@@ -6,8 +6,6 @@ db.sqlite3
 staticfiles
 package-lock.json
 node_modules
-courses/migrations/00*.py
-accounts/migrations/00*.py
 apis/migrations
 courses/__pycache__/
 config/__pycache__/
