@@ -1,0 +1,182 @@
+<!-- Je dois récupérer les documents renseignés pour la consultation en vrai vooir ces informations comme ce qui
+ s'aafichait au niveau de la liste des souscrimptions -->
+
+{% extends 'base.html' %}
+{% block title %}Aperçu d'inscripion | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-12">
+  {% include 'partials/messages.html' %}
+
+  <!-- header -->
+  <div class="mb-10">
+    <h1 class="text-4xl font-light text-slate-800 tracking-tight mb-3">Aperçu du dossier de {{detail.eleve.nom}} {{detail.eleve.prenom}}</h1>
+  </div>
+
+  <!-- main card -->
+  <div class="bg-white border border-slate-200 rounded-sm mb-8">
+    <!-- line -->
+    <div class="h-1 w-full" style="background-color: #ECAB0F;"></div>
+    
+    <div class="p-8">
+      <!-- career choosen -->
+      <div class="mb-10">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-lg font-light text-slate-800 uppercase">Metier de formation</h3>
+          <span class="text-xs text-slate-400 uppercase tracking-wider">Récapitulatif</span>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-12">
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Métier</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.formation.filiere.nom_filiere }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Anne scoliare</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.annee_scolaire }} mois</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Titre professionnel</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.formation.filiere.get_titre_professionnel_display }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Centre de Formation</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.formation.centre.nom_centre }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Date d'inscription</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.date_inscription }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- line -->
+      <div class="w-full h-px bg-slate-100 my-8"></div>
+
+      <!-- personal info -->
+      <div class="mb-10">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-lg font-light text-slate-800 uppercase">Informations personnelles</h3>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-12">
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Nom</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.eleve.nom }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Prénom(s)</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.eleve.prenom }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Sexe</span>
+            <span class="text-base font-medium text-slate-800">{{detail.eleve.sexe }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Email</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.eleve.email }}</span>
+          </div>
+          {% if detail.eleve.tel %}
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Téléphone</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.eleve.tel }}</span>
+          </div>
+          {% endif %}
+          {% if detail.eleve.date_naissance %}
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Date de naissance</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.eleve.date_naissance }}</span>
+          </div>
+          {% endif %}
+          {% if detail.eleve.lieu_naissance %}
+          <div class="md:col-span-2 lg:col-span-3">
+            <span class="text-xs text-slate-400 block mb-1">Lieu de naissance</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.eleve.lieu_naissance }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- line -->
+      <div class="w-full h-px bg-slate-100 my-8"></div>
+
+      <!-- documents -->
+                <div class="mb-10">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-light text-slate-800 uppercase">Documents soumis</h3>
+
+                {% if eleve_docs %}
+                <span class="text-xs text-slate-400">{{ eleve_docs|length }} fichier(s)</span>
+                {% endif %}
+            </div>
+
+            {% if eleve_docs %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                {% for piece in eleve_docs %}
+                <div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+
+                <div class="flex items-center gap-3">
+                    <span class="text-bsb-green text-sm">{{ piece.piece_requise.libelle_piece }}</span>
+                    <span class="tbadge">{{ piece.piece_requise.get_type_libelle }}</span>
+                </div>
+
+                {% if piece.piece %}
+                    <a href="{{ piece.piece.url }}" target="_blank"
+                    class="text-xs text-slate-400 hover:text-slate-600 transition-colors">
+                     Visualiser
+                    </a>
+                {% else %}
+                    <span class="text-muted">Aucun fichier</span>
+                {% endif %}
+
+                </div>
+                {% endfor %}
+
+            </div>
+
+            {% else %}
+                <p class="text-sm text-slate-400 py-2">
+                Aucun document soumis (non requis pour cette formation)
+                </p>
+            {% endif %}
+
+            </div>
+      
+      
+      
+      <!-- final info -->
+      <div class="mx-auto text-center mb-10 p-5 bg-slate-50 border border-slate-200">
+   
+
+      <!-- BOUTONS DE CONFIRMATION -->
+     <div class="flex flex-col sm:flex-row sm:items-center justify-center gap-4">
+          <!-- Valider : POST direct -->
+          <form method="POST" action="{% url 'courses:gerer_inscription' detail.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="valide">
+            <button type="submit"
+                    class="px-8 py-3 text-white text-base font-medium rounded-sm transition-all hover:opacity-90"
+                    style="background-color: #009640;">
+              Valider
+            </button>
+          </form>
+
+          <!-- Rejeter : simple lien vers la page motif -->
+          <a href="{% url 'courses:rejeter_inscription' detail.id %}"
+            class="px-8 py-3 bg-white border border-slate-200 text-slate-600 text-sm font-medium
+                    rounded-sm hover:bg-red-500 hover:text-white hover:border-red-500 transition-all text-center">
+            Rejeter
+          </a>
+        </div>
+    </div>
+  </div>
+
+  <!-- Pied de page avec les couleurs BSB -->
+  <div class="mt-8 flex justify-center space-x-3">
+    <span class="h-0.5 w-3" style="background-color: #ECAB0F;"></span>
+    <span class="h-0.5 w-3" style="background-color: #E30613;"></span>
+    <span class="h-0.5 w-3" style="background-color: #009640;"></span>
+  </div>
+</div>
+{% endblock %}

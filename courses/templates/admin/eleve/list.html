@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Apprenants | BSB{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6">
+    {% include 'partials/messages.html' %}
+
+    <!-- En-tête -->
+    <div class="px-4 md:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Apprenants</h1>
+            <p class="mt-1 text-sm text-gray-500">Retrouver et modifier le dossier complet d'un apprenant</p>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <form method="get">
+        <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl flex flex-col sm:flex-row gap-3 shadow-sm">
+            <div class="relative flex-1">
+                <input type="text" name="recherche" value="{{ recherche }}"
+                       placeholder="Rechercher par nom, prénom ou identifiant..."
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
+            </div>
+            <button type="submit"
+                    class="px-5 py-3 bg-gray-800 hover:bg-gray-900 text-white rounded-lg font-semibold transition-all">
+                Filtrer
+            </button>
+            {% if recherche %}
+            <a href="{% url 'bsb_admin:eleve_list' %}"
+               class="inline-flex items-center px-5 py-3 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-all">
+                Réinitialiser
+            </a>
+            {% endif %}
+        </div>
+    </form>
+
+    <!-- Tableau -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+        {% if eleves %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Apprenant</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Identifiant</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Contact</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {% for e in eleves %}
+                    <tr class="hover:bg-amber-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-3">
+                                <div class="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center shrink-0 font-bold text-sm text-white">
+                                    {{ e.nom|first|upper }}{{ e.prenom|first|upper }}
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-gray-900">{{ e.nom }} {{ e.prenom }}</div>
+                                    <div class="text-xs text-gray-400">@{{ e.username }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ e.numero_identifiant|default:"—" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <div>{{ e.email }}</div>
+                            <div class="text-xs text-gray-400">{{ e.tel|default:"—" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <a href="{% url 'bsb_admin:eleve_update' e.id %}"
+                               class="inline-flex items-center gap-1 p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-all"
+                               title="Modifier">{% include 'partials/icon_edit.html' %} Modifier</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if eleves.has_other_pages %}
+        <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex items-center justify-between">
+            <p class="text-sm text-gray-600">
+                Page <span class="font-semibold">{{ eleves.number }}</span>
+                sur <span class="font-semibold">{{ eleves.paginator.num_pages }}</span>
+            </p>
+            <nav class="inline-flex rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                {% if eleves.has_previous %}
+                <a href="?page={{ eleves.previous_page_number }}&recherche={{ recherche }}"
+                   class="px-3 py-2 bg-white text-gray-500 hover:bg-gray-50 border-r border-gray-200 text-sm transition-all">Précédent</a>
+                {% endif %}
+                {% for num in eleves.paginator.page_range %}
+                    {% if eleves.number == num %}
+                    <span class="px-4 py-2 bg-yellow-600 text-white text-sm font-semibold">{{ num }}</span>
+                    {% else %}
+                    <a href="?page={{ num }}&recherche={{ recherche }}"
+                       class="px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 border-r border-gray-200 text-sm transition-all">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if eleves.has_next %}
+                <a href="?page={{ eleves.next_page_number }}&recherche={{ recherche }}"
+                   class="px-3 py-2 bg-white text-gray-500 hover:bg-gray-50 text-sm transition-all">Suivant</a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-16">
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Aucun apprenant trouvé</h3>
+            <p class="text-gray-500 mb-6 text-sm">
+                {% if recherche %}Aucun résultat pour votre recherche.{% else %}Aucun apprenant enregistré pour le moment.{% endif %}
+            </p>
+            {% if recherche %}
+            <a href="{% url 'bsb_admin:eleve_list' %}"
+               class="inline-flex items-center px-5 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 text-sm font-medium">
+                Effacer les filtres
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

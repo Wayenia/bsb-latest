@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Supprimer le type de frais | BSB{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-md mx-auto px-4">
+
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+      <div class="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+        
+      </div>
+      <h1 class="text-xl font-black text-gray-900 mb-2">Supprimer ce type de frais ?</h1>
+      <p class="text-gray-500 text-sm mb-1">Vous êtes sur le point de supprimer :</p>
+      <p class="text-base font-bold text-gray-800 mb-6">« {{ object.libelle }} »</p>
+      <p class="text-xs text-yellow-700 bg-yellow-50 rounded-lg px-4 py-2 mb-8 border border-yellow-200">
+        
+        Cette action est irréversible. Les frais liés à ce type pourraient être affectés.
+      </p>
+
+      <form method="post" class="flex gap-3">
+        {% csrf_token %}
+        <button type="submit"
+                class="flex-1 py-2.5 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-colors">
+          Confirmer la suppression
+        </button>
+        <a href="{% url 'bsb_admin:type_frais_list' %}"
+           class="flex-1 py-2.5 text-center text-sm font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
+          Annuler
+        </a>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

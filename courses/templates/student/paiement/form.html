@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Effectuer un paiement | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-10">
+  {% include 'partials/messages.html' %}
+
+  <div class="mb-6">
+    <a href="{% url 'courses:liste_dettes' dette.inscription.id %}" class="text-sm text-gray-400 hover:text-gray-600">Mes dettes</a>
+    <h1 class="text-2xl font-black text-gray-900 mt-2">Effectuer un paiement</h1>
+    <p class="text-gray-500 text-sm mt-1">
+      {{ dette.frais_formation.type_frais }} — {{ dette.inscription.formation.filiere }}
+    </p>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-6">
+    <div class="grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <p class="text-gray-400">Montant total du</p>
+        <p class="font-bold text-gray-900">{{ dette.montant_total|floatformat:0 }} FCFA</p>
+      </div>
+      <div>
+        <p class="text-gray-400">Déjà payé</p>
+        <p class="font-bold text-gray-900">{{ dette.montant_paye|floatformat:0 }} FCFA</p>
+      </div>
+      {% if tranche_cible %}
+      <div>
+        <p class="text-gray-400">Tranche à régler</p>
+        <p class="font-bold text-gray-900">
+          {{ tranche_cible.libelle }}
+          {% if tranche_cible.est_primordiale %}<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">Primordiale</span>{% endif %}
+        </p>
+      </div>
+      {% endif %}
+      <div>
+        <p class="text-gray-400">Montant à régler maintenant</p>
+        <p class="font-bold text-gray-900">{{ montant_cible|floatformat:0 }} FCFA</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+    <form method="POST" class="space-y-5" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+        {% for error in form.non_field_errors %}
+        <p class="text-sm text-red-700">{{ error }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div>
+        <label for="{{ form.montant_paiement.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5">
+          {{ form.montant_paiement.label }}
+        </label>
+        {{ form.montant_paiement }}
+        <p class="mt-1 text-xs text-gray-400">Vous devez régler exactement le montant dû, soit {{ montant_cible|floatformat:0 }} FCFA.</p>
+        {% if form.montant_paiement.errors %}
+        <p class="mt-1 text-sm text-red-600">{{ form.montant_paiement.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.mode_paiement.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5">
+          {{ form.mode_paiement.label }}
+        </label>
+        {{ form.mode_paiement }}
+        {% if form.mode_paiement.errors %}
+        <p class="mt-1 text-sm text-red-600">{{ form.mode_paiement.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      {% if tranche_cible.est_primordiale %}
+      <div id="derogation-wrap" class="hidden">
+        <div class="p-3 bg-red-50 border border-red-200 rounded-lg mb-3 text-xs text-red-700">
+          Montant inférieur au montant dû de la tranche primordiale : motif et pièce jointe obligatoires.
+        </div>
+        <label for="{{ form.motif_derogation.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5">
+          {{ form.motif_derogation.label }}
+        </label>
+        {{ form.motif_derogation }}
+        <label for="{{ form.piece_jointe_derogation.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5 mt-3">
+          {{ form.piece_jointe_derogation.label }}
+        </label>
+        {{ form.piece_jointe_derogation }}
+      </div>
+      <script>
+        (function () {
+          var montantCible = {{ montant_cible|floatformat:0 }};
+          var input = document.getElementById('{{ form.montant_paiement.id_for_label }}');
+          var wrap = document.getElementById('derogation-wrap');
+          function toggle() {
+            var val = parseFloat(input.value);
+            wrap.classList.toggle('hidden', !(val > 0 && val < montantCible));
+          }
+          input.addEventListener('input', toggle);
+          toggle();
+        })();
+      </script>
+      {% endif %}
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+        <a href="{% url 'courses:liste_dettes' dette.inscription.id %}"
+           class="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all">
+          Annuler
+        </a>
+        <button type="submit"
+                class="px-6 py-2.5 bg-yellow-600 text-white text-sm font-bold rounded-lg hover:bg-yellow-700 transition-all shadow-sm">
+          Payer {{ montant_cible|floatformat:0 }} FCFA
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}Régions & Provinces | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6">
+  {% include 'partials/messages.html' %}
+
+  <!-- Header ──────────────────────────────────────────── -->
+  <div class="px-4 md:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-black text-gray-900">Régions et Provinces</h1>
+      <p class="mt-1 text-sm text-gray-500">Découpage administratif du territoire</p>
+    </div>
+    <div class="flex gap-3 flex-wrap">
+      {% url 'bsb_admin:province_import' as province_import_url %}
+      {% include 'partials/import_export_buttons.html' with upload_url=province_import_url label="Importer provinces" %}
+      {% url 'bsb_admin:region_import' as region_import_url %}
+      {% include 'partials/import_export_buttons.html' with upload_url=region_import_url label="Importer régions" %}
+      <a href="{% url 'bsb_admin:province_create' %}"
+         class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-800 text-white text-sm font-bold rounded-lg hover:bg-gray-700 transition-all shadow-sm">
+         Nouvelle province
+      </a>
+      <a href="{% url 'bsb_admin:region_create' %}"
+         class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-all shadow-sm">
+         Nouvelle région
+      </a>
+    </div>
+  </div>
+
+  <!-- Filtres ─────────────────────────────────────────── -->
+  <form method="get" class="px-0">
+    <div class="bg-white border border-gray-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center shadow-sm">
+
+      <!-- Recherche -->
+      <div class="relative flex-1">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          
+        </div>
+        <input type="text" name="q" value="{{ q }}"
+               placeholder="Rechercher par nom ou chef-lieu…"
+               class="block w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition">
+      </div>
+
+      <!-- Filtre chef-lieu -->
+      <div class="sm:w-52">
+        <select name="chef_lieu"
+                class="block w-full py-2.5 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition">
+          <option value="">Tous les chefs-lieux</option>
+          {% for cl in chefs_lieux %}
+          <option value="{{ cl }}" {% if chef_lieu_filter == cl %}selected{% endif %}>{{ cl }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-2">
+        <button type="submit"
+                class="px-4 py-2.5 bg-yellow-500 text-white text-sm font-semibold rounded-lg hover:bg-yellow-600 transition shadow-sm">
+          Filtrer
+        </button>
+        <a href="{% url 'bsb_admin:region_list' %}"
+           class="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-lg hover:bg-gray-50 transition">
+          Réinitialiser
+        </a>
+      </div>
+
+    </div>
+  </form>
+
+  <!-- Corps : accordéon régions → provinces ───────────── -->
+  {% if regions %}
+  <div class="space-y-4">
+    {% for region in regions %}
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+
+      <!-- En-tête région -->
+      <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-red-50 to-yellow-50 border-b border-gray-100">
+        <div class="flex items-center gap-4">
+          <!-- Toggle provinces -->
+          <button type="button"
+                  onclick="toggleProvinces('r{{ region.pk }}')"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-300 transition-all shadow-sm"
+                  title="Afficher / Masquer les provinces">
+            <svg id="icon-r{{ region.pk }}" class="w-4 h-4 transition-transform" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div>
+            <div class="flex items-center gap-3">
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-600 text-white text-xs font-black">
+                R
+              </span>
+              <h2 class="text-base font-black text-gray-900">{{ region.nom_region }}</h2>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
+                {{ region.nb_provinces }} province{{ region.nb_provinces|pluralize }}
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 mt-0.5 pl-11">Chef-lieu : <span class="font-semibold text-gray-700">{{ region.chef_lieu }}</span></p>
+          </div>
+        </div>
+
+        <!-- Actions région -->
+        <div class="flex items-center gap-1">
+          <a href="{% url 'bsb_admin:province_create' %}?region={{ region.pk }}"
+             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-yellow-50 hover:border-yellow-400 hover:text-yellow-700 transition-all"
+             title="Ajouter une province à cette région">
+             Province
+          </a>
+          <a href="{% url 'bsb_admin:region_update' region.pk %}"
+             class="inline-flex items-center gap-1 p-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-all"
+             title="Modifier la région">{% include 'partials/icon_edit.html' %}</a>
+          <a href="{% url 'bsb_admin:region_delete' region.pk %}"
+             class="inline-flex items-center gap-1 p-2 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
+             title="Supprimer la région">{% include 'partials/icon_delete.html' %}</a>
+        </div>
+      </div>
+
+      <!-- Provinces (masquées par défaut) -->
+      <div id="r{{ region.pk }}" class="hidden">
+        {% with provinces=region.provinces.all %}
+        {% if provinces %}
+        <table class="min-w-full divide-y divide-gray-100">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="pl-16 pr-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Province</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Chef-lieu</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Créée le</th>
+              <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for province in provinces %}
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="pl-16 pr-6 py-3.5 whitespace-nowrap">
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 flex-shrink-0"></span>
+                  <span class="text-sm font-semibold text-gray-800">{{ province.nom_province }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-600">{{ province.chef_lieu }}</td>
+              <td class="px-6 py-3.5 whitespace-nowrap text-xs text-gray-400">
+                {{ province.date_creation|date:"d/m/Y" }}
+              </td>
+              <td class="px-6 py-3.5 whitespace-nowrap text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <a href="{% url 'bsb_admin:province_update' province.pk %}"
+                     class="inline-flex items-center gap-1 p-1.5 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
+                     title="Modifier">{% include 'partials/icon_edit.html' %}</a>
+                  <a href="{% url 'bsb_admin:province_delete' province.pk %}"
+                     class="inline-flex items-center gap-1 p-1.5 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
+                     title="Supprimer">{% include 'partials/icon_delete.html' %}</a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="px-16 py-5 text-sm text-gray-400 italic flex items-center gap-2">
+          
+          Aucune province pour cette région.
+          <a href="{% url 'bsb_admin:province_create' %}?region={{ region.pk }}"
+             class="ml-2 text-red-600 font-semibold hover:underline">Ajouter la première</a>
+        </div>
+        {% endif %}
+        {% endwith %}
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if regions.has_other_pages %}
+  <div class="flex items-center justify-between px-1 py-2">
+    <p class="text-sm text-gray-500">
+      Page <span class="font-semibold text-gray-800">{{ regions.number }}</span>
+      sur <span class="font-semibold text-gray-800">{{ regions.paginator.num_pages }}</span>
+    </p>
+    <nav class="inline-flex rounded-lg shadow-sm overflow-hidden border border-gray-200 divide-x divide-gray-200">
+      {% if regions.has_previous %}
+      <a href="?page={{ regions.previous_page_number }}&q={{ q }}&chef_lieu={{ chef_lieu_filter }}"
+         class="px-3 py-2 bg-white text-sm text-gray-600 hover:bg-gray-50 transition">Précédent</a>
+      {% endif %}
+      {% for num in regions.paginator.page_range %}
+        {% if regions.number == num %}
+        <span class="px-4 py-2 bg-red-600 text-white text-sm font-bold">{{ num }}</span>
+        {% else %}
+        <a href="?page={{ num }}&q={{ q }}&chef_lieu={{ chef_lieu_filter }}"
+           class="px-4 py-2 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if regions.has_next %}
+      <a href="?page={{ regions.next_page_number }}&q={{ q }}&chef_lieu={{ chef_lieu_filter }}"
+         class="px-3 py-2 bg-white text-sm text-gray-600 hover:bg-gray-50 transition">Suivant</a>
+      {% endif %}
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <!-- État vide -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm text-center py-16">
+    <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+      
+    </div>
+    <h3 class="text-lg font-bold text-gray-800 mb-1">Aucune région trouvée</h3>
+    <p class="text-sm text-gray-500 mb-6">
+      {% if q or chef_lieu_filter %}
+        Aucun résultat pour ces critères.
+        <a href="{% url 'bsb_admin:region_list' %}" class="text-red-600 font-semibold hover:underline">Réinitialiser</a>
+      {% else %}
+        Commencez par créer votre première région.
+      {% endif %}
+    </p>
+    {% if not q and not chef_lieu_filter %}
+    <a href="{% url 'bsb_admin:region_create' %}"
+       class="inline-flex items-center gap-2 px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition shadow-sm">
+       Créer une région
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+  function toggleProvinces(id) {
+    const el = document.getElementById(id);
+    const icon = document.getElementById('icon-' + id);
+    if (el.classList.contains('hidden')) {
+      el.classList.remove('hidden');
+      icon.classList.add('rotate-180');
+    } else {
+      el.classList.add('hidden');
+      icon.classList.remove('rotate-180');
+    }
+  }
+
+  // Auto-dismiss messages
+  setTimeout(() => {
+    document.querySelectorAll('.messages, [class*="messages"]').forEach(m => m.remove());
+  }, 5000);
+</script>
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% block title %}Formations disponibles | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  {% include 'partials/messages.html' %}
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+    <div>
+      <h1 class="text-3xl font-black text-gray-900">Formations disponibles</h1>
+      <!--p class="mt-1 text-sm text-gray-500">Cliquez sur « S'inscrire » pour déposer un dossier</p-->
+    </div>
+    {% if user.is_authenticated %}
+    <a href="{% url 'courses:my_subscriptions' %}"
+       class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-yellow-500 text-white text-sm font-bold rounded-lg hover:bg-yellow-600 transition-colors">
+       Mes dossiers
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Recherche d'un métier + téléchargement de son curricula (accessible sans connexion) -->
+  <div class="bg-white rounded-xl shadow-md border border-gray-200 p-5 mb-8">
+    <h2 class="text-lg font-black text-gray-900 mb-1">Télécharger un document (curricula)</h2>
+    <p class="text-sm text-gray-500 mb-4">Accessible à tous, sans connexion.</p>
+    <form method="get" class="flex flex-col sm:flex-row gap-3">
+      <input type="text" name="curricula_q" value="{{ curricula_q }}"
+             placeholder="Ex : Saisir l'intitulé du métier…"
+             class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+      <button type="submit"
+              class="px-6 py-2.5 bg-bsb-gold text-white text-sm font-bold rounded-lg hover:bg-yellow-600 transition-colors">
+          Rechercher
+      </button>
+      {% if curricula_q %}
+      <a href="{% url 'courses:available_career' %}"
+         class="px-4 py-2.5 border border-gray-300 text-gray-600 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+          Réinitialiser
+      </a>
+      {% endif %}
+    </form>
+
+    {% if curricula_q %}
+    <div class="mt-4 divide-y divide-gray-100 border-t border-gray-100">
+      {% for metier in curricula_results %}
+      <div class="flex items-center justify-between py-3">
+        <div>
+          <p class="text-sm font-bold text-gray-900">{{ metier.nom_filiere }}</p>
+          {% if metier.titre_professionnel %}
+          <p class="text-xs text-gray-500">{{ metier.get_titre_professionnel_display }}</p>
+          {% endif %}
+        </div>
+        {% if metier.curricula %}
+        <a href="{{ metier.curricula.url }}" target="_blank"
+           class="inline-flex items-center gap-2 px-4 py-2 bg-bsb-green text-white text-xs font-bold rounded-lg hover:bg-green-700 transition-colors">
+            Télécharger le curricula
+        </a>
+        {% else %}
+        <span class="text-xs text-gray-400 italic">Curricula non disponible</span>
+        {% endif %}
+      </div>
+      {% empty %}
+      <p class="py-4 text-sm text-gray-400 italic">Aucun métier ne correspond à « {{ curricula_q }} ».</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <form method="get">
+    <div class="bg-white px-4 py-4 border border-gray-200 rounded-lg mb-4 flex flex-col sm:flex-row gap-3">
+      <div class="relative flex-1">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          
+        </div>
+        {{ filter.form.formation }}
+      </div>
+      <div class="sm:w-56">
+        {{ filter.form.centre }}
+      </div>
+    </div>
+  </form>
+
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    {% if available_career %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Métier</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Durée</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Conditions d'accès</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Titre Professionnel</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Centre de Formation</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Frais de scolarité</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Communiqué</th>
+            <th class="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Action</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for career in available_career %}
+          <tr class="hover:bg-gray-50 transition-colors">
+
+            <!-- Métier -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-sm font-bold text-gray-900">{{ career.filiere.nom_filiere }}</span>
+            </td>
+
+            <!-- Durée -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center gap-1 font-medium text-gray-800 text-sm">
+                
+                {{ career.duree_display }}
+              </span>
+            </td>
+
+            <!-- Conditions d'accès -->
+            <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
+              {% if career.filiere.niveau_diplome %}
+                <span class="text-sm text-gray-800">{{ career.filiere.niveau_diplome }}</span>
+              {% else %}
+                <span class="text-gray-400 text-xs italic">Non précisé</span>
+              {% endif %}
+            </td>
+
+            <!-- Titre Professionnel -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if career.filiere.titre_professionnel %}
+                <span class="px-2 py-1 bg-yellow-50 text-yellow-700 border border-yellow-200 text-xs font-bold rounded-full">
+                  {{ career.filiere.get_titre_professionnel_display }}
+                </span>
+              {% else %}
+                <span class="text-gray-400 text-xs italic">—</span>
+              {% endif %}
+            </td>
+
+            <!-- Centre de Formation -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+              <span class="font-medium text-gray-900">{{ career.centre.nom_centre }}</span><br>
+              <span class="text-xs text-gray-400">{{ career.centre.province.nom_province }}</span>
+              <span class="text-xs text-gray-400">{{ career.centre.province.chef_lieu }}</span>
+            </td>
+
+            <!-- Frais de scolarité -->
+            <td class="px-6 py-4 whitespace-nowrap text-left">
+              {% if career.total_frais %}
+                <span class="px-2 py-1 bg-red-50 text-red-700 border border-red-200 text-xs font-bold rounded-full">
+                  {{ career.total_frais|floatformat:0 }} FCFA
+                </span>
+              {% else %}
+                <span class="text-gray-400 text-xs italic">—</span>
+              {% endif %}
+            </td>
+
+            <!-- Communiqué -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm">
+              {% if career.communique %}
+              <a href="{{ career.communique.url }}"
+                 class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 text-xs font-medium hover:underline transition-colors"
+                 target="_blank">
+                 Télécharger
+              </a>
+              {% else %}
+              <span class="text-gray-400 text-xs italic">Aucun</span>
+              {% endif %}
+            </td>
+
+            <!-- Action -->
+            <td class="px-6 py-4 whitespace-nowrap text-center">
+              <a href="{% url 'courses:subscribe_selection' %}"
+                 class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-all transform hover:-translate-y-0.5 shadow hover:shadow-md">
+                S'inscrire
+              </a>
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if available_career.has_other_pages %}
+    <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 flex justify-between sm:hidden">
+          {% if available_career.has_previous %}
+          <a href="?centre={{ request.GET.centre }}&page={{ available_career.previous_page_number }}"
+             class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            Précédent
+          </a>
+          {% endif %}
+          {% if available_career.has_next %}
+          <a href="?centre={{ request.GET.centre }}&page={{ available_career.next_page_number }}"
+             class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            Suivant
+          </a>
+          {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+          <p class="text-sm text-gray-700">
+            Page <span class="font-medium">{{ available_career.number }}</span> sur
+            <span class="font-medium">{{ available_career.paginator.num_pages }}</span>
+          </p>
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+            {% if available_career.has_previous %}
+            <a href="?centre={{ request.GET.centre }}&page={{ available_career.previous_page_number }}"
+               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Précédent</a>
+            {% endif %}
+            {% for num in available_career.paginator.page_range %}
+              {% if available_career.number == num %}
+              <span class="relative inline-flex items-center px-4 py-2 border border-yellow-500 bg-yellow-500 text-sm font-medium text-white">
+                {{ num }}
+              </span>
+              {% else %}
+              <a href="?centre={{ request.GET.centre }}&page={{ num }}"
+                 class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                {{ num }}
+              </a>
+              {% endif %}
+            {% endfor %}
+            {% if available_career.has_next %}
+            <a href="?centre={{ request.GET.centre }}&page={{ available_career.next_page_number }}"
+               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Suivant</a>
+            {% endif %}
+          </nav>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-16">
+      
+      <h3 class="text-lg font-semibold text-gray-500">Aucune formation disponible pour le moment</h3>
+      <p class="text-sm text-gray-400 mt-1">Revenez plus tard ou consultez vos dossiers existants.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  const searchInput = document.getElementById('id_formation');
+  let timeout = null;
+  searchInput.focus();
+  const val = searchInput.value;
+  searchInput.value = '';
+  searchInput.value = val;
+  searchInput.addEventListener('input', function () {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      this.form.submit();
+    }, 400);
+  });
+</script>
+<script>
+  setTimeout(function () {
+    document.querySelectorAll('[class*="border-l-4"]').forEach(function (el) {
+      el.remove();
+    });
+  }, 5000);
+</script>
+{% endblock %}

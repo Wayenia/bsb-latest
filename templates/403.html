@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Accès refusé | BSB{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center px-4">
+    <div class="max-w-lg w-full text-center">
+        <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
+            
+        </div>
+        <h1 class="text-3xl font-black text-gray-900 mb-3">Accès refusé</h1>
+        <p class="text-gray-600 mb-8">
+            {{ exception|default:"Vous n'avez pas la permission d'effectuer cette action." }}
+        </p>
+        <a href="{% url 'courses:redirect_to_dashboard' %}"
+           class="inline-flex items-center justify-center px-6 py-3 bg-bsb-red text-white font-bold rounded-xl hover:bg-red-700 transition-all">
+             Retour à mon tableau de bord
+        </a>
+    </div>
+</div>
+{% endblock %}

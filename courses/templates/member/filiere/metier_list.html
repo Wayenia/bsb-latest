@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+
+{% block title %}Métiers | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6">
+
+    {% include 'partials/messages.html' %}
+
+    <!-- Header -->
+    <div class="px-4 md:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Métiers et Modules</h1>
+            <p class="mt-1 text-sm text-gray-500">Métiers de formation et modules associés</p>
+        </div>
+        <div class="flex gap-3 flex-wrap">
+            {% url 'bsb_admin:module_import' as module_import_url %}
+            {% include 'partials/import_export_buttons.html' with upload_url=module_import_url label="Importer modules" %}
+            {% url 'bsb_admin:field_import' as field_import_url %}
+            {% include 'partials/import_export_buttons.html' with upload_url=field_import_url label="Importer métiers" %}
+            <a href="{% url 'bsb_admin:module_create' %}"
+               class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-800 text-white text-sm font-bold rounded-lg hover:bg-gray-700 transition-all shadow-sm">
+                Nouveau module
+            </a>
+            <a href="{% url 'courses:create_field' %}"
+               class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-all shadow-sm">
+                Nouveau métier
+            </a>
+        </div>
+    </div>
+
+    <!-- Barre de filtres -->
+    <form method="get" id="filter-form">
+        <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-3 flex-wrap">
+
+            <!-- Recherche -->
+            <div class="relative flex-1 min-w-[200px]">
+                <input type="text" name="recherche"
+                       value="{{ filter.form.recherche.value|default:'' }}"
+                       placeholder="Rechercher un métier..."
+                       class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+                       id="id_recherche" autocomplete="off">
+            </div>
+
+            <!-- Filtre Titre Professionnel -->
+            <div class="sm:w-52">
+                <select name="titre_professionnel"
+                        class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+                        onchange="this.form.submit()">
+                    <option value="">Tous les titres</option>
+                    <option value="CQP" {% if filter.form.titre_professionnel.value == 'CQP' %}selected{% endif %}>CQP — Cert. de Qualification Pro.</option>
+                    <option value="BQP" {% if filter.form.titre_professionnel.value == 'BQP' %}selected{% endif %}>BQP — Brevet de Qualification Pro.</option>
+                    <option value="BPT" {% if filter.form.titre_professionnel.value == 'BPT' %}selected{% endif %}>BPT — Brevet Pro. de Technicien</option>
+                    <option value="BPTS" {% if filter.form.titre_professionnel.value == 'BPTS' %}selected{% endif %}>BPTS — Brevet Pro. de Tech. Spé.</option>
+                </select>
+            </div>
+
+            <!-- Filtre Disponibilité -->
+            <div class="sm:w-44">
+                <select name="is_active"
+                        class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+                        onchange="this.form.submit()">
+                    <option value="">Disponibilité</option>
+                    <option value="true" {% if filter.form.is_active.value == 'true' %}selected{% endif %}>Actif</option>
+                    <option value="false" {% if filter.form.is_active.value == 'false' %}selected{% endif %}>Inactif</option>
+                </select>
+            </div>
+
+            <!-- Bouton reset -->
+            <div class="flex items-center">
+                <a href="{% url 'courses:member_field_list' %}"
+                   class="inline-flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition"
+                   title="Réinitialiser les filtres">
+                    <span class="hidden sm:inline">Réinitialiser</span>
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Compteur de résultats -->
+    {% if filieres %}
+    <div class="px-1">
+        <p class="text-sm text-gray-500">
+            <span class="font-semibold text-gray-800">{{ filieres.paginator.count }}</span> métier{{ filieres.paginator.count|pluralize }} trouvé{{ filieres.paginator.count|pluralize }}
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Corps : accordéon métiers → modules ───────────── -->
+    {% if filieres %}
+    <div class="space-y-4">
+        {% for field in filieres %}
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+
+            <!-- En-tête métier -->
+            <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-red-50 to-yellow-50 border-b border-gray-100">
+                <div class="flex items-center gap-4">
+                    <button type="button"
+                            onclick="toggleModules('m{{ field.pk }}')"
+                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-300 transition-all shadow-sm"
+                            title="Afficher / Masquer les modules">
+                        <svg id="icon-m{{ field.pk }}" class="w-4 h-4 transition-transform" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+
+                    <div>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-600 text-white text-xs font-black">
+                                M
+                            </span>
+                            <h2 class="text-base font-black text-gray-900">{{ field.nom_filiere }}</h2>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
+                                {{ field.nb_modules }} module{{ field.nb_modules|pluralize }}
+                            </span>
+                            {% if field.titre_professionnel %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">
+                                {{ field.get_titre_professionnel_display }}
+                            </span>
+                            {% endif %}
+                            {% if field.is_active %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">Actif</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">Inactif</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-xs text-gray-500 mt-0.5 pl-11">
+                            {{ field.niveau_diplome|default:"Conditions d'accès non précisées"|truncatechars:80 }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Actions métier -->
+                <div class="flex items-center gap-1">
+                    {% if field.curricula %}
+                    <a href="{{ field.curricula.url }}" target="_blank"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-green-700 bg-white border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition-all"
+                       title="Télécharger le curricula">
+                        Curricula
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'bsb_admin:module_create' %}?filiere={{ field.pk }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-yellow-50 hover:border-yellow-400 hover:text-yellow-700 transition-all"
+                       title="Ajouter un module pour ce métier">
+                        Module
+                    </a>
+                    <a href="{% url 'bsb_admin:field_update' field.pk %}"
+                       class="inline-flex items-center gap-1 p-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-all"
+                       title="Modifier le métier">{% include 'partials/icon_edit.html' %}</a>
+                    <a href="{% url 'bsb_admin:metier_delete' field.pk %}"
+                       class="inline-flex items-center gap-1 p-2 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
+                       title="Supprimer le métier">{% include 'partials/icon_delete.html' %}</a>
+                </div>
+            </div>
+
+            <!-- Modules (masqués par défaut) -->
+            <div id="m{{ field.pk }}" class="hidden">
+                {% with modules=field.modules.all %}
+                {% if modules %}
+                <table class="min-w-full divide-y divide-gray-100">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="pl-16 pr-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Module</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Volume horaire</th>
+                            <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for module in modules %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="pl-16 pr-6 py-3.5 whitespace-nowrap">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 flex-shrink-0"></span>
+                                    <span class="text-sm font-semibold text-gray-800">{{ module.nom_module }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-600">{{ module.volume_h_cours }} h</td>
+                            <td class="px-6 py-3.5 whitespace-nowrap text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <a href="{% url 'bsb_admin:module_update' module.pk %}"
+                                       class="inline-flex items-center gap-1 p-1.5 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
+                                       title="Modifier">{% include 'partials/icon_edit.html' %}</a>
+                                    <a href="{% url 'bsb_admin:module_delete' module.pk %}"
+                                       class="inline-flex items-center gap-1 p-1.5 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
+                                       title="Supprimer">{% include 'partials/icon_delete.html' %}</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="px-16 py-5 text-sm text-gray-400 italic flex items-center gap-2">
+                    Aucun module pour ce métier.
+                    <a href="{% url 'bsb_admin:module_create' %}?filiere={{ field.pk }}"
+                       class="ml-2 text-red-600 font-semibold hover:underline">Ajouter le premier</a>
+                </div>
+                {% endif %}
+                {% endwith %}
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if filieres.has_other_pages %}
+    <div class="flex items-center justify-between px-1 py-2">
+        <p class="text-sm text-gray-500">
+            Page <span class="font-semibold text-gray-800">{{ filieres.number }}</span>
+            sur <span class="font-semibold text-gray-800">{{ filieres.paginator.num_pages }}</span>
+        </p>
+        <nav class="inline-flex rounded-lg shadow-sm overflow-hidden border border-gray-200 divide-x divide-gray-200">
+            {% if filieres.has_previous %}
+            <a href="?page={{ filieres.previous_page_number }}&recherche={{ request.GET.recherche }}&titre_professionnel={{ request.GET.titre_professionnel }}&is_active={{ request.GET.is_active }}"
+               class="px-3 py-2 bg-white text-sm text-gray-600 hover:bg-gray-50 transition">Précédent</a>
+            {% endif %}
+            {% for num in filieres.paginator.page_range %}
+                {% if filieres.number == num %}
+                <span class="px-4 py-2 bg-red-600 text-white text-sm font-bold">{{ num }}</span>
+                {% else %}
+                <a href="?page={{ num }}&recherche={{ request.GET.recherche }}&titre_professionnel={{ request.GET.titre_professionnel }}&is_active={{ request.GET.is_active }}"
+                   class="px-4 py-2 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if filieres.has_next %}
+            <a href="?page={{ filieres.next_page_number }}&recherche={{ request.GET.recherche }}&titre_professionnel={{ request.GET.titre_professionnel }}&is_active={{ request.GET.is_active }}"
+               class="px-3 py-2 bg-white text-sm text-gray-600 hover:bg-gray-50 transition">Suivant</a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- État vide -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm text-center py-16">
+        <h3 class="text-lg font-bold text-gray-800 mb-1">Aucun métier trouvé</h3>
+        <p class="text-sm text-gray-500 mb-6">Modifiez vos filtres ou créez un nouveau métier.</p>
+        <a href="{% url 'courses:create_field' %}"
+           class="inline-flex items-center gap-2 px-6 py-3 bg-red-700 text-white font-bold rounded-lg hover:bg-red-800 transition">
+            Ajouter un métier
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function toggleModules(id) {
+        const el = document.getElementById(id);
+        const icon = document.getElementById('icon-' + id);
+        el.classList.toggle('hidden');
+        if (icon) icon.classList.toggle('rotate-180');
+    }
+
+    // Auto-submit sur la recherche avec délai
+    const rechercheInput = document.getElementById('id_recherche');
+    if (rechercheInput) {
+        rechercheInput.addEventListener('input', function () {
+            clearTimeout(this._timer);
+            this._timer = setTimeout(() => {
+                document.getElementById('filter-form').submit();
+            }, 600);
+        });
+    }
+
+    // Auto-dismiss messages
+    setTimeout(() => {
+        document.querySelectorAll('.messages, [class*="messages"]').forEach(m => m.remove());
+    }, 5000);
+</script>
+{% endblock %}

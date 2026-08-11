@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tranches — {{ type_frais.libelle }} | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10">
+
+  <div class="mb-8">
+    <a href="{% url 'bsb_admin:type_frais_list' %}" class="text-sm text-gray-400 hover:text-gray-600 mb-2 block">Types de frais</a>
+    <h1 class="text-2xl font-black text-gray-900">Tranches de « {{ type_frais.libelle }} »</h1>
+    <p class="text-gray-500 text-sm mt-1">
+      Un type de frais peut avoir zéro ou plusieurs tranches. Le pourcentage de toutes les
+      tranches doit totaliser exactement 100%. Une seule tranche peut être marquée « primordiale » :
+      elle doit être intégralement réglée avant tout autre paiement de l'inscription.
+    </p>
+  </div>
+
+  {% include 'partials/messages.html' %}
+
+  {% if formset.non_form_errors %}
+  <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+    {% for error in formset.non_form_errors %}
+    <p class="text-sm font-semibold text-red-700">{{ error }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="POST" id="tranches-form">
+    {% csrf_token %}
+    {{ formset.management_form }}
+
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <table class="w-full text-sm" id="tranches-table">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50">
+            <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Libellé</th>
+            <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-24">Ordre</th>
+            <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Pourcentage</th>
+            <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-28">Primordiale</th>
+            <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-20">Retirer</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50" id="tranches-body">
+          {% for form in formset %}
+          <tr class="tranche-row">
+            <td class="px-4 py-3">
+              {{ form.id }}
+              {{ form.libelle }}
+              {% if form.libelle.errors %}<p class="text-xs text-red-600 mt-1">{{ form.libelle.errors.0 }}</p>{% endif %}
+            </td>
+            <td class="px-4 py-3">
+              {{ form.ordre }}
+              {% if form.ordre.errors %}<p class="text-xs text-red-600 mt-1">{{ form.ordre.errors.0 }}</p>{% endif %}
+            </td>
+            <td class="px-4 py-3">
+              {{ form.pourcentage }}
+              {% if form.pourcentage.errors %}<p class="text-xs text-red-600 mt-1">{{ form.pourcentage.errors.0 }}</p>{% endif %}
+            </td>
+            <td class="px-4 py-3 text-center">
+              {{ form.est_primordiale }}
+            </td>
+            <td class="px-4 py-3 text-center">
+              {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="px-4 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+        <button type="button" id="add-tranche"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 text-xs font-bold rounded-lg hover:bg-gray-300 transition-all">
+          Ajouter une tranche
+        </button>
+        <p class="text-xs text-gray-400">Total des pourcentages : <span id="total-pourcentage" class="font-bold">—</span></p>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 mt-6">
+      <a href="{% url 'bsb_admin:type_frais_list' %}"
+         class="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all">
+        Annuler
+      </a>
+      <button type="submit"
+              class="px-6 py-2.5 bg-yellow-600 text-white text-sm font-bold rounded-lg hover:bg-yellow-700 transition-all shadow-sm">
+        Enregistrer les tranches
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Formulaire vide, dupliqué en JS pour "Ajouter une tranche" -->
+<template id="empty-form-template">
+  <tr class="tranche-row">
+    <td class="px-4 py-3">{{ formset.empty_form.libelle }}</td>
+    <td class="px-4 py-3">{{ formset.empty_form.ordre }}</td>
+    <td class="px-4 py-3">{{ formset.empty_form.pourcentage }}</td>
+    <td class="px-4 py-3 text-center">{{ formset.empty_form.est_primordiale }}</td>
+    <td class="px-4 py-3 text-center"></td>
+  </tr>
+</template>
+
+<script>
+(function () {
+  const tbody = document.getElementById('tranches-body');
+  const addBtn = document.getElementById('add-tranche');
+  const totalField = document.getElementById('total-pourcentage');
+  const totalForms = document.getElementById('id_tranches-TOTAL_FORMS');
+  const template = document.getElementById('empty-form-template').innerHTML;
+
+  addBtn.addEventListener('click', function () {
+    const index = parseInt(totalForms.value, 10);
+    const html = template.replace(/__prefix__/g, index);
+    tbody.insertAdjacentHTML('beforeend', html);
+    totalForms.value = index + 1;
+    updateTotal();
+  });
+
+  function updateTotal() {
+    let total = 0;
+    document.querySelectorAll('input[name$="-pourcentage"]').forEach(function (input) {
+      const v = parseFloat(input.value);
+      if (!isNaN(v)) total += v;
+    });
+    totalField.textContent = total.toFixed(2) + '%';
+    totalField.classList.toggle('text-red-600', Math.round(total * 100) / 100 !== 100 && total !== 0);
+    totalField.classList.toggle('text-green-600', Math.round(total * 100) / 100 === 100);
+  }
+
+  tbody.addEventListener('input', function (e) {
+    if (e.target.name && e.target.name.endsWith('-pourcentage')) updateTotal();
+  });
+
+  updateTotal();
+})();
+</script>
+{% endblock %}

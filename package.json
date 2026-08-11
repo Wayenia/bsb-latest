@@ -1,0 +1,22 @@
+{
+  "name": "SUUDU",
+  "version": "1.0.0",
+  "description": "Un système complet de gestion de stock pour toute sorte d'entreprise",
+  "scripts": {
+    "dev": "npx tailwindcss -i ./static/src/input.css -o ./static/css/output.css --watch",
+    "build": "npx tailwindcss -i ./static/src/input.css -o ./static/css/output.css --minify"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.18"
+  },
+  "keywords": [
+    "django",
+    "tailwind",
+    "SUUDU",
+    "africa"
+  ],
+  "author": "SOULAI WAYENIA",
+  "license": "MIT"
+}

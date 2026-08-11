@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Historique des paiements | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6">
+    {% include 'partials/messages.html' %}
+
+    <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Historique des paiements</h1>
+            <p class="mt-2 text-sm text-gray-600">Tous les paiements encaissés pour {{ centre|default:"votre centre" }}</p>
+        </div>
+        <a href="{% url 'courses:paiement_list' %}"
+           class="inline-flex items-center gap-2 border border-gray-300 text-gray-700 font-semibold px-5 py-3 rounded-xl hover:bg-gray-50 transition-all duration-200">
+            Retour aux encaissements
+        </a>
+    </div>
+
+    <!-- Barre de filtre -->
+    <form method="get">
+        <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex gap-3">
+            <input type="text" name="q" value="{{ q|default:'' }}"
+                   placeholder="Nom, prénom, matricule ou n° de quittance..."
+                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+                   autocomplete="off">
+            <button type="submit"
+                    class="inline-flex items-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition">
+                Rechercher
+            </button>
+            {% if q %}
+            <a href="{% url 'courses:paiement_historique' %}"
+               class="inline-flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">
+                Réinitialiser
+            </a>
+            {% endif %}
+        </div>
+    </form>
+
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        {% if paiements %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Apprenant</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Type de frais</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Tranche</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Montant</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Mode</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Encaissé par</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">N° Quittance</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for pmt in paiements %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                            {{ pmt.dette.inscription.eleve.nom }} {{ pmt.dette.inscription.eleve.prenom }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ pmt.dette.frais_formation.type_frais }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {{ pmt.tranche_frais.libelle|default:"Tranche unique" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-medium bg-green-600 text-white rounded-lg px-2 py-1">
+                                {{ pmt.montant_paiement|floatformat:0 }} FCFA
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ pmt.mode_paiement }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ pmt.date_paiement|date:"d/m/Y H:i" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ pmt.cree_par|default:"—" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-400 font-mono">{{ pmt.numero_quittance|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if paiements.has_other_pages %}
+        <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div class="hidden sm:flex sm:items-center sm:justify-between">
+                <p class="text-sm text-gray-700">
+                    Page <span class="font-medium">{{ paiements.number }}</span> sur
+                    <span class="font-medium">{{ paiements.paginator.num_pages }}</span>
+                </p>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% if paiements.has_previous %}
+                    <a href="?page={{ paiements.previous_page_number }}&q={{ q }}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">
+                        Précédent
+                    </a>
+                    {% endif %}
+                    {% for num in paiements.paginator.page_range %}
+                        {% if paiements.number == num %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-yellow-600 bg-yellow-600 text-sm font-medium text-white">{{ num }}</span>
+                        {% else %}
+                        <a href="?page={{ num }}&q={{ q }}"
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if paiements.has_next %}
+                    <a href="?page={{ paiements.next_page_number }}&q={{ q }}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">
+                        Suivant
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-12">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun paiement enregistré</h3>
+            <p class="text-gray-600">Aucun paiement n'a encore été encaissé pour ce centre.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

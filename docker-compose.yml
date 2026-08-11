@@ -1,0 +1,89 @@
+services:
+  suudu_backend:
+    build: .
+    container_name: suudu_backend
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - ./staticfiles:/app/staticfiles
+      - ./media:/app/media
+    command: ["./entrypoint.sh"]
+    env_file:
+      - .env
+    environment:
+      - HOST_IP=${HOST_IP:-}
+    depends_on:
+      suudu_db:
+        condition: service_healthy 
+      suudu_redis:
+        condition: service_started
+    networks:
+      - suudu_net
+
+  suudu_db:
+    image: postgres:15.15-trixie
+    container_name: suudu_db
+    volumes:
+      - suudu_postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    restart: always
+    healthcheck: 
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    networks:
+      - suudu_net
+
+  suudu_nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: suudu_nginx
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      - ./staticfiles:/app/staticfiles
+      - ./media:/app/media
+    depends_on:
+      - suudu_backend
+    networks:
+      - suudu_net
+
+  suudu_redis:
+    image: redis:bookworm
+    container_name: suudu_redis
+    restart: unless-stopped
+    volumes:
+      - suudu_redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - suudu_net
+
+  suudu_pgadmin:
+    image: dpage/pgadmin4:snapshot
+    container_name: suudu_pgadmin
+    restart: unless-stopped
+    volumes:
+      - suudu_pgadmin_data:/var/lib/pgadmin
+    env_file:
+      - .env
+    depends_on:
+      - suudu_db
+    networks:
+      - suudu_net
+
+volumes:
+  suudu_postgres_data:
+  suudu_pgadmin_data:
+  suudu_redis_data:
+  
+networks:
+  suudu_net:
+    driver: bridge
+    name: suudu_network

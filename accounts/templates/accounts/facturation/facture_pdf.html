@@ -1,0 +1,159 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 2cm 2cm 1.5cm 2cm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    color: #000;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .header-left { font-weight: bold; font-size: 12px; text-align: center; line-height: 1.3; }
+  .header-right { text-align: center; font-size: 12px; width: 220px; }
+  .header-right .pays { font-weight: bold; }
+  .header-right .devise { font-style: italic; }
+  .header-date { text-align: right; margin-top: 14px; font-size: 13px; }
+
+  .titre {
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    text-decoration: underline;
+    margin: 28px 0 22px;
+  }
+
+  .bloc-info { margin-bottom: 6px; }
+  .bloc-info .label { font-weight: bold; text-decoration: underline; }
+  .bloc-info .valeur { font-weight: bold; text-transform: uppercase; }
+
+  table.lignes {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 18px;
+  }
+  table.lignes th, table.lignes td {
+    border: 1px solid #000;
+    padding: 8px 10px;
+    vertical-align: middle;
+  }
+  table.lignes th {
+    font-weight: bold;
+    text-align: center;
+  }
+  table.lignes td.num { text-align: center; width: 40px; }
+  table.lignes td.qte { text-align: center; width: 90px; }
+  table.lignes td.montant { text-align: right; width: 130px; }
+  table.lignes td.desig { text-align: left; }
+  table.lignes tr.total td { font-weight: bold; }
+  table.lignes tr.total td.label-total { text-align: center; }
+
+  .arrete { margin-top: 22px; text-align: justify; }
+  .arrete .montant-lettres { font-weight: bold; }
+
+  .signature { margin-top: 55px; text-align: right; }
+  .signature .titre-signataire { margin-bottom: 55px; }
+  .signature .nom-signataire { font-weight: bold; text-decoration: underline; }
+  .signature .qualite-signataire { font-style: italic; font-size: 12px; }
+
+  .pied-page {
+    position: fixed;
+    bottom: 0.8cm;
+    left: 2cm;
+    right: 2cm;
+    text-align: center;
+    font-size: 11px;
+  }
+  .pied-page hr { border: none; border-top: 3px solid #000; margin-bottom: 6px; }
+  .pied-page .bsb { font-weight: bold; }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      {% for line in header_left %}{{ line }}<br>{% endfor %}
+    </div>
+    <div class="header-right">
+      <div class="pays">Burkina Faso</div>
+      <div class="devise">la patrie ou la mort, nous vaincrons</div>
+    </div>
+  </div>
+  <div class="header-date">Ouagadougou, le {{ facture.date_creation|date:"d/m/Y" }}</div>
+
+  <div class="titre">
+    {% if facture.type_facture == 'definitive' %}FACTURE DEFINITIVE{% else %}FACTURE PROFORMA{% endif %}
+    N°{{ facture.numero }}
+  </div>
+
+  <div class="bloc-info">
+    <span class="label">DOIT</span> : <span class="valeur">{{ facture.client }}</span>
+  </div>
+  <div class="bloc-info">
+    <span class="label">Objet</span> : {{ facture.objet }}
+  </div>
+
+  <table class="lignes">
+    <thead>
+      <tr>
+        <th>N°</th>
+        <th>Désignation</th>
+        <th>Quantité</th>
+        <th>Coût unitaire</th>
+        <th>Coût Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ligne in lignes %}
+      <tr>
+        <td class="num">{{ forloop.counter }}</td>
+        <td class="desig">{{ ligne.prestation.libelle }}</td>
+        <td class="qte">{{ ligne.quantite }}</td>
+        <td class="montant">{{ ligne.prix_unitaire|floatformat:0 }}</td>
+        <td class="montant">{{ ligne.montant|floatformat:0 }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="total">
+        <td colspan="4" class="label-total">Total général HTVA</td>
+        <td class="montant">{{ facture.montant_total|floatformat:0 }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="arrete">
+    Arrêté la présente facture {% if facture.type_facture == 'definitive' %}définitive{% else %}proforma{% endif %}
+    à la somme de : <span class="montant-lettres">{{ montant_lettres }}</span>
+    ({{ facture.montant_total|floatformat:0 }}) F CFA HTVA.
+  </p>
+
+  <div class="signature">
+    <div class="titre-signataire">
+      {% if facture.type_facture == 'definitive' %}
+        Le Directeur Général
+      {% else %}
+        Le Directeur de l'Administration<br>et des Finances
+      {% endif %}
+    </div>
+    {% if facture.type_facture == 'definitive' %}
+      <div class="nom-signataire">Dr Kérabouro PALE</div>
+      <div class="qualite-signataire">Chevalier de l'Ordre de l'Étalon</div>
+    {% else %}
+      <div class="nom-signataire">Abdoul Aziz TIEMTORE</div>
+      <div class="qualite-signataire">Chevalier de l'Ordre des Palmes Académiques</div>
+    {% endif %}
+  </div>
+
+  <div class="pied-page">
+    <hr>
+    <div class="bsb">BURKINA SUUDU BAWDE</div>
+    <div>01 BP 6181 Ouagadougou 01 ; Compte Trésor N° 443310000083, N° IFU 00222956X</div>
+    <div>BSB-DSI          généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}</div>
+  </div>
+
+</body>
+</html>

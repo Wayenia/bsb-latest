@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Mes dettes | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl py-10 mx-auto">
+   {% include 'partials/messages.html' %}
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center mb-4">
+            <a href="{% url 'courses:my_subscriptions' %}" class="text-gray-600 hover:text-gray-900 mr-4">Retour</a>
+            <h1 class="text-3xl font-black text-gray-800 flex items-center">
+                
+                Mes dettes
+            </h1>
+        </div>
+        <p class="text-gray-500 text-sm ml-10">
+            Formation : <span class="font-semibold text-gray-700">{{ inscription.formation }}</span>
+            &nbsp;|&nbsp;
+            Statut :
+            <span class="font-semibold
+                {% if inscription.statut == 'valide' %}text-green-600
+                {% elif inscription.statut == 'rejete' %}text-red-600
+                {% else %}text-yellow-600{% endif %}">
+                {{ inscription.libelle_statut_paiement }}
+            </span>
+        </p>
+    </div>
+
+    <!-- Résumé global -->
+    <div class="grid grid-cols-3 gap-4 mb-8">
+        <div class="bg-white rounded-xl shadow p-5 border border-gray-100 text-center">
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Total dû</p>
+            <p class="text-2xl font-black text-gray-800">
+                {{ dettes|length }} dette{% if dettes|length > 1 %}s{% endif %}
+            </p>
+        </div>
+        <div class="bg-green-50 rounded-xl shadow p-5 border border-green-100 text-center">
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Soldées</p>
+            <p class="text-2xl font-black text-green-600">
+               
+                    {{ soldees}}
+                
+            </p>
+        </div>
+        <div class="bg-red-50 rounded-xl shadow p-5 border border-red-100 text-center">
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Non soldées</p>
+            <p class="text-2xl font-black text-red-600">
+                {% for d in dettes %}{% if d.etat_dette == 'non_soldé' %}·{% endif %}{% endfor %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Liste des dettes -->
+    {% if dettes %}
+        <div class="space-y-4">
+            {% for dette in dettes %}
+            <div class="bg-white rounded-xl shadow border
+                        {% if dette.etat_dette == 'soldé' %}border-green-200{% else %}border-red-200{% endif %}
+                        overflow-hidden">
+                <div class="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    
+                    <!-- Infos frais -->
+                    <div>
+                        <p class="text-lg font-bold text-gray-800">
+                            {{ dette.frais_formation.type_frais }}
+                        </p>
+                        {% if dette.date_echeance %}
+                        <p class="text-xs text-gray-400 mt-1">
+                            
+                            Échéance : {{ dette.date_echeance|date:"d/m/Y" }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Montants -->
+                    <div class="flex gap-6 text-center">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-semibold">Total</p>
+                            <p class="text-base font-bold text-gray-800">{{ dette.montant_total|floatformat:0 }} FCFA</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-semibold">Payé</p>
+                            <p class="text-base font-bold text-green-600">{{ dette.montant_paye|floatformat:0 }} FCFA</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-semibold">Reste</p>
+                            <p class="text-base font-bold text-red-600">{{ dette.reste_a_payer|floatformat:0 }} FCFA</p>
+                        </div>
+                    </div>
+
+                    <!-- Statut badge -->
+                    <div>
+                        {% if dette.etat_dette == 'soldé' %}
+                            <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                                Soldée
+                            </span>
+                        {% else %}
+                            <span class="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">
+                                Non soldée
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if not dette.tranches_detail and dette.etat_dette == 'non_soldé' %}
+                            {% if dette.bloquee_par_autre_dette %}
+                            <span class="px-4 py-2 bg-gray-200 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed"
+                                  title="Réglez d'abord la tranche primordiale bloquante d'un autre type de frais">
+                                Payer
+                            </span>
+                            {% else %}
+                            <a href="{% url 'courses:paiement' dette.id %}"
+                                    class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors">
+                                    Payer
+                              </a>
+                            {% endif %}
+                        {% elif dette.etat_dette == 'soldé' %}
+                         <span
+                                class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors">
+                               Soldé
+                         </span>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                {% with tranches=dette.tranches_detail %}
+                {% if tranches %}
+                <div class="border-t border-gray-100">
+                    <button type="button" onclick="toggleTranches(this)"
+                            class="w-full flex items-center justify-between px-6 py-3 text-xs font-bold text-gray-500 uppercase hover:bg-gray-50 transition-colors">
+                        <span>Tranches ({{ tranches|length }})</span>
+                        <span class="chevron-tranche transition-transform">▾</span>
+                    </button>
+                    <div class="tranches-panel hidden px-6 pb-4 space-y-2">
+                        {% for t in tranches %}
+                        <div class="flex items-center justify-between gap-4 py-2 border-b border-gray-50 last:border-0">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">
+                                    {{ t.tranche.libelle }}
+                                    {% if t.tranche.est_primordiale %}<span class="text-yellow-600">(primordiale)</span>{% endif %}
+                                </p>
+                                <p class="text-xs {% if t.soldee %}text-green-600{% else %}text-red-600{% endif %} font-semibold">
+                                    {{ t.paye|floatformat:0 }} / {{ t.montant|floatformat:0 }} FCFA
+                                </p>
+                            </div>
+                            {% if t.soldee %}
+                            <span class="px-3 py-1.5 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg">Soldée</span>
+                            {% elif t.payable %}
+                            <a href="{% url 'courses:paiement' dette.id %}"
+                               class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors">
+                                Payer
+                            </a>
+                            {% else %}
+                            <span class="px-3 py-1.5 bg-gray-200 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed"
+                                  title="Réglez d'abord la tranche primordiale en cours">
+                                Payer
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endwith %}
+            </div>
+            {% endfor %}
+        </div>
+
+    {% else %}
+        <!-- Aucune dette -->
+        <div class="bg-white rounded-xl shadow border border-gray-100 px-8 py-16 text-center">
+            
+            <p class="text-xl font-bold text-gray-700">Aucune dette enregistrée</p>
+            <p class="text-sm text-gray-400 mt-2">Votre dossier est en ordre.</p>
+        </div>
+    {% endif %}
+
+</div>
+
+<script>
+  setTimeout(function () {
+    document.querySelectorAll('[class*="border-l-4"]').forEach(function(el) {
+      el.remove();
+    });
+  }, 5000);
+
+  function toggleTranches(btn) {
+    const panel = btn.nextElementSibling;
+    panel.classList.toggle('hidden');
+    const chevron = btn.querySelector('.chevron-tranche');
+    chevron.style.transform = panel.classList.contains('hidden') ? '' : 'rotate(180deg)';
+  }
+</script>
+
+{% endblock %}

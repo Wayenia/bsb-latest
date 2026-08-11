@@ -1,0 +1,184 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Georgia, serif;
+    background: #fff;
+    color: #111;
+    font-size: 13px;
+    padding: 30px 40px;
+  }
+
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+  .header-left, .header-right {
+    flex: 1;
+    font-size: 7px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .header-left p, .header-right p {
+    margin: 0;
+  }
+  .header-center {
+    flex: 0 0 auto;
+    text-align: center;
+    padding: 0 10px;
+  }
+  .header-center img {
+    width: 70px;
+    height: auto;
+  }
+
+  h1.titre {
+    text-align: center;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 24px;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #111;
+    margin-bottom: 28px;
+  }
+
+  .ligne {
+    display: flex;
+    margin-bottom: 10px;
+  }
+  .ligne .label {
+    width: 200px;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+  .ligne .valeur {
+    flex: 1;
+  }
+
+  .separateur {
+    border: none;
+    border-top: 1px dashed #bbb;
+    margin: 22px 0;
+  }
+
+  .statut-badge {
+    display: inline-block;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 4px;
+  }
+  .statut-en_cours { background: #FEF3C7; color: #92400E; }
+  .statut-valide { background: #D1FAE5; color: #065F46; }
+  .statut-rejete { background: #FEE2E2; color: #991B1B; }
+
+  .footer {
+    margin-top: 60px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .signature {
+    text-align: center;
+    width: 160px;
+  }
+  .signature .ligne-sign {
+    border-top: 1px solid #111;
+    margin-bottom: 6px;
+  }
+  .signature p {
+    font-size: 10px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .bas-page {
+    margin-top: 40px;
+    border-top: 1px solid #111;
+    padding-top: 8px;
+    font-size: 10px;
+    color: #777;
+    text-align: center;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+  <!-- EN-TETE -->
+  <div class="header">
+    <div class="header-left">
+      {% for line in header_left %}<p>{{ line }}</p>{% endfor %}
+    </div>
+    <div class="header-center">
+      <img src="{% static 'images/favicon.png' %}" alt="BSB">
+    </div>
+    <div class="header-right">
+      {% for line in header_right %}<p>{{ line }}</p>{% endfor %}
+    </div>
+  </div>
+
+  <h1 class="titre">{{ titre_document }}</h1>
+
+  <!-- NUMERO ET DATE -->
+  <div class="ligne">
+    <span class="label">N° de dossier :</span>
+    <span class="valeur">{{ numero_dossier }}</span>
+  </div>
+  <div class="ligne">
+    <span class="label">Date de dépôt :</span>
+    <span class="valeur">{{ inscription.date_inscription|date:"d/m/Y à H:i" }}</span>
+  </div>
+
+  <hr class="separateur">
+
+  <!-- APPRENANT -->
+  <div class="ligne">
+    <span class="label">Apprenant :</span>
+    <span class="valeur">{{ eleve.nom }} {{ eleve.prenom }}</span>
+  </div>
+  <div class="ligne">
+    <span class="label">Centre :</span>
+    <span class="valeur">{{ centre }}</span>
+  </div>
+  <div class="ligne">
+    <span class="label">Métier :</span>
+    <span class="valeur">{{ filiere }}</span>
+  </div>
+  <div class="ligne">
+    <span class="label">Année scolaire :</span>
+    <span class="valeur">{{ annee_scolaire }}</span>
+  </div>
+
+  <hr class="separateur">
+
+  <!-- STATUT -->
+  <div class="ligne">
+    <span class="label">Statut de la demande :</span>
+    <span class="valeur"><span class="statut-badge statut-{{ inscription.statut }}">{{ inscription.get_statut_display }}</span></span>
+  </div>
+  {% if inscription.statut == 'rejete' %}
+  <div class="ligne">
+    <span class="label">Motif de rejet :</span>
+    <span class="valeur">{{ inscription.motif_rejet }}</span>
+  </div>
+  {% endif %}
+
+  <!-- BAS DE PAGE -->
+  <div class="bas-page">
+    BSB-DSI          généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}
+  </div>
+
+</body>
+</html>

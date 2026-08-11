@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Paiement | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-16">
+    {% include 'partials/messages.html' %}
+
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-lg p-10 text-center">
+        <div class="mx-auto mb-6 h-16 w-16 rounded-full bg-yellow-100 flex items-center justify-center">
+            <span class="text-3xl">🏢</span>
+        </div>
+        <h1 class="text-2xl font-black text-gray-900 mb-3">Paiement à effectuer au centre</h1>
+        <p class="text-gray-600 leading-relaxed">
+            Le paiement en ligne n'est pas disponible pour les apprenants. Merci de vous rendre
+            au centre <span class="font-bold text-gray-800">Burkina Suudu Bawdè</span> le plus proche
+            pour effectuer votre paiement auprès du personnel habilité.
+        </p>
+
+        <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="{% url 'courses:my_subscriptions' %}"
+               class="inline-flex items-center justify-center px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all">
+                Retour à mes inscriptions
+            </a>
+            <a href="{% url 'courses:mes_paiements' %}"
+               class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-all">
+                Voir mes paiements
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,174 @@
+{%extends 'base.html' %}
+{%block title%} Frais|BSB {% endblock%}
+
+
+{%block content%}
+<div class="max-w-7xl mx-auto py-10 space-y-6">
+    <!-- Messages -->
+    {% include 'partials/messages.html' %}
+
+    <!-- Header -->
+    <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900 flex items-center">
+                Frais disponibles
+            </h1>
+            <p class="mt-2 text-sm text-gray-600">Liste des frais des formation</p>
+        </div>
+        <div class="mt-4 sm:mt-0">
+            <a href="{% url 'bsb_admin:fees_create' %}"
+               class="inline-flex items-center px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+                
+                Créer un Frais
+            </a>
+        </div>
+    </div>
+    <!-- Barre de filtre -->
+    <form method="get">
+        <div class="bg-white px-4 py-4 border border-gray-200 rounded-lg mb-4 flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <input type="text" name="q" value="{{ q|default:'' }}"
+                       placeholder="Centre, métier ou type de frais..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+                       autocomplete="off">
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="submit"
+                        class="inline-flex items-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition">
+                    Rechercher
+                </button>
+                {% if q %}
+                <a href="{% url 'bsb_admin:fees_list' %}"
+                   class="inline-flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">
+                    Réinitialiser
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+
+    <!-- Table Card -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        {% if fees %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Centre
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          Métier
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                           Type de frais
+                        </th>
+                          <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                           Montant
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for f in fees %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="ml-4">
+                                    <div class="text-sm font-bold text-gray-900">{{ f.formation.centre.nom_centre }}</div>
+
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-medium text-gray-900">{{ f.formation.filiere.nom_filiere }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-medium text-gray-900">{{f.type_frais}}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-medium text-gray-900">{{f.montant}}</span>
+                        </td>
+                      
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end space-x-2">
+                                <a href="{% url 'bsb_admin:fees_update' f.id %}"
+                                   class="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-50 rounded-lg transition-all"
+                                   title="Modifier">{% include 'partials/icon_edit.html' %} Modifier</a>
+                                <a href="{% url 'bsb_admin:fees_delete' f.id %}"
+                                   class="inline-flex items-center gap-1 text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-all"
+                                   title="Supprimer">{% include 'partials/icon_delete.html' %} Supprimer</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if fees.has_other_pages %}
+        <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div class="flex items-center justify-between">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if fees.has_previous %}
+                    <a href="?page={{ fees.previous_page_number }}&q={{ q }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Précédent
+                    </a>
+                    {% endif %}
+                    {% if fees.has_next %}
+                    <a href="?page={{ fees.next_page_number }}&q={{ q }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Suivant
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Page <span class="font-medium">{{ fees.number }}</span> sur <span class="font-medium">{{ fees.paginator.num_pages }}</span>
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            {% if fees.has_previous %}
+                            <a href="?page={{ fees.previous_page_number }}&q={{ q }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Précédent</a>
+                            {% endif %}
+
+                            {% for num in fees.paginator.page_range %}
+                                {% if fees.number == num %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-bsb-gold bg-bsb-gold text-sm font-medium text-white">
+                                    {{ num }}
+                                </span>
+                                {% else %}
+                                <a href="?page={{ num }}&q={{ q }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ num }}
+                                </a>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if fees.has_next %}
+                            <a href="?page={{ fees.next_page_number }}&q={{ q }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Suivant</a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-12">
+            
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun Frais de formation trouvé </h3>
+            <p class="text-gray-600 mb-6">Commencez par créer votre premier frais de formation</p>
+            <a href="{% url 'bsb_admin:fees_create' %}" class="inline-flex items-center px-6 py-3 bg-bsb-gold text-white font-bold rounded-lg hover:bg-yellow-600 transition-all">
+                Créer un mfrais de formation
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

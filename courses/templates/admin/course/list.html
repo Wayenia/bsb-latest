@@ -1,0 +1,141 @@
+<!-- courses/templates/admin/course/list.html -->
+{% extends 'base.html' %}
+{% block title %}Cours | BSB{% endblock %}
+{% block page_title %}Gestion des Cours{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800">Liste des Cours</h3>
+            <p class="text-gray-600">Gérez tous les cours des modules</p>
+        </div>
+        <div class="flex gap-3 flex-wrap items-center">
+            {% url 'bsb_admin:course_import' as course_import_url %}
+            {% include 'partials/import_export_buttons.html' with upload_url=course_import_url %}
+            <a href="{% url 'bsb_admin:course_create' %}" class="btn-admin">
+                Nouveau Cours
+            </a>
+        </div>
+    </div>
+
+    <!-- Barre de filtres -->
+    <form method="get" id="filter-form">
+        <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-3 flex-wrap">
+            <div class="relative flex-1 min-w-[200px]">
+                <input type="text" name="q"
+                       value="{{ q|default:'' }}"
+                       placeholder="Cours, module ou métier..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+                       autocomplete="off">
+            </div>
+            <div class="flex items-center">
+                <button type="submit"
+                        class="inline-flex items-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition">
+                    Rechercher
+                </button>
+                {% if q %}
+                <a href="{% url 'bsb_admin:course_list' %}"
+                   class="ml-2 inline-flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">
+                    Réinitialiser
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+
+    <!-- Table -->
+    <div class="dashboard-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="table-admin data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cours</th>
+                        <th>Module</th>
+                        <th>Métier</th>
+                        <th>Volume Horaire</th>
+                        <th>Créé le</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cours in course %}
+                    <tr>
+                        <td class="font-mono text-sm">{{ cours.id }}</td>
+                        <td>
+                            <div class="flex items-center">
+                                <div class="h-8 w-8 rounded-lg bg-yellow-100 flex items-center justify-center mr-3">
+                                    
+                                </div>
+                                <div>
+                                    <span class="font-medium">{{ cours.libelle_cours }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ cours.module.nom_module }}</td>
+                        <td>
+                            <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
+                                {{ cours.module.filiere.nom_filiere }}
+                            </span>
+                        </td>
+                        <td>{{ cours.volume_h_cours }}h</td>
+                        <td>{{ cours.date_creation|date:"d/m/Y" }}</td>
+                        <td>
+                            <div class="flex space-x-2">
+                                <a href="{% url 'bsb_admin:course_update' cours.pk %}"
+                                   class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">{% include 'partials/icon_edit.html' %} Modifier</a>
+                                <a href="{% url 'bsb_admin:course_delete' cours.pk %}"
+                                   class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                                   onclick="return confirm('Supprimer ce cours ?')">{% include 'partials/icon_delete.html' %} Supprimer</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-8 text-gray-500">
+                            
+                            <p>Aucun cours trouvé</p>
+                            <a href="{% url 'bsb_admin:course_create' %}" class="btn-admin mt-4 inline-block">
+                                Créer un Cours
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if course.has_other_pages %}
+        <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div class="flex items-center justify-between">
+                <p class="text-sm text-gray-700">
+                    Page <span class="font-medium">{{ course.number }}</span> sur
+                    <span class="font-medium">{{ course.paginator.num_pages }}</span>
+                </p>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% if course.has_previous %}
+                    <a href="?page={{ course.previous_page_number }}&q={{ q }}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">Précédent</a>
+                    {% endif %}
+                    {% for num in course.paginator.page_range %}
+                        {% if course.number == num %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-bsb-gold bg-bsb-gold text-sm font-medium text-white">{{ num }}</span>
+                        {% else %}
+                        <a href="?page={{ num }}&q={{ q }}"
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if course.has_next %}
+                    <a href="?page={{ course.next_page_number }}&q={{ q }}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">Suivant</a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block title %}Centres | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6">
+  {% include 'partials/messages.html' %}
+
+  <!-- Header -->
+  <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-3xl font-black text-gray-900">Les centres de formation</h1>
+      <p class="mt-2 text-sm text-gray-600">Liste de tous les centres</p>
+    </div>
+    <div class="mt-4 sm:mt-0 flex gap-3 flex-wrap">
+      {% url 'bsb_admin:center_import' as center_import_url %}
+      {% include 'partials/import_export_buttons.html' with upload_url=center_import_url %}
+      <a href="{% url 'courses:center_create' %}"
+         class="inline-flex items-center px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+        Créer un centre
+      </a>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <form method="get" class="px-4 md:px-0">
+    <div class="bg-white px-4 py-4 border border-gray-200 rounded-lg flex flex-col sm:flex-row gap-3">
+
+      <!-- Recherche -->
+      <div class="relative flex-1">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          
+        </div>
+        <input type="text" name="q" value="{{ q }}"
+               placeholder="Rechercher par nom, adresse, province…"
+               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+      </div>
+
+      <!-- Filtre Direction -->
+      <div class="sm:w-56">
+        <select name="direction"
+                class="block w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+          <option value="">Toutes les directions</option>
+          {% for d in directions %}
+          <option value="{{ d.id }}" {% if direction_id == d.id|stringformat:"s" %}selected{% endif %}>
+            {{ d.nom_direction }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Filtre Niveau -->
+      <div class="sm:w-40">
+        <select name="niveau"
+                class="block w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+          <option value="">Tous les niveaux</option>
+          {% for n in niveaux %}
+          <option value="{{ n }}" {% if niveau == n|stringformat:"s" %}selected{% endif %}>
+            Niveau {{ n }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Boutons -->
+      <div class="flex gap-2">
+        <button type="submit"
+                class="px-4 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition-all text-sm">
+          Filtrer
+        </button>
+        <a href="{% url 'courses:center_list' %}"
+           class="px-4 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all text-sm">
+          Réinitialiser
+        </a>
+      </div>
+
+    </div>
+  </form>
+
+  <!-- Table -->
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    {% if centers %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nom du centre</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Direction</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Niveau</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Province</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Téléphone</th>
+            <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for center in centers %}
+          <tr class="hover:bg-gray-50 transition-colors">
+
+            <!-- 1. Nom du centre -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-sm font-medium text-gray-900">{{ center.nom_centre }}</span>
+            </td>
+
+            <!-- 2. Direction -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-sm text-gray-900">{{ center.direction|default:"—" }}</span>
+            </td>
+
+            <!-- 3. Niveau -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if center.niveau_centre %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                Niveau {{ center.niveau_centre }}
+              </span>
+              {% else %}
+              <span class="text-sm text-gray-400">—</span>
+              {% endif %}
+            </td>
+
+            <!-- 4. Province -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-sm text-gray-900">{{ center.province|default:"—" }}</span>
+            </td>
+
+            <!-- 5. Téléphone -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-sm text-gray-500">{{ center.tel|default:"—" }}</span>
+            </td>
+
+            <!-- 6. Actions -->
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <div class="flex items-center justify-end space-x-2">
+                <a href="{% url 'courses:center_filieres' center.pk %}"
+                   class="text-green-600 hover:text-green-900 p-2 hover:bg-green-50 rounded-lg transition-all"
+                   title="Métiers associés">Métiers associés</a>
+                <a href="{% url 'courses:center_update' center.pk %}"
+                   class="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-50 rounded-lg transition-all"
+                   title="Modifier">{% include 'partials/icon_edit.html' %} Modifier</a>
+                <a href="{% url 'courses:center_delete' center.pk %}"
+                   class="inline-flex items-center gap-1 text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-all"
+                   title="Supprimer">{% include 'partials/icon_delete.html' %} Supprimer</a>
+              </div>
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if centers.has_other_pages %}
+    <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-gray-700">
+          Page <span class="font-medium">{{ centers.number }}</span> sur
+          <span class="font-medium">{{ centers.paginator.num_pages }}</span>
+        </p>
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+          {% if centers.has_previous %}
+          <a href="?page={{ centers.previous_page_number }}&q={{ q }}&direction={{ direction_id }}&niveau={{ niveau }}"
+             class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Précédent</a>
+          {% endif %}
+
+          {% for num in centers.paginator.page_range %}
+            {% if centers.number == num %}
+            <span class="relative inline-flex items-center px-4 py-2 border border-yellow-500 bg-yellow-500 text-sm font-medium text-white">
+              {{ num }}
+            </span>
+            {% else %}
+            <a href="?page={{ num }}&q={{ q }}&direction={{ direction_id }}&niveau={{ niveau }}"
+               class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+              {{ num }}
+            </a>
+            {% endif %}
+          {% endfor %}
+
+          {% if centers.has_next %}
+          <a href="?page={{ centers.next_page_number }}&q={{ q }}&direction={{ direction_id }}&niveau={{ niveau }}"
+             class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Suivant</a>
+          {% endif %}
+        </nav>
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-12">
+      
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun centre trouvé</h3>
+      <p class="text-gray-600 mb-6">Aucun résultat pour ces critères de filtre.</p>
+      <a href="{% url 'courses:center_list' %}"
+         class="inline-flex items-center px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg hover:bg-yellow-700 transition-all">
+        Réinitialiser les filtres
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  setTimeout(() => {
+    const msg = document.querySelector('.messages, [class*="messages"]');
+    if (msg) msg.remove();
+  }, 5000);
+</script>
+{% endblock %}

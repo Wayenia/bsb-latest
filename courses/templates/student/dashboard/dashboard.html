@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  
+  <!-- Header avec cloche -->
+  <div class="mb-8 flex items-start justify-between">
+    <div>
+      <h2 class="text-3xl serif-font border-l-4 border-red-700 font-bold pl-4 text-slate-900">
+        Bienvenu(e) {{ request.user.nom }} {{ request.user.prenom }} !
+      </h2>
+      <p class="text-slate-500 pl-5 mt-2">
+        Aperçu de votre parcours a
+        <span class="text-red-600 text-xs font-bold uppercase">Burkina</span>
+        <span class="text-yellow-600 text-xs font-bold uppercase">Suudu</span>
+        <span class="text-green-600 text-xs font-bold uppercase">Bawdè</span>.
+      </p>
+    </div>
+
+    <!--  CLOCHE NOTIFICATIONS -->
+    <div class="relative mt-1" id="notif-wrapper">
+      <button
+        onclick="toggleNotifPanel()"
+        class="relative p-2 rounded-full hover:bg-slate-100 transition-colors focus:outline-none border border-slate-200 bg-white shadow-sm"
+        title="Notifications"
+      >
+        <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        <span
+          id="notif-badge"
+          class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"
+        ></span>
+      </button>
+
+      <!-- Panneau déroulant -->
+      <div
+        id="notif-panel"
+        class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden"
+      >
+        <div class="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-red-700 to-red-600">
+          <span class="text-white font-bold text-sm uppercase tracking-wide"> Notifications</span>
+          <a href="{% url 'courses:notifications' %}" class="text-yellow-300 text-xs hover:underline font-semibold">
+            Tout voir →
+          </a>
+        </div>
+        <div class="p-4 text-center">
+          <p class="text-slate-500 text-sm mb-3">
+            Consultez le détail de vos notifications
+          </p>
+
+          <a
+            href="{% url 'courses:notifications' %}"
+            class="inline-block bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition"
+          >
+            Voir mes notifications
+          </a>
+        </div>
+        <div class="px-4 py-3 bg-slate-50 border-t border-slate-200 text-center">
+          <a href="{% url 'courses:my_subscriptions' %}"
+             class="text-red-700 text-xs font-bold hover:underline uppercase tracking-wide">
+             Mes demandes d'inscription / Payer
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include 'partials/messages.html' %}
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+      <div class="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center text-amber-gold">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-2xl font-bold">{{ my_subscriptions }}</h3>
+        <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Dossiers déposés</p>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+      <div class="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center text-red-burgundy">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-2xl font-bold">{{ available_career_count }}</h3>
+        <p class="text-xs text-slate-500 tracking-wider font-semibold">Nouveaux métiers de formation ouvertes</p>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="text-xl font-bold mb-3">Consultations</h3>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <a href="{% url 'courses:my_subscriptions' %}"
+       class="group bg-gradient-to-br from-white to-slate-50 p-10 rounded-xl border border-slate-200 text-center">
+      <div class="w-16 h-16 bg-red-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+      </div>
+      <h3 class="text-lg font-bold underline">Consulter mes dossiers</h3>
+      <p class="text-slate-500 text-sm underline text-gray-500">Suivre l'état de mes demandes d'inscription</p>
+    </a>
+
+    <a href="{% url 'courses:available_career' %}"
+       class="group bg-gradient-to-br from-white to-slate-50 p-10 rounded-xl border border-slate-200 text-center">
+      <div class="w-16 h-16 bg-yellow-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+        </svg>
+      </div>
+      <h3 class="text-lg font-bold underline">Consulter les offres de formations</h3>
+      <p class="text-slate-500 text-sm underline text-gray-500">Découvrir les nouvelles offres de formations</p>
+    </a>
+  </div>
+</div>
+
+<script>
+  // Charger le badge
+  fetch("{% url 'courses:notifications_count' %}")
+    .then(r => r.json())
+    .then(data => {
+      const badge = document.getElementById('notif-badge');
+      if (data.count > 0) {
+        badge.textContent = data.count;
+        badge.classList.remove('hidden');
+      }
+    });
+
+  function toggleNotifPanel() {
+    document.getElementById('notif-panel').classList.toggle('hidden');
+  }
+
+  document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById('notif-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      document.getElementById('notif-panel').classList.add('hidden');
+    }
+  });
+</script>
+{% endblock %}

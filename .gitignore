@@ -1,0 +1,31 @@
+.env
+.env*
+.idea
+Pipfile
+db.sqlite3
+staticfiles
+package-lock.json
+node_modules
+courses/migrations/00*.py
+accounts/migrations/00*.py
+apis/migrations
+courses/__pycache__/
+config/__pycache__/
+accounts/__pycache__/
+load_and_create_users.py
+
+# Environnement virtuel Python (jamais deploye, reconstruit via requirements.txt)
+venv/
+.venv/
+
+# Bytecode Python
+__pycache__/
+*.pyc
+
+# Fichiers uploades par les utilisateurs (montes en volume Docker, pas versionnes)
+media/
+
+# Logs applicatifs
+*.log
+security.log
+.claude/

@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+{% block title %}Facturation et Prestation | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  {% include 'partials/messages.html' %}
+
+  <div class="mb-8 flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-black text-gray-900">Facturation et Prestation</h1>
+      <p class="mt-1 text-sm text-gray-500">Créer une nouvelle facture</p>
+    </div>
+    <a href="{% url 'accounts:prestation_list' %}" class="text-sm font-bold text-red-700 hover:underline">
+      Gérer les prestations
+    </a>
+  </div>
+
+  <form method="post" id="facture-form" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="client_id" id="id_client_id" value="">
+
+    {% if client_form.non_field_errors or facture_form.non_field_errors %}
+    <div class="p-4 bg-red-50 border border-red-200 rounded-lg mb-6">
+      {{ client_form.non_field_errors }}
+      {{ facture_form.non_field_errors }}
+    </div>
+    {% endif %}
+
+    <!-- Client -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+      <h2 class="text-lg font-bold text-gray-900 mb-4">Client</h2>
+
+      <div class="mb-5">
+        <label class="block text-sm font-bold text-gray-800 mb-1.5">
+          {{ client_form.type_client.label }} <span class="text-red-600">*</span>
+        </label>
+        {{ client_form.type_client }}
+      </div>
+
+      <!-- Personne physique -->
+      <div id="section-personne" class="grid grid-cols-1 sm:grid-cols-2 gap-4 hidden">
+        <div>
+          <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.nom.label }} <span class="text-red-600">*</span></label>
+          {{ client_form.nom }}
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.prenom.label }} <span class="text-red-600">*</span></label>
+          {{ client_form.prenom }}
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.telephone.label }} <span class="text-red-600">*</span></label>
+          {{ client_form.telephone }}
+          <p class="text-xs text-gray-400 mt-1">Un numéro déjà enregistré préremplit automatiquement la fiche du client.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.type_piece.label }} <span class="text-red-600">*</span></label>
+          {{ client_form.type_piece }}
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.numero_piece.label }} <span class="text-red-600">*</span></label>
+          {{ client_form.numero_piece }}
+        </div>
+      </div>
+
+      <!-- Entreprise / Autre -->
+      <div id="section-entreprise" class="grid grid-cols-1 sm:grid-cols-2 gap-4 hidden">
+        <div>
+          <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.raison_sociale.label }} <span class="text-red-600">*</span></label>
+          {{ client_form.raison_sociale }}
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.ifu.label }} <span class="text-red-600">*</span></label>
+          {{ client_form.ifu }}
+          <p class="text-xs text-gray-400 mt-1">Un IFU déjà enregistré préremplit automatiquement la fiche du client.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.statut.label }} <span class="text-red-600">*</span></label>
+          {{ client_form.statut }}
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.date_creation.label }} <span class="text-red-600">*</span></label>
+          {{ client_form.date_creation }}
+        </div>
+      </div>
+
+      <!-- Adresse : commun aux deux types -->
+      <div class="mt-4" id="section-adresse">
+        <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.adresse.label }} <span class="text-red-600">*</span></label>
+        {{ client_form.adresse }}
+      </div>
+    </div>
+
+    <!-- Objet -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+      <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ facture_form.objet.label }} <span class="text-red-600">*</span></label>
+      {{ facture_form.objet }}
+    </div>
+
+    <!-- Lignes de prestation -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-gray-900">Lignes de la facture</h2>
+        <button type="button" onclick="ouvrirModalPrestation()"
+                class="text-xs font-bold text-red-700 hover:underline">
+          + Nouvelle prestation
+        </button>
+      </div>
+
+      {{ formset.management_form }}
+      <div id="lignes-container" class="space-y-3">
+        {% for form in formset.forms %}
+        <div class="ligne-row grid grid-cols-1 sm:grid-cols-[1fr_100px_140px_140px_40px] gap-3 items-end border-b border-gray-100 pb-3">
+          <div>
+            {% if forloop.first %}<label class="block text-xs font-bold text-gray-500 uppercase mb-1">Prestation</label>{% endif %}
+            {{ form.prestation }}
+          </div>
+          <div>
+            {% if forloop.first %}<label class="block text-xs font-bold text-gray-500 uppercase mb-1">Quantité</label>{% endif %}
+            {{ form.quantite }}
+          </div>
+          <div>
+            {% if forloop.first %}<label class="block text-xs font-bold text-gray-500 uppercase mb-1">Coût unitaire</label>{% endif %}
+            {{ form.prix_unitaire }}
+          </div>
+          <div>
+            {% if forloop.first %}<label class="block text-xs font-bold text-gray-500 uppercase mb-1">Coût total</label>{% endif %}
+            <span class="ligne-montant block px-3 py-3 text-sm font-bold text-gray-900">0</span>
+          </div>
+          <div>
+            <button type="button" onclick="supprimerLigne(this)" title="Supprimer la ligne"
+                    class="p-2 rounded-lg text-red-600 hover:bg-red-50 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+          {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <template id="empty-form-template">
+        <div class="ligne-row grid grid-cols-1 sm:grid-cols-[1fr_100px_140px_140px_40px] gap-3 items-end border-b border-gray-100 pb-3">
+          <div>{{ formset.empty_form.prestation }}</div>
+          <div>{{ formset.empty_form.quantite }}</div>
+          <div>{{ formset.empty_form.prix_unitaire }}</div>
+          <div><span class="ligne-montant block px-3 py-3 text-sm font-bold text-gray-900">0</span></div>
+          <div>
+            <button type="button" onclick="supprimerLigne(this)" title="Supprimer la ligne"
+                    class="p-2 rounded-lg text-red-600 hover:bg-red-50 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <button type="button" onclick="ajouterLigne()"
+              class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition">
+        + Ajouter une ligne
+      </button>
+
+      <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end">
+        <div class="text-right">
+          <p class="text-xs text-gray-500 uppercase font-bold">Total général</p>
+          <p id="grand-total" class="text-2xl font-black text-red-700">0 FCFA</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-end gap-3">
+      <button type="submit" name="action" value="proforma"
+              class="px-6 py-3 bg-gray-700 text-white text-sm font-bold rounded-lg hover:bg-gray-800 transition">
+        Proforma
+      </button>
+      <button type="submit" name="action" value="definitive"
+              class="px-6 py-3 bg-red-700 text-white text-sm font-bold rounded-lg hover:bg-red-800 transition">
+        Définitive
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Modale nouvelle prestation -->
+<div id="modal-prestation" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold text-gray-900">Nouvelle prestation</h2>
+      <button type="button" onclick="fermerModalPrestation()" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-1">Libellé</label>
+        <input type="text" id="qp-libelle" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-1">Description (optionnel)</label>
+        <textarea id="qp-description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-1">Prix unitaire (FCFA)</label>
+        <input type="number" id="qp-prix" min="0" step="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+      </div>
+      <p id="qp-error" class="text-xs text-red-600 hidden"></p>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button type="button" onclick="fermerModalPrestation()"
+              class="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-semibold hover:bg-gray-50">Annuler</button>
+      <button type="button" onclick="creerPrestation()"
+              class="flex-[2] py-2 bg-red-700 hover:bg-red-800 text-white rounded-lg text-sm font-bold">Créer et utiliser</button>
+    </div>
+  </div>
+</div>
+
+{{ prestations_json|json_script:"prestations-data" }}
+<script>
+const prestationsData = JSON.parse(document.getElementById('prestations-data').textContent);
+const prestationPrix = {};
+prestationsData.forEach(p => { prestationPrix[p.id] = p.prix_unitaire; });
+
+// ── Type de client : afficher/masquer les sections ──────────────────────────
+const typeClientSelect = document.getElementById('{{ client_form.type_client.id_for_label }}');
+function toggleClientSections() {
+  const val = typeClientSelect.value;
+  document.getElementById('section-personne').classList.toggle('hidden', val !== 'personne');
+  document.getElementById('section-entreprise').classList.toggle('hidden', val === 'personne' || val === '');
+}
+typeClientSelect.addEventListener('change', toggleClientSections);
+toggleClientSections();
+
+// ── Recherche client existant (téléphone / IFU) ──────────────────────────────
+function lookupClient(param, value) {
+  if (!value) return;
+  fetch(`{% url 'accounts:client_lookup' %}?${param}=${encodeURIComponent(value)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.found) { document.getElementById('id_client_id').value = ''; return; }
+      document.getElementById('id_client_id').value = data.id;
+      const map = {
+        nom: 'nom', prenom: 'prenom', telephone: 'telephone', adresse: 'adresse',
+        type_piece: 'type_piece', numero_piece: 'numero_piece',
+        raison_sociale: 'raison_sociale', ifu: 'ifu', statut: 'statut', date_creation: 'date_creation',
+      };
+      for (const [jsonKey, fieldName] of Object.entries(map)) {
+        const el = document.getElementById('id_' + fieldName);
+        if (el && data[jsonKey] !== undefined) el.value = data[jsonKey];
+      }
+    });
+}
+const telInput = document.getElementById('{{ client_form.telephone.id_for_label }}');
+if (telInput) telInput.addEventListener('blur', () => lookupClient('tel', telInput.value.trim()));
+const ifuInput = document.getElementById('{{ client_form.ifu.id_for_label }}');
+if (ifuInput) ifuInput.addEventListener('blur', () => lookupClient('ifu', ifuInput.value.trim()));
+
+// ── Lignes dynamiques ─────────────────────────────────────────────────────
+const totalFormsInput = document.getElementById('id_lignes-TOTAL_FORMS');
+const lignesContainer = document.getElementById('lignes-container');
+const emptyTemplate = document.getElementById('empty-form-template').innerHTML;
+
+function ajouterLigne() {
+  const idx = parseInt(totalFormsInput.value, 10);
+  const html = emptyTemplate.replace(/__prefix__/g, idx);
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = html.trim();
+  lignesContainer.appendChild(wrapper.firstChild);
+  totalFormsInput.value = idx + 1;
+  attacherEcouteurs();
+}
+
+function attacherEcouteurs() {
+  document.querySelectorAll('.ligne-row').forEach(row => {
+    const select = row.querySelector('select[name$="-prestation"]');
+    const qte = row.querySelector('input[name$="-quantite"]');
+    const prix = row.querySelector('input[name$="-prix_unitaire"]');
+    const montantSpan = row.querySelector('.ligne-montant');
+
+    function recalcLigne() {
+      const q = parseFloat(qte.value) || 0;
+      const p = parseFloat(prix.value) || 0;
+      const montant = q * p;
+      montantSpan.textContent = montant.toLocaleString('fr-FR');
+      recalcTotal();
+    }
+
+    if (select && !select.dataset.bound) {
+      select.dataset.bound = '1';
+      select.addEventListener('change', function () {
+        if (this.value && prestationPrix[this.value] !== undefined && !prix.dataset.edited) {
+          prix.value = prestationPrix[this.value];
+        }
+        recalcLigne();
+      });
+    }
+    if (qte && !qte.dataset.bound) { qte.dataset.bound = '1'; qte.addEventListener('input', recalcLigne); }
+    if (prix && !prix.dataset.bound) {
+      prix.dataset.bound = '1';
+      prix.addEventListener('input', function () { this.dataset.edited = '1'; recalcLigne(); });
+    }
+    recalcLigne();
+  });
+}
+
+function recalcTotal() {
+  let total = 0;
+  document.querySelectorAll('.ligne-row').forEach(row => {
+    const qte = parseFloat(row.querySelector('input[name$="-quantite"]')?.value) || 0;
+    const prix = parseFloat(row.querySelector('input[name$="-prix_unitaire"]')?.value) || 0;
+    total += qte * prix;
+  });
+  document.getElementById('grand-total').textContent = total.toLocaleString('fr-FR') + ' FCFA';
+}
+
+// La ligne est retirée du DOM (et non simplement grisée) : comme ce formulaire
+// ne sert qu'à la création, toutes les lignes sont "nouvelles" — les retirer
+// avant soumission suffit, pas besoin de les marquer DELETE côté serveur.
+function supprimerLigne(bouton) {
+  const row = bouton.closest('.ligne-row');
+  row.remove();
+  renumeroterLignes();
+  recalcTotal();
+}
+
+function renumeroterLignes() {
+  const rows = document.querySelectorAll('#lignes-container .ligne-row');
+  rows.forEach((row, idx) => {
+    row.querySelectorAll('[name], [id], label[for]').forEach(el => {
+      if (el.name) el.name = el.name.replace(/lignes-\d+-/, `lignes-${idx}-`);
+      if (el.id) el.id = el.id.replace(/lignes-\d+-/, `lignes-${idx}-`);
+      if (el.htmlFor) el.htmlFor = el.htmlFor.replace(/lignes-\d+-/, `lignes-${idx}-`);
+    });
+  });
+  totalFormsInput.value = rows.length;
+}
+
+attacherEcouteurs();
+
+// ── Modale nouvelle prestation ────────────────────────────────────────────
+let ligneCibleSelect = null;
+function ouvrirModalPrestation(select) {
+  ligneCibleSelect = select || null;
+  document.getElementById('qp-error').classList.add('hidden');
+  document.getElementById('modal-prestation').classList.remove('hidden');
+  document.getElementById('modal-prestation').classList.add('flex');
+}
+function fermerModalPrestation() {
+  document.getElementById('modal-prestation').classList.add('hidden');
+  document.getElementById('modal-prestation').classList.remove('flex');
+}
+function creerPrestation() {
+  const libelle = document.getElementById('qp-libelle').value.trim();
+  const description = document.getElementById('qp-description').value.trim();
+  const prix = document.getElementById('qp-prix').value;
+  const errEl = document.getElementById('qp-error');
+
+  const body = new URLSearchParams();
+  body.append('libelle', libelle);
+  body.append('description', description);
+  body.append('prix_unitaire', prix);
+
+  fetch("{% url 'accounts:prestation_quick_create' %}", {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: body.toString(),
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) {
+        errEl.textContent = "Veuillez vérifier les champs saisis.";
+        errEl.classList.remove('hidden');
+        return;
+      }
+      prestationPrix[data.id] = data.prix_unitaire;
+      document.querySelectorAll('select[name$="-prestation"]').forEach(sel => {
+        const opt = document.createElement('option');
+        opt.value = data.id;
+        opt.textContent = data.libelle;
+        sel.appendChild(opt);
+      });
+      fermerModalPrestation();
+      document.getElementById('qp-libelle').value = '';
+      document.getElementById('qp-description').value = '';
+      document.getElementById('qp-prix').value = '';
+    });
+}
+
+// Après une création de facture, la page est rechargée sur cette même vue
+// avec ?facture=<id> : on déclenche le téléchargement automatique du PDF
+// (réponse "attachment", donc sans quitter/naviguer hors de cette page),
+// puis on nettoie l'URL pour qu'un rechargement manuel ne re-télécharge pas.
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const factureId = params.get('facture');
+  if (factureId) {
+    window.location.href = "{% url 'accounts:facture_pdf' 0 %}".replace('0', factureId);
+    params.delete('facture');
+    const nouvelleUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    history.replaceState(null, '', nouvelleUrl);
+  }
+})();
+</script>
+{% endblock %}

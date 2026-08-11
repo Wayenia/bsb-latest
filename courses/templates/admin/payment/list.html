@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% block title %} Paiements | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6">
+    {% include 'partials/messages.html' %}
+
+    <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Paiements</h1>
+            <p class="mt-2 text-sm text-gray-600">Liste des paiements</p>
+        </div>
+    </div>
+
+    <!-- Barre de filtres -->
+    <form method="get" id="filter-form">
+        <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-3 flex-wrap">
+            <div class="relative flex-1 min-w-[200px]">
+                <input type="text" name="q"
+                       value="{{ q|default:'' }}"
+                       placeholder="Nom, prénom, matricule ou n° de quittance..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+                       autocomplete="off">
+            </div>
+            <div class="flex items-center">
+                <button type="submit"
+                        class="inline-flex items-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition">
+                    Rechercher
+                </button>
+                {% if q %}
+                <a href="{% url 'bsb_admin:payment_list' %}"
+                   class="ml-2 inline-flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition"
+                   title="Réinitialiser les filtres">
+                    Réinitialiser
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+
+    <!-- Table Card -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        {% if inscriptions %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Apprenant</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Centre</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Métier</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Année scolaire</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total dû</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total payé</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Reste à payer</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for insc in inscriptions %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                            {{ insc.eleve.nom }} {{ insc.eleve.prenom }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ insc.formation.centre }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ insc.formation.filiere }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ insc.annee_scolaire|default:"—" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap ">
+                            <span class="text-sm font-medium bg-yellow-500 text-white rounded-lg px-2 py-1">
+                                {{ insc.total_du }} FCFA
+                            </span>
+                            
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-medium bg-green-500 text-white rounded-lg px-2 py-1">
+                                {{ insc.total_paye }} FCFA
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-medium bg-red-500 text-white rounded-lg px-2 py-1">
+                                {{ insc.reste }} FCFA
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button
+                                onclick="openModal('insc-{{ insc.id }}')"
+                                class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-all">
+                                 Détails
+                            </button>
+                            <a href="{% url 'courses:stats_dettes_eleve' insc.eleve.id %}?inscription={{ insc.id }}"
+                                   class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-700 text-white hover:bg-gray-800 transition-all">
+                                    Voir les dettes
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if inscriptions.has_other_pages %}
+        <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div class="hidden sm:flex sm:items-center sm:justify-between">
+                <p class="text-sm text-gray-700">
+                    Page <span class="font-medium">{{ inscriptions.number }}</span> sur
+                    <span class="font-medium">{{ inscriptions.paginator.num_pages }}</span>
+                </p>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% if inscriptions.has_previous %}
+                    <a href="?page={{ inscriptions.previous_page_number }}&q={{ q }}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">Précédent</a>
+                    {% endif %}
+                    {% for num in inscriptions.paginator.page_range %}
+                        {% if inscriptions.number == num %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-bsb-gold bg-bsb-gold text-sm font-medium text-white">{{ num }}</span>
+                        {% else %}
+                        <a href="?page={{ num }}&q={{ q }}"
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if inscriptions.has_next %}
+                    <a href="?page={{ inscriptions.next_page_number }}&q={{ q }}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">Suivant</a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-12">
+            
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun paiement trouvé</h3>
+            <p class="text-gray-600">Aucun paiement n'a encore été enregistré.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+{% for insc in inscriptions %}
+<div id="insc-{{ insc.id }}"
+     class="fixed inset-0 z-50 hidden items-center flex justify-center p-4"
+     style="background: rgba(0,0,0,0.5);">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden">
+
+        <div class="px-6 py-4 border-b border-gray-200 flex items-start justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">
+                    {{ insc.eleve.nom }} {{ insc.eleve.prenom }}
+                </h2>
+                <p class="text-sm text-gray-500 mt-0.5">
+                    {{ insc.formation.centre }} · {{ insc.formation.filiere }} · {{ insc.annee_scolaire|default:"—" }}
+                </p>
+            </div>
+            <button onclick="closeModal('insc-{{ insc.id }}')"
+                    class="text-gray-400 hover:text-gray-700 text-xl font-bold ml-4"></button>
+        </div>
+
+        <div class="px-6 py-4 overflow-y-auto max-h-96 space-y-4">
+            {% for dette in insc.dettes.all %}
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <div class="bg-gray-50 px-4 py-2 flex items-center justify-between">
+                    <span class="text-xs font-bold text-gray-600 uppercase tracking-wide">
+                        {{ dette.frais_formation.type_frais }}
+                    </span>
+                    <span class="text-xs text-gray-500">
+                        Total dû : <strong>{{ dette.montant_total }} FCFA</strong>
+                    </span>
+                </div>
+
+                {% if dette.paiements.all %}
+                <table class="min-w-full divide-y divide-gray-100 text-sm">
+                    <thead>
+                        <tr class="bg-white">
+                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Tranche</th>
+                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Montant payé</th>
+                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
+                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Mode</th>
+                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">N° Quittance</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for pmt in dette.paiements.all %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2 font-medium text-gray-800">Tranche {{ pmt.tranche }}</td>
+                            <td class="px-4 py-2">
+                                <span class="bg-green-500 text-white text-xs rounded-md px-2 py-0.5">
+                                    {{ pmt.montant_paiement }} FCFA
+                                </span>
+                            </td>
+                            <td class="px-4 py-2 text-gray-600">{{ pmt.date_paiement|date:"d/m/Y H:i" }}</td>
+                            <td class="px-4 py-2 text-gray-600">{{ pmt.mode_paiement }}</td>
+                            <td class="px-4 py-2 text-xs text-gray-400 font-mono">
+                                {{ pmt.numero_quittance|default:"—" }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-sm text-gray-400 px-4 py-3">Aucun versement pour ce type de frais.</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-end gap-8 text-sm">
+            <span class="text-gray-600">
+                Total dû : <span class="font-bold text-yellow-500">{{ insc.total_du }} FCFA</span>
+            </span>
+            <span class="text-gray-600">
+                Total payé : <span class="font-bold text-green-600">{{ insc.total_paye }} FCFA</span>
+            </span>
+            <span class="text-gray-600">
+                Reste : <span class="font-bold text-red-600">{{ insc.reste }} FCFA</span>
+            </span>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+function openModal(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('hidden');
+    el.classList.add('flex');
+}
+function closeModal(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('hidden');
+    el.classList.remove('flex');
+}
+document.querySelectorAll('[id^="insc-"]').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal(modal.id);
+    });
+});
+</script>
+
+{% endblock %}

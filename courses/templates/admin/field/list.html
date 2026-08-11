@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block title %}Métiers | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-8xl mx-auto py-10 space-y-6">
+
+    {% include 'partials/messages.html' %}
+
+    <!-- Header -->
+    <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900 flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-red-700 text-yellow-400">
+                    
+                </span>
+                Les Métiers du {{ centre }}
+            </h1>
+            <p class="mt-2 text-sm text-gray-500">Liste complète des métiers proposés par le centre</p>
+        </div>
+        <div class="mt-4 sm:mt-0">
+            <a href="{% url 'courses:create_field' %}"
+               class="inline-flex items-center gap-2 px-6 py-3 bg-red-700 text-white font-bold rounded-lg shadow-md hover:bg-red-800 hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                
+                Ajouter un métier
+            </a>
+        </div>
+    </div>
+
+    <!-- Barre de filtres -->
+    <form method="get" id="filter-form">
+        <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-3 flex-wrap">
+
+            <!-- Recherche -->
+            <div class="relative flex-1 min-w-[200px]">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    
+                </div>
+                <input type="text" name="recherche"
+                       value="{{ filter.form.recherche.value|default:'' }}"
+                       placeholder="Rechercher un métier..."
+                       class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+                       id="id_recherche" autocomplete="off">
+            </div>
+
+            <!-- Filtre Titre Professionnel -->
+            <div class="sm:w-52">
+                <select name="titre_professionnel"
+                        class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+                        onchange="this.form.submit()">
+                    <option value="">Tous les titres</option>
+                    <option value="CQP" {% if filter.form.titre_professionnel.value == 'CQP' %}selected{% endif %}>CQP — Cert. de Qualification Pro.</option>
+                    <option value="BQP" {% if filter.form.titre_professionnel.value == 'BQP' %}selected{% endif %}>BQP — Brevet de Qualification Pro.</option>
+                    <option value="BPT" {% if filter.form.titre_professionnel.value == 'BPT' %}selected{% endif %}>BPT — Brevet Pro. de Technicien</option>
+                    <option value="BPTS" {% if filter.form.titre_professionnel.value == 'BPTS' %}selected{% endif %}>BPTS — Brevet Pro. de Tech. Sup.</option>
+                </select>
+            </div>
+
+            <!-- Filtre Disponibilité -->
+            <div class="sm:w-44">
+                <select name="is_active"
+                        class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+                        onchange="this.form.submit()">
+                    <option value="">Disponibilité</option>
+                    <option value="1" {% if filter.form.is_active.value == '1' %}selected{% endif %}>Actif</option>
+                    <option value="0" {% if filter.form.is_active.value == '0' %}selected{% endif %}>Inactif</option>
+                </select>
+            </div>
+
+            <!-- Bouton reset -->
+            <div class="flex items-center">
+                <a href="{% url 'courses:member_field_list' %}"
+                   class="inline-flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition"
+                   title="Réinitialiser les filtres">
+                    
+                    <span class="hidden sm:inline">Réinitialiser</span>
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Compteur de résultats -->
+    {% if filieres %}
+    <div class="px-1">
+        <p class="text-sm text-gray-500">
+            <span class="font-semibold text-gray-800">{{ filieres.paginator.count }}</span> métier{{ filieres.paginator.count|pluralize }} trouvé{{ filieres.paginator.count|pluralize }}
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        {% if filieres %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100">
+                <thead>
+                    <tr class="bg-gray-50">
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Métier</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Titre professionnel</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Conditions d'accès</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Disponible</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {% for field in filieres %}
+                    <tr class="hover:bg-red-50 transition-colors duration-150">
+
+                        <!-- Nom du métier -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-3">
+                                <div class="flex-shrink-0 h-10 w-10 bg-red-700 rounded-full flex items-center justify-center shadow">
+                                    
+                                </div>
+                                <span class="text-sm font-bold text-gray-900">{{ field.filiere }}</span>
+                            </div>
+                        </td>
+
+                        <!-- Titre professionnel -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if field.filiere.titre_professionnel %}
+                            <span class="px-3 py-1 inline-flex text-xs font-bold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">
+                                {{ field.filiere.titre_professionnel }}
+                            </span>
+                            {% else %}
+                            <span class="text-xs text-gray-400 italic">—</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Conditions d'accès (ex niveau_diplome) -->
+                        <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
+                            <span class="line-clamp-2">{{ field.filiere.niveau_diplome|default:"Non précisé" }}</span>
+                        </td>
+
+                        <!-- Disponible -->
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            {% if field.is_active %}
+                            <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-green-100 text-green-800">
+                                 Oui
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-red-100 text-red-800">
+                                 Non
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{% url 'bsb_admin:field_update' field.id %}"
+                                   class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition"
+                                   title="Modifier">
+                                    <span class="hidden sm:inline">Modifier</span>
+                                </a>
+                                <a href="{% url 'bsb_admin:metier_delete' field.id %}"
+                                   class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition"
+                                   title="Supprimer">
+                                    <span class="hidden sm:inline">Supprimer</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if filieres.has_other_pages %}
+        <div class="bg-gray-50 px-6 py-3 border-t border-gray-100">
+            <div class="flex items-center justify-between">
+                <p class="text-sm text-gray-500">
+                    Page <span class="font-semibold text-gray-800">{{ filieres.number }}</span>
+                    sur <span class="font-semibold text-gray-800">{{ filieres.paginator.num_pages }}</span>
+                </p>
+                <nav class="inline-flex rounded-md shadow-sm gap-1">
+                    {% if filieres.has_previous %}
+                    <a href="?page={{ filieres.previous_page_number }}&recherche={{ request.GET.recherche }}&titre_professionnel={{ request.GET.titre_professionnel }}&is_active={{ request.GET.is_active }}"
+                       class="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50 transition">Précédent</a>
+                    {% endif %}
+                    {% for num in filieres.paginator.page_range %}
+                        {% if filieres.number == num %}
+                        <span class="px-4 py-2 text-sm font-bold bg-red-700 text-white border border-red-700">{{ num }}</span>
+                        {% else %}
+                        <a href="?page={{ num }}&recherche={{ request.GET.recherche }}&titre_professionnel={{ request.GET.titre_professionnel }}&is_active={{ request.GET.is_active }}"
+                           class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if filieres.has_next %}
+                    <a href="?page={{ filieres.next_page_number }}&recherche={{ request.GET.recherche }}&titre_professionnel={{ request.GET.titre_professionnel }}&is_active={{ request.GET.is_active }}"
+                       class="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50 transition">Suivant</a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- État vide -->
+        <div class="text-center py-16">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-1">Aucun métier trouvé</h3>
+            <p class="text-gray-500 text-sm mb-6">Modifiez vos filtres ou créez un nouveau métier.</p>
+            <a href="{% url 'courses:create_field' %}"
+               class="inline-flex items-center gap-2 px-6 py-3 bg-red-700 text-white font-bold rounded-lg hover:bg-red-800 transition">
+                 Ajouter un métier
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Auto-submit sur la recherche avec délai
+    const rechercheInput = document.getElementById('id_recherche');
+    if (rechercheInput) {
+        rechercheInput.addEventListener('input', function () {
+            clearTimeout(this._timer);
+            this._timer = setTimeout(() => {
+                document.getElementById('filter-form').submit();
+            }, 600);
+        });
+    }
+</script>
+{% endblock %}

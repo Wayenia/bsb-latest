@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Importer — Statistiques réelles | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-6">
+  {% include 'partials/messages.html' %}
+
+  <div>
+    <a href="{% url 'courses:stats_reel_dashboard' %}" class="text-sm text-gray-400 hover:text-gray-600">Statistiques réelles</a>
+    <h1 class="text-2xl font-black text-gray-900 mt-1">
+      Importer — {{ formation.centre.nom_centre }} / {{ formation.filiere.nom_filiere }}
+    </h1>
+    <p class="mt-2">
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">
+        Année scolaire : {{ annee.libelle_anne }}
+      </span>
+    </p>
+    <p class="mt-2 text-sm text-gray-500">
+      Une formation peut être relancée d'une année sur l'autre — ce fichier ne
+      couvre que l'année scolaire ci-dessus. Pour une autre année, reviens au
+      tableau de bord et sélectionne le filtre « Année scolaire » avant de cliquer
+      sur « Modèle »/« Importer » pour cette formation.
+    </p>
+    <p class="mt-2 text-sm text-gray-500">
+      Téléchargez le modèle Excel (2 feuilles), remplissez les colonnes marquées
+      d'un <strong>*</strong>, puis importez-le ici. Les colonnes déjà connues
+      de l'application (Nom, Prénom, Centre, Métier...) sont pré-remplies et
+      ne doivent pas être modifiées. La feuille « Effectifs » couvre les
+      apprenants inscrits (pré-remplis, à corriger si besoin), présents à
+      l'examen et admis (ces deux derniers à saisir, l'application ne les
+      connaît pas).
+    </p>
+  </div>
+
+  {% url 'courses:stats_reel_formation_template' formation.id as modele_url %}
+  <a href="{{ modele_url }}?annee={{ annee.id }}"
+     class="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow-500 text-white text-sm font-bold rounded-lg hover:bg-yellow-600 transition-all shadow-sm">
+    Télécharger le modèle Excel ({{ annee.libelle_anne }})
+  </a>
+
+  {% url 'courses:stats_reel_formation_upload' formation.id as upload_action_url %}
+  <form method="post" action="{{ upload_action_url }}?annee={{ annee.id }}" enctype="multipart/form-data"
+        class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="block text-sm font-bold text-gray-800 mb-1.5" for="fichier">Fichier (.xlsx uniquement — 2 feuilles requises)</label>
+      <input type="file" name="fichier" id="fichier" accept=".xlsx" required
+             class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
+    </div>
+    <button type="submit"
+            class="px-6 py-2.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-all shadow-sm">
+      Importer
+    </button>
+  </form>
+</div>
+{% endblock %}

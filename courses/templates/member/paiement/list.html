@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% block title %}Encaissements | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6">
+    {% include 'partials/messages.html' %}
+
+    <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Encaissements</h1>
+            <p class="mt-2 text-sm text-gray-600">
+                {% if q %}Résultats de recherche — tous centres{% else %}Inscriptions de {{ centre|default:"votre centre" }} avec reste à payer{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'courses:paiement_historique' %}"
+           class="inline-flex items-center gap-2 bg-gray-700 hover:bg-gray-800 text-white font-semibold px-5 py-3 rounded-xl shadow-sm transition-all duration-200">
+            Historique paiement
+        </a>
+    </div>
+
+    <!-- Recherche multi-centre -->
+    {% if peut_rechercher_tous_centres %}
+    <form method="get" class="px-4 md:px-0">
+        <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <input type="text" name="q" value="{{ q }}"
+                       placeholder="Rechercher un apprenant par nom, identifiant ou téléphone (tous centres)…"
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+            </div>
+            <div class="flex gap-2">
+                <button type="submit"
+                        class="px-4 py-2.5 bg-yellow-600 text-white text-sm font-semibold rounded-lg hover:bg-yellow-700 transition">
+                    Rechercher
+                </button>
+                {% if q %}
+                <a href="{% url 'courses:paiement_list' %}"
+                   class="px-4 py-2.5 border border-gray-300 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition">
+                    Réinitialiser
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+    {% endif %}
+
+    <!-- Table Card -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        {% if inscriptions %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Apprenant</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Métier</th>
+                        {% if q %}<th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Centre</th>{% endif %}
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Année scolaire</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total dû</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total payé</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Reste à payer</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for insc in inscriptions %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                            {{ insc.eleve.nom }} {{ insc.eleve.prenom }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ insc.formation.filiere }}
+                        </td>
+                        {% if q %}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {{ insc.formation.centre }}
+                        </td>
+                        {% endif %}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ insc.annee_scolaire|default:"—" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-medium bg-gray-700 text-white rounded-lg px-2 py-1">
+                                {{ insc.total_du|floatformat:0 }} FCFA
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-medium bg-green-600 text-white rounded-lg px-2 py-1">
+                                {{ insc.total_paye|floatformat:0 }} FCFA
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-medium bg-red-600 text-white rounded-lg px-2 py-1">
+                                {{ insc.reste|floatformat:0 }} FCFA
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-2">
+                                <button
+                                    onclick="openModal('insc-{{ insc.id }}')"
+                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-all">
+                                    Détails
+                                </button>
+                                <a href="{% url 'courses:stats_dettes_eleve' insc.eleve.id %}?inscription={{ insc.id }}"
+                                   class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-700 text-white hover:bg-gray-800 transition-all">
+                                    Voir les dettes
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if inscriptions.has_other_pages %}
+        <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div class="hidden sm:flex sm:items-center sm:justify-between">
+                <p class="text-sm text-gray-700">
+                    Page <span class="font-medium">{{ inscriptions.number }}</span> sur
+                    <span class="font-medium">{{ inscriptions.paginator.num_pages }}</span>
+                </p>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% if inscriptions.has_previous %}
+                    <a href="?page={{ inscriptions.previous_page_number }}&q={{ q }}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">
+                        Précédent
+                    </a>
+                    {% endif %}
+                    {% for num in inscriptions.paginator.page_range %}
+                        {% if inscriptions.number == num %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-yellow-600 bg-yellow-600 text-sm font-medium text-white">{{ num }}</span>
+                        {% else %}
+                        <a href="?page={{ num }}&q={{ q }}"
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if inscriptions.has_next %}
+                    <a href="?page={{ inscriptions.next_page_number }}&q={{ q }}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">
+                        Suivant
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-12">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                {% if q %}Aucun apprenant trouvé{% else %}Aucun reste à payer{% endif %}
+            </h3>
+            <p class="text-gray-600">
+                {% if q %}Essayez avec un autre nom, identifiant ou numéro.{% else %}Toutes les inscriptions de ce centre sont soldées.{% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+{% for insc in inscriptions %}
+<div id="insc-{{ insc.id }}"
+     class="fixed inset-0 z-50 hidden items-center flex justify-center p-4"
+     style="background: rgba(0,0,0,0.5);">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden">
+
+        <div class="px-6 py-4 border-b border-gray-200 flex items-start justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">
+                    {{ insc.eleve.nom }} {{ insc.eleve.prenom }}
+                </h2>
+                <p class="text-sm text-gray-500 mt-0.5">
+                    {{ insc.formation.centre }} · {{ insc.formation.filiere }} · {{ insc.annee_scolaire|default:"—" }}
+                </p>
+            </div>
+            <button onclick="closeModal('insc-{{ insc.id }}')"
+                    class="text-gray-400 hover:text-gray-700 text-xl font-bold ml-4">Fermer</button>
+        </div>
+
+        <div class="px-6 py-4 overflow-y-auto max-h-96 space-y-4">
+            {% for dette in insc.dettes.all %}
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <div class="bg-gray-50 px-4 py-2 flex items-center justify-between">
+                    <span class="text-xs font-bold text-gray-600 uppercase tracking-wide">
+                        {{ dette.frais_formation.type_frais }}
+                    </span>
+                    <span class="text-xs text-gray-500">
+                        Total dû : <strong>{{ dette.montant_total|floatformat:0 }} FCFA</strong>
+                    </span>
+                </div>
+
+                {% if dette.etat_dette != 'soldé' %}
+                <div class="px-4 py-3 bg-yellow-50 border-b border-yellow-100">
+                    {% with tranches=dette.tranches_detail %}
+                    {% if tranches %}
+                    <div class="space-y-1.5">
+                        {% for t in tranches %}
+                        <div class="flex items-center justify-between gap-3 text-sm">
+                            <span class="text-gray-700">
+                                {{ t.tranche.libelle }}
+                                {% if t.tranche.est_primordiale %}<span class="text-yellow-700 text-xs">(primordiale)</span>{% endif %}
+                                — <span class="{% if t.soldee %}text-green-600{% else %}text-red-600{% endif %} font-semibold">{{ t.paye|floatformat:0 }} / {{ t.montant|floatformat:0 }} FCFA</span>
+                            </span>
+                            {% if t.soldee %}
+                            <button class="px-3 py-1 bg-gray-200 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed" disabled>Soldée</button>
+                            {% elif t.payable %}
+                            <button class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors"
+                                    onclick="ouvrirModalPaiement('{{ dette.id }}', '{{ t.tranche.libelle|escapejs }}', {{ t.reste|floatformat:0 }}, {{ t.tranche.est_primordiale|yesno:'true,false' }})">Encaisser</button>
+                            {% else %}
+                            <button class="px-3 py-1 bg-gray-200 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed"
+                                    disabled title="Réglez d'abord la tranche primordiale en cours">Encaisser</button>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="flex items-center justify-between gap-3 text-sm">
+                        <span class="text-gray-700">Reste à régler : <span class="text-red-600 font-semibold">{{ dette.montant_a_payer|floatformat:0 }} FCFA</span></span>
+                        {% if dette.bloquee_par_autre_dette %}
+                        <button class="px-3 py-1 bg-gray-200 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed"
+                                disabled title="Réglez d'abord la tranche primordiale bloquante d'un autre type de frais">Encaisser</button>
+                        {% else %}
+                        <button class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors"
+                                onclick="ouvrirModalPaiement('{{ dette.id }}', '{{ dette.frais_formation.type_frais|escapejs }}', {{ dette.montant_a_payer|floatformat:0 }}, false)">Encaisser</button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                {% endif %}
+
+                {% if dette.paiements.all %}
+                <table class="min-w-full divide-y divide-gray-100 text-sm">
+                    <thead>
+                        <tr class="bg-white">
+                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Tranche</th>
+                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Montant payé</th>
+                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
+                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Mode</th>
+                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">N° Quittance</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for pmt in dette.paiements.all %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2 font-medium text-gray-800">{{ pmt.tranche_frais.libelle|default:"Tranche unique" }}</td>
+                            <td class="px-4 py-2">
+                                <span class="bg-green-600 text-white text-xs rounded-md px-2 py-0.5">
+                                    {{ pmt.montant_paiement|floatformat:0 }} FCFA
+                                </span>
+                            </td>
+                            <td class="px-4 py-2 text-gray-600">{{ pmt.date_paiement|date:"d/m/Y H:i" }}</td>
+                            <td class="px-4 py-2 text-gray-600">{{ pmt.mode_paiement }}</td>
+                            <td class="px-4 py-2 text-xs text-gray-400 font-mono">
+                                {{ pmt.numero_quittance|default:"—" }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-sm text-gray-400 px-4 py-3">Aucun versement pour ce type de frais.</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-end gap-8 text-sm">
+            <span class="text-gray-600">
+                Total dû : <span class="font-bold text-gray-800">{{ insc.total_du|floatformat:0 }} FCFA</span>
+            </span>
+            <span class="text-gray-600">
+                Total payé : <span class="font-bold text-green-700">{{ insc.total_paye|floatformat:0 }} FCFA</span>
+            </span>
+            <span class="text-gray-600">
+                Reste : <span class="font-bold text-red-700">{{ insc.reste|floatformat:0 }} FCFA</span>
+            </span>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- MODAL PAIEMENT (réutilisé pour toutes les tranches / tous les types de frais) -->
+<div id="modal-paiement-tranche" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h2 style="font-weight:800;font-size:1.1rem;color:#374151;margin:0;">Enregistrer un paiement</h2>
+      <button type="button" onclick="fermerModalPaiement()" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
+    </div>
+    <p id="modal-paiement-cible" class="text-sm text-gray-500 mb-4"></p>
+    <form method="post" id="form-paiement-tranche" action="" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Montant (FCFA)</label>
+        <input type="number" name="montant_paiement" id="modal-montant-input" min="1" step="1" required
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Mode de paiement</label>
+        <select name="mode_paiement" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+          <option value="mobile">Mobile Money</option>
+          <option value="chèque">Chèque</option>
+          <option value="espece">Espèce</option>
+        </select>
+      </div>
+      <div id="modal-derogation-wrap" class="mb-4 hidden">
+        <p class="text-xs text-red-600 font-semibold mb-2">
+            Montant inférieur au montant dû de la tranche primordiale : motif et pièce jointe obligatoires.
+        </p>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Motif de la dérogation</label>
+        <textarea name="motif_derogation" id="modal-motif-derogation" rows="2"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-2"></textarea>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Pièce jointe justificative</label>
+        <input type="file" name="piece_jointe_derogation" id="modal-piece-jointe-derogation"
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+      </div>
+      <div class="flex gap-2">
+        <button type="button" onclick="fermerModalPaiement()"
+                class="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-semibold hover:bg-gray-50">Annuler</button>
+        <button type="submit"
+                class="flex-[2] py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold">Confirmer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openModal(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('hidden');
+    el.classList.add('flex');
+}
+function closeModal(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('hidden');
+    el.classList.remove('flex');
+}
+document.querySelectorAll('[id^="insc-"]').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal(modal.id);
+    });
+});
+
+var modalMontantMax = 0;
+var modalEstPrimordiale = false;
+
+function ouvrirModalPaiement(detteId, libelle, montantMax, estPrimordiale) {
+  var form = document.getElementById('form-paiement-tranche');
+  form.action = "{% url 'courses:stats_detail_dette' 0 %}".replace('0', detteId);
+  var input = document.getElementById('modal-montant-input');
+  input.value = montantMax;
+  input.max = montantMax;
+  modalMontantMax = montantMax;
+  modalEstPrimordiale = !!estPrimordiale;
+  document.getElementById('modal-paiement-cible').textContent =
+    libelle + ' — montant maximum : ' + Number(montantMax).toLocaleString('fr-FR') + ' FCFA';
+  document.getElementById('modal-derogation-wrap').classList.add('hidden');
+  document.getElementById('modal-motif-derogation').value = '';
+  document.getElementById('modal-piece-jointe-derogation').value = '';
+  var modal = document.getElementById('modal-paiement-tranche');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+document.getElementById('modal-montant-input').addEventListener('input', function () {
+  var val = parseFloat(this.value);
+  var sousPaiement = modalEstPrimordiale && val > 0 && val < modalMontantMax;
+  document.getElementById('modal-derogation-wrap').classList.toggle('hidden', !sousPaiement);
+});
+
+
+function fermerModalPaiement() {
+  var modal = document.getElementById('modal-paiement-tranche');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+document.getElementById('modal-paiement-tranche').addEventListener('click', function(e) {
+  if (e.target === this) fermerModalPaiement();
+});
+</script>
+
+{% endblock %}

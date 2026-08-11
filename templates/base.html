@@ -1,0 +1,272 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BSB - Burkina Suudu Bawdè{% endblock %}</title>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+
+    <style>
+        :root {
+            --bsb-primary: #374151;
+            --bsb-secondary: #059669;
+            --bsb-accent: #d97706;
+            --bsb-light: #f8fafc;
+            --bsb-dark: #1e293b;
+        }
+        .sidebar {
+            background: linear-gradient(180deg, #374151 0%, #4b5563 100%);
+            min-height: 100vh;
+        }
+        .dashboard-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        .btn-gov {
+            background: linear-gradient(135deg, #374151 0%, #6b7280 100%);
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        .btn-gov:hover {
+            background: linear-gradient(135deg, #4b5563 0%, #9ca3af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(55, 65, 81,0.3);
+        }
+        .btn-gov-secondary {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: white;
+        }
+        .btn-gov-secondary:hover {
+            background: linear-gradient(135deg, #047857 0%, #34d399 100%);
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .status-active { background-color: #d1fae5; color: #065f46; }
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-inactive { background-color: #f3f4f6; color: #6b7280; }
+        .table-gov {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .table-gov thead {
+            background: linear-gradient(90deg, #374151 0%, #6b7280 100%);
+            color: white;
+        }
+        .table-gov th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+        }
+        .table-gov tbody tr {
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s ease;
+        }
+        .table-gov tbody tr:hover { background-color: #f8fafc; }
+        .table-gov td { padding: 1rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #374151; }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            transition: border-color 0.3s ease;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #9ca3af;
+            box-shadow: 0 0 0 3px rgba(107, 114, 128,0.1);
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 90%;
+            width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        @keyframes slideIn {
+            from { opacity:0; transform:translateX(40px); }
+            to { opacity:1; transform:translateX(0); }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50">
+{% block body %}
+
+    {% if not request.path|slice:"0:7" == "/admin/" %}
+        {% include 'partials/navbar.html' %}
+
+        <!-- Messages Django globaux -->
+        {% if messages %}
+        <div style="position:fixed;top:80px;right:20px;z-index:9999;min-width:300px;max-width:420px;">
+            {% for message in messages %}
+            <div data-automsg style="
+                display:flex;align-items:flex-start;gap:.75rem;
+                background:#fff;border-radius:12px;padding:1rem 1.25rem;
+                margin-bottom:.75rem;
+                box-shadow:0 4px 24px rgba(0,0,0,.13);
+                border-left:4px solid {% if message.tags == 'success' %}#059669{% elif message.tags == 'error' %}#dc2626{% elif message.tags == 'warning' %}#d97706{% else %}#6b7280{% endif %};
+                animation:slideIn .3s ease;">
+                
+                <div style="flex:1;">
+                    <div style="font-weight:600;font-size:.92rem;color:#111;">{{ message }}</div>
+                </div>
+                <button onclick="this.parentElement.remove()"
+                        style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.1rem;padding:0;margin-left:.5rem;"></button>
+            </div>
+            {% endfor %}
+        </div>
+        <script>
+            setTimeout(function(){
+                document.querySelectorAll('[data-automsg]').forEach(function(el){ el.remove(); });
+            }, 5000);
+        </script>
+        {% endif %}
+        <!-- Fin messages -->
+
+    {% endif %}
+
+    <!-- Contenu principal -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if not request.path|slice:"0:7" == "/admin/" %}
+        {% include 'partials/footer.html' %}
+    {% endif %}
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('.data-table').DataTable({
+                dom: 'Bfrtip',
+                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/fr-FR.json' }
+            });
+        });
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        });
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+
+    <!-- Indicatif téléphonique + validation du nombre de chiffres selon le pays -->
+    <script>
+    (function () {
+        var phoneInputs = document.querySelectorAll('.phone-intl');
+        if (!phoneInputs.length) return;
+
+        var cssLink = document.createElement('link');
+        cssLink.rel = 'stylesheet';
+        cssLink.href = 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.5.1/build/css/intlTelInput.css';
+        document.head.appendChild(cssLink);
+
+        var script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.5.1/build/js/intlTelInputWithUtils.min.js';
+        script.onload = function () {
+            phoneInputs.forEach(function (input) {
+                var iti = window.intlTelInput(input, {
+                    initialCountry: 'bf',
+                    preferredCountries: ['bf', 'ci', 'gh', 'tg', 'bj', 'ml', 'ne'],
+                    separateDialCode: true,
+                    strictMode: true,
+                    utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.5.1/build/js/utils.js',
+                });
+
+                var errorEl = document.createElement('p');
+                errorEl.className = 'text-xs text-red-600 mt-1 hidden';
+                errorEl.textContent = "Numéro invalide pour le pays sélectionné.";
+                input.insertAdjacentElement('afterend', errorEl);
+
+                function validate() {
+                    var valid = input.value.trim() === '' || iti.isValidNumber();
+                    errorEl.classList.toggle('hidden', valid);
+                    input.classList.toggle('border-red-500', !valid);
+                    return valid;
+                }
+                input.addEventListener('blur', validate);
+                input.addEventListener('countrychange', validate);
+
+                var form = input.closest('form');
+                if (form) {
+                    form.addEventListener('submit', function (e) {
+                        if (input.value.trim() === '') return;
+                        if (!validate()) {
+                            e.preventDefault();
+                            input.focus();
+                            return;
+                        }
+                        input.value = iti.getNumber();
+                    });
+                }
+            });
+        };
+        document.head.appendChild(script);
+    })();
+    </script>
+
+{% endblock body %}
+</body>
+</html>

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Historique des encaissements | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto py-10 space-y-6 px-4 sm:px-6 lg:px-8">
+    {% include 'partials/messages.html' %}
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'accounts:facture_list' %}" class="text-sm text-gray-400 hover:text-gray-600">Retour</a>
+            <h1 class="text-2xl font-black text-gray-900 mt-1">Historique des encaissements</h1>
+        </div>
+    </div>
+
+    <form method="get" class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex gap-3">
+        <input type="text" name="q" value="{{ q|default:'' }}"
+               placeholder="N° reçu, n° facture ou client..."
+               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+               autocomplete="off">
+        <button type="submit" class="px-4 py-2 bg-red-700 text-white text-sm font-bold rounded-lg hover:bg-red-800 transition">
+            Rechercher
+        </button>
+        {% if q %}
+        <a href="{% url 'accounts:prestation_historique' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">
+            Réinitialiser
+        </a>
+        {% endif %}
+    </form>
+
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        {% if paiements %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">N° Reçu</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Facture</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Client</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Mode</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Encaissé par</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Montant</th>
+                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Reçu</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {% for p in paiements %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-3 text-sm font-mono text-gray-700">{{ p.numero_recu }}</td>
+                        <td class="px-6 py-3 text-sm text-gray-700">{{ p.facture.numero }}</td>
+                        <td class="px-6 py-3 text-sm text-gray-700">{{ p.facture.client }}</td>
+                        <td class="px-6 py-3 text-sm text-gray-600">{{ p.get_mode_paiement_display }}</td>
+                        <td class="px-6 py-3 text-sm text-gray-600">{{ p.caissier.get_full_name|default:p.caissier.username }}</td>
+                        <td class="px-6 py-3 text-sm text-gray-600">{{ p.date_paiement|date:"d/m/Y H:i" }}</td>
+                        <td class="px-6 py-3 text-right text-sm font-bold text-gray-900">{{ p.montant|floatformat:0 }} FCFA</td>
+                        <td class="px-6 py-3 text-right">
+                            <a href="{% url 'accounts:prestation_recu_pdf' p.id %}" class="text-xs font-bold text-red-700 hover:underline">Télécharger</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if paiements.has_other_pages %}
+        <div class="bg-gray-50 px-6 py-3 border-t border-gray-100">
+            <div class="flex items-center justify-between">
+                <p class="text-sm text-gray-500">
+                    Page <span class="font-semibold text-gray-800">{{ paiements.number }}</span>
+                    sur <span class="font-semibold text-gray-800">{{ paiements.paginator.num_pages }}</span>
+                </p>
+                <nav class="inline-flex rounded-md shadow-sm gap-1">
+                    {% if paiements.has_previous %}
+                    <a href="?page={{ paiements.previous_page_number }}&q={{ q }}"
+                       class="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50 transition">Précédent</a>
+                    {% endif %}
+                    {% for num in paiements.paginator.page_range %}
+                        {% if paiements.number == num %}
+                        <span class="px-4 py-2 text-sm font-bold bg-red-700 text-white border border-red-700">{{ num }}</span>
+                        {% else %}
+                        <a href="?page={{ num }}&q={{ q }}"
+                           class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if paiements.has_next %}
+                    <a href="?page={{ paiements.next_page_number }}&q={{ q }}"
+                       class="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50 transition">Suivant</a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-16">
+            <h3 class="text-lg font-bold text-gray-800 mb-1">Aucun encaissement trouvé</h3>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

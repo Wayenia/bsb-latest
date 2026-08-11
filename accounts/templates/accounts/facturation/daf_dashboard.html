@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Tableau de bord DAF | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  {% include 'partials/messages.html' %}
+
+  <div class="mb-8">
+    <h1 class="text-3xl font-black text-gray-900">Direction de l'Administration et des Finances</h1>
+    <p class="mt-1 text-sm text-gray-500">Facturation et encaissement des prestations</p>
+  </div>
+
+  {% if not perms.accounts.gerer_facturation and not perms.accounts.encaisser_prestation %}
+  <div class="bg-white border border-gray-200 rounded-xl p-6 text-sm text-gray-500">
+    Aucune permission ne vous a encore été accordée pour ce module. Contactez un administrateur pour obtenir l'accès à la facturation et/ou à l'encaissement.
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {% if perms.accounts.gerer_facturation %}
+    <a href="{% url 'accounts:facture_create' %}"
+       class="group bg-white p-10 rounded-xl border border-gray-200 shadow-sm text-center hover:shadow-md transition-all">
+      <div class="w-16 h-16 bg-red-700 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+      </div>
+      <h2 class="text-lg font-bold text-gray-900">Facturation et Prestation</h2>
+      <p class="text-gray-500 text-sm mt-1">Créer une facture proforma ou définitive</p>
+    </a>
+    {% endif %}
+
+    {% if perms.accounts.gerer_facturation or perms.accounts.encaisser_prestation %}
+    <a href="{% url 'accounts:facture_list' %}"
+       class="group bg-white p-10 rounded-xl border border-gray-200 shadow-sm text-center hover:shadow-md transition-all">
+      <div class="w-16 h-16 bg-bsb-gold text-white rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+        </svg>
+      </div>
+      <h2 class="text-lg font-bold text-gray-900">Encaissement/Prestation</h2>
+      <p class="text-gray-500 text-sm mt-1">Consulter les factures et encaisser les paiements</p>
+    </a>
+    {% endif %}
+
+    {% if perms.accounts.gerer_facturation %}
+    <a href="{% url 'accounts:prestation_list' %}"
+       class="group bg-white p-10 rounded-xl border border-gray-200 shadow-sm text-center hover:shadow-md transition-all">
+      <div class="w-16 h-16 bg-red-700 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+        </svg>
+      </div>
+      <h2 class="text-lg font-bold text-gray-900">Prestations</h2>
+      <p class="text-gray-500 text-sm mt-1">Gérer le catalogue des prestations</p>
+    </a>
+    {% endif %}
+
+    {% if perms.accounts.gerer_facturation %}
+    <a href="{% url 'accounts:client_list' %}"
+       class="group bg-white p-10 rounded-xl border border-gray-200 shadow-sm text-center hover:shadow-md transition-all">
+      <div class="w-16 h-16 bg-bsb-gold text-white rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"></path>
+        </svg>
+      </div>
+      <h2 class="text-lg font-bold text-gray-900">Clients</h2>
+      <p class="text-gray-500 text-sm mt-1">Consulter et importer les clients de facturation</p>
+    </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

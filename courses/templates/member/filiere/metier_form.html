@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Métier | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-10">
+
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center gap-4 mb-2">
+            <a href="{% url 'courses:member_field_list' %}"
+               class="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-700 transition">Retour</a>
+            <h1 class="text-2xl font-black text-gray-900">{{ action }} un métier</h1>
+        </div>
+        <p class="text-gray-500 text-sm ml-13 pl-1">Remplissez les informations du métier ci-dessous</p>
+    </div>
+
+    <!-- Carte formulaire -->
+    <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+
+        <!-- Bandeau rouge en haut -->
+        <div class="h-1.5 bg-gradient-to-r from-red-700 via-yellow-500 to-red-700"></div>
+
+        <div class="p-8">
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Erreurs globales -->
+                {% if form.non_field_errors %}
+                <div class="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
+                    
+                    <div>
+                        <p class="text-sm font-semibold text-red-800">Erreur dans le formulaire</p>
+                        <p class="text-sm text-red-600 mt-1">{{ form.non_field_errors }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Nom du métier (pleine largeur) -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.nom_filiere.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5">
+                            Nom du métier {% if form.nom_filiere.field.required %}<span class="text-red-600">*</span>{% endif %}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                
+                            </div>
+                            {{ form.nom_filiere }}
+                        </div>
+                        {% if form.nom_filiere.errors %}
+                        <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                             {{ form.nom_filiere.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Titre professionnel -->
+                    <div>
+                        <label for="{{ form.titre_professionnel.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5">
+                            Titre professionnel {% if form.titre_professionnel.field.required %}<span class="text-red-600">*</span>{% endif %}
+                        </label>
+                        {{ form.titre_professionnel }}
+                        {% if form.titre_professionnel.errors %}
+                        <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                             {{ form.titre_professionnel.errors.0 }}
+                        </p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-400">CQP, BQP, BPT ou BPTS</p>
+                    </div>
+
+                    
+
+                    <!-- Conditions d'accès (ex niveau_diplome) — pleine largeur -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.niveau_diplome.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5">
+                            Conditions d'accès {% if form.niveau_diplome.field.required %}<span class="text-red-600">*</span>{% endif %}
+                        </label>
+                        {{ form.niveau_diplome }}
+                        {% if form.niveau_diplome.errors %}
+                        <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                             {{ form.niveau_diplome.errors.0 }}
+                        </p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-400">Ex : BEPC, BAC, BAC+2, sans condition de diplôme…</p>
+                    </div>
+
+                    <!-- Texte défilant (carrousel accueil) — pleine largeur -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.texte_defilante.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5">
+                            Texte défilant <span class="text-gray-400 font-normal">(optionnel)</span>
+                        </label>
+                        {{ form.texte_defilante }}
+                        {% if form.texte_defilante.errors %}
+                        <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                             {{ form.texte_defilante.errors.0 }}
+                        </p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-400">Affiché en bandeau défilant dans le carrousel de la page d'accueil, si renseigné.</p>
+                    </div>
+
+                    <!-- Rendre actif -->
+                    <div class="md:col-span-2">
+                        <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            {{ form.is_active }}
+                            <div>
+                                <label for="{{ form.is_active.id_for_label }}" class="text-sm font-bold text-gray-800 cursor-pointer">
+                                    Rendre ce métier disponible
+                                </label>
+                                <p class="text-xs text-gray-500 mt-0.5">Les candidats pourront voir ce métier dans les offres du centre</p>
+                            </div>
+                        </div>
+                        {% if form.is_active.errors %}
+                        <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                             {{ form.is_active.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Curricula -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.curricula.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5">
+                            Curricula <span class="text-gray-400 font-normal">(optionnel)</span>
+                        </label>
+                        {% if form.instance.curricula %}
+                        <div class="mb-2 flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                            <a href="{{ form.instance.curricula.url }}" target="_blank" class="text-sm text-green-700 font-semibold underline">
+                                {{ form.instance.curricula.name|cut:"curricula_filieres/" }}
+                            </a>
+                            <span class="text-xs text-gray-500">(fichier actuel — en choisir un nouveau le remplacera)</span>
+                        </div>
+                        {% endif %}
+                        {{ form.curricula }}
+                        {% if form.curricula.errors %}
+                        <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">{{ form.curricula.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Modules -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-800 mb-1.5">
+                            Modules <span class="text-gray-400 font-normal">(optionnel)</span>
+                        </label>
+                        <p class="text-xs text-gray-500 mb-3">Cochez des modules déjà existants et/ou ajoutez de nouveaux modules pour ce métier.</p>
+
+                        {% if form.modules_existants.field.queryset.all %}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 max-h-48 overflow-y-auto p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            {% for checkbox in form.modules_existants %}
+                            <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                {{ checkbox.tag }}
+                                {{ checkbox.choice_label }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div id="new-modules-list" class="space-y-2 mb-3"></div>
+
+                        <button type="button" id="add-module-btn"
+                                class="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-700 text-sm font-semibold rounded-lg hover:bg-red-50 transition">
+                            Ajouter un nouveau module
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- Champ caché next -->
+                <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
+
+                <!-- Boutons d'action -->
+                {% url 'courses:member_field_list' as field_list_url %}
+                <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
+                    <a href="{{ request.GET.next|default:field_list_url }}"
+                       class="inline-flex items-center gap-2 px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition">
+                         Annuler
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 px-6 py-2.5 bg-red-700 text-white font-bold rounded-lg shadow hover:bg-red-800 hover:shadow-md transition-all transform hover:-translate-y-0.5">
+                        
+                        {% if action == 'Modifier' %}Enregistrer{% else %}Ajouter{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Info -->
+    <div class="mt-5 flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+
+        <p class="text-sm text-gray-600">
+            Les champs marqués d'un <span class="text-red-600 font-bold">*</span> sont obligatoires.
+            Assurez-vous de remplir tous les champs requis avant de soumettre.
+        </p>
+    </div>
+
+</div>
+
+<script>
+(function () {
+    var list = document.getElementById('new-modules-list');
+    var addBtn = document.getElementById('add-module-btn');
+    if (!list || !addBtn) return;
+
+    function addRow() {
+        var row = document.createElement('div');
+        row.className = 'flex items-center gap-2';
+        row.innerHTML =
+            '<input type="text" name="new_module_nom" placeholder="Nom du module" ' +
+            'class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600">' +
+            '<input type="number" name="new_module_volume" placeholder="Volume (h)" min="1" ' +
+            'class="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600">' +
+            '<button type="button" class="remove-module-btn text-gray-400 hover:text-red-600 text-sm font-bold px-2">&times;</button>';
+        row.querySelector('.remove-module-btn').addEventListener('click', function () {
+            row.remove();
+        });
+        list.appendChild(row);
+    }
+
+    addBtn.addEventListener('click', addRow);
+})();
+</script>
+{% endblock %}

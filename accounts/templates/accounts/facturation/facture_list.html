@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}Encaissement/Prestation | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6 px-4 sm:px-6 lg:px-8">
+    {% include 'partials/messages.html' %}
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Encaissement/Prestation</h1>
+            <p class="mt-2 text-sm text-gray-600">Factures de prestation</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'accounts:prestation_historique' %}"
+               class="inline-flex items-center px-5 py-2.5 border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50 transition-all">
+                Historique des encaissements
+            </a>
+            <a href="{% url 'accounts:facture_create' %}"
+               class="inline-flex items-center px-5 py-2.5 bg-red-700 text-white text-sm font-bold rounded-lg shadow hover:bg-red-800 transition-all">
+                Nouvelle facture
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <form method="get" class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-3 flex-wrap">
+        <div class="relative flex-1 min-w-[220px]">
+            <input type="text" name="q" value="{{ q|default:'' }}"
+                   placeholder="Numéro de facture ou client..."
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+                   autocomplete="off">
+        </div>
+        <div class="sm:w-52">
+            <select name="statut" onchange="this.form.submit()"
+                    class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition">
+                <option value="">Tous les statuts</option>
+                <option value="proforma" {% if statut == 'proforma' %}selected{% endif %}>Proforma</option>
+                <option value="definitive" {% if statut == 'definitive' %}selected{% endif %}>Définitive</option>
+            </select>
+        </div>
+        <div class="flex items-center gap-2">
+            <button type="submit" class="px-4 py-2 bg-red-700 text-white text-sm font-bold rounded-lg hover:bg-red-800 transition">
+                Rechercher
+            </button>
+            {% if q or statut %}
+            <a href="{% url 'accounts:facture_list' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">
+                Réinitialiser
+            </a>
+            {% endif %}
+        </div>
+    </form>
+
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        {% if factures %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">N° Facture</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Client</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Statut</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Montant</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Reste dû</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {% for facture in factures %}
+                    <tr class="hover:bg-red-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{{ facture.numero }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ facture.client }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if facture.type_facture == 'definitive' %}
+                            <span class="px-3 py-1 inline-flex text-xs font-bold rounded-full bg-red-100 text-red-800">Définitive</span>
+                            {% else %}
+                            <span class="px-3 py-1 inline-flex text-xs font-bold rounded-full bg-yellow-100 text-yellow-800">Proforma</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">{{ facture.montant_total|floatformat:0 }} FCFA</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-700">
+                            {% if facture.type_facture == 'definitive' %}{{ facture.reste_a_payer|floatformat:0 }} FCFA{% else %}—{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{% url 'accounts:facture_pdf' facture.id %}" target="_blank"
+                                   class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
+                                    PDF
+                                </a>
+                                {% if facture.type_facture == 'definitive' %}
+                                <a href="{% url 'accounts:facture_detail' facture.id %}"
+                                   class="px-3 py-1.5 text-xs font-bold text-white bg-bsb-gold hover:bg-yellow-600 rounded-lg transition">
+                                    Encaisser
+                                </a>
+                                {% else %}
+                                <a href="{% url 'accounts:facture_detail' facture.id %}"
+                                   class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
+                                    Détail
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if factures.has_other_pages %}
+        <div class="bg-gray-50 px-6 py-3 border-t border-gray-100">
+            <div class="flex items-center justify-between">
+                <p class="text-sm text-gray-500">
+                    Page <span class="font-semibold text-gray-800">{{ factures.number }}</span>
+                    sur <span class="font-semibold text-gray-800">{{ factures.paginator.num_pages }}</span>
+                </p>
+                <nav class="inline-flex rounded-md shadow-sm gap-1">
+                    {% if factures.has_previous %}
+                    <a href="?page={{ factures.previous_page_number }}&q={{ q }}&statut={{ statut }}"
+                       class="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50 transition">Précédent</a>
+                    {% endif %}
+                    {% for num in factures.paginator.page_range %}
+                        {% if factures.number == num %}
+                        <span class="px-4 py-2 text-sm font-bold bg-red-700 text-white border border-red-700">{{ num }}</span>
+                        {% else %}
+                        <a href="?page={{ num }}&q={{ q }}&statut={{ statut }}"
+                           class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if factures.has_next %}
+                    <a href="?page={{ factures.next_page_number }}&q={{ q }}&statut={{ statut }}"
+                       class="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50 transition">Suivant</a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-16">
+            <h3 class="text-lg font-bold text-gray-800 mb-1">Aucune facture trouvée</h3>
+            <p class="text-gray-500 text-sm mb-6">Modifiez vos filtres ou créez une nouvelle facture.</p>
+            <a href="{% url 'accounts:facture_create' %}"
+               class="inline-flex items-center gap-2 px-6 py-3 bg-red-700 text-white font-bold rounded-lg hover:bg-red-800 transition">
+                Nouvelle facture
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

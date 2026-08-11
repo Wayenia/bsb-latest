@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inscription | BSB - Burkina Suudu Bawde{% endblock %}
+
+{% block content %}
+<div class="to-reduce min-h-screen flex items-center justify-center relative overflow-hidden py-6">
+
+     <!-- Background Logo -->
+    <div class="absolute inset-0 bg-auth-pattern z-0"></div>
+    
+    <div class="relative z-10 w-full max-w-9xl px-4 md:px-6">
+        
+        <div class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-3">
+                Inscription <span class="text-yellow-600">sur Yupan</span>
+            </h1>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                La maison des compétences du BURKINA FASO
+            </p>
+        </div>
+        
+        {% include 'partials/messages.html' %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1">
+                <div class="glass rounded-2xl p-8 h-full">
+                    <h3 class="text-xl ont-bold text-gray-800 mb-6">
+                        Etapes et consignes à respecter
+                    </h3>
+                    
+                    <div class="space-y-6">
+                        <div class="flex items-start space-x-4 step-nav" id="nav-1">
+                            <div class="flex-shrink-0 w-10 h-10 bg-yellow-600 rounded-full flex items-center justify-center text-white font-bold">1</div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Informations personnelles</h4>
+                                <p class="text-sm text-gray-500">Remplissez vos informations réelles</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4 step-nav opacity-40" id="nav-2">
+                            <div class="flex-shrink-0 w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">2</div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Coordonnées</h4>
+                                <p class="text-sm text-gray-500">Remplissez vos contact et localisation</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4 step-nav opacity-40" id="nav-3">
+                            <div class="flex-shrink-0 w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">3</div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Infos spécifiques</h4>
+                                <p class="text-sm text-gray-500">Lieu et date de naissance</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4 step-nav opacity-40" id="nav-4">
+                            <div class="flex-shrink-0 w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">4</div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Mot de passe</h4>
+                                <p class="text-sm text-gray-500">Fournissez un mot de passe robuste.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-10 p-4 bg-red-50 rounded-xl border border-red-100">
+                        <h4 class="font-bold text-red-700 mb-2">
+                             Remarque
+                        </h4>
+                        <p class="text-sm text-red-700">Les champs marqués d'une étoile (*) sont obligatoires.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="lg:col-span-2">
+                <div class="glass overflow-hidden">
+                    <div class="w-full bg-gray-200 h-2">
+                        <div id="progressBar" class="bg-yellow-600 h-2 transition-all duration-500" style="width: 20%"></div>
+                    </div>
+
+                    <div class="p-4 md:p-5">
+                        {% if errors %}
+                        <div class="mb-4 bg-red-50 border-l-4 border-red-500 p-3 rounded-xl">
+                            <ul class="text-sm text-red-700">
+                                {% for field, error_list in errors.items %}
+                                    {% for error in error_list %}
+                                        <li> <strong>{{ field|title }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <form method="POST" action="{% url 'accounts:register' %}" id="registrationForm" class="space-y-8">
+                            {% csrf_token %}
+
+                            <div class="step" data-step="1">
+                                <h3 class="text-2xl font-bold text-gray-800 border-b-2 border-yellow-500 pb-3 mb-6">
+                                    Étape 1 : Informations personnelles
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700 uppercase">Nom de famille <span class="text-red-700">*</span></label>
+                                        <input type="text" name="nom" required value="{{ form_data.nom|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-4 focus:ring-gray-100 outline-none uppercase" placeholder="Traoré">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700 uppercase">Prénom <span class="text-red-700">*</span></label>
+                                        <input type="text" name="prenom" required value="{{ form_data.prenom|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-4 focus:ring-gray-100 outline-none" placeholder="Abdoulaye">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700 uppercase">Nom d'utilisateur <span class="text-red-700">*</span></label>
+                                        <input type="text" name="username" required value="{{ form_data.username|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-4 focus:ring-gray-100 outline-none" placeholder="atraore">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700 uppercase">Sexe <span class="text-red-700">*</span></label>
+                                        <select name="sexe" required class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                            <option value="m" {% if form_data.sexe == 'm' %}selected{% endif %}>Masculin</option>
+                                            <option value="f" {% if form_data.sexe == 'f' %}selected{% endif %}>Féminin</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step hidden" data-step="2">
+                                <h3 class="text-2xl font-bold text-gray-800 border-b-2 border-yellow-500 pb-3 mb-6">
+                                    Étape 2 : Coordonnées réelles
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700">Numéro de téléphone <span class="text-red-700">*</span></label>
+                                        <input type="tel" name="tel" id="id_tel" required value="{{ form_data.tel|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none phone-intl" placeholder="+22670010300">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700">Adresse / Localité <span class="text-red-700">*</span></label>
+                                        <input type="text" name="adresse" required value="{{ form_data.adresse|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" placeholder="Ouagadougou, Secteur 15">
+                                    </div>
+                                    <div class="space-y-2 col-span-full">
+                                        <label class="text-sm font-bold text-gray-700">Adresse Email</label>
+                                        <input type="email" name="email" value="{{ form_data.email|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" placeholder="exemple@email.com">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step hidden" data-step="3">
+                                <h3 class="text-2xl font-bold text-gray-800 border-b-2 border-yellow-500 pb-3 mb-6">
+                                    Étape 3 : Autres informations spécifiques
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700">Lieu de naissance <span class="text-red-700">*</span></label>
+                                        <input type="text" name="lieu_naissance" id="id_lieu_naissance" required value="{{ form_data.lieu_naissance|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700">Date de naissance</label>
+                                        <input type="date" name="date_naissance" value="{{ form_data.date_naissance|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step hidden" data-step="4">
+                                <h3 class="text-2xl font-bold text-gray-800 border-b-2 border-yellow-500 pb-3 mb-6">
+                                    Étape 4 : Mot de passe</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700">Mot de passe <span class="text-red-700">*</span></label>
+                                        <input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700">Confirmer mot de passe <span class="text-red-700">*</span></label>
+                                        <input type="password" name="password_confirm" required class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center pt-10 border-t border-gray-100">
+                                <button type="button" id="prevBtn" class="hidden px-8 py-3 rounded-xl font-bold text-gray-500 bg-gray-300 hover:bg-gray-300 hover:text-bsb-gray transition-all uppercase">
+                                     Précédent
+                                </button>
+
+                                 <!-- sign in -->
+                                <div class="flex flex-col items-center justify-center text-center mx-auto px-2 py-3 bg-white text-gray-900 rounded-xl font-black transition-all">
+                                    
+                                    Avez-vous deja un compte ?
+                                    <a href="{% url 'accounts:login' %}" class="font-semibold text-green-500">
+                                        Connectez-vous ici
+                                    </a>
+                                </div>
+
+
+                                <button type="button" id="nextBtn" class="px-10 py-4 bg-bsb-gray text-white uppercase rounded-xl font-black shadow-xl hover:bg-yellow-600 transition-all">
+                                    Suivant
+                                </button>
+                                <button type="submit" id="submitBtn" class="hidden px-12 py-4 bg-green-600 text-white uppercase rounded-xl font-black shadow-xl hover:bg-green-700 transition-all tracking-widest">
+                                    Valider l'inscription
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    function showStep(step) {
+        document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
+        document.querySelector(`[data-step="${step}"]`).classList.remove('hidden');
+
+        document.getElementById('prevBtn').classList.toggle('hidden', step === 1);
+        document.getElementById('nextBtn').classList.toggle('hidden', step === totalSteps);
+        document.getElementById('submitBtn').classList.toggle('hidden', step !== totalSteps);
+
+        const percent = ((step - 1) / (totalSteps - 1)) * 100;
+        document.getElementById('progressBar').style.width = percent + '%';
+
+        document.querySelectorAll('.step-nav').forEach((nav, idx) => {
+            if (idx + 1 <= step) {
+                nav.classList.remove('opacity-40');
+                nav.querySelector('div').classList.replace('bg-gray-400', 'bg-yellow-600');
+            } else {
+                nav.classList.add('opacity-40');
+                nav.querySelector('div').classList.replace('bg-yellow-600', 'bg-gray-400');
+            }
+        });
+    }
+
+    // Validation Logic: Shows errors below fields
+    function validateCurrentStep() {
+        const activeStep = document.querySelector(`.step[data-step="${currentStep}"]`);
+        const inputs = activeStep.querySelectorAll('input[required], select[required]');
+        let isValid = true;
+
+        // Clear existing errors
+        activeStep.querySelectorAll('.field-error').forEach(el => el.remove());
+        activeStep.querySelectorAll('input, select').forEach(el => el.classList.remove('border-red-500'));
+
+        // Generic check for text/select/email inputs
+        inputs.forEach(input => {
+            if (!input.value.trim()) {
+                isValid = false;
+                input.classList.add('border-red-500');
+                const errorMsg = document.createElement('p');
+                errorMsg.className = 'field-error text-red-600 text-[10px] font-bold mt-1 uppercase';
+                errorMsg.innerText = 'Ce champ est obligatoire';
+                input.parentNode.appendChild(errorMsg);
+            }
+        });
+
+        // Specific check for Step 4 (Password matching)
+        if (currentStep === 4) {
+            const pass = document.getElementById('id_password').value;
+            const confirm = document.getElementById('id_password_confirm').value;
+            if (pass && confirm && pass !== confirm) {
+                isValid = false;
+                const matchError = document.createElement('p');
+                matchError.className = 'field-error text-red-600 text-xs font-bold mt-1';
+                matchError.innerText = 'Les mots de passe ne correspondent pas';
+                document.getElementById('id_password_confirm').parentNode.appendChild(matchError);
+            }
+        }
+
+        return isValid;
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        if (validateCurrentStep()) {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showStep(currentStep);
+                window.scrollTo(0,0);
+            }
+        }
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        if (currentStep > 1) { currentStep--; showStep(currentStep); }
+    });
+
+    // Final validation before submit
+    document.getElementById('registrationForm').onsubmit = function() {
+        return validateCurrentStep();
+    };
+
+    showStep(1);
+</script>
+
+<style>
+    .to-reduce{
+        opacity: 0.8;
+    }
+    .glass {
+        background: transparent;
+        backdrop-filter: none;
+    }
+    input.border-red-500 {
+        background-color: rgba(255, 245, 245, 0.8);
+    }
+    /* .glass {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+    }
+    input.border-red-500 {
+        background-color: #fff5f5;
+    } */
+</style>
+{% endblock %}

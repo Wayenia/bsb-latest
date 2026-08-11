@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% block title %}Aperçu de votre dossier | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-12">
+  {% include 'partials/messages.html' %}
+
+  <!-- header -->
+  <div class="mb-10">
+    <h1 class="text-4xl font-light text-slate-800 tracking-tight mb-3">Aperçu de votre dossier de candidature</h1>
+    <p class="text-base text-slate-500 max-w-2xl leading-relaxed">
+      Vérifiez attentivement toutes vos informations avant de soumettre.
+      <span class="text-slate-400 block mt-1">Après confirmation, vous ne pourrez plus modifier votre dossier.</span>
+    </p>
+  </div>
+
+  <!-- main card -->
+  <div class="bg-white border border-slate-200 rounded-sm mb-8">
+    <!-- line -->
+    <div class="h-1 w-full" style="background-color: #ECAB0F;"></div>
+    
+    <div class="p-8">
+      <!-- career choosen -->
+      <div class="mb-10">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-lg font-light text-slate-800 uppercase">Metier de formation</h3>
+          <span class="text-xs text-slate-400 uppercase tracking-wider">Récapitulatif</span>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-12">
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Métier</span>
+            <span class="text-base font-medium text-slate-800">{{ career.filiere.nom_filiere }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Durée</span>
+            <span class="text-base font-medium text-slate-800">{{ career.duree_display }} mois</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Titre professionnel</span>
+            <span class="text-base font-medium text-slate-800">{{ career.filiere.get_titre_professionnel_display }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Centre de Formation</span>
+            <span class="text-base font-medium text-slate-800">{{ career.centre.nom_centre }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Ville</span>
+            <span class="text-base font-medium text-slate-800">{{ career.centre.province.chef_lieu }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- line -->
+      <div class="w-full h-px bg-slate-100 my-8"></div>
+
+      <!-- personal info -->
+      <div class="mb-10">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-lg font-light text-slate-800 uppercase">Informations personnelles</h3>
+          <a href="javascript:history.go(-2)"
+             class="text-lg text-red-600 flex items-center gap-1">
+            <span class="text-lg"></span>
+            <span>Modifier</span>
+          </a>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-12">
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Nom</span>
+            <span class="text-base font-medium text-slate-800">{{ student.nom }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Prénom(s)</span>
+            <span class="text-base font-medium text-slate-800">{{ student.prenom }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Sexe</span>
+            <span class="text-base font-medium text-slate-800">
+              {% if student.sexe|lower == 'm' %}Masculin{% elif student.sexe|lower == 'f' %}Féminin{% else %}{{ student.sexe }}{% endif %}
+            </span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Email</span>
+            <span class="text-base font-medium text-slate-800">{{ student.email }}</span>
+          </div>
+          {% if student.tel %}
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Téléphone</span>
+            <span class="text-base font-medium text-slate-800">{{ student.tel }}</span>
+          </div>
+          {% endif %}
+          {% if student.date_naissance %}
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Date de naissance</span>
+            <span class="text-base font-medium text-slate-800">{{ student.date_naissance }}</span>
+          </div>
+          {% endif %}
+          {% if student.lieu_naissance %}
+          <div class="md:col-span-2 lg:col-span-3">
+            <span class="text-xs text-slate-400 block mb-1">Lieu de naissance</span>
+            <span class="text-base font-medium text-slate-800">{{ student.lieu_naissance }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+       <h3 class="text-lg font-light text-slate-800 uppercase mb-6">Informations de la personne à contacter</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-12">
+
+        <div>
+          <span class="text-xs text-slate-400 block mb-1">Nom de la Personne</span>
+          <span class="text-base font-medium text-slate-800">{{ student.nom_personne }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-400 block mb-1">Prénom de la personne</span>
+          <span class="text-base font-medium text-slate-800">{{student.prenom_personne}}</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-400 block mb-1">Fonction de la personne</span>
+          <span class="text-base font-medium text-slate-800">{{student.fonction}}</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-400 block mb-1">Contact de la personne</span>
+          <span class="text-base font-medium text-slate-800">{{student.contact}}</span>
+        </div>
+      </div>
+      
+      <!-- line -->
+      <div class="w-full h-px bg-slate-100 my-8"></div>
+
+      <!-- documents -->
+      <div class="mb-10">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-lg font-light text-slate-800 uppercase">Documents soumis</h3>
+          {% if uploaded_files %}
+          <span class="text-xs text-slate-400">{{ uploaded_files|length }} fichier(s)</span>
+          {% endif %}
+        </div>
+        
+        {% if uploaded_files %}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for nom, fic in uploaded_files.items %}
+            <div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+              <div class="flex items-center gap-3">
+                <span class="text-bsb-green text-sm"></span>
+                <span class="text-sm text-slate-700">{{ nom }}</span>
+              </div>
+              <a href="{{ fic.url }}" target="_blank"
+                 class="text-xs text-slate-400 hover:text-slate-600 transition-colors">
+                Voir
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-sm text-slate-400 py-2">
+            Aucun document soumis (non requis pour cette formation)
+          </p>
+        {% endif %}
+      </div>
+      
+      <!-- line -->
+      <div class="w-full h-px bg-slate-100 my-8"></div>
+      
+      <!-- final info -->
+      <div class="mx-auto text-center mb-10 p-5 bg-slate-50 border border-slate-200">
+        <div class="flex items-start gap-3">
+          <span class="text-bsb-gold text-lg">
+            
+          </span>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            Vérifiez attentivement toutes vos informations avant de soumettre.
+            <span class="font-medium text-red-600">Après confirmation, vous ne pourrez plus modifier votre dossier.</span>
+            <br>
+            <br>
+            Vous serez notifié(e) de la décision par l'administration dans votre espace
+            <span class="font-medium text-green-600">
+              <a href="{% url 'courses:my_subscriptions' %}">
+                   Mes inscriptions
+              </a>
+            </span>.
+
+            
+          </p>
+        </div>
+      </div>
+
+      <!-- BOUTONS DE CONFIRMATION -->
+      <form method="POST" action="">
+        {% csrf_token %}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <a href="javascript:history.go(-2)"
+             class="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-medium
+                    rounded-sm hover:bg-slate-50 hover:border-slate-300 transition-all text-center sm:text-left">
+            ← Modifier mes informations
+          </a>
+          
+          <button type="submit"
+                  class="px-8 py-3 text-white text-base font-medium rounded-sm
+                         transition-all hover:opacity-90"
+                  style="background-color: #009640;">
+            Soumettre ma demande d'inscription
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Pied de page avec les couleurs BSB -->
+  <div class="mt-8 flex justify-center space-x-3">
+    <span class="h-0.5 w-3" style="background-color: #ECAB0F;"></span>
+    <span class="h-0.5 w-3" style="background-color: #E30613;"></span>
+    <span class="h-0.5 w-3" style="background-color: #009640;"></span>
+  </div>
+</div>
+<script>
+  setTimeout(function () {
+    document.querySelectorAll('[class*="border-l-4"]').forEach(function(el) {
+      el.remove();
+    });
+  }, 5000);
+</script>
+{% endblock %}

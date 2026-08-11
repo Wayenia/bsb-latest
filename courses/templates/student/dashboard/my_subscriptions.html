@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-6 py-10">
+    
+  {% include 'partials/messages.html' %}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 ">
+        <div>
+            <h2 class="text-3xl serif-font border-l-4 border-red-700 font-bold pl-4 text-slate-900">
+                Mes demandes d'inscription
+            </h2>
+            <p class="text-slate-500 pl-5 mt-1">
+                Historique et statut de vos dossiers de candidature.
+            </p>
+        </div>
+          <a href="{% url 'courses:mes_paiements' %}"
+       class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700">
+          Mes Paiements
+       </a>
+    </div>
+
+    <div>
+        
+        <section class="py-20">
+            <div class="space-y-6">
+                 <div class="mb-5">
+          <a href="{% url 'courses:available_career' %}"
+       class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-yellow-600 text-white text-sm font-bold rounded-lg hover:bg-yellow-700">
+          Mes inscriptions
+       </a>
+     </div>
+                {% for subscription in subscriptions %}
+                <div class="bg-white rounded-lg border border-slate-200 p-6 transition-shadow hover:shadow-md">
+                    <div class="grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-4">
+                        
+                        <div class="flex flex-col">
+                            <h3 class="text-lg font-semibold text-slate-900 leading-snug">
+                                {{ subscription.formation.filiere.nom_filiere }}
+                            </h3>
+                            <div class="flex items-center gap-2 text-sm text-slate-500 mt-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                                <span>{{ subscription.formation.centre.nom_centre }}</span>
+                            </div>
+
+                            <!-- Date d'subscription -->
+                            <div class="flex items-center gap-2 text-sm text-slate-500 mt-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"></path>
+                                </svg>
+                                <span>Soumis le: {{ subscription.date_inscription|date:"d F Y H:i:s" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="w-full flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold
+                                {% if subscription.statut == 'en_cours' %}bg-yellow-100 text-yellow-800
+                                {% elif subscription.statut == 'valide' %}bg-red-700 text-white
+                                {% elif subscription.statut == 'rejete' %}bg-red-100 text-red-800
+                                {% else %}bg-slate-100 text-slate-800{% endif %}
+                            ">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                {{ subscription.libelle_statut_paiement }}
+                            </span>
+
+                            {% if subscription.statut != 'rejete' %}
+                                <a href="{% url 'courses:telecharger_recepisse' subscription.id %}" class="ml-4 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"></path>
+                                    </svg>
+                                    Télécharger le récépissé
+                                </a>
+                            {% endif %}
+
+                            <!-- if status = 'valide' display at end right a payment button -->
+                            {% if subscription.statut == 'valide' %}
+                                <a href="{% url 'courses:liste_dettes' subscription.id %}" class="ml-4 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M3 15a4 4 0 0 1 4 -4h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-6z"></path>
+                                        <path d="M7.5 7.5l8.5 -8.5"></path>
+                                        <path d="M7.5 7.5l8.5 -8.5"></path>
+                                    </svg>
+                                    Effectuer le paiement
+                                </a>
+                            {% endif %}
+
+                            {% if subscription.statut == 'rejete' %}
+                            <div class="flex ">
+                             <span class="bg-red-500 text-white p-1 rounded-lg"> Motif de rejet :{{subscription.motif_rejet}} </span>
+                                {% if subscription.id in deja_reinscrites_ids %}
+                                <span class="ml-4 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-400 cursor-not-allowed" title="Vous vous êtes déjà réinscrit(e) à cette formation">
+                                    Se réinscrire
+                                </span>
+                                {% else %}
+                                <a href="{% url 'courses:personal_info' subscription.formation.id %}?from_rejected={{ subscription.id }}" class="ml-4 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-gray-800 hover:bg-gray-200 transition-colors">
+                                    Se réinscrire
+                                </a>
+                                {% endif %}
+                             </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% empty %}
+                <div class="text-center text-slate-400 py-10">
+                    <p>Aucune demande d'inscription trouvée.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if subscriptions.has_other_pages %}
+            <div class="flex items-center justify-between px-1 py-4">
+                <p class="text-sm text-slate-500">
+                    Page <span class="font-semibold text-slate-800">{{ subscriptions.number }}</span>
+                    sur <span class="font-semibold text-slate-800">{{ subscriptions.paginator.num_pages }}</span>
+                </p>
+                <nav class="inline-flex rounded-lg shadow-sm overflow-hidden border border-slate-200 divide-x divide-slate-200">
+                    {% if subscriptions.has_previous %}
+                    <a href="?page={{ subscriptions.previous_page_number }}" class="px-3 py-2 bg-white text-sm text-slate-600 hover:bg-slate-50 transition">Précédent</a>
+                    {% endif %}
+                    {% for num in subscriptions.paginator.page_range %}
+                        {% if subscriptions.number == num %}
+                        <span class="px-4 py-2 bg-red-700 text-white text-sm font-bold">{{ num }}</span>
+                        {% else %}
+                        <a href="?page={{ num }}" class="px-4 py-2 bg-white text-sm text-slate-700 hover:bg-slate-50 transition">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if subscriptions.has_next %}
+                    <a href="?page={{ subscriptions.next_page_number }}" class="px-3 py-2 bg-white text-sm text-slate-600 hover:bg-slate-50 transition">Suivant</a>
+                    {% endif %}
+                </nav>
+            </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+
+<script>
+  setTimeout(function () {
+    document.querySelectorAll('[class*="border-l-4"]').forEach(function(el) {
+      el.remove();
+    });
+  }, 5000);
+</script>
+{% endblock %}

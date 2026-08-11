@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Supprimer une région | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-10">
+    {% include 'partials/messages.html' %}
+
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-red-600 px-6 py-5">
+            <h1 class="text-2xl font-bold text-white">
+                
+                Confirmation de suppression
+            </h1>
+        </div>
+
+        <div class="p-8">
+            <div class="flex items-center mb-6">
+                <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                    
+                </div>
+
+                <div class="ml-5">
+                    <h2 class="text-xl font-bold text-gray-900">
+                        {{ region.nom_region }}
+                    </h2>
+                    <p class="text-gray-600">
+                        Chef-lieu : {{ region.chef_lieu }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                <p class="text-red-700">
+                    Voulez-vous vraiment supprimer cette région ?
+                    <br>
+                    <strong>Cette action est irréversible.</strong>
+                </p>
+            </div>
+
+            <form method="POST" class="mt-8 flex justify-end gap-3">
+                {% csrf_token %}
+
+                <a href="{% url 'bsb_admin:region_list' %}"
+                   class="px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100">
+                    Annuler
+                </a>
+
+                <button type="submit"
+                        class="px-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700">
+                    
+                    Supprimer
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

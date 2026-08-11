@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4 landscape; margin: 1.2cm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Times New Roman', Times, serif; color: #000; font-size: 9px; }
+
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .header-left { font-weight: bold; font-size: 7px; text-align: center; line-height: 1.25; }
+  .header-right { text-align: center; font-size: 7px; width: 160px; }
+  .header-right .pays { font-weight: bold; }
+
+  .titre { text-align: center; font-weight: bold; font-size: 13px; text-decoration: underline; margin: 10px 0 4px; }
+  .sous-titre { text-align: center; font-size: 9px; margin-bottom: 12px; }
+
+  .direction-titre {
+    font-weight: bold; font-size: 11px; background: #f0f0f0;
+    padding: 4px 6px; margin-top: 14px; margin-bottom: 4px;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  th, td { border: 1px solid #444; padding: 2px 3px; text-align: left; vertical-align: top; }
+  th { background: #C0392B; color: #fff; font-size: 8px; text-align: center; }
+  td { font-size: 8px; }
+  td.centre { text-align: center; }
+
+  .pied-page { margin-top: 14px; text-align: right; font-size: 8px; font-style: italic; color: #444; }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      {% for line in header_left %}{{ line }}<br>{% endfor %}
+    </div>
+    <div class="header-right">
+      {% for line in header_right %}<div{% if forloop.first %} class="pays"{% endif %}>{{ line }}</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="titre">Liste nominative des apprenants en résidentielle</div>
+  <div class="sous-titre">Année scolaire : {{ annee_libelle }} — Générée le {{ date_generation|date:"d/m/Y à H:i" }}</div>
+
+  {% for direction_nom, inscriptions in directions.items %}
+  <div class="direction-titre">{{ direction_nom }}</div>
+  <table>
+    <thead>
+      <tr>
+        <th>N°</th>
+        <th>Nom</th>
+        <th>Prénom(s)</th>
+        <th>Sexe</th>
+        <th>Nationalité</th>
+        <th>Niveau scolaire</th>
+        <th>Centre</th>
+        <th>Métiers</th>
+        <th>Niveau de formation</th>
+        <th>Type de formation</th>
+        <th>Mode de formation</th>
+        <th>Date de naissance</th>
+        <th>Téléphone</th>
+        <th>Tuteur/parent</th>
+        <th>Observations</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inscription in inscriptions %}
+      <tr>
+        <td class="centre">{{ forloop.counter }}</td>
+        <td>{{ inscription.eleve.nom }}</td>
+        <td>{{ inscription.eleve.prenom }}</td>
+        <td class="centre">{{ inscription.eleve.get_sexe_display }}</td>
+        <td>{{ inscription.eleve.nationalite|default:"—" }}</td>
+        <td>{{ inscription.eleve.niveau_scolaire|default:"—" }}</td>
+        <td>{{ inscription.formation.centre.nom_centre }}</td>
+        <td>{{ inscription.formation.filiere.nom_filiere }}</td>
+        <td class="centre">{{ inscription.formation.filiere.titre_professionnel|default:"—" }}</td>
+        <td>{{ inscription.formation.get_type_formation_display|default:"—" }}</td>
+        <td>{{ inscription.get_mode_formation_display }}</td>
+        <td class="centre">{{ inscription.eleve.date_naissance|date:"d/m/Y"|default:"—" }}</td>
+        <td>{{ inscription.eleve.tel|default:"—" }}</td>
+        <td>{{ inscription.personne_contact_nom|default:"" }} {{ inscription.personne_contact_prenom|default:"" }}
+            {% if inscription.personne_contact_tel %}({{ inscription.personne_contact_tel }}){% endif %}</td>
+        <td>{{ inscription.observations_reel|default:"" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% empty %}
+  <p>Aucun apprenant en mode résidentielle trouvé pour ces filtres.</p>
+  {% endfor %}
+
+  <div class="pied-page">
+    BSB-DSI          généré sur YU-PAAN le : {{ date_generation|date:"d/m/Y à H:i" }}
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paiement Mobile</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green-50: #E1F5EE;
+      --green-100: #9FE1CB;
+      --green-400: #1D9E75;
+      --green-600: #0F6E56;
+      --green-800: #085041;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --gray-50: #F7F7F6;
+      --gray-100: #EBEBEA;
+      --gray-300: #C4C4C2;
+      --gray-500: #888780;
+      --gray-800: #2C2C2A;
+      --text-primary: #1A1A18;
+      --text-secondary: #5F5E5A;
+      --text-hint: #9A9895;
+      --bg: #F4F3F0;
+      --surface: #FFFFFF;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* ── Card ────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      width: 100%;
+      max-width: 400px;
+      padding: 2rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.06);
+    }
+
+    .card-header { margin-bottom: 1.75rem; }
+    .card-header h1 { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+    .card-header p { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
+
+    /* ── Section label ───────────────────────── */
+    .section-label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      color: var(--text-hint);
+      margin-bottom: 10px;
+    }
+
+    /* ── Networks ────────────────────────────── */
+    .network-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .net-btn {
+      border: 1.5px solid var(--gray-100);
+      border-radius: var(--radius-md);
+      padding: 14px 8px 12px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--surface);
+      transition: border-color .15s, background .15s;
+      user-select: none;
+    }
+    .net-btn:hover { border-color: var(--gray-300); background: var(--gray-50); }
+    .net-btn.selected { border: 2px solid var(--green-400); background: var(--green-50); }
+
+    .net-logo { font-size: 24px; display: block; margin-bottom: 5px; line-height: 1; }
+    .net-name { font-size: 11px; font-weight: 500; color: var(--text-secondary); line-height: 1.2; }
+    .net-btn.selected .net-name { color: var(--green-600); }
+
+    /* ── Phone input ─────────────────────────── */
+    .field { margin-bottom: 1.25rem; }
+    .field input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--gray-100);
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--surface);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field input::placeholder { color: var(--text-hint); }
+    .field input:focus {
+      border-color: var(--green-400);
+      box-shadow: 0 0 0 3px rgba(29,158,117,.12);
+    }
+
+    /* ── Amount card ─────────────────────────── */
+    .amount-card {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-100);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .amount-label { font-size: 12px; color: var(--text-hint); margin-bottom: 4px; }
+    .amount-value { font-size: 34px; font-weight: 600; color: var(--text-primary); line-height: 1.1; }
+    .amount-currency { font-size: 16px; font-weight: 500; color: var(--text-secondary); }
+
+    /* ── Pay button ──────────────────────────── */
+    .pay-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: var(--radius-md);
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+    }
+    .pay-btn.ready { background: var(--green-400); color: #fff; }
+    .pay-btn.ready:hover { background: var(--green-600); }
+    .pay-btn.ready:active { transform: scale(0.98); }
+    .pay-btn.disabled {
+      background: var(--gray-100);
+      color: var(--gray-300);
+      cursor: not-allowed;
+    }
+
+    /* ── States ──────────────────────────────── */
+    .state { display: none; }
+    .state.visible { display: block; }
+
+    /* Loading */
+    .loading-box {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-100);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      text-align: center;
+      margin-top: 1rem;
+    }
+    .spinner {
+      display: inline-block;
+      width: 28px; height: 28px;
+      border: 2.5px solid var(--green-100);
+      border-top-color: var(--green-400);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+      margin-bottom: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-box p { font-size: 13px; color: var(--text-secondary); }
+
+    /* Success */
+    .success-box {
+      background: var(--green-50);
+      border: 1px solid var(--green-100);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      text-align: center;
+      margin-top: 1rem;
+    }
+    .success-icon { font-size: 32px; margin-bottom: 8px; display: block; }
+    .success-title { font-size: 16px; font-weight: 600; color: var(--green-600); }
+    .success-sub { font-size: 13px; color: var(--green-400); margin-top: 3px; }
+    .success-detail {
+      margin-top: 1rem;
+      border-top: 1px solid var(--green-100);
+      padding-top: 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      text-align: left;
+    }
+    .detail-item .detail-label { font-size: 11px; color: var(--green-400); }
+    .detail-item .detail-val { font-size: 13px; font-weight: 500; color: var(--green-800); }
+
+    .reset-btn {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 10px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--green-100);
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--green-600);
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .reset-btn:hover { background: white; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <h1>Paiement mobile</h1>
+    <p>Sélectionne ton réseau et confirme</p>
+  </div>
+
+  <!-- Form (état initial) -->
+  <div id="stateForm">
+    <p class="section-label">Réseau mobile</p>
+    <div class="network-grid">
+      <div class="net-btn" data-network="Orange Money" onclick="selectNetwork(this)">
+        <span class="net-logo"></span>
+        <span class="net-name">Orange Money</span>
+      </div>
+      <div class="net-btn" data-network="Moov Money" onclick="selectNetwork(this)">
+        <span class="net-logo"></span>
+        <span class="net-name">Moov Money</span>
+      </div>
+      <div class="net-btn" data-network="Coris Money" onclick="selectNetwork(this)">
+        <span class="net-logo"></span>
+        <span class="net-name">Coris Money</span>
+      </div>
+    </div>
+
+    <p class="section-label">Numéro de téléphone</p>
+    <div class="field">
+      <input type="tel" id="phoneInput" placeholder="Ex: 70 00 00 00" maxlength="11" />
+    </div>
+
+    <div class="amount-card">
+      <p class="amount-label">Montant à payer</p>
+      <p class="amount-value"><span class="amount-currency">XOF </span>5 000</p>
+    </div>
+
+    <button class="pay-btn disabled" id="payBtn" onclick="pay()">
+      Sélectionne un réseau
+    </button>
+  </div>
+
+  <!-- État : chargement -->
+  <div id="stateLoading" class="state">
+    <div class="loading-box">
+      <div class="spinner"></div>
+      <p>Traitement en cours…</p>
+    </div>
+  </div>
+
+  <!-- État : succès -->
+  <div id="stateSuccess" class="state">
+    <div class="success-box">
+      <span class="success-icon"></span>
+      <p class="success-title">Paiement réussi !</p>
+      <p class="success-sub" id="successSub"></p>
+      <div class="success-detail">
+        <div class="detail-item">
+          <p class="detail-label">Réseau</p>
+          <p class="detail-val" id="detailNetwork">—</p>
+        </div>
+        <div class="detail-item">
+          <p class="detail-label">Téléphone</p>
+          <p class="detail-val" id="detailPhone">—</p>
+        </div>
+        <div class="detail-item">
+          <p class="detail-label">Montant</p>
+          <p class="detail-val">XOF 5 000</p>
+        </div>
+        <div class="detail-item">
+          <p class="detail-label">Statut</p>
+          <p class="detail-val"> Confirmé</p>
+        </div>
+      </div>
+    </div>
+    <button class="reset-btn" onclick="reset()">Nouveau paiement</button>
+  </div>
+</div>
+
+<script>
+  let selectedNetwork = null;
+
+  function selectNetwork(el) {
+    document.querySelectorAll('.net-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedNetwork = el.dataset.network;
+    const btn = document.getElementById('payBtn');
+    btn.className = 'pay-btn ready';
+    btn.textContent = 'Payer 5 000 XOF';
+  }
+
+  function setState(name) {
+    document.getElementById('stateForm').style.display = name === 'form' ? '' : 'none';
+    document.getElementById('stateLoading').style.display = name === 'loading' ? 'block' : 'none';
+    document.getElementById('stateSuccess').style.display = name === 'success' ? 'block' : 'none';
+  }
+
+  function pay() {
+    if (!selectedNetwork) return;
+    setState('loading');
+
+    setTimeout(() => {
+      const phone = document.getElementById('phoneInput').value.trim() || '—';
+      document.getElementById('successSub').textContent = selectedNetwork + ' · XOF 5 000';
+      document.getElementById('detailNetwork').textContent = selectedNetwork;
+      document.getElementById('detailPhone').textContent = phone;
+      setState('success');
+    }, 1800);
+  }
+
+  function reset() {
+    selectedNetwork = null;
+    document.getElementById('phoneInput').value = '';
+    document.querySelectorAll('.net-btn').forEach(b => b.classList.remove('selected'));
+    const btn = document.getElementById('payBtn');
+    btn.className = 'pay-btn disabled';
+    btn.textContent = 'Sélectionne un réseau';
+    setState('form');
+  }
+
+  setState('form');
+</script>
+</body>
+</html>

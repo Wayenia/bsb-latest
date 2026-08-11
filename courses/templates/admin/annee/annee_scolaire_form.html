@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ action }} une annee scolaire | BSB{% endblock %}
+{% block content %}
+{% include 'partials/messages.html' %}
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-lg mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mb-6">
+      <a href="{% url 'bsb_admin:annee_list' %}" class="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1">
+         Annees scolaires
+      </a>
+    </div>
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+      <div class="mb-8">
+        <div class="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center mb-4">
+          
+        </div>
+        <h1 class="text-xl font-black text-gray-900">{{ action }} une annee scolaire</h1>
+        {% if object %}<p class="text-sm text-gray-400 mt-1">Modification de {{ object.libelle_anne }}</p>{% endif %}
+      </div>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-6">
+          <label class="block text-sm font-bold text-gray-700 mb-2">Libelle <span class="text-red-500">*</span></label>
+          {{ form.libelle_anne }}
+          {% if form.libelle_anne.errors %}<p class="mt-1 text-xs text-red-500">{{ form.libelle_anne.errors.0 }}</p>{% endif %}
+          <p class="mt-1 text-xs text-gray-400">Ex : 2024-2025</p>
+        </div>
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit" class="flex-1 py-2.5 bg-yellow-500 text-white text-sm font-bold rounded-xl hover:bg-yellow-600 transition-colors">
+            {{ action }}
+          </button>
+          <a href="{% url 'bsb_admin:annee_list' %}" class="flex-1 py-2.5 text-center text-sm font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
+            Annuler
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

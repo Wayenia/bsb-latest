@@ -1,0 +1,387 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Agent | BSB{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto py-10">
+    {% include 'partials/messages.html' %}
+
+    <!-- En-tête -->
+    <div class="mb-8 flex items-center gap-4">
+        <a href="{% url 'bsb_admin:agent_list' %}"
+           class="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-700 transition-all">Retour</a>
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">{{ action }} un agent</h1>
+            <p class="text-gray-500 mt-1 text-sm">Les champs spécifiques apparaissent selon le rôle choisi</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+        <form method="POST" class="space-y-8" id="agent-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 flex gap-3 items-start">
+                
+                <p class="text-sm text-red-700">{{ form.non_field_errors }}</p>
+            </div>
+            {% endif %}
+
+            <!-- ══ RÔLE ══════════════════════════════════════════════════════ -->
+            <div class="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-xl p-5">
+                <label for="{{ form.user_type.id_for_label }}"
+                       class="block text-sm font-bold text-gray-900 mb-2">
+                    
+                    {{ form.user_type.label }} <span class="text-red-600">*</span>
+                </label>
+                {{ form.user_type }}
+                {% if form.user_type.errors %}
+                <p class="mt-1 text-xs text-red-600">
+                    {{ form.user_type.errors.0 }}
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- ══ IDENTITÉ ══════════════════════════════════════════════════ -->
+            <div>
+                <h2 class="text-base font-bold text-gray-800 border-b-2 border-yellow-400 pb-2 mb-5 flex items-center gap-2">
+                     Identité
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    <div>
+                        <label for="{{ form.nom.id_for_label }}"
+                               class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.nom.label }} <span class="text-red-600">*</span>
+                        </label>
+                        {{ form.nom }}
+                        {% if form.nom.errors %}<p class="mt-1 text-xs text-red-600">{{ form.nom.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.prenom.id_for_label }}"
+                               class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.prenom.label }} <span class="text-red-600">*</span>
+                        </label>
+                        {{ form.prenom }}
+                        {% if form.prenom.errors %}<p class="mt-1 text-xs text-red-600">{{ form.prenom.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.username.id_for_label }}"
+                               class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.username.label }} <span class="text-red-600">*</span>
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}<p class="mt-1 text-xs text-red-600">{{ form.username.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.email.id_for_label }}"
+                               class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.email.label }} <span class="text-red-600">*</span>
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<p class="mt-1 text-xs text-red-600">{{ form.email.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.tel.id_for_label }}"
+                               class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.tel.label }}
+                        </label>
+                        {{ form.tel }}
+                        {% if form.tel.errors %}<p class="mt-1 text-xs text-red-600">{{ form.tel.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.sexe.id_for_label }}"
+                               class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.sexe.label }}
+                        </label>
+                        {{ form.sexe }}
+                        {% if form.sexe.errors %}<p class="mt-1 text-xs text-red-600">{{ form.sexe.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.date_naissance.id_for_label }}"
+                               class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.date_naissance.label }}
+                        </label>
+                        {{ form.date_naissance }}
+                        {% if form.date_naissance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.date_naissance.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.password.id_for_label }}"
+                               class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.password.label }}
+                        </label>
+                        {{ form.password }}
+                        {% if form.password.errors %}<p class="mt-1 text-xs text-red-600">{{ form.password.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="{{ form.adresse.id_for_label }}"
+                               class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.adresse.label }}
+                        </label>
+                        {{ form.adresse }}
+                        {% if form.adresse.errors %}<p class="mt-1 text-xs text-red-600">{{ form.adresse.errors.0 }}</p>{% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ══ SECTION FORMATEUR ═════════════════════════════════════════ -->
+            <div id="section-formateur" class="hidden role-section">
+                <h2 class="text-base font-bold text-gray-800 border-b-2 border-gray-400 pb-2 mb-5 flex items-center gap-2">
+                     Informations Formateur
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.centre_formateur.label }} <span class="text-red-600">*</span>
+                        </label>
+                        {{ form.centre_formateur }}
+                        {% if form.centre_formateur.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.centre_formateur.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.date_integration_formateur.label }} <span class="text-red-600">*</span>
+                        </label>
+                        {{ form.date_integration_formateur }}
+                        {% if form.date_integration_formateur.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.date_integration_formateur.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.filiere.label }}
+                        </label>
+                        {{ form.filiere }}
+                        {% if form.filiere.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.filiere.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.module.label }}
+                        </label>
+                        {{ form.module }}
+                        <p class="mt-1 text-xs text-gray-400">
+                            Sélectionnez d'abord un métier pour voir ses modules.
+                        </p>
+                        {% if form.module.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.module.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+            {{ filiere_modules_json|json_script:"filiere-modules-data" }}
+
+            <!-- ══ SECTION DIRECTEUR INTER-RÉGIONAL ═════════════════════════ -->
+            <div id="section-dir" class="hidden role-section">
+                <h2 class="text-base font-bold text-gray-800 border-b-2 border-red-500 pb-2 mb-5 flex items-center gap-2">
+                     Directeur inter-régional
+                </h2>
+                <div class="grid grid-cols-1 gap-5">
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.direction_interreg.label }} <span class="text-red-600">*</span>
+                        </label>
+                        {{ form.direction_interreg }}
+                        {% if form.direction_interreg.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.direction_interreg.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ══ SECTION CENTRE (gestionnaire / comptable / caissier) ═════ -->
+            <div id="section-centre-role" class="hidden role-section">
+                <h2 class="text-base font-bold text-gray-800 border-b-2 border-yellow-500 pb-2 mb-5 flex items-center gap-2">
+                    
+                    <span id="titre-centre-role">Rattachement au centre</span>
+                </h2>
+                <div class="grid grid-cols-1 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.centre_role.label }} <span class="text-red-600">*</span>
+                        </label>
+                        {{ form.centre_role }}
+                        {% if form.centre_role.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.centre_role.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ SECTION ADMIN ══════════════════════════════════════════════ -->
+            <div id="section-admin" class="hidden role-section">
+                <h2 class="text-base font-bold text-gray-800 border-b-2 border-gray-400 pb-2 mb-5 flex items-center gap-2">
+                     Administrateur
+                </h2>
+                <div class="grid grid-cols-1 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.centre_admin.label }}
+                            <span class="text-xs font-normal text-gray-400">(optionnel)</span>
+                        </label>
+                        {{ form.centre_admin }}
+                        {% if form.centre_admin.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.centre_admin.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ SECTION MEMBRE DE L'ADMINISTRATION (fonction libre) ═════════ -->
+            <div id="section-membre" class="hidden role-section">
+                <h2 class="text-base font-bold text-gray-800 border-b-2 border-gray-400 pb-2 mb-5 flex items-center gap-2">
+                     Membre de l'administration
+                </h2>
+                <div class="grid grid-cols-1 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            {{ form.emploi_libre.label }} <span class="text-red-600">*</span>
+                        </label>
+                        {{ form.emploi_libre }}
+                        {% if form.emploi_libre.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.emploi_libre.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- deps : aucune section supplémentaire — le rôle seul suffit -->
+
+            <!-- ══ BOUTONS ════════════════════════════════════════════════════ -->
+            <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
+                <a href="{% url 'bsb_admin:agent_list' %}"
+                   class="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-semibold
+                          hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-all">
+                    Annuler
+                </a>
+                <button type="submit"
+                        class="px-8 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-xl
+                               shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                    {{ action }}
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    /*
+     * Valeurs user_type réelles (modèle Utilisateur) :
+     * formateur | dir | gestionnaire | agent_comptable | caissier | deps | admin | daf | membre
+     */
+    var ROLE_CONFIG = {
+        'formateur': { section: 'section-formateur', titre: null },
+        'dir': { section: 'section-dir', titre: null },
+        'gestionnaire': { section: 'section-centre-role', titre: 'Directeur de centre — centre rattaché' },
+        'agent_comptable': { section: 'section-centre-role', titre: 'Agent comptable — centre rattaché' },
+        'caissier': { section: 'section-centre-role', titre: 'Caissier — centre rattaché' },
+        'admin': { section: 'section-admin', titre: null },
+        'daf': { section: 'section-admin', titre: null },
+        'membre': { section: 'section-membre', titre: null },
+        // deps : aucune section
+    };
+
+    var ALL_SECTIONS = [
+        'section-formateur',
+        'section-dir',
+        'section-centre-role',
+        'section-admin',
+        'section-membre',
+    ];
+
+    var select = document.getElementById('id_user_type');
+    var titreEl = document.getElementById('titre-centre-role');
+
+    function toggleSections() {
+        var type = select.value;
+        var config = ROLE_CONFIG[type] || null;
+
+        // Masquer toutes les sections
+        ALL_SECTIONS.forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.classList.add('hidden');
+                el.style.opacity = '0';
+            }
+        });
+
+        if (!config) return; // deps / '' → rien
+
+        // Afficher avec micro-animation
+        var target = document.getElementById(config.section);
+        if (!target) return;
+        target.classList.remove('hidden');
+        requestAnimationFrame(function () {
+            target.style.transition = 'opacity 0.2s ease';
+            target.style.opacity = '1';
+        });
+
+        // Titre dynamique pour la section centre
+        if (titreEl && config.titre) {
+            titreEl.textContent = config.titre;
+        }
+    }
+
+    select.addEventListener('change', toggleSections);
+    toggleSections(); // initialisation (mode modification)
+})();
+
+(function () {
+    // Filtre le select "Module" selon le métier choisi dans le select "Métier".
+    var dataEl = document.getElementById('filiere-modules-data');
+    if (!dataEl) return;
+    var filiereModules = JSON.parse(dataEl.textContent);
+
+    var filiereSelect = document.getElementById('id_filiere');
+    var moduleSelect = document.getElementById('id_module');
+    if (!filiereSelect || !moduleSelect) return;
+
+    var initialModuleValue = moduleSelect.value;
+
+    function refreshModules() {
+        var currentValue = moduleSelect.value;
+        var modules = filiereModules[filiereSelect.value] || [];
+
+        moduleSelect.innerHTML = '';
+        var emptyOpt = document.createElement('option');
+        emptyOpt.value = '';
+        emptyOpt.textContent = modules.length ? 'Sélectionnez un module' : 'Aucun module pour ce métier';
+        moduleSelect.appendChild(emptyOpt);
+
+        modules.forEach(function (m) {
+            var opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.nom;
+            moduleSelect.appendChild(opt);
+        });
+
+        var valueToRestore = (currentValue === initialModuleValue) ? initialModuleValue : currentValue;
+        if (modules.some(function (m) { return String(m.id) === String(valueToRestore); })) {
+            moduleSelect.value = valueToRestore;
+        }
+    }
+
+    filiereSelect.addEventListener('change', refreshModules);
+    refreshModules(); // initialisation (mode modification : garde le module déjà choisi)
+})();
+</script>
+{% endblock %}

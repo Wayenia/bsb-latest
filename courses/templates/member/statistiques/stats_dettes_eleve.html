@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dettes de {{ eleve.nom }} {{ eleve.prenom }} | BSB{% endblock %}
+
+{% block extra_css %}
+<style>
+  .stats-body { background:#f4f6fb; min-height:100vh; padding:2rem 1rem; }
+  .page-card { background:#fff; border-radius:16px; box-shadow:0 2px 16px rgba(55, 65, 81,.09); padding:1.5rem; margin-bottom:1.5rem; }
+  .avatar { width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#374151,#6b7280);color:#fff;font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+  .btn-back { display:inline-flex;align-items:center;gap:.5rem;padding:.45rem 1rem;border-radius:10px;border:2px solid #e2e8f0;background:#fff;color:#374151;font-weight:600;font-size:.88rem;text-decoration:none;transition:all .15s; }
+  .btn-back:hover { border-color:#6b7280;color:#6b7280; }
+
+  .insc-header {
+    background:linear-gradient(135deg,#374151,#6b7280);
+    color:#fff;border-radius:12px;padding:1rem 1.25rem;
+    display:flex;justify-content:space-between;align-items:center;
+    cursor:pointer;user-select:none;gap:1rem;flex-wrap:wrap;
+    transition:opacity .15s;
+  }
+  .insc-header:hover { opacity:.92; }
+  .insc-header .chevron { transition:transform .3s;font-size:1rem; }
+  .insc-header.open .chevron { transform:rotate(180deg); }
+
+  .insc-body { overflow:hidden;transition:max-height .4s ease;max-height:0; }
+  .insc-body.open { max-height:3000px; }
+
+  .dette-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;padding:1rem 0; }
+  .dette-card { background:#fff;border-radius:12px;border:1.5px solid #e2e8f0;padding:1.1rem;transition:box-shadow .2s; }
+  .dette-card:hover { box-shadow:0 4px 18px rgba(55, 65, 81,.1); }
+
+  .prog-bar-wrap { background:#f0f4ff;border-radius:8px;height:9px;overflow:hidden;margin:.4rem 0; }
+  .prog-bar { height:100%;border-radius:8px;transition:width .5s; }
+  .prog-green { background:#059669; }
+  .prog-yellow { background:#d97706; }
+  .prog-red { background:#dc2626; }
+
+  .badge-solde { background:#d1fae5;color:#065f46;padding:.28em .75em;border-radius:20px;font-size:.76rem;font-weight:700; }
+  .badge-nonsolde { background:#fee2e2;color:#991b1b;padding:.28em .75em;border-radius:20px;font-size:.76rem;font-weight:700; }
+
+  .btn-detail { display:inline-flex;align-items:center;gap:.4rem;padding:.38rem .9rem;border-radius:8px;background:linear-gradient(135deg,#374151,#6b7280);color:#fff;font-size:.82rem;font-weight:700;text-decoration:none;border:none;transition:all .15s; }
+  .btn-detail:hover { opacity:.88;color:#fff;transform:translateY(-1px); }
+
+  .tranches-toggle { display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;border-top:1px dashed #e2e8f0;margin-top:.5rem;padding-top:.6rem; }
+  .tranches-toggle .chevron { transition:transform .3s;font-size:.85rem;color:#9ca3af; }
+  .tranches-toggle.open .chevron { transform:rotate(180deg); }
+  .tranches-body { overflow:hidden;max-height:0;transition:max-height .3s ease; }
+  .tranches-body.open { max-height:1000px; }
+  .tranche-row { display:flex;justify-content:space-between;align-items:center;gap:.5rem;font-size:.78rem;padding:.4rem 0;border-bottom:1px solid #f3f4f6; }
+  .tranche-row:last-child { border-bottom:none; }
+  .btn-payer-tranche { padding:.28rem .7rem;border-radius:7px;background:#059669;color:#fff;font-size:.74rem;font-weight:700;border:none;cursor:pointer;transition:all .15s;flex-shrink:0; }
+  .btn-payer-tranche:hover { background:#047857; }
+  .btn-payer-tranche:disabled { background:#e5e7eb;color:#9ca3af;cursor:not-allowed; }
+
+  .total-badge { background:#fee2e2;color:#991b1b;border-radius:10px;padding:.6rem 1.1rem;flex-shrink:0; }
+  .eleve-meta span { font-size:.82rem;color:#6b7280;margin-right:1.2rem; }
+
+  .empty-state { text-align:center;padding:4rem 1rem;color:#9ca3af; }
+  .empty-state i { font-size:3rem;margin-bottom:1rem;display:block;opacity:.25; }
+
+  @media(max-width:600px){
+    .stats-body{padding:1rem .4rem;}
+    .page-card{padding:1rem;}
+    .dette-grid{grid-template-columns:1fr;}
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stats-body">
+<div style="max-width:1100px;margin:0 auto;">
+
+  <!-- Entête -->
+  <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+    <a href="{% url 'courses:paiement_list' %}" class="btn-back">
+      Retour
+    </a>
+    <div>
+      <h2 style="font-weight:800;color:#374151;margin:0;font-size:1.4rem;">
+        Dettes de l'apprenant
+      </h2>
+      <p style="color:#6b7280;font-size:.85rem;margin:.2rem 0 0;">Liste des dettes par formation</p>
+    </div>
+  </div>
+
+  <!-- Carte apprenant -->
+  <div class="page-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;">
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <div class="avatar"></div>
+        <div>
+          <div style="font-weight:800;font-size:1.15rem;color:#374151;">{{ eleve.nom }} {{ eleve.prenom }}</div>
+          <div style="margin-top:.3rem;">
+            <span class="eleve-meta">{{ eleve.numero_identifiant|default:"—" }}</span>
+            <span class="eleve-meta">{{ eleve.tel|default:"—" }}</span>
+            <span class="eleve-meta">{{ eleve.email }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="total-badge">
+        <div style="font-size:1.2rem;font-weight:800;">{{ total_restant|floatformat:0 }} FCFA</div>
+        <div style="font-size:.75rem;color:#9ca3af;">Reste à payer (total)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inscriptions avec dettes -->
+  {% for item in inscriptions_dettes %}
+  <div style="margin-bottom:1.25rem;">
+
+    <div class="insc-header open" onclick="toggleInsc(this)">
+      <div>
+        <div style="font-weight:700;font-size:1rem;">
+          {{ item.inscription.formation.filiere.nom_filiere }}
+        </div>
+        <div style="font-size:.82rem;opacity:.8;margin-top:.15rem;">
+          {{ item.inscription.formation.centre.nom_centre }}{% if item.inscription.annee_scolaire %} — {{ item.inscription.annee_scolaire }}{% endif %}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:1.5rem;">
+        <div style="text-align:right;">
+          <div style="font-weight:700;font-size:.95rem;">{{ item.total_paye|floatformat:0 }} / {{ item.total_du|floatformat:0 }} FCFA</div>
+          <div style="font-size:.75rem;opacity:.75;">payé / dû</div>
+        </div>
+        
+      </div>
+    </div>
+
+    <div class="insc-body open">
+      <div class="dette-grid">
+        {% for dette in item.dettes %}
+        <div class="dette-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.65rem;">
+            <div>
+              <div style="font-weight:700;color:#374151;font-size:.95rem;">{{ dette.frais_formation.type_frais.libelle }}</div>
+              <div style="font-size:.78rem;color:#9ca3af;">Total : {{ dette.montant_total|floatformat:0 }} FCFA</div>
+            </div>
+            {% if dette.etat_dette == 'soldé' %}
+              <span class="badge-solde"> Soldée</span>
+            {% else %}
+              <span class="badge-nonsolde">● Non soldée</span>
+            {% endif %}
+          </div>
+
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.3rem;">
+            <span style="color:#059669;font-weight:600;">Payé : {{ dette.montant_paye|floatformat:0 }} FCFA</span>
+            <span style="color:#dc2626;font-weight:600;">Reste : {{ dette.reste|floatformat:0 }} FCFA</span>
+          </div>
+
+          <div class="prog-bar-wrap">
+            <div class="prog-bar {% if dette.taux >= 100 %}prog-green{% elif dette.taux >= 50 %}prog-yellow{% else %}prog-red{% endif %}"
+                 style="width:{{ dette.taux }}%;"></div>
+          </div>
+          <div style="text-align:right;font-size:.75rem;color:#9ca3af;margin-bottom:.75rem;">{{ dette.taux|floatformat:1 }}% réglé</div>
+
+          {% if dette.tranches %}
+          <div class="tranches-toggle" onclick="toggleTranches(this)">
+            <span style="font-size:.72rem;color:#9ca3af;font-weight:700;text-transform:uppercase;">Tranches ({{ dette.tranches|length }})</span>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="tranches-body">
+            {% for t in dette.tranches %}
+            <div class="tranche-row">
+              <span style="color:#374151;{% if t.est_cible %}font-weight:700;{% endif %}">
+                {{ t.tranche.libelle }}
+                {% if t.tranche.est_primordiale %}<span style="color:#d97706;">(primordiale)</span>{% endif %}
+                <br>
+                <span style="{% if t.soldee %}color:#059669;{% else %}color:#dc2626;{% endif %}font-weight:600;">
+                  {{ t.paye|floatformat:0 }} / {{ t.montant|floatformat:0 }} FCFA
+                </span>
+              </span>
+              {% if t.soldee %}
+                <button class="btn-payer-tranche" disabled title="Tranche déjà soldée">Soldée</button>
+              {% elif t.payable %}
+                <button class="btn-payer-tranche" onclick="ouvrirModalPaiement('{{ dette.id }}', '{{ t.tranche.libelle|escapejs }}', {{ t.reste|floatformat:0 }}, {{ t.tranche.est_primordiale|yesno:'true,false' }})">Encaisser</button>
+              {% else %}
+                <button class="btn-payer-tranche" disabled title="Réglez d'abord la tranche primordiale en cours avant celle-ci">Encaisser</button>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="tranche-row" style="border-top:1px dashed #e2e8f0;margin-top:.5rem;padding-top:.6rem;">
+            <span style="color:#374151;">Montant à régler</span>
+            {% if dette.etat_dette == 'soldé' %}
+              <button class="btn-payer-tranche" disabled title="Dette déjà soldée">Soldée</button>
+            {% elif dette.bloquee %}
+              <button class="btn-payer-tranche" disabled title="Réglez d'abord la tranche primordiale bloquante d'un autre type de frais">Encaisser</button>
+            {% else %}
+              <button class="btn-payer-tranche" onclick="ouvrirModalPaiement('{{ dette.id }}', '{{ dette.frais_formation.type_frais.libelle|escapejs }}', {{ dette.montant_a_payer|floatformat:0 }}, false)">Encaisser</button>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <div style="text-align:right;margin-top:.5rem;">
+            <a href="{% url 'courses:stats_detail_dette' dette.id %}" class="btn-detail">
+               Détail
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+  {% empty %}
+  <div class="page-card empty-state">
+    
+    Cet apprenant n'a aucune dette enregistrée.
+  </div>
+  {% endfor %}
+
+</div>
+</div>
+
+<!-- MODAL PAIEMENT (réutilisé pour toutes les tranches) -->
+<div id="modal-paiement-tranche" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h2 style="font-weight:800;font-size:1.1rem;color:#374151;margin:0;">Enregistrer un paiement</h2>
+      <button type="button" onclick="fermerModalPaiement()" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
+    </div>
+    <p id="modal-paiement-cible" style="font-size:.85rem;color:#6b7280;margin-bottom:1rem;"></p>
+    <form method="post" id="form-paiement-tranche" action="" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div style="margin-bottom:.9rem;">
+        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Montant (FCFA)</label>
+        <input type="number" name="montant_paiement" id="modal-montant-input" min="1" step="1" required
+               style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;">
+      </div>
+      <div style="margin-bottom:1.1rem;">
+        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Mode de paiement</label>
+        <select name="mode_paiement" style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;">
+          <option value="mobile">Mobile Money</option>
+          <option value="chèque">Chèque</option>
+          <option value="espece">Espèce</option>
+        </select>
+      </div>
+      <div id="modal-derogation-wrap" style="margin-bottom:1.1rem;display:none;">
+        <p style="font-size:.75rem;color:#dc2626;font-weight:600;margin-bottom:.4rem;">
+            Montant inférieur au montant dû de la tranche primordiale : motif et pièce jointe obligatoires.
+        </p>
+        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Motif de la dérogation</label>
+        <textarea name="motif_derogation" id="modal-motif-derogation" rows="2"
+                  style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;margin-bottom:.5rem;"></textarea>
+        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Pièce jointe justificative</label>
+        <input type="file" name="piece_jointe_derogation" id="modal-piece-jointe-derogation"
+               style="width:100%;padding:.4rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;">
+      </div>
+      <div style="display:flex;gap:.6rem;">
+        <button type="button" onclick="fermerModalPaiement()" style="flex:1;padding:.6rem;border-radius:8px;border:2px solid #e2e8f0;background:#fff;color:#374151;font-weight:600;font-size:.85rem;cursor:pointer;">Annuler</button>
+        <button type="submit" style="flex:2;padding:.6rem;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;">Confirmer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function toggleInsc(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+  header.classList.toggle('open');
+}
+
+function toggleTranches(el) {
+  const body = el.nextElementSibling;
+  body.classList.toggle('open');
+  el.classList.toggle('open');
+}
+
+let modalMontantMax = 0;
+let modalEstPrimordiale = false;
+
+function ouvrirModalPaiement(detteId, libelle, montantMax, estPrimordiale) {
+  const form = document.getElementById('form-paiement-tranche');
+  form.action = "{% url 'courses:stats_detail_dette' 0 %}".replace('0', detteId);
+  const input = document.getElementById('modal-montant-input');
+  input.value = montantMax;
+  input.max = montantMax;
+  modalMontantMax = montantMax;
+  modalEstPrimordiale = !!estPrimordiale;
+  document.getElementById('modal-paiement-cible').textContent =
+    `${libelle} — montant maximum : ${Number(montantMax).toLocaleString('fr-FR')} FCFA`;
+  document.getElementById('modal-derogation-wrap').style.display = 'none';
+  document.getElementById('modal-motif-derogation').value = '';
+  document.getElementById('modal-piece-jointe-derogation').value = '';
+  const modal = document.getElementById('modal-paiement-tranche');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+document.getElementById('modal-montant-input').addEventListener('input', function () {
+  const val = parseFloat(this.value);
+  const sousPaiement = modalEstPrimordiale && val > 0 && val < modalMontantMax;
+  document.getElementById('modal-derogation-wrap').style.display = sousPaiement ? 'block' : 'none';
+});
+
+
+function fermerModalPaiement() {
+  const modal = document.getElementById('modal-paiement-tranche');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+document.getElementById('modal-paiement-tranche').addEventListener('click', function(e) {
+  if (e.target === this) fermerModalPaiement();
+});
+</script>
+{% endblock %}

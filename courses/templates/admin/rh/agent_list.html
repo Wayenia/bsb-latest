@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% block title %}Agents | BSB{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6">
+    {% include 'partials/messages.html' %}
+
+    <!-- En-tête -->
+    <div class="px-4 md:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Ressources Humaines</h1>
+            <p class="mt-1 text-sm text-gray-500">Gestion centralisée de tous les agents</p>
+        </div>
+        <div class="flex gap-3 flex-wrap">
+            <a href="{% url 'bsb_admin:permissions_matrix' %}"
+               class="inline-flex items-center px-6 py-3 bg-bsb-gray hover:bg-gray-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                Permissions
+            </a>
+            {% url 'bsb_admin:agent_import' as agent_import_url %}
+            {% include 'partials/import_export_buttons.html' with upload_url=agent_import_url %}
+            <a href="{% url 'bsb_admin:agent_create' %}"
+               class="inline-flex items-center px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                Ajouter un agent
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <form method="get">
+        <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl flex flex-col sm:flex-row gap-3 shadow-sm">
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    
+                </div>
+                <input type="text" name="q" value="{{ q }}"
+                       placeholder="Rechercher par nom, email, username..."
+                       class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
+            </div>
+            <div class="sm:w-80">
+                <select name="type"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent cursor-pointer transition-all">
+                    <option value="">Tous les rôles</option>
+                    {% for val, label in type_choices %}
+                    <option value="{{ val }}" {% if user_type == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit"
+                    class="px-5 py-3 bg-gray-800 hover:bg-gray-900 text-white rounded-lg font-semibold transition-all">
+                Filtrer
+            </button>
+        </div>
+    </form>
+
+    <!-- Tableau -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+        {% if agents %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Agent</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rôle</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Contact</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Structure / Direction</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {% for agent in agents %}
+                    <tr class="hover:bg-amber-50 transition-colors">
+
+                        <!-- Avatar + nom -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-3">
+                                <div class="h-10 w-10 rounded-full flex items-center justify-center shrink-0 font-bold text-sm text-white
+                                    {% if agent.user_type == 'formateur' %}bg-gray-600
+                                    {% elif agent.user_type == 'dir' %}bg-red-600
+                                    {% elif agent.user_type == 'gestionnaire' %}bg-yellow-600
+                                    {% elif agent.user_type == 'agent_comptable' %}bg-orange-500
+                                    {% elif agent.user_type == 'caissier' %}bg-amber-600
+                                    {% elif agent.user_type == 'deps' %}bg-gray-600
+                                    {% elif agent.user_type == 'daf' %}bg-red-800
+                                    {% elif agent.user_type == 'membre' %}bg-gray-500
+                                    {% else %}bg-gray-800{% endif %}">
+                                    {{ agent.nom|first|upper }}{{ agent.prenom|first|upper }}
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-gray-900">{{ agent.nom }} {{ agent.prenom }}</div>
+                                    <div class="text-xs text-gray-400">@{{ agent.username }}</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Badge rôle -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if agent.user_type == 'formateur' %}bg-gray-100 text-gray-800
+                                {% elif agent.user_type == 'dir' %}bg-red-100 text-red-800
+                                {% elif agent.user_type == 'gestionnaire' %}bg-yellow-100 text-yellow-800
+                                {% elif agent.user_type == 'agent_comptable' %}bg-orange-100 text-orange-800
+                                {% elif agent.user_type == 'caissier' %}bg-amber-100 text-amber-800
+                                {% elif agent.user_type == 'deps' %}bg-gray-100 text-gray-700
+                                {% elif agent.user_type == 'daf' %}bg-red-100 text-red-900
+                                {% elif agent.user_type == 'membre' %}bg-gray-100 text-gray-600
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ agent.get_user_type_display }}
+                            </span>
+                        </td>
+
+                        <!-- Contact -->
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <div>{{ agent.email }}</div>
+                            <div class="text-xs text-gray-400">{{ agent.tel|default:"—" }}</div>
+                        </td>
+
+                        <!-- Structure / Direction -->
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {% if agent.user_type == 'formateur' %}
+                                {% with agent.formateur.centre as c %}
+                                    {% if c %}{{ c.nom_centre }}
+                                    {% else %}—{% endif %}
+                                {% endwith %}
+                            {% elif agent.user_type == 'dir' %}
+                                {% with agent.directeurinterregional.direction as d %}
+                                    {% if d %}{{ d.nom_direction }}
+                                    {% else %}—{% endif %}
+                                {% endwith %}
+                            {% elif agent.user_type == 'gestionnaire' or agent.user_type == 'agent_comptable' or agent.user_type == 'caissier' %}
+                                {% with agent.membreadministration.structure as s %}
+                                    {% if s %}{{ s.nom_centre }}
+                                    {% else %}—{% endif %}
+                                {% endwith %}
+                            {% elif agent.user_type == 'deps' %}
+                                <span class="text-gray-400 italic text-xs">Poste national</span>
+                            {% elif agent.user_type == 'admin' %}
+                                <span class="text-gray-400 italic text-xs">Administrateur système</span>
+                            {% elif agent.user_type == 'daf' %}
+                                {% with agent.daf.structure as s %}
+                                    {% if s %}{{ s.nom_centre }}
+                                    {% else %}<span class="text-gray-400 italic text-xs">Poste national</span>{% endif %}
+                                {% endwith %}
+                            {% elif agent.user_type == 'membre' %}
+                                {{ agent.membreadministration.emploi|default:"—" }}
+                            {% else %}—{% endif %}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <form method="POST" action="{% url 'bsb_admin:agent_toggle_active' agent.id %}">
+                                    {% csrf_token %}
+                                    {% if agent.is_active %}
+                                    <button type="submit" title="Suspendre le compte"
+                                            class="p-2 text-bsb-gray hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all">Suspendre le compte</button>
+                                    {% else %}
+                                    <button type="submit" title="Réactiver le compte"
+                                            class="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-all">Réactiver le compte</button>
+                                    {% endif %}
+                                </form>
+                                <a href="{% url 'bsb_admin:agent_update' agent.id %}"
+                                   class="inline-flex items-center gap-1 p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-all"
+                                   title="Modifier">{% include 'partials/icon_edit.html' %} Modifier</a>
+                                <a href="{% url 'bsb_admin:agent_delete' agent.id %}"
+                                   class="inline-flex items-center gap-1 p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
+                                   title="Supprimer">{% include 'partials/icon_delete.html' %} Supprimer</a>
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if agents.has_other_pages %}
+        <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex items-center justify-between">
+            <p class="text-sm text-gray-600">
+                Page <span class="font-semibold">{{ agents.number }}</span>
+                sur <span class="font-semibold">{{ agents.paginator.num_pages }}</span>
+            </p>
+            <nav class="inline-flex rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                {% if agents.has_previous %}
+                <a href="?page={{ agents.previous_page_number }}&q={{ q }}&type={{ user_type }}"
+                   class="px-3 py-2 bg-white text-gray-500 hover:bg-gray-50 border-r border-gray-200 text-sm transition-all">Précédent</a>
+                {% endif %}
+                {% for num in agents.paginator.page_range %}
+                    {% if agents.number == num %}
+                    <span class="px-4 py-2 bg-yellow-600 text-white text-sm font-semibold">{{ num }}</span>
+                    {% else %}
+                    <a href="?page={{ num }}&q={{ q }}&type={{ user_type }}"
+                       class="px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 border-r border-gray-200 text-sm transition-all">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if agents.has_next %}
+                <a href="?page={{ agents.next_page_number }}&q={{ q }}&type={{ user_type }}"
+                   class="px-3 py-2 bg-white text-gray-500 hover:bg-gray-50 text-sm transition-all">Suivant</a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- État vide -->
+        <div class="text-center py-16">
+            <div class="h-20 w-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Aucun agent trouvé</h3>
+            <p class="text-gray-500 mb-6 text-sm">
+                {% if q or user_type %}Aucun résultat pour votre recherche.
+                {% else %}Commencez par ajouter votre premier agent.{% endif %}
+            </p>
+            {% if q or user_type %}
+            <a href="{% url 'bsb_admin:agent_list' %}"
+               class="inline-flex items-center px-5 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 text-sm font-medium">
+                Effacer les filtres
+            </a>
+            {% else %}
+            <a href="{% url 'bsb_admin:agent_create' %}"
+               class="inline-flex items-center px-6 py-3 bg-yellow-600 text-white font-bold rounded-xl hover:bg-yellow-700 transition-all">
+                Ajouter un agent
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

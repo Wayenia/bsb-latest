@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Supprimer une Programmation | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl py-10 mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center mb-4">
+            <a href="{% url 'bsb_admin:programming_list' %}" class="text-gray-600 hover:text-gray-900 mr-4">Retour</a>
+            <h1 class="text-3xl font-black text-red-600 flex items-center">
+                
+                Confirmer la suppression
+            </h1>
+        </div>
+    </div>
+
+    <!-- Confirmation Card -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden border-2 border-red-200">
+        <!-- Object Details -->
+        <div class="px-8 py-6">
+            <h4 class="text-sm font-bold text-gray-500 uppercase mb-4">Détails de la direction à supprimer</h4>
+            
+            <div class="bg-gray-50 rounded-lg p-6 space-y-3">
+                <div class="flex items-start">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase font-semibold">Nom du centre</p>
+                        <p class="text-lg font-bold text-gray-900">{{ object.centre.nom_centre }} </p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200">
+                    <div class="flex items-start">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-semibold">Métier</p>
+                            <p class="text-sm font-medium text-gray-900"> {{object.filiere.nom_filiere}}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-semibold">Actif</p>
+                            {% if object.is_active %}
+                            <p class="text-sm font-medium text-gray-900">
+                                <span>Oui</span>
+                            </p>
+                            {% else %}
+                             <p class="text-sm font-medium text-gray-900">
+                                <span>Non</span>
+                            </p>
+                            {%endif%}
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- Warning Message -->
+            <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                <div class="flex">
+                    
+                    <div>
+                        <h3 class="text-sm font-medium text-yellow-800">Éléments associés</h3>
+                        <p class="mt-1 text-sm text-yellow-700">
+                           Après la suppresssion vous ne pourrez voir cette programmation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question -->
+            <div class="mt-8">
+                <p class="text-center text-lg font-semibold text-gray-900">
+                    Êtes-vous sûr de vouloir supprimer cette direction régionale ?
+                </p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="bg-gray-50 px-8 py-6 flex items-center justify-center space-x-4 border-t border-gray-200">
+            <a href="{% url 'bsb_admin:programming_list' %}"
+               class="px-8 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-100 transition-all">
+                Non, annuler
+            </a>
+            
+            <form method="POST" class="inline">
+                {% csrf_token %}
+                <button type="submit"
+                        class="px-8 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold rounded-lg hover:from-red-700 hover:to-red-800 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+                    Oui, supprimer définitivement
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

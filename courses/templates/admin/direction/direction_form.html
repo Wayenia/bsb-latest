@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Direction | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-10">
+    <div class="mb-8">
+        <div class="flex items-center mb-4">
+            <a href="{% url 'bsb_admin:direction_list' %}" class="text-gray-800 hover:text-gray-900 mr-4">Retour</a>
+            <h1 class="text-3xl font-black text-gray-900">{{ action }} une direction régionale</h1>
+        </div>
+        <p class="text-gray-600 ml-12">Remplissez l'information ci-dessous</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-8">
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                <div class="flex">
+                    
+                    <div>
+                        {% for error in form.non_field_errors %}
+                        <p class="text-sm text-red-700">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
+                    {{ field.label }} {% if field.field.required %}<span class="text-red-600">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                <p class="mt-2 text-sm text-red-600">{{ field.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+                <a href="{% url 'bsb_admin:direction_list' %}"
+                   class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-all">
+                    Annuler
+                </a>
+                <button type="submit"
+                        class="px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-yellow-700 transition-all transform hover:-translate-y-0.5">
+                    {{ action }}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="mt-6 bg-gray-50 border-l-4 border-red-500 p-4">
+        <div class="flex">
+
+            <p class="text-sm text-gray-500">Le nom de la direction doit être unique. Le chef-lieu proposé dépend des régions sélectionnées.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Filtre les options du chef-lieu selon les régions sélectionnées
+    (function () {
+        var regionsSelect = document.getElementById('id_regions');
+        var chefLieuSelect = document.getElementById('id_chef_lieu');
+        if (!regionsSelect || !chefLieuSelect) return;
+
+        function selectedRegions() {
+            return Array.from(regionsSelect.selectedOptions).map(function (o) { return o.value; });
+        }
+
+        function filterChefLieu() {
+            var selected = selectedRegions();
+            var currentValue = chefLieuSelect.value;
+            var stillValid = false;
+            Array.from(chefLieuSelect.options).forEach(function (opt) {
+                if (!opt.value) { opt.hidden = false; return; }
+                var visible = selected.length === 0 || selected.indexOf(opt.dataset.region) !== -1;
+                opt.hidden = !visible;
+                if (visible && opt.value === currentValue) stillValid = true;
+            });
+            if (!stillValid) chefLieuSelect.value = '';
+        }
+
+        regionsSelect.addEventListener('change', filterChefLieu);
+        filterChefLieu();
+    })();
+</script>
+{% endblock %}

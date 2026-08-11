@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} un paiement | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10">
+    {% include 'partials/messages.html' %}
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center mb-4">
+            <a href="{% url 'bsb_admin:payment_list' %}" class="text-gray-800 hover:text-gray-900 mr-4">Retour</a>
+            <h1 class="text-3xl font-black text-gray-900 flex items-center">
+                {{ action }} un paiement
+            </h1>
+        </div>
+        <p class="text-gray-600 ml-12">Remplissez les informations ci-dessous</p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-lg p-8">
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                <div class="mt-2 text-sm text-red-700">
+                    {{ form.non_field_errors }}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Dette -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.dette.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
+                        {{ form.dette.label }}
+                        {% if form.dette.field.required %}<span class="text-red-600">*</span>{% endif %}
+                    </label>
+                    {{ form.dette }}
+                    {% if form.dette.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.dette.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tranche -->
+                <div>
+                    <label for="{{ form.tranche.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
+                        {{ form.tranche.label }}
+                        {% if form.tranche.field.required %}<span class="text-red-600">*</span>{% endif %}
+                    </label>
+                    {{ form.tranche }}
+                    {% if form.tranche.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.tranche.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tranche de frais -->
+                <div>
+                    <label for="{{ form.tranche_frais.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
+                        {{ form.tranche_frais.label }}
+                        {% if form.tranche_frais.field.required %}<span class="text-red-600">*</span>{% endif %}
+                    </label>
+                    {{ form.tranche_frais }}
+                    {% if form.tranche_frais.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.tranche_frais.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Montant -->
+                <div>
+                    <label for="{{ form.montant_paiement.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
+                        {{ form.montant_paiement.label }}
+                        {% if form.montant_paiement.field.required %}<span class="text-red-600">*</span>{% endif %}
+                    </label>
+                    {{ form.montant_paiement }}
+                    {% if form.montant_paiement.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.montant_paiement.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Mode de paiement -->
+                <div>
+                    <label for="{{ form.mode_paiement.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
+                        {{ form.mode_paiement.label }}
+                        {% if form.mode_paiement.field.required %}<span class="text-red-600">*</span>{% endif %}
+                    </label>
+                    {{ form.mode_paiement }}
+                    {% if form.mode_paiement.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.mode_paiement.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Numéro de quittance -->
+                <div>
+                    <label for="{{ form.numero_quittance.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
+                        {{ form.numero_quittance.label }}
+                        {% if form.numero_quittance.field.required %}<span class="text-red-600">*</span>{% endif %}
+                    </label>
+                    {{ form.numero_quittance }}
+                    {% if form.numero_quittance.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.numero_quittance.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+                <a href="{% url 'bsb_admin:payment_list' %}"
+                   class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-red-200 transition-all">
+                    Annuler
+                </a>
+                <button type="submit"
+                        class="px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+                    {{ action }}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Help Section -->
+    <div class="mt-6 bg-red-100 border-l-4 border-red-500 p-4">
+        <p class="text-sm text-gray-500">
+            Les champs marqués d'un astérisque (<span class="text-red-600">*</span>) sont obligatoires.
+        </p>
+    </div>
+</div>
+{% endblock %}

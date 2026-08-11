@@ -1,0 +1,482 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} | Programme BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10">
+    {% include 'partials/messages.html' %}
+
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center mb-4">
+            <a href="{% url 'bsb_admin:programming_list' %}"
+               class="text-gray-600 hover:text-red-600 mr-4 transition-colors">Retour</a>
+            <div>
+                <h1 class="text-3xl font-black text-gray-900">{{ action }} une formation</h1>
+                <p class="text-gray-500 text-sm mt-1">Remplissez les informations ci-dessous</p>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" class="space-y-6" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+            <div class="flex items-start gap-3">
+                
+                <div>
+                    <h3 class="text-sm font-bold text-red-800">Erreur dans le formulaire</h3>
+                    <div class="mt-1 text-sm text-red-700">{{ form.non_field_errors }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ===== BLOC 1 : Informations générales ===== -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
+                <h2 class="text-white font-bold text-lg flex items-center gap-2">
+                     Informations générales
+                </h2>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Centre -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        {{ form.centre.label }} <span class="text-red-600">*</span>
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1">{{ form.centre }}</div>
+                        <a href="{% url 'bsb_admin:center_create' %}?next={{ request.path }}"
+                           class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-yellow-700 bg-yellow-50 border border-yellow-300 rounded-lg hover:bg-yellow-100 transition-all">
+                             Nouveau centre
+                        </a>
+                    </div>
+                    {% if form.centre.errors %}
+                    <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                         {{ form.centre.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Type de formation -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        {{ form.type_formation.label }} <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.type_formation }}
+                    {% if form.type_formation.errors %}
+                    <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                         {{ form.type_formation.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Métier (filière) -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        Métier <span class="text-red-600">*</span>
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1">{{ form.filiere }}</div>
+                        <a href="{% url 'bsb_admin:field_create' %}?next={{ request.path }}"
+                           class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-yellow-700 bg-yellow-50 border border-yellow-300 rounded-lg hover:bg-yellow-100 transition-all">
+                             Nouveau métier
+                        </a>
+                    </div>
+                    {% if form.filiere.errors %}
+                    <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                         {{ form.filiere.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Année scolaire -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        {{ form.annee_prog.label }} <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.annee_prog }}
+                    {% if form.annee_prog.errors %}
+                    <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                         {{ form.annee_prog.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Date de lancement -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        {{ form.date_lancement.label }} <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.date_lancement }}
+                    {% if form.date_lancement.errors %}
+                    <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                         {{ form.date_lancement.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Date de fin — OBLIGATOIRE désormais -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        {{ form.date_fin.label }} <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.date_fin }}
+                    {% if form.date_fin.errors %}
+                    <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                         {{ form.date_fin.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Date limite d'inscription -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        {{ form.date_limite_inscription.label }}
+                    </label>
+                    {{ form.date_limite_inscription }}
+                    {% if form.date_limite_inscription.errors %}
+                    <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                         {{ form.date_limite_inscription.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Communiqué + Toggle actif -->
+                <div class="md:col-span-2">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 p-5 bg-gray-50 rounded-xl border border-gray-200">
+                        <div class="flex-1">
+                            <label class="block text-sm font-bold text-gray-800 mb-1">{{ form.communique.label }}</label>
+                            <p class="text-xs text-gray-500 mb-2">Fichier PDF ou image du communiqué</p>
+                            
+                            <!-- Fichier actuel si existant -->
+                            {% if form.instance.communique %}
+                            <div class="mb-2 flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                                
+                                <span>Fichier actuel :</span>
+                                <a href="{{ form.instance.communique.url }}" target="_blank"
+                                class="font-semibold underline hover:text-green-900 truncate max-w-xs">
+                                    {{ form.instance.communique.name|cut:"communiques_filieres/" }}
+                                </a>
+                                <span class="text-xs text-gray-500">(remplacer ci-dessous)</span>
+                            </div>
+                            {% endif %}
+
+                            {{ form.communique }}
+                            {% if form.communique.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.communique.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="flex items-center gap-4 shrink-0">
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">{{ form.is_active.label }}</p>
+                                <p class="text-xs text-gray-500">Activer cette programmation</p>
+                            </div>
+                            <label for="{{ form.is_active.id_for_label }}" class="relative inline-flex items-center cursor-pointer">
+                                {{ form.is_active }}
+                                <div class="w-11 h-6 bg-gray-300 peer-checked:bg-red-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-red-300 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ===== BLOC 2 : Frais ===== -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 px-6 py-4 flex items-center justify-between">
+                <h2 class="text-white font-bold text-lg flex items-center gap-2">
+                     Frais de la formation
+                </h2>
+                <button type="button" id="btn-add-frais"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-bold text-yellow-700 bg-white rounded-lg hover:bg-yellow-50 transition-all">
+                     Ajouter
+                </button>
+            </div>
+
+            {{ frais_formset.management_form }}
+            <div id="frais-container" class="p-6 space-y-3">
+                {% for frais_form in frais_formset %}
+                <div class="frais-row grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Type de frais</label>
+                        {{ frais_form.type_frais }}
+                        {{ frais_form.id }}
+                        {% if frais_form.type_frais.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ frais_form.type_frais.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Montant (FCFA)</label>
+                        {{ frais_form.montant }}
+                        {% if frais_form.montant.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ frais_form.montant.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="sm:col-span-2 flex justify-end">
+                        <button type="button" onclick="supprimerLigne(this, 'frais')"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all">
+                             Supprimer
+                        </button>
+                    </div>
+                    <div class="hidden">{{ frais_form.DELETE }}</div>
+                </div>
+                {% empty %}
+                <!-- Message si aucun frais — masqué dès qu'on ajoute une ligne -->
+                <div id="frais-empty-msg" class="text-center py-6 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+                    
+                    <p class="text-sm">Aucun frais ajouté. Cliquez sur "Ajouter" pour en créer.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ===== BLOC 3 : Documents requis ===== -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-600 to-gray-700 px-6 py-4 flex items-center justify-between">
+                <h2 class="text-white font-bold text-lg flex items-center gap-2">
+                     Documents requis
+                </h2>
+                <button type="button" id="btn-add-piece"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-bold text-gray-700 bg-white rounded-lg hover:bg-gray-100 transition-all">
+                     Ajouter
+                </button>
+            </div>
+
+            {{ piece_jointe_formset.management_form }}
+            <div id="piece-container" class="p-6 space-y-3">
+                {% for piece_form in piece_jointe_formset %}
+                <div class="piece-row grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Libellé du document</label>
+                        {{ piece_form.libelle_piece }}
+                        {{ piece_form.id }}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Type</label>
+                        {{ piece_form.type_piece }}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        {{ piece_form.est_requis }}
+                        <label class="text-sm font-medium text-gray-700">Obligatoire</label>
+                    </div>
+                    <div class="flex justify-end items-center">
+                        <button type="button" onclick="supprimerLigne(this, 'piece')"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all">
+                             Supprimer
+                        </button>
+                    </div>
+                    <div class="hidden">{{ piece_form.DELETE }}</div>
+                </div>
+                {% empty %}
+                <div id="piece-empty-msg" class="text-center py-6 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+                    
+                    <p class="text-sm">Aucun document ajouté. Cliquez sur "Ajouter" pour en créer.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ===== Boutons d'action ===== -->
+        <div class="flex items-center justify-between pt-2">
+            <a href="{% url 'bsb_admin:programming_list' %}"
+               class="inline-flex items-center gap-2 px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:border-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
+                 Annuler
+            </a>
+            <button type="submit"
+                    class="inline-flex items-center gap-2 px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+                 {{ action }}
+            </button>
+        </div>
+
+        <!-- Note champs obligatoires -->
+        <p class="text-xs text-gray-400 text-center">
+            Les champs marqués <span class="text-red-500 font-bold">*</span> sont obligatoires.
+        </p>
+    </form>
+</div>
+<!-- Juste avant le <script> principal -->
+<script>
+    const FRAIS_TYPE_OPTIONS = [
+        {% for tf in type_frais_options %}
+        { value: "{{ tf.pk }}", label: "{{ tf.libelle|escapejs }}" },
+        {% endfor %}
+    ];
+    const PIECE_TYPE_OPTIONS = [
+        {% for tp in type_piece_options %}
+        { value: "{{ tp.0 }}", label: "{{ tp.1|escapejs }}" },
+        {% endfor %}
+    ];
+</script>
+
+<script>
+function buildSelectOptions(optionsArray, emptyLabel) {
+    let html = `<option value="">${emptyLabel}</option>`;
+    optionsArray.forEach(o => {
+        html += `<option value="${o.value}">${o.label}</option>`;
+    });
+    return html;
+}
+
+const CONFIG = {
+    frais: {
+        totalFormsId: 'id_frais-TOTAL_FORMS',
+        container: 'frais-container',
+        buildRow: function(idx) {
+            return `
+            <div class="frais-row grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Type de frais</label>
+                    <select name="frais-${idx}-type_frais" id="id_frais-${idx}-type_frais"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 text-sm">
+                        ${buildSelectOptions(FRAIS_TYPE_OPTIONS, 'Sélectionner un type de frais')}
+                    </select>
+                    <input type="hidden" name="frais-${idx}-id" id="id_frais-${idx}-id">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Montant (FCFA)</label>
+                    <input type="number" name="frais-${idx}-montant" id="id_frais-${idx}-montant"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 text-sm"
+                           placeholder="Ex: 50000" min="0" step="1000">
+                </div>
+                <div class="sm:col-span-2 flex justify-end">
+                    <button type="button" onclick="supprimerLigne(this, 'frais')"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all">
+                         Supprimer
+                    </button>
+                </div>
+                <input type="checkbox" name="frais-${idx}-DELETE" id="id_frais-${idx}-DELETE" class="hidden">
+            </div>`;
+        }
+    },
+    piece: {
+        totalFormsId: 'id_piece-TOTAL_FORMS',
+        container: 'piece-container',
+        buildRow: function(idx) {
+            return `
+            <div class="piece-row grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Libellé du document</label>
+                    <input type="text" name="piece-${idx}-libelle_piece" id="id_piece-${idx}-libelle_piece"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 text-sm"
+                           placeholder="Ex: Copie CNI">
+                    <input type="hidden" name="piece-${idx}-id" id="id_piece-${idx}-id">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Type</label>
+                    <select name="piece-${idx}-type_piece" id="id_piece-${idx}-type_piece"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 text-sm">
+                        ${buildSelectOptions(PIECE_TYPE_OPTIONS, 'Sélectionner un type')}
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="piece-${idx}-est_requis" id="id_piece-${idx}-est_requis"
+                           class="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500" checked>
+                    <label for="id_piece-${idx}-est_requis" class="text-sm font-medium text-gray-700">Obligatoire</label>
+                </div>
+                <div class="flex justify-end items-center">
+                    <button type="button" onclick="supprimerLigne(this, 'piece')"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all">
+                         Supprimer
+                    </button>
+                </div>
+                <input type="checkbox" name="piece-${idx}-DELETE" id="id_piece-${idx}-DELETE" class="hidden">
+            </div>`;
+        }
+    }
+};
+
+function ajouterLigne(type) {
+    const cfg = CONFIG[type];
+    const totalInput = document.getElementById(cfg.totalFormsId);
+    const idx = parseInt(totalInput.value);
+    const container = document.getElementById(cfg.container);
+
+    const emptyMsg = document.getElementById(`${type}-empty-msg`);
+    if (emptyMsg) emptyMsg.style.display = 'none';
+
+    const div = document.createElement('div');
+    div.innerHTML = cfg.buildRow(idx).trim();
+    const row = div.firstChild;
+    row.style.opacity = '0';
+    row.style.transform = 'translateY(-8px)';
+    container.appendChild(row);
+
+    requestAnimationFrame(() => {
+        row.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+        row.style.opacity = '1';
+        row.style.transform = 'translateY(0)';
+    });
+
+    totalInput.value = idx + 1;
+}
+
+function supprimerLigne(btn, type) {
+    const row = btn.closest(`.${type}-row`);
+
+    const deleteChk = row.querySelector(`input[type="checkbox"][name$="-DELETE"]`);
+    if (deleteChk) {
+        deleteChk.checked = true;
+        deleteChk.disabled = false;
+    }
+
+    // Nouvelle ligne (pas encore en base) : retirer du DOM proprement
+    const idField = row.querySelector('input[type="hidden"][name$="-id"]');
+    if (idField && !idField.value) {
+        row.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(-6px)';
+        setTimeout(() => {
+            row.remove();
+            const totalInput = document.getElementById(CONFIG[type].totalFormsId);
+            totalInput.value = parseInt(totalInput.value) - 1;
+            renumeroterLignes(type);
+        }, 200);
+        return;
+    }
+
+    // Ligne existante (en base) : masquer et laisser Django gérer via DELETE
+    row.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+    row.style.opacity = '0';
+    row.style.transform = 'translateY(-6px)';
+    setTimeout(() => { row.style.display = 'none'; }, 200);
+}
+
+function renumeroterLignes(type) {
+    const container = document.getElementById(CONFIG[type].container);
+    const rows = container.querySelectorAll(`.${type}-row`);
+    rows.forEach((row, newIdx) => {
+        row.querySelectorAll('input, select, textarea').forEach(el => {
+            ['name', 'id'].forEach(attr => {
+                if (el.getAttribute(attr)) {
+                    el.setAttribute(attr,
+                        el.getAttribute(attr).replace(
+                            new RegExp(`(${type}-)(\\d+)(-)`),
+                            `$1${newIdx}$3`
+                        )
+                    );
+                }
+            });
+        });
+        // Renuméroter aussi les labels
+        row.querySelectorAll('label').forEach(label => {
+            if (label.getAttribute('for')) {
+                label.setAttribute('for',
+                    label.getAttribute('for').replace(
+                        new RegExp(`(${type}-)(\\d+)(-)`),
+                        `$1${newIdx}$3`
+                    )
+                );
+            }
+        });
+    });
+}
+
+document.getElementById('btn-add-frais').addEventListener('click', () => ajouterLigne('frais'));
+document.getElementById('btn-add-piece').addEventListener('click', () => ajouterLigne('piece'));
+</script>
+{% endblock %}

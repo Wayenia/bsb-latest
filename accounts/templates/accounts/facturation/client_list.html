@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Clients | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-10 space-y-6 px-4 sm:px-6 lg:px-8">
+    {% include 'partials/messages.html' %}
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'accounts:daf_dashboard' %}" class="text-sm text-gray-400 hover:text-gray-600">Tableau de bord</a>
+            <h1 class="text-2xl font-black text-gray-900 mt-1">Clients</h1>
+        </div>
+        {% url 'accounts:client_import' as client_import_url %}
+        {% include 'partials/import_export_buttons.html' with upload_url=client_import_url %}
+    </div>
+
+    <form method="get" class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex gap-3">
+        <input type="text" name="q" value="{{ q|default:'' }}"
+               placeholder="Rechercher un client (nom, raison sociale, téléphone, IFU)..."
+               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+               autocomplete="off">
+        <button type="submit" class="px-4 py-2 bg-red-700 text-white text-sm font-bold rounded-lg hover:bg-red-800 transition">
+            Rechercher
+        </button>
+        {% if q %}
+        <a href="{% url 'accounts:client_list' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">
+            Réinitialiser
+        </a>
+        {% endif %}
+    </form>
+
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        {% if clients %}
+        <table class="min-w-full divide-y divide-gray-100">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Client</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Téléphone</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Adresse</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for c in clients %}
+                <tr class="hover:bg-red-50 transition-colors">
+                    <td class="px-6 py-3 text-sm font-bold text-gray-900">{{ c }}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600">{{ c.get_type_client_display }}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600">{{ c.telephone|default:"—" }}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600">{{ c.adresse|default:"—"|truncatechars:60 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if clients.has_other_pages %}
+        <div class="flex items-center justify-between px-6 py-3 border-t border-gray-100">
+            <p class="text-sm text-gray-500">
+                Page <span class="font-semibold text-gray-800">{{ clients.number }}</span>
+                sur <span class="font-semibold text-gray-800">{{ clients.paginator.num_pages }}</span>
+            </p>
+            <div class="flex gap-2">
+                {% if clients.has_previous %}
+                <a href="?page={{ clients.previous_page_number }}&q={{ q }}" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">Précédent</a>
+                {% endif %}
+                {% if clients.has_next %}
+                <a href="?page={{ clients.next_page_number }}&q={{ q }}" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">Suivant</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-16">
+            <h3 class="text-lg font-bold text-gray-800 mb-1">Aucun client trouvé</h3>
+            <p class="text-sm text-gray-500 mt-1">Les clients sont créés depuis le formulaire de facture, ou importés en masse via le bouton ci-dessus.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

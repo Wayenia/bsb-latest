@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Résultat de l'import — Statistiques réelles | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-8">
+  {% include 'partials/messages.html' %}
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <a href="{% url 'courses:stats_reel_dashboard' %}" class="text-sm text-gray-400 hover:text-gray-600">Statistiques réelles</a>
+      <h1 class="text-2xl font-black text-gray-900 mt-1">
+        Résultat de l'import — {{ formation.centre.nom_centre }} / {{ formation.filiere.nom_filiere }}
+      </h1>
+      <span class="inline-flex items-center px-3 py-1 mt-2 rounded-full text-xs font-bold bg-red-100 text-red-800">
+        Année scolaire : {{ annee.libelle_anne }}
+      </span>
+    </div>
+    {% url 'courses:stats_reel_formation_upload' formation.id as upload_again_url %}
+    <a href="{{ upload_again_url }}?annee={{ annee.id }}"
+       class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-all shadow-sm">
+      Importer un autre fichier
+    </a>
+  </div>
+
+  {# ── Feuille Liste nominative ────────────────────────────────────────── #}
+  <div>
+    <h2 class="text-lg font-bold text-gray-800 mb-3">Feuille « Liste nominative »</h2>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="bg-white border border-gray-200 rounded-xl p-5 text-center shadow-sm">
+        <div class="text-3xl font-black text-red-600">{{ nominatif_result.updated|length }}</div>
+        <div class="text-sm text-gray-500 mt-1">ligne(s) mise(s) à jour</div>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl p-5 text-center shadow-sm">
+        <div class="text-3xl font-black text-yellow-600">{{ nominatif_result.errors|length }}</div>
+        <div class="text-sm text-gray-500 mt-1">ligne(s) ignorée(s)</div>
+      </div>
+    </div>
+
+    {% if nominatif_result.errors %}
+    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div class="px-5 py-3 bg-yellow-50 border-b border-gray-200 text-sm font-bold text-yellow-800">Lignes ignorées</div>
+      <table class="min-w-full divide-y divide-gray-100">
+        <tbody class="divide-y divide-gray-100">
+          {% for row_number, msgs in nominatif_result.errors %}
+          <tr>
+            <td class="px-5 py-2.5 text-sm text-gray-500 align-top whitespace-nowrap">Ligne {{ row_number }}</td>
+            <td class="px-5 py-2.5 text-sm text-red-700">
+              <ul class="list-disc list-inside space-y-0.5">
+                {% for msg in msgs %}<li>{{ msg }}</li>{% endfor %}
+              </ul>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── Feuille Effectifs ───────────────────────────────────────────────── #}
+  <div>
+    <h2 class="text-lg font-bold text-gray-800 mb-3">Feuille « Effectifs »</h2>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="bg-white border border-gray-200 rounded-xl p-5 text-center shadow-sm">
+        <div class="text-3xl font-black text-red-600">{{ effectifs_result.updated|length }}</div>
+        <div class="text-sm text-gray-500 mt-1">ligne(s) enregistrée(s)</div>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl p-5 text-center shadow-sm">
+        <div class="text-3xl font-black text-yellow-600">{{ effectifs_result.errors|length }}</div>
+        <div class="text-sm text-gray-500 mt-1">ligne(s) ignorée(s)</div>
+      </div>
+    </div>
+
+    {% if effectifs_result.errors %}
+    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div class="px-5 py-3 bg-yellow-50 border-b border-gray-200 text-sm font-bold text-yellow-800">Lignes ignorées</div>
+      <table class="min-w-full divide-y divide-gray-100">
+        <tbody class="divide-y divide-gray-100">
+          {% for row_number, msgs in effectifs_result.errors %}
+          <tr>
+            <td class="px-5 py-2.5 text-sm text-gray-500 align-top whitespace-nowrap">Ligne {{ row_number }}</td>
+            <td class="px-5 py-2.5 text-sm text-red-700">
+              <ul class="list-disc list-inside space-y-0.5">
+                {% for msg in msgs %}<li>{{ msg }}</li>{% endfor %}
+              </ul>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

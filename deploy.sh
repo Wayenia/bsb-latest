@@ -1,0 +1,105 @@
+#!/bin/sh
+clear
+
+echo "******* Déploiement en cours ... *********"
+
+# GÉNÉRATION AUTO DU .env (SI ABSENT)
+# Pour inclure un nom de domaine réel (servi en HTTPS via un proxy/LB externe,
+# cf. les règles de sécurité du projet - jamais de redirection HTTPS ici) :
+#   DOMAIN=mon-domaine.example ./deploy.sh
+if [ ! -f .env ]; then
+    echo " .env manquant - génération automatique..."
+
+    SECRET_KEY=$(openssl rand -base64 50 | tr -d '\n=' 2>/dev/null || python3 -c "import secrets; print(secrets.token_urlsafe(50))")
+    DB_PASS=$(openssl rand -base64 20 | tr -d '\n=' 2>/dev/null || python3 -c "import secrets; print(secrets.token_urlsafe(20))")
+    PGADMIN_PASS=$(openssl rand -base64 15 | tr -d '\n=' 2>/dev/null || python3 -c "import secrets; print(secrets.token_urlsafe(15))")
+    EMAIL="admin_$(date +%s)@local.dev"
+    SERVER_IP=$(hostname -I | awk '{print $1}' | head -1)
+
+    if [ -n "$DOMAIN" ]; then
+        ALLOWED_HOSTS_VAL="${DOMAIN},${SERVER_IP},127.0.0.1,localhost"
+        CORS_VAL="https://${DOMAIN},http://${DOMAIN},http://127.0.0.1,http://localhost,http://${SERVER_IP}"
+        CSRF_VAL="https://${DOMAIN},http://${DOMAIN},http://127.0.0.1,http://localhost,http://${SERVER_IP}"
+        echo " Domaine détecté : ${DOMAIN}"
+    else
+        ALLOWED_HOSTS_VAL="${SERVER_IP},127.0.0.1,localhost"
+        CORS_VAL="http://127.0.0.1,http://localhost,http://${SERVER_IP}"
+        CSRF_VAL="http://127.0.0.1,http://localhost,http://${SERVER_IP}"
+        echo " Aucun DOMAIN fourni - génération avec IP/localhost uniquement (relancez avec DOMAIN=... si besoin)"
+    fi
+
+    cat > .env << EOF
+# Configuration Django
+SECRET_KEY=${SECRET_KEY}
+DEBUG=False
+ALLOWED_HOSTS=${ALLOWED_HOSTS_VAL}
+
+# --- Frontend CORS Origins ---
+CORS_ALLOWED_ORIGINS=${CORS_VAL}
+CORS_ALLOW_CREDENTIALS=True
+
+# --- CSRF ---
+CSRF_TRUSTED_ORIGINS=${CSRF_VAL}
+
+# --- Database ---
+POSTGRES_DB=suudu_db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=${DB_PASS}
+POSTGRES_HOST=suudu_db
+POSTGRES_PORT=5432
+
+# --- pgAdmin ---
+PGADMIN_DEFAULT_EMAIL=${EMAIL}
+PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASS}
+PGADMIN_PORT=8080
+
+# --- Redis ---
+REDIS_LOCATION_URL=redis://suudu_redis:6379/1
+CELERY_BROKER_URL=redis://suudu_redis:6379/0
+CELERY_RESULT_BACKEND=redis://suudu_redis:6379/0
+EOF
+
+    echo " .env généré avec valeurs sécurisées"
+    echo " Admin email: ${EMAIL}"
+    echo " PgAdmin password: ${PGADMIN_PASS}"
+    echo " IP serveur: ${SERVER_IP}"
+fi
+
+echo "--- Nettoyage des anciens conteneurs ---"
+# Important : jamais de -v ici. Ce drapeau supprimerait les volumes nommés
+# (donc la base de données Postgres, pgAdmin et Redis) à chaque redéploiement.
+sudo docker compose down --remove-orphans 2>/dev/null
+
+echo "--- Construction et démarrage ---"
+sudo docker compose up --build -d
+
+echo ""
+echo " Déploiement terminé"
+echo ""
+
+echo "------- ACTIONS SUIVANTES -------"
+echo ""
+echo "================================="
+echo " Accès: http://127.0.0.1"
+echo " Accès domaine/IP: http://$(grep ALLOWED_HOSTS .env | cut -d= -f2 | cut -d, -f1)"
+echo " (si un domaine est servi en HTTPS via un proxy externe, utilisez https://)"
+echo ""
+
+echo "================================="
+echo "Pour créer un superuser :"
+echo "sudo docker exec -it suudu_backend python manage.py createsuperuser"
+echo ""
+
+echo "================================="
+echo "Pour voir les logs :"
+echo "sudo docker compose logs -f --tail=50"
+echo ""
+
+echo "================================="
+echo " Vérifier les en-têtes de sécurité:"
+echo "curl -I http://127.0.0.1"
+echo ""
+
+echo "================================="
+echo " Logs de sécurité:"
+echo "sudo docker exec -it suudu_backend cat /app/security.log"

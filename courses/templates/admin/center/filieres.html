@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}Métiers — {{ centre.nom_centre }} | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6">
+  {% include 'partials/messages.html' %}
+
+  <!-- Header -->
+  <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-4">
+      <a href="{% url 'bsb_admin:center_list' %}" class="text-gray-500 hover:text-gray-800">Retour</a>
+      <div>
+        <h1 class="text-3xl font-black text-gray-900">{{ centre.nom_centre }}</h1>
+        <p class="mt-1 text-sm text-gray-500">
+          {{ centre.ville }} —
+          {{ centre.direction }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info rapide centre -->
+  <div class="px-4 md:px-0 grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+      <p class="text-xs text-gray-500 uppercase font-semibold">Niveau</p>
+      <p class="text-2xl font-black text-yellow-600">{{ centre.niveau_centre }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+      <p class="text-xs text-gray-500 uppercase font-semibold">Métier</p>
+      <p class="text-2xl font-black text-yellow-600">{{ page_obj.paginator.count }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+      <p class="text-xs text-gray-500 uppercase font-semibold">Téléphone</p>
+      <p class="text-sm font-semibold text-gray-700 mt-1">{{ centre.tel|default:"—" }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+      <p class="text-xs text-gray-500 uppercase font-semibold">Adresse</p>
+      <p class="text-sm font-semibold text-gray-700 mt-1">{{ centre.adresse }}</p>
+    </div>
+  </div>
+
+  <!-- Table filières -->
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    {% if page_obj %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Métier</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Titre professionnel</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Conditions d'accès</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Durée</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Année scolaire</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Statut</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for cf in page_obj %}
+          <tr class="hover:bg-gray-50 transition-colors">
+
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-sm font-semibold text-gray-900">{{ cf.filiere.nom_filiere }}</span>
+            </td>
+
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                {{ cf.filiere.get_titre_professionnel_display|default:"—" }}
+              </span>
+            </td>
+
+            <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
+              <span class="line-clamp-2">{{ cf.filiere.niveau_diplome|default:"—" }}</span>
+            </td>
+
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-sm text-gray-700">{{ cf.filiere.duree_formation }} an(s)</span>
+            </td>
+
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-sm text-gray-700">{{ cf.annee_prog|default:"—" }}</span>
+            </td>
+
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if cf.is_active %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Active
+              </span>
+              {% else %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                Inactive
+              </span>
+              {% endif %}
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-gray-700">
+          Page <span class="font-medium">{{ page_obj.number }}</span> sur
+          <span class="font-medium">{{ page_obj.paginator.num_pages }}</span>
+        </p>
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+          {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}"
+             class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Précédent</a>
+          {% endif %}
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <span class="relative inline-flex items-center px-4 py-2 border border-yellow-500 bg-yellow-500 text-sm font-medium text-white">{{ num }}</span>
+            {% else %}
+            <a href="?page={{ num }}"
+               class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ num }}</a>
+            {% endif %}
+          {% endfor %}
+          {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}"
+             class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Suivant</a>
+          {% endif %}
+        </nav>
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-12">
+      
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun métier associée</h3>
+      <p class="text-gray-600 mb-6">Ce centre n'a pas encore de métiers programmés.</p>
+      <a href="{% url 'bsb_admin:center_update' centre.pk %}"
+         class="inline-flex items-center px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg hover:bg-yellow-700 transition-all">
+        Ajouter des métiers
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

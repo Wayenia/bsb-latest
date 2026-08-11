@@ -1,0 +1,407 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Détail dette — {{ dette.frais_formation.type_frais.libelle }} | BSB{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<style>
+  body { background:#f4f6fb; }
+  .page-card { background:#fff; border-radius:16px; box-shadow:0 2px 16px rgba(55, 65, 81,.09); border:none; }
+  .info-badge { background:#f0f4ff; color:#374151; border-radius:10px; padding:.5rem 1rem; font-size:.88rem; font-weight:600; }
+  .progress { height:12px; border-radius:8px; }
+  .table thead { background:linear-gradient(90deg,#374151,#6b7280); color:#fff; }
+  .table thead th { font-weight:600; font-size:.85rem; border:none; padding:.85rem 1rem; }
+  .table tbody tr:hover { background:#f0f4ff; }
+  .btn-payer { background:linear-gradient(135deg,#059669,#10b981); color:#fff; border:none; border-radius:8px; font-size:.82rem; padding:.38rem .9rem; font-weight:700; transition:all .15s; }
+  .btn-payer:hover { background:linear-gradient(135deg,#047857,#34d399); color:#fff; transform:translateY(-1px); }
+  .btn-payer:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+  .btn-quittance { background:#6b7280; color:#fff; border:none; border-radius:8px; font-size:.82rem; padding:.38rem .9rem; font-weight:600; transition:all .15s; }
+  .btn-quittance:hover { background:#4b5563; color:#fff; transform:translateY(-1px); }
+  .modal-header-custom { background:linear-gradient(135deg,#374151,#6b7280); color:#fff; border-radius:12px 12px 0 0; }
+  .form-control-custom { border:2px solid #e2e8f0; border-radius:10px; padding:.65rem 1rem; }
+  .form-control-custom:focus { border-color:#6b7280; box-shadow:0 0 0 3px rgba(37,99,235,.1); outline:none; }
+  .solde-banner { background:linear-gradient(135deg,#d1fae5,#a7f3d0); border-radius:12px; border:2px solid #059669; }
+  .dette-progress-label { font-size:.82rem; font-weight:600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-4">
+
+  <!-- Breadcrumb -->
+  <nav class="mb-3" aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'courses:statistiques' %}">Statistiques</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'courses:paiement_list' %}">Encaissements</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'courses:stats_dettes_eleve' eleve.id %}?inscription={{ dette.inscription.id }}">{{ eleve.nom }} {{ eleve.prenom }}</a></li>
+      <li class="breadcrumb-item active">{{ dette.frais_formation.type_frais.libelle }}</li>
+    </ol>
+  </nav>
+
+  <!-- En-tête -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{% url 'courses:stats_dettes_eleve' eleve.id %}?inscription={{ dette.inscription.id }}" class="btn btn-outline-secondary btn-sm">Retour</a>
+    <div>
+      <h2 class="fw-bold mb-0" style="color:#374151;">
+        
+        Détail — {{ dette.frais_formation.type_frais.libelle }}
+      </h2>
+      <p class="text-muted small mb-0">
+        {{ dette.inscription.formation.filiere.nom_filiere }} •
+        {{ dette.inscription.formation.centre.nom_centre }}
+        {% if dette.inscription.annee_scolaire %}• {{ dette.inscription.annee_scolaire }}{% endif %}
+      </p>
+    </div>
+  </div>
+
+  <!-- Infos apprenant + dette -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-6">
+      <div class="page-card p-4 h-100">
+        <div class="fw-bold text-secondary small mb-3 text-uppercase">Apprenant</div>
+        <div class="fw-bold fs-5 mb-1" style="color:#374151;">{{ eleve.nom }} {{ eleve.prenom }}</div>
+        <div class="text-muted small mb-1">{{ eleve.numero_identifiant|default:"—" }}</div>
+        <div class="text-muted small mb-1">{{ eleve.tel|default:"—" }}</div>
+        <div class="text-muted small">{{ eleve.email }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="page-card p-4 h-100">
+        <div class="fw-bold text-secondary small mb-3 text-uppercase">Récapitulatif financier</div>
+        <div class="row g-2 mb-3">
+          <div class="col-4 text-center">
+            <div class="fw-bold fs-5 text-dark">{{ dette.montant_total|floatformat:0 }}</div>
+            <div class="text-muted" style="font-size:.75rem;">Total dû (FCFA)</div>
+          </div>
+          <div class="col-4 text-center">
+            <div class="fw-bold fs-5 text-success">{{ montant_paye|floatformat:0 }}</div>
+            <div class="text-muted" style="font-size:.75rem;">Payé (FCFA)</div>
+          </div>
+          <div class="col-4 text-center">
+            <div class="fw-bold fs-5 text-danger">{{ reste|floatformat:0 }}</div>
+            <div class="text-muted" style="font-size:.75rem;">Restant (FCFA)</div>
+          </div>
+        </div>
+        <div class="progress mb-1">
+          <div class="progress-bar {% if taux >= 100 %}bg-success{% elif taux >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+               style="width:{{ taux }}%"></div>
+        </div>
+        <div class="d-flex justify-content-between dette-progress-label">
+          <span class="text-muted">Progression</span>
+          <span class="{% if taux >= 100 %}text-success{% elif taux >= 50 %}text-warning{% else %}text-danger{% endif %}">
+            {{ taux|floatformat:1 }}%
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bannière soldée -->
+  {% if dette.etat_dette == 'soldé' %}
+  <div class="solde-banner p-3 mb-4 d-flex align-items-center gap-3">
+    
+    <div>
+      <div class="fw-bold text-success">Dette entièrement soldée</div>
+      <div class="text-muted small">Tous les paiements ont été enregistrés pour cette dette.</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Tranches du type de frais -->
+  {% if tranches_data %}
+  <div class="page-card p-4 mb-4">
+    <div class="fw-bold mb-3" style="color:#374151; font-size:1.05rem;">
+      Tranches de « {{ dette.frais_formation.type_frais.libelle }} »
+    </div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Tranche</th>
+            <th>Montant</th>
+            <th>Payé</th>
+            <th>Reste</th>
+            <th>État</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tranches_data %}
+          <tr {% if t.est_cible %}class="table-warning"{% endif %}>
+            <td class="fw-semibold">
+              {{ t.tranche.libelle }}
+              {% if t.tranche.est_primordiale %}<span class="badge bg-warning text-dark ms-1">Primordiale</span>{% endif %}
+              {% if t.est_cible %}<span class="badge bg-success ms-1">À payer</span>{% endif %}
+            </td>
+            <td>{{ t.montant|floatformat:0 }} FCFA</td>
+            <td class="text-success">{{ t.paye|floatformat:0 }} FCFA</td>
+            <td class="text-danger">{{ t.reste|floatformat:0 }} FCFA</td>
+            <td>
+              {% if t.soldee %}
+                <span class="badge bg-success">Soldée</span>
+              {% else %}
+                <span class="badge bg-secondary">Non soldée</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              {% if t.soldee %}
+                <button class="btn btn-payer btn-sm" disabled>Soldée</button>
+              {% elif t.payable %}
+                <button class="btn btn-payer btn-sm" data-bs-toggle="modal" data-bs-target="#modalPaiement">Encaisser</button>
+              {% else %}
+                <button class="btn btn-payer btn-sm" disabled title="Réglez d'abord la tranche primordiale en cours">Encaisser</button>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Tableau des tranches -->
+  <div class="page-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div class="fw-bold" style="color:#374151; font-size:1.05rem;">
+        Historique des paiements
+      </div>
+      {% if not tranches_data and dette.etat_dette != 'soldé' %}
+        {% if bloquee %}
+        <button class="btn btn-payer" disabled title="Réglez d'abord la tranche primordiale bloquante d'un autre type de frais">
+          Enregistrer un paiement
+        </button>
+        {% else %}
+        <button class="btn btn-payer" data-bs-toggle="modal" data-bs-target="#modalPaiement">
+          Enregistrer un paiement
+        </button>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Tranche</th>
+            <th>Montant</th>
+            <th>Mode</th>
+            <th>Date</th>
+            <th>N° Quittance</th>
+            <th>Enregistré par</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in paiements %}
+          <tr>
+            <td>
+              <span class="badge bg-secondary rounded-pill">Tranche {{ p.tranche }}</span>
+            </td>
+            <td class="fw-semibold text-success">{{ p.montant_paiement|floatformat:0 }} FCFA</td>
+            <td>
+              {% if p.mode_paiement == 'mobile' %}
+                <span class="badge bg-secondary text-dark">Mobile Money</span>
+              {% elif p.mode_paiement == 'espece' %}
+                <span class="badge bg-secondary text-dark">Espèce</span>
+              {% else %}
+                <span class="badge bg-secondary">Chèque</span>
+              {% endif %}
+            </td>
+            <td class="small text-muted">{{ p.date_paiement|date:"d/m/Y H:i" }}</td>
+            <td><code class="small">{{ p.numero_quittance }}</code></td>
+            <td class="small">
+              {% if p.cree_par %}
+                {{ p.cree_par.get_full_name|default:p.cree_par.username }}
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'courses:stats_quittance_tranche' dette.id p.tranche %}"
+                 class="btn btn-quittance btn-sm">
+                Quittance
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">
+              
+              Aucun paiement enregistré pour cette dette.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% if paiements %}
+        <tfoot>
+          <tr class="table-light fw-bold">
+            <td>Total</td>
+            <td class="text-success">{{ montant_paye|floatformat:0 }} FCFA</td>
+            <td colspan="5"></td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── MODAL PAIEMENT ──────────────────────────────────────────────── -->
+{% if dette.etat_dette != 'soldé' %}
+<div class="modal fade" id="modalPaiement" tabindex="-1" aria-labelledby="modalPaiementLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px; border:none; box-shadow:0 8px 40px rgba(0,0,0,.18);">
+      <div class="modal-header modal-header-custom py-3">
+        <h5 class="modal-title fw-bold" id="modalPaiementLabel">
+          Enregistrer un paiement
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="post" id="formPaiement" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body p-4">
+
+          <!-- Récap -->
+          <div class="bg-light rounded-3 p-3 mb-4">
+            <div class="row g-2 text-center">
+              <div class="col-4">
+                <div class="small text-muted">Total dû</div>
+                <div class="fw-bold">{{ dette.montant_total|floatformat:0 }} FCFA</div>
+              </div>
+              <div class="col-4">
+                <div class="small text-muted">Déjà payé</div>
+                <div class="fw-bold text-success">{{ montant_paye|floatformat:0 }} FCFA</div>
+              </div>
+              <div class="col-4">
+                <div class="small text-muted">Reste à payer</div>
+                <div class="fw-bold text-danger" id="resteDisplay">{{ reste|floatformat:0 }} FCFA</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tranche à régler -->
+          <div class="alert alert-warning py-2 px-3 mb-3" style="font-size:.88rem;">
+            {% if tranche_cible %}
+              À régler maintenant : <strong>{{ tranche_cible.libelle }}</strong>
+              {% if tranche_cible.est_primordiale %}(primordiale){% endif %}
+              — montant dû : <strong>{{ montant_cible|floatformat:0 }} FCFA</strong>
+            {% else %}
+              À régler maintenant : <strong>{{ dette.frais_formation.type_frais.libelle }}</strong>
+              (pas de tranches) — montant dû : <strong>{{ montant_cible|floatformat:0 }} FCFA</strong>
+            {% endif %}
+          </div>
+
+          <!-- Apprenant (info) -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-secondary">Apprenant (payeur)</label>
+            <input type="text" class="form-control form-control-custom"
+                   value="{{ eleve.nom }} {{ eleve.prenom }}" disabled>
+          </div>
+
+          <!-- Montant -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-secondary">
+              Montant à payer <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <input type="number" name="montant_paiement" id="montantInput"
+                     class="form-control form-control-custom"
+                     placeholder="Ex: 25000"
+                     min="1" max="{{ montant_cible|floatformat:0 }}"
+                     step="1" required>
+              <span class="input-group-text bg-white" style="border:2px solid #e2e8f0; border-left:none; border-radius:0 10px 10px 0;">FCFA</span>
+            </div>
+            <div class="form-text">Montant maximum : {{ montant_cible|floatformat:0 }} FCFA (tranche/frais en cours).</div>
+            <div class="invalid-feedback" id="montantError"></div>
+          </div>
+
+          <!-- Mode de paiement -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-secondary">
+              Mode de paiement <span class="text-danger">*</span>
+            </label>
+            <select name="mode_paiement" class="form-select form-control-custom" required>
+              <option value="mobile"> Mobile Money</option>
+              <option value="chèque"> Chèque</option>
+              <option value="espece"> Espèce</option>
+            </select>
+          </div>
+
+          <!-- Dérogation tranche primordiale (motif + pièce jointe) -->
+          <div id="derogationWrap" class="mb-3 d-none">
+            <div class="alert alert-danger py-2 px-3 mb-3" style="font-size:.85rem;">
+              Le montant saisi est inférieur au montant dû pour cette tranche primordiale : un motif
+              et une pièce jointe justificative sont obligatoires pour valider ce règlement.
+            </div>
+            <label class="form-label fw-semibold small text-secondary">Motif de la dérogation <span class="text-danger">*</span></label>
+            <textarea name="motif_derogation" id="motifDerogation" class="form-control form-control-custom mb-2" rows="2"></textarea>
+            <label class="form-label fw-semibold small text-secondary">Pièce jointe justificative <span class="text-danger">*</span></label>
+            <input type="file" name="piece_jointe_derogation" id="pieceJointeDerogation" class="form-control form-control-custom">
+          </div>
+
+          <!-- Enregistré par (info) -->
+          <div class="mb-1">
+            <label class="form-label fw-semibold small text-secondary">Enregistré par</label>
+            <input type="text" class="form-control form-control-custom"
+                   value="{{ request.user.get_full_name|default:request.user.username }}" disabled>
+          </div>
+
+        </div>
+
+        <div class="modal-footer border-0 px-4 pb-4 pt-0">
+          <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-payer px-5" id="btnSubmitPaiement">
+            Valider le paiement
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+const estPrimordiale = {{ tranche_cible.est_primordiale|yesno:"true,false" }};
+const montantCible = {{ montant_cible|floatformat:0 }};
+
+function toggleDerogation() {
+  const input = document.getElementById('montantInput');
+  const wrap = document.getElementById('derogationWrap');
+  const val = parseFloat(input.value);
+  const sousPaiement = estPrimordiale && val > 0 && val < montantCible;
+  wrap.classList.toggle('d-none', !sousPaiement);
+}
+document.getElementById('montantInput').addEventListener('input', toggleDerogation);
+
+document.getElementById('formPaiement').addEventListener('submit', function(e) {
+  const input = document.getElementById('montantInput');
+  const errDiv = document.getElementById('montantError');
+  const val = parseFloat(input.value);
+
+  input.classList.remove('is-invalid');
+
+  if (!val || val <= 0) {
+    e.preventDefault();
+    input.classList.add('is-invalid');
+    errDiv.textContent = "Le montant doit être supérieur à 0.";
+    return;
+  }
+  if (val > montantCible) {
+    e.preventDefault();
+    input.classList.add('is-invalid');
+    errDiv.textContent = `Le montant ne peut pas dépasser le montant dû pour la tranche/frais en cours (${montantCible.toLocaleString('fr-FR')} FCFA).`;
+    return;
+  }
+});
+</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

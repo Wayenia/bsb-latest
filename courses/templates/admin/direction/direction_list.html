@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Directions régionales | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-10 space-y-6">
+    {% include 'partials/messages.html' %}
+
+    <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Directions régionales</h1>
+            <p class="mt-2 text-sm text-gray-600">Liste des directions régionales</p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex gap-3 flex-wrap">
+            {% url 'bsb_admin:direction_import' as direction_import_url %}
+            {% include 'partials/import_export_buttons.html' with upload_url=direction_import_url %}
+            <a href="{% url 'bsb_admin:direction_create' %}"
+               class="inline-flex items-center px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-yellow-700 transition-all transform hover:-translate-y-0.5">
+
+                Créer une direction
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtre -->
+    <form method="GET" class="px-4 md:px-6 bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-wrap items-end gap-4">
+        <div class="flex-1 min-w-[260px]">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Recherche</label>
+            <div class="relative">
+                
+                <input type="text" name="q" value="{{ search }}" placeholder="Nom de la direction..."
+                       class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm">
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button type="submit" class="px-5 py-2.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-all">
+                Filtrer
+            </button>
+            {% if search %}
+            <a href="{% url 'bsb_admin:direction_list' %}" class="px-5 py-2.5 border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50 transition-all">
+                Réinitialiser
+            </a>
+            {% endif %}
+        </div>
+    </form>
+
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        {% if directions %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nom de la direction</th>
+                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for direction in directions %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-bold text-gray-900">{{ direction.nom_direction }}</div>
+                            <div class="text-xs text-gray-500">Créée le {{ direction.date_creation|date:"d/m/Y" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end space-x-2">
+                                <a href="{% url 'bsb_admin:direction_update' direction.id %}"
+                                   class="inline-flex items-center gap-1 text-yellow-600 hover:text-yellow-800 p-2 hover:bg-yellow-50 rounded-lg transition-all" title="Modifier">{% include 'partials/icon_edit.html' %} Modifier</a>
+                                <a href="{% url 'bsb_admin:direction_delete' direction.id %}"
+                                   class="inline-flex items-center gap-1 text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-all" title="Supprimer">{% include 'partials/icon_delete.html' %} Supprimer</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if directions.has_other_pages %}
+        <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div class="flex items-center justify-between">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if directions.has_previous %}
+                    <a href="?page={{ directions.previous_page_number }}{% if search %}&q={{ search }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Précédent</a>
+                    {% endif %}
+                    {% if directions.has_next %}
+                    <a href="?page={{ directions.next_page_number }}{% if search %}&q={{ search }}{% endif %}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Suivant</a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <p class="text-sm text-gray-700">
+                        Page <span class="font-medium">{{ directions.number }}</span> sur <span class="font-medium">{{ directions.paginator.num_pages }}</span>
+                    </p>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        {% if directions.has_previous %}
+                        <a href="?page={{ directions.previous_page_number }}{% if search %}&q={{ search }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Précédent</a>
+                        {% endif %}
+                        {% for num in directions.paginator.page_range %}
+                            {% if directions.number == num %}
+                            <span class="relative inline-flex items-center px-4 py-2 border border-bsb-gold bg-bsb-gold text-sm font-medium text-white">{{ num }}</span>
+                            {% else %}
+                            <a href="?page={{ num }}{% if search %}&q={{ search }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        {% if directions.has_next %}
+                        <a href="?page={{ directions.next_page_number }}{% if search %}&q={{ search }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Suivant</a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-12">
+            
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucune direction trouvée</h3>
+            <p class="text-gray-600 mb-6">Commencez par créer votre première direction régionale</p>
+            <a href="{% url 'bsb_admin:direction_create' %}" class="inline-flex items-center px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg hover:bg-yellow-700 transition-all">
+                Créer une direction
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Types de frais | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6">
+  {% include 'partials/messages.html' %}
+
+  <!-- Header -->
+  <div class="px-4 md:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <a href="{% url 'bsb_admin:admin_dashboard' %}" class="text-sm text-gray-400 hover:text-gray-600 mb-2 block">Tableau de bord</a>
+      <h1 class="text-3xl font-black text-gray-900">Types de frais</h1>
+      <p class="mt-1 text-sm text-gray-500">{{ types.paginator.count }} type{{ types.paginator.count|pluralize }} enregistré{{ types.paginator.count|pluralize }}</p>
+    </div>
+    <div class="flex gap-3 flex-wrap">
+      {% url 'bsb_admin:type_frais_import' as type_frais_import_url %}
+      {% include 'partials/import_export_buttons.html' with upload_url=type_frais_import_url %}
+      <a href="{% url 'bsb_admin:type_frais_create' %}"
+         class="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow-600 text-white text-sm font-bold rounded-lg hover:bg-yellow-700 transition-all shadow-sm">
+        Nouveau type de frais
+      </a>
+    </div>
+  </div>
+
+  <!-- Barre de filtre -->
+  <form method="get">
+    <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex gap-3">
+      <input type="text" name="q" value="{{ q|default:'' }}"
+             placeholder="Rechercher un type de frais..."
+             class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition"
+             autocomplete="off">
+      <button type="submit"
+              class="inline-flex items-center gap-1 px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-semibold hover:bg-yellow-700 transition">
+        Rechercher
+      </button>
+      {% if q %}
+      <a href="{% url 'bsb_admin:type_frais_list' %}"
+         class="inline-flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">
+        Réinitialiser
+      </a>
+      {% endif %}
+    </div>
+  </form>
+
+  <!-- Accordéon type de frais → tranches -->
+  {% if types %}
+  <div class="space-y-4">
+    {% for t in types %}
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+
+      <div class="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-100">
+        <div class="flex items-center gap-4">
+          <button type="button"
+                  onclick="toggleTranches('t{{ t.pk }}')"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-400 transition-all shadow-sm"
+                  title="Afficher / Masquer les tranches">
+            <span class="text-xs transition-transform duration-200" id="icon-t{{ t.pk }}">▾</span>
+          </button>
+          <div>
+            <div class="flex items-center gap-3">
+              <h2 class="text-base font-black text-gray-900">{{ t.libelle }}</h2>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
+                {{ t.nb_tranches }} tranche{{ t.nb_tranches|pluralize }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <a href="{% url 'bsb_admin:type_frais_tranches' t.id %}"
+             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-yellow-50 hover:border-yellow-400 hover:text-yellow-700 transition-all">
+            Gérer les tranches
+          </a>
+          <a href="{% url 'bsb_admin:type_frais_update' t.id %}"
+             class="px-3 py-1.5 text-xs font-bold text-gray-600 hover:text-gray-900 transition-all">
+            Modifier
+          </a>
+          <a href="{% url 'bsb_admin:type_frais_delete' t.id %}"
+             class="px-3 py-1.5 text-xs font-bold text-red-600 hover:text-red-800 transition-all">
+            Supprimer
+          </a>
+        </div>
+      </div>
+
+      <div id="t{{ t.pk }}" class="hidden">
+        {% with tranches=t.tranches.all %}
+        {% if tranches %}
+        <table class="min-w-full divide-y divide-gray-100">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="pl-16 pr-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tranche</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Ordre</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Pourcentage</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Primordiale</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for tr in tranches %}
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="pl-16 pr-6 py-3.5 whitespace-nowrap text-sm font-semibold text-gray-800">{{ tr.libelle }}</td>
+              <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-600">{{ tr.ordre }}</td>
+              <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-600">{{ tr.pourcentage }}%</td>
+              <td class="px-6 py-3.5 whitespace-nowrap text-sm">
+                {% if tr.est_primordiale %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">Oui</span>
+                {% else %}
+                <span class="text-gray-400">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="px-16 py-5 text-sm text-gray-400 italic">
+          Aucune tranche pour ce type de frais — il se paie en une seule fois.
+          <a href="{% url 'bsb_admin:type_frais_tranches' t.id %}" class="ml-2 text-gray-700 font-semibold hover:underline">Ajouter des tranches</a>
+        </div>
+        {% endif %}
+        {% endwith %}
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if types.has_other_pages %}
+  <div class="flex items-center justify-between px-1 py-2">
+    <p class="text-sm text-gray-500">Page {{ types.number }} / {{ types.paginator.num_pages }}</p>
+    <div class="flex gap-2">
+      {% if types.has_previous %}
+      <a href="?page={{ types.previous_page_number }}&q={{ q }}" class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Précédent</a>
+      {% endif %}
+      {% if types.has_next %}
+      <a href="?page={{ types.next_page_number }}&q={{ q }}" class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Suivant</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm text-center py-16">
+    <p class="text-gray-500 font-medium">Aucun type de frais enregistré</p>
+    <a href="{% url 'bsb_admin:type_frais_create' %}" class="mt-4 inline-block text-sm font-bold text-gray-700 hover:underline">
+      Créer le premier
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+  function toggleTranches(id) {
+    const el = document.getElementById(id);
+    const icon = document.getElementById('icon-' + id);
+    if (el.classList.contains('hidden')) {
+      el.classList.remove('hidden');
+      icon.textContent = '▴';
+    } else {
+      el.classList.add('hidden');
+      icon.textContent = '▾';
+    }
+  }
+  setTimeout(() => {
+    document.querySelectorAll('.messages, [class*="messages"]').forEach(m => m.remove());
+  }, 5000);
+</script>
+{% endblock %}

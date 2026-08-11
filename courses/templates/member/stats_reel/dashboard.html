@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block title %}Statistiques réelles | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6 px-4 sm:px-6 lg:px-8">
+  {% include 'partials/messages.html' %}
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <a href="{% url 'courses:statistiques' %}" class="text-sm text-gray-400 hover:text-gray-600">Statistiques</a>
+      <h1 class="text-3xl font-black text-gray-900 mt-1">Statistiques réelles</h1>
+      <p class="mt-1 text-sm text-gray-500">
+        Effectifs formés et liste nominative des apprenants — données saisies manuellement
+        par formation (téléchargez le modèle, remplissez-le, puis importez-le).
+      </p>
+    </div>
+    <div class="flex gap-3 flex-wrap">
+      {% url 'courses:stats_reel_export_nominatif' as export_nominatif_url %}
+      <a href="{{ export_nominatif_url }}?{{ request.GET.urlencode }}"
+         class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-all shadow-sm">
+        PDF liste nominative (résidentielle)
+      </a>
+      {% url 'courses:stats_reel_export_agrege' as export_agrege_url %}
+      <a href="{{ export_agrege_url }}?{{ request.GET.urlencode }}"
+         class="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow-600 text-white text-sm font-bold rounded-lg hover:bg-yellow-700 transition-all shadow-sm">
+        Excel situation des formés
+      </a>
+      {% url 'courses:stats_reel_export_certification' as export_certif_url %}
+      <a href="{{ export_certif_url }}?{{ request.GET.urlencode }}"
+         class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-800 text-white text-sm font-bold rounded-lg hover:bg-gray-700 transition-all shadow-sm">
+        PDF résultats aux examens
+      </a>
+      {% url 'courses:stats_reel_export_handicap' as export_handicap_url %}
+      <a href="{{ export_handicap_url }}?{{ request.GET.urlencode }}"
+         class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-700 text-white text-sm font-bold rounded-lg hover:bg-gray-800 transition-all shadow-sm">
+        PDF répartition handicap
+      </a>
+    </div>
+  </div>
+  <p class="text-xs text-gray-400 -mt-3">
+    Les 4 exports respectent les filtres ci-dessous (année, direction, centre, métier) — pense à les régler avant de télécharger.
+    Une formation (centre + métier) peut être relancée d'une année sur l'autre : les boutons « Modèle »/« Importer » de chaque
+    ligne utilisent l'année sélectionnée ci-dessous, ou à défaut la plus récente année ayant des inscrits pour cette formation.
+  </p>
+
+  <form method="get" class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-wrap gap-3 items-end">
+    <div class="flex-1 min-w-[200px]">
+      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Recherche</label>
+      <input type="text" name="q" value="{{ q|default:'' }}"
+             placeholder="Centre ou métier..."
+             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+             autocomplete="off">
+    </div>
+    <div>
+      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Année scolaire</label>
+      <select name="annee" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+        <option value="">Toutes</option>
+        {% for a in annees %}
+        <option value="{{ a.id }}" {% if selected.annee_id == a.id|stringformat:'s' %}selected{% endif %}>{{ a.libelle_anne }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% if directions %}
+    <div>
+      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Direction</label>
+      <select name="direction" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+        <option value="">Toutes</option>
+        {% for d in directions %}
+        <option value="{{ d.id }}" {% if selected.direction_id == d.id|stringformat:'s' %}selected{% endif %}>{{ d.nom_direction }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+    {% if centres %}
+    <div>
+      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Centre</label>
+      <select name="centre" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+        <option value="">Tous</option>
+        {% for c in centres %}
+        <option value="{{ c.id }}" {% if selected.centre_id == c.id|stringformat:'s' %}selected{% endif %}>{{ c.nom_centre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+    <div>
+      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Métier</label>
+      <select name="filiere" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+        <option value="">Tous</option>
+        {% for f in filieres %}
+        <option value="{{ f.id }}" {% if selected.filiere_id == f.id|stringformat:'s' %}selected{% endif %}>{{ f.nom_filiere }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition">
+      Filtrer
+    </button>
+    <a href="{% url 'courses:stats_reel_dashboard' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">
+      Réinitialiser
+    </a>
+  </form>
+
+  <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+    {% if formations %}
+    <table class="min-w-full divide-y divide-gray-100">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Centre</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Métier</th>
+          <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Inscrits</th>
+          <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Statut saisie</th>
+          <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for f in formations %}
+        <tr class="hover:bg-red-50 transition-colors">
+          <td class="px-6 py-3 text-sm font-bold text-gray-900">{{ f.centre.nom_centre }}</td>
+          <td class="px-6 py-3 text-sm text-gray-600">{{ f.filiere.nom_filiere }}</td>
+          <td class="px-6 py-3 text-sm text-center text-gray-700">{{ f.nb_inscrits }}</td>
+          <td class="px-6 py-3 text-center">
+            {% if f.nb_inscrits == 0 %}
+            <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-gray-100 text-gray-500">Aucun inscrit</span>
+            {% elif f.nb_mode_renseigne == f.nb_inscrits and f.nb_effectifs > 0 %}
+            <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-green-100 text-green-800">Complet</span>
+            {% elif f.nb_mode_renseigne > 0 or f.nb_effectifs > 0 %}
+            <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-yellow-100 text-yellow-800">Partiel</span>
+            {% else %}
+            <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-red-100 text-red-800">À saisir</span>
+            {% endif %}
+          </td>
+          <td class="px-6 py-3 text-right whitespace-nowrap">
+            {% url 'courses:stats_reel_formation_template' f.id as modele_url %}
+            <a href="{{ modele_url }}{% if selected.annee_id %}?annee={{ selected.annee_id }}{% endif %}"
+               class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-yellow-700 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-all mr-1">
+              Modèle
+            </a>
+            {% url 'courses:stats_reel_formation_upload' f.id as importer_url %}
+            <a href="{{ importer_url }}{% if selected.annee_id %}?annee={{ selected.annee_id }}{% endif %}"
+               class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-all">
+              Importer
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if formations.has_other_pages %}
+    <div class="flex items-center justify-between px-6 py-3 border-t border-gray-100">
+      <p class="text-sm text-gray-500">
+        Page <span class="font-semibold text-gray-800">{{ formations.number }}</span>
+        sur <span class="font-semibold text-gray-800">{{ formations.paginator.num_pages }}</span>
+      </p>
+      <div class="flex gap-2">
+        {% if formations.has_previous %}
+        <a href="?page={{ formations.previous_page_number }}&q={{ q }}" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">Précédent</a>
+        {% endif %}
+        {% if formations.has_next %}
+        <a href="?page={{ formations.next_page_number }}&q={{ q }}" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">Suivant</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-16">
+      <h3 class="text-lg font-bold text-gray-800 mb-1">Aucune formation trouvée</h3>
+      <p class="text-sm text-gray-500 mt-1">Aucune formation (centre + métier) n'est visible dans votre périmètre.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

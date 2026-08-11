@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-10 px-4">
+  {% include 'partials/messages.html' %}
+
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6">
+    <a href="{% url 'bsb_admin:admin_dashboard' %}" class="hover:text-gray-600 transition">Tableau de bord</a>
+    
+    <a href="{% url 'bsb_admin:region_list' %}" class="hover:text-gray-600 transition">Régions</a>
+    
+    <span class="text-gray-700 font-medium">{{ action }} une province</span>
+  </nav>
+
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+
+    <!-- En-tête -->
+    <div class="px-8 py-6 bg-gradient-to-r from-yellow-500 to-yellow-600 flex items-center gap-4">
+      <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+        
+      </div>
+      <div>
+        <h1 class="text-xl font-black text-white">{{ title }}</h1>
+        <p class="text-yellow-100 text-sm mt-0.5">
+          {% if action == "Créer" %}Renseignez les informations de la nouvelle province.
+          {% else %}Modifiez les informations de cette province.{% endif %}
+        </p>
+      </div>
+    </div>
+
+    <!-- Formulaire -->
+    <form method="post" class="px-8 py-8 space-y-6">
+      {% csrf_token %}
+
+      <!-- Région parente -->
+      <div>
+        <label for="region" class="block text-sm font-bold text-gray-700 mb-1.5">
+          Région <span class="text-red-500">*</span>
+        </label>
+        <select id="region"
+                name="region"
+                class="block w-full px-4 py-3 border {% if errors.region %}border-red-400 bg-red-50{% else %}border-gray-200{% endif %} rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition">
+          <option value="">— Sélectionnez une région —</option>
+          {% for r in regions %}
+          <option value="{{ r.pk }}"
+            {% if values.region == r.pk|stringformat:"s" %}selected
+            {% elif province.region.pk == r.pk %}selected
+            {% elif preselected_region == r.pk|stringformat:"s" %}selected
+            {% endif %}>
+            {{ r.nom_region }}
+          </option>
+          {% endfor %}
+        </select>
+        {% if errors.region %}
+        <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+           {{ errors.region }}
+        </p>
+        {% endif %}
+      </div>
+
+      <!-- Nom de la province -->
+      <div>
+        <label for="nom_province" class="block text-sm font-bold text-gray-700 mb-1.5">
+          Nom de la province <span class="text-red-500">*</span>
+        </label>
+        <input type="text"
+               id="nom_province"
+               name="nom_province"
+               
+               value="{% if values.nom_province %}{{ values.nom_province }}{% elif province %}{{ province.nom_province }}{% endif %}"
+               placeholder="ex : Kadiogo, Sanmatenga…"
+               class="block w-full px-4 py-3 border {% if errors.nom_province %}border-red-400 bg-red-50{% else %}border-gray-200{% endif %} rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition"
+               autofocus>
+        {% if errors.nom_province %}
+        <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+           {{ errors.nom_province }}
+        </p>
+        {% endif %}
+      </div>
+
+      <!-- Chef-lieu -->
+      <div>
+        <label for="chef_lieu" class="block text-sm font-bold text-gray-700 mb-1.5">
+          Chef-lieu <span class="text-red-500">*</span>
+        </label>
+        <input type="text"
+               id="chef_lieu"
+               name="chef_lieu"
+               
+               value="{% if values.chef_lieu %}{{ values.chef_lieu }}{% elif province %}{{ province.chef_lieu }}{% endif %}"
+               placeholder="ex : Ouagadougou, Kaya…"
+               class="block w-full px-4 py-3 border {% if errors.chef_lieu %}border-red-400 bg-red-50{% else %}border-gray-200{% endif %} rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition">
+        {% if errors.chef_lieu %}
+        <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+           {{ errors.chef_lieu }}
+        </p>
+        {% endif %}
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+        <a href="{% url 'bsb_admin:region_list' %}"
+           class="inline-flex items-center gap-2 px-5 py-2.5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50 transition">
+           Annuler
+        </a>
+        <button type="submit"
+                class="inline-flex items-center gap-2 px-7 py-2.5 bg-yellow-500 text-white text-sm font-bold rounded-xl hover:bg-yellow-600 transition shadow-sm">
+          
+          {% if action == "Créer" %}Créer la province{% else %}Enregistrer les modifications{% endif %}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

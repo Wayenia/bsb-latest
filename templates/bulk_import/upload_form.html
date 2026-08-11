@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Importer — {{ spec.verbose_name }} | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-6">
+  {% include 'partials/messages.html' %}
+
+  <div>
+    {% if list_url %}
+    <a href="{{ list_url }}" class="text-sm text-gray-400 hover:text-gray-600">Retour à la liste</a>
+    {% endif %}
+    <h1 class="text-2xl font-black text-gray-900 mt-1">Importer — {{ spec.verbose_name }}</h1>
+    <p class="mt-1 text-sm text-gray-500">
+      Téléchargez le modèle Excel, remplissez-le, puis importez-le ci-dessous.
+      Les lignes valides sont créées ; les lignes invalides sont listées avec leur motif dans le rapport.
+    </p>
+  </div>
+
+  {% if template_url %}
+  <a href="{{ template_url }}"
+     class="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow-500 text-white text-sm font-bold rounded-lg hover:bg-yellow-600 transition-all shadow-sm">
+    Télécharger le modèle Excel
+  </a>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data"
+        class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="block text-sm font-bold text-gray-800 mb-1.5" for="fichier">Fichier (.xlsx ou .csv)</label>
+      <input type="file" name="fichier" id="fichier" accept=".xlsx,.csv" required
+             class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
+    </div>
+    <button type="submit"
+            class="px-6 py-2.5 bg-red-700 text-white text-sm font-bold rounded-lg hover:bg-red-800 transition-all shadow-sm">
+      Importer
+    </button>
+  </form>
+</div>
+{% endblock %}

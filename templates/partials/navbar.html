@@ -1,0 +1,251 @@
+{% load static %}
+
+<nav class="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm transition-all duration-300">
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+
+            <!-- LOGO -->
+            <div class="flex-shrink-0 flex items-center cursor-pointer">
+                <a href="{% url 'courses:home' %}" class="flex items-center gap-2">
+                    <img src="{% static 'images/logo.png' %}" alt="BSB Logo" class="h-14 w-auto object-contain transition-transform hover:scale-105">
+                    <div class="hidden lg:block leading-tight">
+                        <span class="text-yellow-600 font-bold text-xl block tracking-tight">BSB</span>
+                        <span class="text-red-600 text-xs font-bold uppercase tracking-wider">Burkina</span>
+                        <span class="text-yellow-600 text-xs font-bold uppercase tracking-wider">Suudu</span>
+                        <span class="text-green-600 text-xs font-bold uppercase tracking-wider">Bawdè</span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- LIENS DESKTOP -->
+            <div class="hidden sm:flex items-center space-x-1">
+
+                <a href="{% url 'courses:home' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                    Accueil
+                    <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                </a>
+
+                {% if user.is_authenticated %}
+
+                    {# ── ADMIN / SUPERUSER ──────────────────────────────────────── #}
+                    {% if user.user_type == 'admin' or user.user_type == 'dg' or user.is_superuser %}
+                        {% if perms.courses.gerer_programmations %}
+                        <a href="{% url 'bsb_admin:programming_list' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                            Programmations
+                            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                        </a>
+                        {% endif %}
+                        {% if perms.courses.voir_inscriptions %}
+                        <a href="{% url 'bsb_admin:subscription_list' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                            Inscriptions
+                            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                        </a>
+                        {% endif %}
+
+                    {# ── DEPS / DIR / AGENT COMPTABLE / GESTIONNAIRE / CAISSIER / MEMBRE : navigation via les cartes de "Mon espace" ── #}
+                    {% elif user.user_type == 'deps' or user.user_type == 'dir' or user.user_type == 'agent_comptable' or user.user_type == 'gestionnaire' or user.user_type == 'caissier' or user.user_type == 'membre' %}
+
+                    {# ── FORMATEUR ───────────────────────────────────────────────── #}
+                    {% elif user.user_type == 'formateur' %}
+                        <a href="{% url 'courses:formateur_filieres' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                            Mes métiers
+                            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                        </a>
+                        <a href="{% url 'courses:formateur_dashboard' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                            Tableau de bord
+                            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                        </a>
+
+                    {# ── ELEVE ───────────────────────────────────────────────────── #}
+                    {% elif user.user_type == 'eleve' %}
+                        <a href="{% url 'courses:available_career' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                            Métiers de formation
+                            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                        </a>
+                        <a href="{% url 'courses:my_subscriptions' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                            Mes demandes d'inscription
+                            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                        </a>
+                        <a href="{% url 'courses:about' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                            À propos
+                            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                        </a>
+
+                    {# ── NON CONNECTE ────────────────────────────────────────────── #}
+                    {% endif %}
+
+                    {# ── FACTURATION : accessible à quiconque a la permission,     ── #}
+                    {# ── quel que soit son rôle — sauf admin/dg (déjà sur la matrice── #}
+                    {# ── du dashboard, pas dans la navbar allégée pour ces 2 rôles) ── #}
+                    {% if user.user_type != 'admin' and user.user_type != 'dg' and not user.is_superuser %}
+                    {% if perms.accounts.gerer_facturation %}
+                    <a href="{% url 'accounts:facture_create' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                        Facturation et Prestation
+                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                    </a>
+                    {% endif %}
+                    {% if perms.accounts.gerer_facturation or perms.accounts.encaisser_prestation %}
+                    <a href="{% url 'accounts:facture_list' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                        Encaissement/Prestation
+                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                    </a>
+                    {% endif %}
+                    {% endif %}
+
+                {% else %}
+                    <a href="{% url 'courses:available_career' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                        Métiers de formation
+                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                    </a>
+                    <a href="#" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                        Actualités
+                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-green-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                    </a>
+                    <a href="{% url 'courses:about' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                        À propos
+                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                    </a>
+                {% endif %}
+
+            </div>
+
+            <!-- BOUTONS AUTH DESKTOP -->
+            <div class="hidden sm:flex items-center space-x-3">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'courses:redirect_to_dashboard' %}" class="px-5 py-2.5 text-sm font-bold text-white border border-gray-100 bg-yellow-600 rounded-full hover:bg-green-600 transition-all transform hover:-translate-y-0.5">
+                        Mon espace
+                    </a>
+                    <a href="{% url 'accounts:mon_profil' %}" class="px-5 py-2.5 text-sm font-bold text-gray-700 border border-gray-300 rounded-full hover:bg-gray-100 transition-all transform hover:-translate-y-0.5">
+                        Mon profil
+                    </a>
+                    <a href="{% url 'accounts:logout' %}" class="px-5 py-2.5 text-sm font-bold text-white border border-gray-300 bg-bsb-gray rounded-full hover:bg-gray-600 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                        Se déconnecter
+                    </a>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="px-5 py-2.5 text-sm font-bold text-white border border-gray-300 bg-bsb-red rounded-full hover:bg-red-700 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                        Se connecter
+                    </a>
+                    <a href="{% url 'accounts:register' %}" class="px-5 py-2.5 text-sm font-bold text-white hover:text-gray-900 border border-gray-300 bg-bsb-gold rounded-full hover:bg-yellow-500 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                        S'inscrire
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- BOUTON HAMBURGER -->
+            <button id="mobile-menu-btn"
+                    class="sm:hidden flex flex-col justify-center items-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
+                    aria-label="Menu">
+                <span class="hamburger-line block w-6 h-0.5 bg-gray-700 transition-all duration-300"></span>
+                <span class="hamburger-line block w-6 h-0.5 bg-gray-700 transition-all duration-300 mt-1.5"></span>
+                <span class="hamburger-line block w-6 h-0.5 bg-gray-700 transition-all duration-300 mt-1.5"></span>
+            </button>
+
+        </div>
+    </div>
+
+    <!-- MENU MOBILE -->
+    <div id="mobile-menu" class="sm:hidden hidden border-t border-gray-100 bg-white">
+        <div class="px-4 py-4 space-y-1">
+
+            <a href="{% url 'courses:home' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">
+                 Accueil
+            </a>
+
+            {% if user.is_authenticated %}
+
+                {# ── ADMIN / SUPERUSER ──────────────────────────────────────── #}
+                {% if user.user_type == 'admin' or user.user_type == 'dg' or user.is_superuser %}
+                    {% if perms.courses.gerer_programmations %}<a href="{% url 'bsb_admin:programming_list' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">️ Programmations</a>{% endif %}
+                    {% if perms.courses.voir_inscriptions %}<a href="{% url 'bsb_admin:subscription_list' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Inscriptions</a>{% endif %}
+
+                {# ── DEPS / DIR / AGENT COMPTABLE / GESTIONNAIRE / CAISSIER / MEMBRE : navigation via les cartes de "Mon espace" ── #}
+                {% elif user.user_type == 'deps' or user.user_type == 'dir' or user.user_type == 'agent_comptable' or user.user_type == 'gestionnaire' or user.user_type == 'caissier' or user.user_type == 'membre' %}
+
+                {# ── FORMATEUR ───────────────────────────────────────────────── #}
+                {% elif user.user_type == 'formateur' %}
+                    <a href="{% url 'courses:formateur_filieres' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Mes métiers</a>
+                    <a href="{% url 'courses:formateur_dashboard' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Tableau de bord</a>
+
+                {# ── ELEVE ───────────────────────────────────────────────────── #}
+                {% elif user.user_type == 'eleve' %}
+                    <a href="{% url 'courses:available_career' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Métiers de formation</a>
+                    <a href="{% url 'courses:my_subscriptions' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Mes demandes d'inscription</a>
+                    <a href="{% url 'courses:about' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">ℹ️ À propos</a>
+
+                {% endif %}
+
+                {# ── FACTURATION : accessible à quiconque a la permission,     ── #}
+                {# ── quel que soit son rôle — sauf admin/dg (pas dans la       ── #}
+                {# ── navbar allégée pour ces 2 rôles)                          ── #}
+                {% if user.user_type != 'admin' and user.user_type != 'dg' and not user.is_superuser %}
+                {% if perms.accounts.gerer_facturation %}
+                <a href="{% url 'accounts:facture_create' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Facturation et Prestation</a>
+                {% endif %}
+                {% if perms.accounts.gerer_facturation or perms.accounts.encaisser_prestation %}
+                <a href="{% url 'accounts:facture_list' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Encaissement/Prestation</a>
+                {% endif %}
+                {% endif %}
+
+            {% else %}
+                {# ── NON CONNECTE ────────────────────────────────────────────── #}
+                <a href="{% url 'courses:available_career' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Métiers de formation</a>
+                <a href="#" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Actualités</a>
+                <a href="{% url 'courses:about' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">ℹ️ À propos</a>
+            {% endif %}
+
+            <div class="border-t border-gray-100 my-2"></div>
+
+            {% if user.is_authenticated %}
+                <a href="{% url 'courses:redirect_to_dashboard' %}" class="block px-4 py-3 text-sm font-bold text-white bg-yellow-600 rounded-xl text-center hover:bg-green-600 transition-colors">
+                    Mon espace
+                </a>
+                <a href="{% url 'accounts:mon_profil' %}" class="block px-4 py-3 text-sm font-bold text-gray-700 border border-gray-300 rounded-xl text-center hover:bg-gray-100 transition-colors">
+                    Mon profil
+                </a>
+                <a href="{% url 'accounts:logout' %}" class="block px-4 py-3 text-sm font-bold text-gray-600 border border-gray-400 rounded-xl text-center hover:bg-gray-100 transition-colors">
+                    Se déconnecter
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="block px-4 py-3 text-sm font-bold text-white bg-bsb-red rounded-xl text-center hover:bg-red-700 transition-colors">
+                    Se connecter
+                </a>
+                <a href="{% url 'accounts:register' %}" class="block px-4 py-3 text-sm font-bold text-yellow-700 border border-bsb-gold rounded-xl text-center hover:bg-yellow-50 transition-colors">
+                    S'inscrire
+                </a>
+            {% endif %}
+
+        </div>
+    </div>
+</nav>
+
+<script>
+(function () {
+    const btn = document.getElementById('mobile-menu-btn');
+    const menu = document.getElementById('mobile-menu');
+    const lines = btn.querySelectorAll('.hamburger-line');
+
+    btn.addEventListener('click', function () {
+        const isOpen = !menu.classList.contains('hidden');
+        menu.classList.toggle('hidden');
+        if (!isOpen) {
+            lines[0].style.transform = 'translateY(8px) rotate(45deg)';
+            lines[1].style.opacity = '0';
+            lines[2].style.transform = 'translateY(-8px) rotate(-45deg)';
+        } else {
+            lines[0].style.transform = '';
+            lines[1].style.opacity = '';
+            lines[2].style.transform = '';
+        }
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!btn.contains(e.target) && !menu.contains(e.target)) {
+            menu.classList.add('hidden');
+            lines[0].style.transform = '';
+            lines[1].style.opacity = '';
+            lines[2].style.transform = '';
+        }
+    });
+})();
+</script>

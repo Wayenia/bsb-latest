@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Mes paiements | BSB{% endblock %}
+
+{% block content %}
+
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-6 py-10">
+      {% include 'partials/messages.html' %}
+   
+     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+      <div class="mb">
+        <h2 class="text-3xl serif-font border-l-4 border-green-700 font-bold pl-4 text-slate-900">
+            Mes paiements
+        </h2>
+        <p class="text-slate-500 pl-5 mt-1">
+            Historique des paiements des dettes
+        </p>
+    </div>
+    <a href="{% url 'courses:my_subscriptions' %}"
+       class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-yellow-600 text-white text-sm font-bold rounded-lg hover:bg-yellow-700">
+       Mes dossiers
+    </a>
+  </div>
+
+    <div>
+        <section class="py-20">
+            <div class="space-y-6">
+                {% for p in paiements %}
+                <div class="bg-white rounded-lg border border-slate-200 p-6 transition-shadow hover:shadow-md">
+                    <div class="grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-4">
+                        
+                        <div class="flex flex-col">
+                            <h3 class="text-lg font-semibold text-slate-900 leading-snug">
+                                {{ p.dette.frais_formation.type_frais }}
+                            </h3>
+                            <div class="flex items-center gap-2 text-sm text-slate-500 mt-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                                <span>{{ p.dette.inscription.formation}}</span>
+                            </div>
+
+                            <!-- Date d'subscription -->
+                            <div class="flex items-center gap-2 text-sm text-slate-500 mt-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"></path>
+                                </svg>
+                                <span>Soumis le: {{ p.date_paiement|date:"d F Y H:i:s" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="w-full flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+                                
+                            montant: {{ p.montant_paiement }}
+                               mode paie: {{p.mode_paiement}}
+                               tranche : {{p.tranche}}
+                               
+                            <a href="{% url 'courses:reportlab' p.id %}" class="text-gray-500">Télécharger la quittance</a>
+                        </div>
+                    </div>
+                </div>
+                 {% if paiements.has_other_pages %}
+                    <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1 flex justify-between sm:hidden">
+                                    {% if paiements.has_previous %}
+                                    <a href="?page={{ paiements.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                        Précédent
+                                    </a>
+                                    {% endif %}
+                                    {% if paiements.has_next %}
+                                    <a href="?page={{ paiements.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                        Suivant
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-700">
+                                            Page <span class="font-medium">{{ paiements.number }}</span> sur <span class="font-medium">{{ paiements.paginator.num_pages }}</span>
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                                            {% if paiements.has_previous %}
+                                            <a href="?page={{ paiements.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Précédent</a>
+                                            {% endif %}
+                                            
+                                            {% for num in paiements.paginator.page_range %}
+                                                {% if paiements.number == num %}
+                                                <span class="relative inline-flex items-center px-4 py-2 border border-bsb-gold bg-bsb-gold text-sm font-medium text-white">
+                                                    {{ num }}
+                                                </span>
+                                                {% else %}
+                                                <a href="?page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                                    {{ num }}
+                                                </a>
+                                                {% endif %}
+                                            {% endfor %}
+                                            
+                                            {% if paiements.has_next %}
+                                            <a href="?page={{ paiements.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Suivant</a>
+                                            {% endif %}
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                {% empty %}
+                <div class="text-center text-slate-400 py-10">
+                    <p>Aucun Paiement trouvé trouvé.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+  setTimeout(function () {
+    document.querySelectorAll('[class*="border-l-4"]').forEach(function(el) {
+      el.remove();
+    });
+  }, 5000);
+</script>
+{% endblock %}

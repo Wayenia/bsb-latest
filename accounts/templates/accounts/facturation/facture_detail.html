@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% block title %}Facture {{ facture.numero }} | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-10 space-y-6 px-4 sm:px-6 lg:px-8">
+    {% include 'partials/messages.html' %}
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'accounts:facture_list' %}" class="text-sm text-gray-400 hover:text-gray-600">Retour</a>
+            <h1 class="text-2xl font-black text-gray-900 mt-1">Facture {{ facture.numero }}</h1>
+            <p class="text-sm text-gray-500 mt-0.5">{{ facture.client }} — {{ facture.objet }}</p>
+        </div>
+        <div class="flex items-center gap-2">
+            {% if facture.type_facture == 'definitive' %}
+            <span class="px-3 py-1.5 inline-flex text-xs font-bold rounded-full bg-red-100 text-red-800">Définitive</span>
+            {% else %}
+            <span class="px-3 py-1.5 inline-flex text-xs font-bold rounded-full bg-yellow-100 text-yellow-800">Proforma</span>
+            {% endif %}
+            <a href="{% url 'accounts:facture_pdf' facture.id %}" target="_blank"
+               class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50 transition">
+                Télécharger le PDF
+            </a>
+            {% if facture.type_facture == 'proforma' %}
+            <form method="post" action="{% url 'accounts:facture_valider' facture.id %}"
+                  onsubmit="return confirm('Valider cette facture proforma en facture définitive ? Un nouveau numéro sera attribué.');">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-bsb-gold text-white text-sm font-bold rounded-lg hover:bg-yellow-600 transition">
+                    Valider en définitive
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Lignes -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Désignation</th>
+                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Quantité</th>
+                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Coût unitaire</th>
+                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Coût total</th>
+                        {% if facture.type_facture == 'definitive' %}
+                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Reste dû</th>
+                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {% for ligne in lignes %}
+                    <tr>
+                        <td class="px-6 py-3 text-sm font-semibold text-gray-800">{{ ligne.prestation.libelle }}</td>
+                        <td class="px-6 py-3 text-center text-sm text-gray-600">{{ ligne.quantite }}</td>
+                        <td class="px-6 py-3 text-right text-sm text-gray-600">{{ ligne.prix_unitaire|floatformat:0 }} FCFA</td>
+                        <td class="px-6 py-3 text-right text-sm font-bold text-gray-900">{{ ligne.montant|floatformat:0 }} FCFA</td>
+                        {% if facture.type_facture == 'definitive' %}
+                        <td class="px-6 py-3 text-right text-sm font-bold {% if ligne.reste > 0 %}text-red-700{% else %}text-gray-400{% endif %}">
+                            {{ ligne.reste|floatformat:0 }} FCFA
+                        </td>
+                        <td class="px-6 py-3 text-right">
+                            {% if ligne.reste > 0 %}
+                            <button type="button"
+                                    onclick="ouvrirModalEncaissement('ligne', {{ ligne.id }}, {{ ligne.reste|floatformat:0 }}, '{{ ligne.prestation.libelle|escapejs }}')"
+                                    class="px-3 py-1.5 text-xs font-bold text-white bg-bsb-gold hover:bg-yellow-600 rounded-lg transition">
+                                Encaisser
+                            </button>
+                            {% else %}
+                            <span class="text-xs text-gray-400 italic">Soldée</span>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="bg-gray-50">
+                        <td colspan="3" class="px-6 py-3 text-right text-sm font-bold text-gray-700">Total général</td>
+                        <td class="px-6 py-3 text-right text-sm font-black text-gray-900">{{ facture.montant_total|floatformat:0 }} FCFA</td>
+                        {% if facture.type_facture == 'definitive' %}
+                        <td class="px-6 py-3 text-right text-sm font-black text-red-700">{{ facture.reste_a_payer|floatformat:0 }} FCFA</td>
+                        <td></td>
+                        {% endif %}
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    {% if facture.type_facture == 'definitive' %}
+    <div class="flex justify-end">
+        <button type="button" onclick="ouvrirModalEncaissement('total')"
+                class="px-6 py-3 bg-bsb-gold text-white text-sm font-bold rounded-lg shadow hover:bg-yellow-600 transition"
+                {% if facture.reste_a_payer <= 0 %}disabled{% endif %}>
+            {% if facture.reste_a_payer <= 0 %}Facture soldée{% else %}Encaisser le montant total{% endif %}
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- Historique des paiements -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wide">Paiements encaissés</h2>
+        </div>
+        {% if paiements %}
+        <table class="min-w-full divide-y divide-gray-100">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">N° Reçu</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Mode</th>
+                    <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Montant</th>
+                    <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Reçu</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for p in paiements %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-3 text-sm font-mono text-gray-700">{{ p.numero_recu }}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600">{{ p.date_paiement|date:"d/m/Y H:i" }}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600">{{ p.get_mode_paiement_display }}</td>
+                    <td class="px-6 py-3 text-right text-sm font-bold text-gray-900">{{ p.montant|floatformat:0 }} FCFA</td>
+                    <td class="px-6 py-3 text-right">
+                        <a href="{% url 'accounts:prestation_recu_pdf' p.id %}" class="text-xs font-bold text-red-700 hover:underline">Télécharger</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="px-6 py-6 text-sm text-gray-400 italic">Aucun paiement enregistré pour cette facture.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if facture.type_facture == 'definitive' %}
+<!-- Modale encaissement -->
+<div id="modal-encaissement" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold text-gray-900">Encaisser un paiement</h2>
+      <button type="button" onclick="fermerModalEncaissement()" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+    </div>
+
+    <form method="post" action="{% url 'accounts:prestation_encaisser' facture.id %}" id="form-encaissement">
+      {% csrf_token %}
+      <input type="hidden" name="mode_encaissement" id="id_mode_encaissement" value="total">
+      <input type="hidden" name="ligne_id" id="id_ligne_id" value="">
+
+      <div class="mb-4">
+        <label class="block text-sm font-bold text-gray-700 mb-1" id="montant-label">Montant à encaisser (FCFA)</label>
+        <input type="number" name="montant_paiement" id="id_montant_paiement" min="0" step="1"
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        <p class="text-xs text-gray-400 mt-1" id="montant-aide"></p>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-bold text-gray-700 mb-1">Mode de paiement</label>
+        <select name="mode_paiement" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+          {% for value, label in paiement_form.fields.mode_paiement.choices %}
+          <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-bold text-gray-700 mb-1">Référence (optionnel)</label>
+        <input type="text" name="reference" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+      </div>
+
+      <div class="flex gap-2 mt-6">
+        <button type="button" onclick="fermerModalEncaissement()"
+                class="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-semibold hover:bg-gray-50">Annuler</button>
+        <button type="submit"
+                class="flex-[2] py-2 bg-bsb-gold hover:bg-yellow-600 text-white rounded-lg text-sm font-bold">Confirmer l'encaissement</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const resteAPayerFacture = {{ facture.reste_a_payer|floatformat:0 }};
+
+function ouvrirModalEncaissement(mode, ligneId, ligneReste, ligneLibelle) {
+  mode = mode || 'total';
+  document.getElementById('id_mode_encaissement').value = mode;
+
+  const montantInput = document.getElementById('id_montant_paiement');
+  const label = document.getElementById('montant-label');
+  const aide = document.getElementById('montant-aide');
+
+  if (mode === 'total') {
+    document.getElementById('id_ligne_id').value = '';
+    label.textContent = 'Montant à encaisser (FCFA)';
+    montantInput.value = resteAPayerFacture;
+    montantInput.max = resteAPayerFacture;
+    montantInput.min = resteAPayerFacture;
+    montantInput.readOnly = true;
+    montantInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+    aide.textContent = "Le montant total doit être encaissé en une fois, exactement (" + resteAPayerFacture.toLocaleString('fr-FR') + " FCFA).";
+  } else {
+    document.getElementById('id_ligne_id').value = ligneId;
+    label.textContent = 'Montant pour « ' + ligneLibelle + ' » (FCFA)';
+    montantInput.value = '';
+    montantInput.max = ligneReste;
+    montantInput.min = 0;
+    montantInput.readOnly = false;
+    montantInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+    aide.textContent = 'Reste dû sur cette ligne : ' + Number(ligneReste).toLocaleString('fr-FR') + ' FCFA.';
+  }
+
+  const modal = document.getElementById('modal-encaissement');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  if (mode === 'ligne') montantInput.focus();
+}
+function fermerModalEncaissement() {
+  const modal = document.getElementById('modal-encaissement');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+document.getElementById('modal-encaissement').addEventListener('click', function (e) {
+  if (e.target === this) fermerModalEncaissement();
+});
+document.getElementById('form-encaissement')?.addEventListener('submit', function (e) {
+  const montant = parseFloat(document.getElementById('id_montant_paiement').value);
+  if (!montant || montant <= 0) {
+    e.preventDefault();
+    alert('Le montant doit être supérieur à 0.');
+  }
+});
+
+// Après un encaissement, la page est rechargée sur cette même vue avec
+// ?recu=<id> : on déclenche le téléchargement automatique du reçu (réponse
+// "attachment", donc sans quitter/naviguer hors de cette page), puis on
+// nettoie l'URL pour qu'un rechargement manuel ne re-télécharge pas le reçu.
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const recuId = params.get('recu');
+  if (recuId) {
+    window.location.href = "{% url 'accounts:prestation_recu_pdf' 0 %}".replace('0', recuId);
+    params.delete('recu');
+    const nouvelleUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    history.replaceState(null, '', nouvelleUrl);
+  }
+})();
+</script>
+{% endif %}
+{% endblock %}

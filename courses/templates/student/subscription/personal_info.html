@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% block title %}Informations personnelles | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-12">
+  {% include 'partials/messages.html' %}
+
+  <div class="bg-white border border-slate-200 rounded-sm mb-8">
+    <div class="h-1 w-full" style="background-color: #ECAB0F;"></div>
+    
+    <div class="p-8">
+      <!-- head -->
+      <div class="mb-8">
+        <h3 class="text-xl font-light text-slate-800 mb-1">Informations personnelles</h3>
+        <p class="text-sm text-slate-500">
+          Veuillez renseigner attentivement vos vraies informations
+        </p>
+      </div>
+
+      <form method="POST" action="">
+        {% csrf_token %}
+
+        <!-- Grille 2 colonnes pour tous les champs -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+          
+          <!-- Nom -->
+          <div class="w-full">
+            <div class="mb-2">
+              <label for="{{ form.nom.id_for_label }}" class="text-base font-medium text-slate-800 block">
+                {{ form.nom.label }}
+                <span class="text-red-600 ml-1">*</span>
+              </label>
+            </div>
+            {{ form.nom }}
+            {% if form.nom.errors %}
+              <p class="text-xs text-red-600 mt-1">{{ form.nom.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Prénom -->
+          <div class="w-full">
+            <div class="mb-2">
+              <label for="{{ form.prenom.id_for_label }}" class="text-base font-medium text-slate-800 block">
+                {{ form.prenom.label }}
+                <span class="text-red-600 ml-1">*</span>
+              </label>
+            </div>
+            {{ form.prenom }}
+            {% if form.prenom.errors %}
+              <p class="text-xs text-red-600 mt-1">{{ form.prenom.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Sexe -->
+          <div class="w-full">
+            <div class="mb-2">
+              <label for="{{ form.sexe.id_for_label }}" class="text-base font-medium text-slate-800 block">
+                {{ form.sexe.label }}
+                <span class="text-red-600 ml-1">*</span>
+              </label>
+            </div>
+            {{ form.sexe }}
+          </div>
+
+          <!-- Email -->
+          <div class="w-full">
+            <div class="mb-2">
+              <label for="{{ form.email.id_for_label }}" class="text-base font-medium text-slate-800 block">
+                {{ form.email.label }}
+              </label>
+            </div>
+            {{ form.email }}
+            {% if form.email.errors %}
+              <p class="text-xs text-red-600 mt-1">{{ form.email.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Téléphone -->
+          <div class="w-full">
+            <div class="mb-2">
+              <label for="{{ form.tel.id_for_label }}" class="text-base font-medium text-slate-800 block">
+                {{ form.tel.label }}
+                <span class="text-red-600 ml-1">*</span>
+              </label>
+            </div>
+            {{ form.tel }}
+            <span class="text-xs text-slate-400 mt-1 block">Format: +226 XX XX XX XX</span>
+          </div>
+
+          <!-- Date de naissance -->
+          <div class="w-full">
+            <div class="mb-2">
+              <label for="{{ form.date_naissance.id_for_label }}" class="text-base font-medium text-slate-800 block">
+                {{ form.date_naissance.label }}
+                <span class="text-red-600 ml-1">*</span>
+              </label>
+            </div>
+            {{ form.date_naissance }}
+          </div>
+
+          <!-- Lieu de naissance (sur toute la largeur en dessous) -->
+          <div class="md:col-span-2 w-full mb-6">
+            <div class="mb-2">
+              <label for="{{ form.lieu_naissance.id_for_label }}" class="text-base font-medium text-slate-800 block">
+                {{ form.lieu_naissance.label }}
+                <span class="text-red-600 ml-1">*</span>
+              </label>
+            </div>
+            {{ form.lieu_naissance }}
+          </div>
+        </div>
+
+        <h3 class="text-xl font-light text-slate-800 mb-2"> Informations de la personne à contacter</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+        <!-- Nom de la personne a prévénir en cas de besoin -->
+        <div class="w-full">
+          <div class="mb-2">
+            <label for="{{form.nom_personne.id_for_label}}" class="text-base font-medium text-slate-800 block">
+              {{form.nom_personne.label}}
+              <span class="text-red-600 ml-1">*</span>
+            </label>
+          </div>
+              {{form.nom_personne}}
+        </div>
+        <!-- Prenom de la personne à prevenir en cas de besoin -->
+         <div class="w-full">
+          <div class="mb-2">
+            <label for="{{form.prenom_personne.id_for_label}}" class="text-base font-medium text-slate-800 block">
+              {{form.prenom_personne.label}}
+              <span class="text-red-600 ml-1">*</span>
+            </label>
+          </div>
+              {{form.prenom_personne}}
+        </div>
+        <!-- Fonction de la personne à prévenir en cas de besoin -->
+         <div class="w-full">
+          <div class="mb-2">
+            <label for="{{form.fonction.id_for_label}}" class="text-base font-medium text-slate-800 block">
+              {{form.fonction.label}}
+              <span class="text-red-600 ml-1">*</span>
+            </label>
+          </div>
+              {{form.fonction}}
+        </div>
+        <!-- Contact de la personne à prévenir en cas de besoin -->
+         <div class="w-full">
+          <div class="mb-2">
+            <label for="{{form.contact.id_for_label}}" class="text-base font-medium text-slate-800 block">
+              {{form.contact.label}}
+              <span class="text-red-600 ml-1">*</span>
+            </label>
+          </div>
+              {{form.contact}}
+        </div>
+        </div>
+        <!-- Boutons de navigation -->
+        <div class="flex justify-between mt-10 pt-6 border-t border-slate-200">
+          
+          <a href="javascript:history.back()"
+             class="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-medium
+                    rounded-sm hover:bg-slate-50 hover:border-slate-300 transition-all">
+            ← Retour
+          </a>
+          <button type="submit"
+                  class="px-6 py-2.5 text-white text-sm font-medium rounded-sm
+                         transition-all hover:opacity-90 flex items-center gap-2"
+                  style="background-color: #009640;">
+            <span>Suivant</span>
+            <span class="text-xs opacity-70">→</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="mt-8 flex justify-center space-x-3">
+    <span class="h-0.5 w-3" style="background-color: #ECAB0F;"></span>
+    <span class="h-0.5 w-3" style="background-color: #E30613;"></span>
+    <span class="h-0.5 w-3" style="background-color: #009640;"></span>
+  </div>
+</div>
+{% endblock %}

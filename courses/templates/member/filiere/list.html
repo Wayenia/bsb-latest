@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}filieres | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-8xl mx-auto py-10 space-y-6">
+    <!-- Messages -->
+    {% include 'partials/messages.html' %}
+    
+    <!-- Header -->
+    <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900 flex items-center">
+                Les offres de formation du {{centre}}
+            </h1>
+            <p class="mt-2 text-sm text-gray-600">Liste de toutes les filières</p>
+        </div>
+        <div class="mt-4 sm:mt-0">
+            <a href="{% url 'courses:create_field' %}" 
+               class="inline-flex items-center px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+                <i class="fas fa-plus mr-2"></i>
+                Créer une filière
+            </a>
+        </div>
+    </div>
+     <!-- Barre de filtre -->
+     <form method="get">
+        <div class="bg-white px-4 py-4 border border-gray-200 rounded-lg mb-4 flex flex-col sm:flex-row gap-3">
+            <!-- Recherche -->
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+                {{filter.form.recherche}}
+            </div>
+
+            <!-- Filtre Centre / Ville -->
+            <div class="sm:w-56">
+                {{filter.form.diplome}}
+            </div>
+
+        </div>
+      </form>
+     
+
+    <!-- Table Card -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        {% if filieres %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Nom de la filiere
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Durree de formation
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Nom du diplôme
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Niveau du diplôme
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Disponible
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for field in filieres %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-bsb-gold rounded-full flex items-center justify-center">
+                                    <i class="fas fa-map-marker-alt text-white"></i>
+                                </div>
+                                <div class="ml-4  ">
+                                    <div class="text-sm font-bold text-gray-900 ">{{ field.filiere }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <span class="text-sm font-medium text-gray-900 ">{{ field.filiere.duree_formation }} mois</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                {{ field.filiere.nom_diplome }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
+                            {{ field.filiere.niveau_diplome }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {% if field.is_active %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    Oui
+                                </span>
+                            {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    Non
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end space-x-2">
+                                <a href="{% url 'bsb_admin:field_update' field.id %}" 
+                                   class="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-all"
+                                   title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'bsb_admin:field_delete' field.id %}" 
+                                   class="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-all"
+                                   title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if filieres.has_other_pages %}
+        <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div class="flex items-center justify-between">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if filieres.has_previous %}
+                    <a href="?page={{ filieres.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Précédent
+                    </a>
+                    {% endif %}
+                    {% if fields.has_next %}
+                    <a href="?page={{ ffilieres.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Suivant
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Page <span class="font-medium">{{ filieres.number }}</span> sur <span class="font-medium">{{ filieres.paginator.num_pages }}</span>
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            {% if filieres.has_previous %}
+                            <a href="?page={{ filieres.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% for num in filieres.paginator.page_range %}
+                                {% if filieres.number == num %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-bsb-gold bg-bsb-gold text-sm font-medium text-white">
+                                    {{ num }}
+                                </span>
+                                {% else %}
+                                <a href="?page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ num }}
+                                </a>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if filieres.has_next %}
+                            <a href="?page={{ filieres.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-map-marked-alt text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucune filière trouvée</h3>
+            <p class="text-gray-600 mb-6">Commencez par créer votre première filière</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{{ filter.form.recherche }}
+
+<script>
+    document.querySelector('[name="recherche"]').addEventListener('input', function() {
+        clearTimeout(this._timer);
+        this._timer = setTimeout(() => this.form.submit(), 1000); // délai 500ms
+    });
+</script>
+{% endblock %}

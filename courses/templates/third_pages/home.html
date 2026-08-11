@@ -1,0 +1,527 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Accueil | BSB - Burkina Suudu Bawdè{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative bg-gradient-to-br from-bsb-red via-gray-900 to-bsb-green py-10 overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0" style="background-image: url('{% static 'images/logo.png' %}'); background-size: 400px; background-repeat: repeat;"></div>
+    </div>
+    
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <div class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6">
+                <span class="text-gray-900 text-xl font-semibold">Ministère de l'Enseignement Secondaire et de la Formation Professionnelle et Technique</span>
+            </div>
+            
+            <h1 class="text-5xl md:text-6xl font-black text-gray-900 mb-6">
+                Burkina Suudu Bawdè 
+            </h1>
+            <p class="text-xl md:text-2xl text-yellow-600 font-semibold mb-4" id="typewriter"></p>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto mb-10">
+                Développer les compétences de la jeunesse burkinabè à travers une formation de qualité
+                pour un avenir professionnel épanoui et durable.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                {% if user.is_staff %}
+                <a href="{% url 'bsb_admin:admin_dashboard' %}"
+                   class="inline-flex items-center justify-center px-8 py-3 text-sm font-bold text-gray-900 hover:text-white border border-gray-300 bg-yellow-100 rounded-full hover:bg-yellow-600 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                    Accéder à mon espace
+                </a>
+                {% else %}
+                {% if not user.is_staff %}
+                <a href="{% url 'courses:redirect_to_dashboard' %}"
+                   class="inline-flex items-center justify-center px-8 py-3 text-sm font-bold text-gray-900 hover:text-white border border-gray-300 bg-yellow-100 rounded-full hover:bg-yellow-600 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                    Accéder à mon compte
+                </a>
+                {% else %}
+                <a href="{% url 'accounts:login' %}"
+                   class="inline-flex items-center justify-center px-8 py-3 text-sm font-bold text-gray-900 hover:text-white border border-gray-300 bg-yellow-100 rounded-full hover:bg-yellow-600 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                    Se connecter
+                </a>
+                {% endif %}
+                {% endif %}
+                <a href="#formations"
+                   class="inline-flex items-center justify-center px-8 py-3 px-5 py-2.5 text-sm font-bold text-gray-800 hover:text-white border border-gray-300 bg-bsb-red rounded-full hover:bg-red-700 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                    Découvrir les formations
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div class="text-center">
+                <div class="text-5xl font-black text-bsb-gold mb-2">32</div>
+                <div class="text-gray-600 font-semibold">
+                    <a href="{% url 'bsb_admin:center_list' %}" class="bg-white text-gray-500 hover:text-red-700">
+                        Centres de formation
+                    </a>
+                </div>
+            </div>
+            <div class="text-center">
+                <div class="text-5xl font-black text-bsb-gold mb-2">144</div>
+                <div class="text-gray-600 font-semibold">
+                    <a href="{% url 'bsb_admin:field_list' %}" class="bg-white text-gray-500 hover:text-red-700">
+                        Metiers de formation
+                    </a>
+                </div>
+            </div>
+            <div class="text-center">
+                <div class="text-5xl font-black text-bsb-gold mb-2">15000+</div>
+                <div class="text-gray-600 font-semibold">Apprenants formés</div>
+            </div>
+            <div class="text-center">
+                <div class="text-5xl font-black text-bsb-gold mb-2">13</div>
+                <div class="text-gray-600 font-semibold">
+                    <a href="{% url 'bsb_admin:field_list' %}" class="bg-white text-gray-500 hover:text-red-700">
+                        Régionales couvertes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Carousel Formations Actives -->
+<section class="py-14 bg-gradient-to-b from-white to-gray-50 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+            <h2 class="text-4xl font-black text-yellow-600 mb-3">Formations en cours</h2>
+            <p class="text-gray-500 text-lg">Inscrivez-vous dès maintenant à nos formations actives</p>
+        </div>
+
+        <div class="relative">
+            <!-- Flèches de navigation -->
+            <button id="carousel-prev"
+                class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white border-2 border-bsb-gold text-bsb-gold shadow-lg rounded-full w-11 h-11 flex items-center justify-center hover:bg-bsb-gold hover:text-white transition-all duration-200 focus:outline-none">Précédent</button>
+            <button id="carousel-next"
+                class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white border-2 border-bsb-gold text-bsb-gold shadow-lg rounded-full w-11 h-11 flex items-center justify-center hover:bg-bsb-gold hover:text-white transition-all duration-200 focus:outline-none">Suivant</button>
+
+            <!-- Conteneur glissant -->
+            <div class="overflow-hidden rounded-2xl" id="carousel-wrapper">
+                <div id="carousel-track" class="flex gap-6 transition-transform duration-500 ease-in-out">
+                    {% for career in active_careers %}
+                    <div class="carousel-card flex-shrink-0 w-72 sm:w-80 bg-white rounded-2xl border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col overflow-hidden">
+                        
+                        <div class="p-6 flex flex-col flex-1">
+                            <!-- Badge filière / domaine -->
+                            <div class="mb-3">
+                                <span class="inline-block px-3 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-700">
+                                    Type formation : {{ career.get_type_formation_display }}
+                                </span>
+                            </div>
+
+                            <h3 class="text-lg font-black text-gray-900 mb-1 leading-tight">
+                                {{ career.filiere.nom_filiere }}
+                            </h3>
+                            <p class="text-sm text-gray-500 mb-1">
+                                
+                                Durée : {{ career.duree_display }}
+                            </p>
+                            {% if career.annee_prog %}
+                            <p class="text-sm text-gray-500 mb-3">
+                                
+                                {{ career.annee_prog }}
+                            </p>
+                            {% endif %}
+
+                            <p class="text-base font-bold text-gray-800 mb-4">
+                                
+                                Titre professionnel : {{ career.filiere.titre_professionnel }}
+                            </p>
+                            <br>
+                            {% if career.filiere.texte_defilante %}
+                                <div class="bsb-ticker bg-gradient-to-r from-bsb-red to-bsb-gold mb-4">
+                                    <div class="bsb-ticker__inner text-xs font-bold text-white py-1.5">
+                                        {{ career.filiere.texte_defilante }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <div class="mt-auto">
+                                {% if user.is_authenticated %}
+                                    <a href="{% url 'courses:subscribe_selection' %}"
+                                       class="block w-full text-center px-5 py-2.5 bg-bsb-red text-white font-bold rounded-xl hover:bg-red-700 transition-colors duration-200 text-sm">
+                                         S'inscrire
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'accounts:login' %}?next={% url 'courses:subscribe_selection' %}"
+                                       class="block w-full text-center px-5 py-2.5 bg-yellow-500 text-white font-bold rounded-xl hover:bg-yellow-600 transition-colors duration-200 text-sm">
+                                         Se connecter pour s'inscrire
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- Barre de couleur en bas -->
+                        <div class="h-1.5 rounded-b-2xl bg-bsb-gold"></div>
+                    </div>
+                    {% empty %}
+                    <div class="w-full text-center py-16 text-gray-400">
+                        
+                        Aucune formation active pour le moment.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Indicateurs (dots) -->
+            <div id="carousel-dots" class="flex justify-center gap-2 mt-6"></div>
+        </div>
+    </div>
+</section>
+<!-- About Section -->
+<section class="py-10 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-4xl text-yellow-600 font-black mb-6">
+                    Notre mission
+                </h2>
+                <p class="text-lg text-gray-700 mb-6 leading-relaxed">
+                    Le <strong>Burkina Suudu Bawdè (BSB)</strong> est l'institution nationale de référence
+                    pour la formation professionnelle et technique au Burkina Faso. Nous accompagnons
+                    les jeunes burkinabè dans leur insertion professionnelle à travers des formations
+                    adaptées aux besoins du marché du travail.
+                </p>
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="ml-4">
+                            <h3 class="font-bold text-gray-900">Formation de qualité</h3>
+                            <p class="text-gray-600">Programmes certifiés et reconnus nationalement</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 h-10 w-10 bg-bsb-gold rounded-full flex items-center justify-center">
+                            
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="font-bold text-gray-900">Insertion Professionnelle</h3>
+                            <p class="text-gray-600">Accompagnement vers l'emploi et l'entrepreneuriat</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 h-10 w-10 bg-bsb-red rounded-full flex items-center justify-center">
+                            
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="font-bold text-gray-900">Couverture Nationale</h3>
+                            <p class="text-gray-600">Présent dans les 13 régions du Burkina Faso</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <img src="{% static 'images/logo.png' %}" alt="BSB Logo" class="w-full max-w-md mx-auto">
+            </div>
+        </div>
+    </div>
+
+</section>
+<!-- Formations Section -->
+<section id="formations" class="py-10 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-black text-yellow-600 mb-4">Nos offres de formation</h2>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+                31 centres de formation - 9 domaines d'apprentissage - 144 métiers - plus des formations à la carte
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- LE GÉNIE CIVIL -->
+            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
+                <h3 class="text-xl font-bold text-bsb-gold mb-4">LE GÉNIE CIVIL</h3>
+                <p class="text-gray-700 mb-4">
+                    Formation aux métiers du bâtiment, des travaux publics et de la construction
+                </p>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>Maçonnerie</li>
+                    <li>Plomberie sanitaire</li>
+                    <li>Carrelage-Faïencerie</li>
+                    <li>Menuiserie bâtiment</li>
+                </ul>
+            </div>
+
+            <!-- LE GÉNIE ÉLECTRIQUE -->
+            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
+                <h3 class="text-xl font-bold text-bsb-gold mb-4">LE GÉNIE ÉLECTRIQUE</h3>
+                <p class="text-gray-700 mb-4">
+                    Électricité, électrotechnique, froid et climatisation pour tous les secteurs
+                </p>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>Électricité bâtiment</li>
+                    <li>Électrotechnique industrielle</li>
+                    <li>Froid et climatisation</li>
+                    <li>Installation énergies</li>
+                </ul>
+            </div>
+
+            <!-- LE GÉNIE MÉCANIQUE -->
+            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
+                <h3 class="text-xl font-bold text-bsb-gold mb-4">LE GÉNIE MÉCANIQUE</h3>
+                <p class="text-gray-700 mb-4">
+                    Mécanique automobile, mécanique générale et maintenance industrielle
+                </p>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>Mécanique automobile</li>
+                    <li>Mécanique générale</li>
+                    <li>Soudure métallerie</li>
+                    <li>Maintenance industrielle</li>
+                </ul>
+            </div>
+
+            <!-- LE GÉNIE INFORMATIQUE -->
+            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
+                <h3 class="text-xl font-bold text-bsb-gold mb-4">LE GÉNIE INFORMATIQUE</h3>
+                <p class="text-gray-700 mb-4">
+                    Informatique, développement, maintenance et technologies numériques
+                </p>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>Développement logiciel</li>
+                    <li>Maintenance informatique</li>
+                    <li>Infographie multimédia</li>
+                    <li>Réseaux informatiques</li>
+                </ul>
+            </div>
+
+            <!-- LE GÉNIE ÉLECTRONIQUE -->
+            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
+                <h3 class="text-xl font-bold text-bsb-gold mb-4">LE GÉNIE ÉLECTRONIQUE</h3>
+                <p class="text-gray-700 mb-4">
+                    Électronique, automatisme, télécommunications et systèmes embarqués
+                </p>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>Électronique industrielle</li>
+                    <li>Automatisme et régulation</li>
+                    <li>Télécommunications</li>
+                    <li>Électronique de puissance</li>
+                </ul>
+            </div>
+
+            <!-- L'AGRO-ALIMENTAIRE -->
+            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
+                <h3 class="text-xl font-bold text-bsb-gold mb-4">L'AGRO-ALIMENTAIRE</h3>
+                <p class="text-gray-700 mb-4">
+                    Agriculture, transformation et valorisation des produits agroalimentaires
+                </p>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>Agriculture moderne</li>
+                    <li>Transformation alimentaire</li>
+                    <li>Élevage et aviculture</li>
+                    <li>Qualité agro-alimentaire</li>
+                </ul>
+            </div>
+
+            <!-- LE TEXTILE-HABILLEMENT -->
+            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
+                <h3 class="text-xl font-bold text-bsb-gold mb-4">LE TEXTILE-HABILLEMENT</h3>
+                <p class="text-gray-700 mb-4">
+                    Couture, confection, stylisme et métiers de la mode et du textile
+                </p>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>Couture-coupe</li>
+                    <li>Stylisme-modélisme</li>
+                    <li>Confection industrielle</li>
+                    <li>Tissage et teinture</li>
+                </ul>
+            </div>
+
+            <!-- LA MAINTENANCE INDUSTRIELLE -->
+            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
+                <h3 class="text-xl font-bold text-bsb-gold mb-4">LA MAINTENANCE INDUSTRIELLE</h3>
+                <p class="text-gray-700 mb-4">
+                    Maintenance préventive et corrective des équipements industriels
+                </p>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>Maintenance mécanique</li>
+                    <li>Maintenance électrique</li>
+                    <li>Maintenance hydraulique</li>
+                    <li>Diagnostic industriel</li>
+                </ul>
+            </div>
+
+            <!-- L'HYGIÈNE ET LES SOINS CORPORELS -->
+            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
+                <h3 class="text-xl font-bold text-bsb-gold mb-4">L'HYGIÈNE ET LES SOINS CORPORELS</h3>
+                <p class="text-gray-700 mb-4">
+                    Esthétique, coiffure, bien-être et métiers des soins corporels
+                </p>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>Esthétique-cosmétique</li>
+                    <li>Coiffure</li>
+                    <li>Soins corporels</li>
+                    <li>Masseur-kinésithérapeute</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-10 bg-bsb-gold">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <a href="#contact"
+            class="inline-flex items-center justify-center px-8 py-4 bg-gray-100 bg-gray-900 text-white text-lg rounded-xl shadow-xl">
+            Nous contacter
+        </a>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="py-10 bg-gray-100 text-gray-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-3 gap-12">
+            <div>
+                <h3 class="text-2xl font-bold mb-6 flex items-center">
+                    Siège national
+                </h3>
+                <p class="text-gray-700 mb-2">Ouagadougou, Burkina Faso</p>
+                <p class="text-gray-700">Ministère de l'Enseignement Secondaire et de la Formation Professionnelle et Technique</p>
+            </div>
+            
+            <div>
+                <h3 class="text-2xl font-bold mb-6 flex items-center">
+                    Contact
+                </h3>
+                <p class="text-gray-700 mb-2">
+                    Tél: +226 25 30 18 75 / 70 32 60 68 / 25 30 18 76 / 73 51 23 23 /
+                    73 07 36 36 / 73 01 97 97 / 73 48 91 91
+                </p>
+                <p class="text-gray-700">Email: contact@bsb.gov.bf</p>
+            </div>
+
+            <div>
+                <h3 class="text-2xl font-bold mb-6 flex items-center">
+                    Horaires
+                </h3>
+                <p class="text-gray-700 mb-2">Lundi - Jeudi: 7h30 - 16h00</p>
+                <p class="text-gray-700">Vendredi: 7h30 - 16h30</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+  const termes = ["Bienvenue sur Yu-Paan", "Plateforme de gestion des formations aux métiers"];
+  let i = 0, j = 0, suppression = false;
+
+  function ecrire() {
+    const el = document.getElementById('typewriter');
+    const mot = termes[i];
+
+    if (!suppression) {
+      el.textContent = mot.substring(0, j++);
+      if (j > mot.length) { suppression = true; setTimeout(ecrire, 1500); return; }
+    } else {
+      el.textContent = mot.substring(0, j--);
+      if (j < 0) { suppression = false; i = (i + 1) % termes.length; j = 0; }
+    }
+    setTimeout(ecrire, suppression ? 50 : 100);
+  }
+
+  ecrire();
+</script>
+<script>
+(function () {
+    const track = document.getElementById('carousel-track');
+    const prevBtn = document.getElementById('carousel-prev');
+    const nextBtn = document.getElementById('carousel-next');
+    const dotsContainer = document.getElementById('carousel-dots');
+
+    if (!track) return;
+
+    const cards = track.querySelectorAll('.carousel-card');
+    if (!cards.length) return;
+
+    let current = 0;
+
+    // Calcul du nombre de cartes visibles selon la largeur
+    function visibleCount() {
+        const w = document.getElementById('carousel-wrapper').offsetWidth;
+        if (w >= 1024) return 3;
+        if (w >= 640) return 2;
+        return 1;
+    }
+
+    function cardWidth() {
+        // largeur carte + gap (gap-6 = 24px)
+        return cards[0].offsetWidth + 24;
+    }
+
+    function maxIndex() {
+        return Math.max(0, cards.length - visibleCount());
+    }
+
+    // Création des dots
+    function buildDots() {
+        dotsContainer.innerHTML = '';
+        const total = maxIndex() + 1;
+        for (let i = 0; i < total; i++) {
+            const d = document.createElement('button');
+            d.className = 'w-2.5 h-2.5 rounded-full transition-all duration-300 ' +
+                (i === current ? 'bg-yellow-500 w-6' : 'bg-gray-300');
+            d.addEventListener('click', () => goTo(i));
+            dotsContainer.appendChild(d);
+        }
+    }
+
+    function updateDots() {
+        const dots = dotsContainer.querySelectorAll('button');
+        dots.forEach((d, i) => {
+            d.className = 'rounded-full transition-all duration-300 h-2.5 ' +
+                (i === current ? 'w-6 bg-yellow-500' : 'w-2.5 bg-gray-300');
+        });
+    }
+
+    function goTo(index) {
+        current = Math.max(0, Math.min(index, maxIndex()));
+        track.style.transform = `translateX(-${current * cardWidth()}px)`;
+        updateDots();
+        prevBtn.disabled = current === 0;
+        nextBtn.disabled = current === maxIndex();
+        prevBtn.classList.toggle('opacity-40', current === 0);
+        nextBtn.classList.toggle('opacity-40', current === maxIndex());
+    }
+
+    prevBtn.addEventListener('click', () => goTo(current - 1));
+    nextBtn.addEventListener('click', () => goTo(current + 1));
+
+    // Touch / swipe
+    let startX = 0;
+    track.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    track.addEventListener('touchend', e => {
+        const diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) goTo(diff > 0 ? current + 1 : current - 1);
+    });
+
+    // Init & resize
+    function init() {
+        buildDots();
+        goTo(0);
+    }
+
+    init();
+    window.addEventListener('resize', () => { buildDots(); goTo(Math.min(current, maxIndex())); });
+})();
+</script>
+<style>
+    .bsb-ticker {
+        overflow: hidden;
+    }
+    .bsb-ticker__inner {
+        display: inline-block;
+        white-space: nowrap;
+        padding-left: 100%;
+        animation: bsb-ticker-scroll 12s linear infinite;
+    }
+    @keyframes bsb-ticker-scroll {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-100%); }
+    }
+</style>
+{% endblock %}

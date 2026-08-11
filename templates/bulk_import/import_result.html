@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Résultat de l'import — {{ spec.verbose_name }} | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-6">
+  {% include 'partials/messages.html' %}
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      {% if list_url %}
+      <a href="{{ list_url }}" class="text-sm text-gray-400 hover:text-gray-600">Retour à la liste</a>
+      {% endif %}
+      <h1 class="text-2xl font-black text-gray-900 mt-1">Résultat de l'import — {{ spec.verbose_name }}</h1>
+    </div>
+    {% if upload_url %}
+    <a href="{{ upload_url }}"
+       class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-700 text-white text-sm font-bold rounded-lg hover:bg-red-800 transition-all shadow-sm">
+      Importer un autre fichier
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div class="bg-white border border-gray-200 rounded-xl p-5 text-center shadow-sm">
+      <div class="text-3xl font-black text-red-700">{{ report.created|length }}</div>
+      <div class="text-sm text-gray-500 mt-1">ligne(s) importée(s)</div>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-xl p-5 text-center shadow-sm">
+      <div class="text-3xl font-black text-yellow-600">{{ report.errors|length }}</div>
+      <div class="text-sm text-gray-500 mt-1">ligne(s) ignorée(s)</div>
+    </div>
+  </div>
+
+  {% if report.created %}
+  <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+    <div class="px-5 py-3 bg-gray-50 border-b border-gray-200 text-sm font-bold text-gray-700">Lignes créées</div>
+    <table class="min-w-full divide-y divide-gray-100">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-5 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Ligne Excel</th>
+          <th class="px-5 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Créé</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for c in report.created %}
+        <tr>
+          <td class="px-5 py-2.5 text-sm text-gray-500">{{ c.row_number }}</td>
+          <td class="px-5 py-2.5 text-sm font-semibold text-gray-900">{{ c.label }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% for c in report.created %}
+    {% if c.extra.username %}
+      {% if forloop.first %}
+      <div class="bg-red-50 border-2 border-red-300 rounded-xl overflow-hidden shadow-sm">
+        <div class="px-5 py-3 bg-red-100 border-b border-red-300 text-sm font-bold text-red-800">
+          Identifiants générés — à transmettre maintenant, ils ne seront plus jamais affichés
+        </div>
+        <table class="min-w-full divide-y divide-red-200">
+          <thead>
+            <tr>
+              <th class="px-5 py-2.5 text-left text-xs font-bold text-red-700 uppercase tracking-wider">Utilisateur</th>
+              <th class="px-5 py-2.5 text-left text-xs font-bold text-red-700 uppercase tracking-wider">Nom d'utilisateur</th>
+              <th class="px-5 py-2.5 text-left text-xs font-bold text-red-700 uppercase tracking-wider">Mot de passe</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-red-200">
+      {% endif %}
+            <tr>
+              <td class="px-5 py-2.5 text-sm text-gray-900">{{ c.label }}</td>
+              <td class="px-5 py-2.5 text-sm font-mono text-gray-800">{{ c.extra.username }}</td>
+              <td class="px-5 py-2.5 text-sm font-mono font-bold text-red-800">{{ c.extra.password }}</td>
+            </tr>
+      {% if forloop.last %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% if report.errors %}
+  <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+    <div class="px-5 py-3 bg-yellow-50 border-b border-gray-200 text-sm font-bold text-yellow-800">Lignes ignorées (erreurs)</div>
+    <table class="min-w-full divide-y divide-gray-100">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-5 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Ligne Excel</th>
+          <th class="px-5 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Motif(s)</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for err in report.errors %}
+        <tr>
+          <td class="px-5 py-2.5 text-sm text-gray-500 align-top">{{ err.row_number }}</td>
+          <td class="px-5 py-2.5 text-sm text-red-700">
+            <ul class="list-disc list-inside space-y-0.5">
+              {% for msg in err.messages %}<li>{{ msg }}</li>{% endfor %}
+            </ul>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if not report.created and not report.errors %}
+  <div class="bg-white border border-gray-200 rounded-xl p-10 text-center text-gray-500 text-sm">
+    Le fichier ne contenait aucune ligne exploitable.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
