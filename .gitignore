@@ -21,6 +21,8 @@ venv/
 # Bytecode Python
 __pycache__/
 *.pyc
+python
+Pipfile*
 
 # Fichiers uploades par les utilisateurs (montes en volume Docker, pas versionnes)
 media/
