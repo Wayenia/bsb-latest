@@ -1300,6 +1300,16 @@ def _get_scope(user):
     Retourne (centres_qs, directions_qs, scope_label)
     selon le rôle de l'utilisateur connecté.
     """
+    # Un superuser (ex: créé via `createsuperuser`, qui ne demande pas user_type
+    # et laisse donc la valeur par défaut "eleve") a toujours une portée globale,
+    # comme le font déjà les décorateurs require_permission/require_role.
+    if user.is_superuser:
+        return (
+            CentreFormation.objects.all(),
+            Direction_reg.objects.all(),
+            "global",
+        )
+
     utype = user.user_type
 
     # Niveau 1 : accès total
