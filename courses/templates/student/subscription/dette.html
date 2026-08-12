@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Mes dettes | BSB{% endblock %}
 
@@ -15,7 +16,7 @@
             </h1>
         </div>
         <p class="text-gray-500 text-sm ml-10">
-            Formation : <span class="font-semibold text-gray-700">{{ inscription.formation }}</span>
+            Métier : <span class="font-semibold text-gray-700">{{ inscription.formation.filiere.nom_filiere }}</span>
             &nbsp;|&nbsp;
             Statut :
             <span class="font-semibold
@@ -77,15 +78,15 @@
                     <div class="flex gap-6 text-center">
                         <div>
                             <p class="text-xs text-gray-500 uppercase font-semibold">Total</p>
-                            <p class="text-base font-bold text-gray-800">{{ dette.montant_total|floatformat:0 }} FCFA</p>
+                            <p class="text-base font-bold text-gray-800">{{ dette.montant_total|floatformat:0|intcomma }} FCFA</p>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 uppercase font-semibold">Payé</p>
-                            <p class="text-base font-bold text-green-600">{{ dette.montant_paye|floatformat:0 }} FCFA</p>
+                            <p class="text-base font-bold text-green-600">{{ dette.montant_paye|floatformat:0|intcomma }} FCFA</p>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 uppercase font-semibold">Reste</p>
-                            <p class="text-base font-bold text-red-600">{{ dette.reste_a_payer|floatformat:0 }} FCFA</p>
+                            <p class="text-base font-bold text-red-600">{{ dette.reste_a_payer|floatformat:0|intcomma }} FCFA</p>
                         </div>
                     </div>
 
@@ -141,7 +142,7 @@
                                     {% if t.tranche.est_primordiale %}<span class="text-yellow-600">(primordiale)</span>{% endif %}
                                 </p>
                                 <p class="text-xs {% if t.soldee %}text-green-600{% else %}text-red-600{% endif %} font-semibold">
-                                    {{ t.paye|floatformat:0 }} / {{ t.montant|floatformat:0 }} FCFA
+                                    {{ t.paye|floatformat:0|intcomma }} / {{ t.montant|floatformat:0|intcomma }} FCFA
                                 </p>
                             </div>
                             {% if t.soldee %}

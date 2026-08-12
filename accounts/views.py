@@ -16,7 +16,11 @@ def user_register(request):
             try:
                 user = serializer.save()
                 login(request, user)
-                messages.success(request, f"Bienvenue {user.prenom} {user.nom}! Votre compte élève a été créé avec succès.")
+                messages.success(
+                    request,
+                    f"Bienvenue {user.prenom} {user.nom} ! Votre compte a été créé avec succès. "
+                    "Consultez dès maintenant nos métiers de formation disponibles."
+                )
                 return redirect('courses:student_dashboard')
 
             except Exception as e:
@@ -164,6 +168,10 @@ def changer_mot_de_passe(request):
 
 from decimal import Decimal, InvalidOperation
 
+import base64
+import os
+
+from django.conf import settings
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
@@ -250,6 +258,24 @@ def _facturation_header_lines(user=None):
         "la patrie ou la mort, nous vaincrons",
     ]
     return left, right
+
+
+_FAVICON_DATA_URI_CACHE = None
+
+
+def _pdf_logo_data_uri():
+    """Logo encodé en base64, à insérer directement dans le HTML des PDF
+    weasyprint (`<img src="{{ favicon_data_uri }}">`). Nécessaire car
+    `weasyprint.HTML(string=...)` ne peut pas résoudre une URL `{% static %}`
+    en environnement conteneurisé — on évite tout aller-retour réseau ou
+    résolution de fichier au moment du rendu."""
+    global _FAVICON_DATA_URI_CACHE
+    if _FAVICON_DATA_URI_CACHE is None:
+        favicon_path = os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
+        with open(favicon_path, 'rb') as f:
+            encoded = base64.b64encode(f.read()).decode('ascii')
+        _FAVICON_DATA_URI_CACHE = f"data:image/png;base64,{encoded}"
+    return _FAVICON_DATA_URI_CACHE
 
 
 # ─── Tableau de bord DAF ────────────────────────────────────────────────────
@@ -490,8 +516,9 @@ def facture_pdf(request, id):
         'montant_lettres': montant_en_lettres(facture.montant_total),
         'header_left': header_left,
         'header_right': header_right,
+        'favicon_data_uri': _pdf_logo_data_uri(),
     })
-    pdf_file = weasyprint.HTML(string=html_string).write_pdf()
+    pdf_file = weasyprint.HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
     response = HttpResponse(pdf_file, content_type='application/pdf')
     # "attachment" : déclenché automatiquement en téléchargement (création de
     # facture, page facture_detail) sans quitter/naviguer hors de la page.
@@ -675,8 +702,9 @@ def prestation_recu_pdf(request, id):
         'facture': paiement.facture,
         'header_left': header_left,
         'header_right': header_right,
+        'favicon_data_uri': _pdf_logo_data_uri(),
     })
-    pdf_file = weasyprint.HTML(string=html_string).write_pdf()
+    pdf_file = weasyprint.HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
     response = HttpResponse(pdf_file, content_type='application/pdf')
     # "attachment" : déclenché automatiquement en téléchargement depuis
     # facture_detail.html sans quitter/naviguer hors de la page (voir le

@@ -96,7 +96,7 @@
       document.getElementById('detail-duree').textContent = career.duree || '—';
       document.getElementById('detail-niveau').textContent = career.niveau_diplome || '—';
       document.getElementById('detail-titre').textContent = career.titre_professionnel || '—';
-      document.getElementById('detail-frais').textContent = career.total_frais ? (career.total_frais + ' FCFA') : '—';
+      document.getElementById('detail-frais').textContent = career.total_frais ? (career.total_frais.toLocaleString('en-US') + ' FCFA') : '—';
 
       const dateLimiteWrap = document.getElementById('detail-date-limite-wrap');
       if (career.date_limite) {

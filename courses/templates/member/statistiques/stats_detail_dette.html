@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static humanize %}
 
 {% block title %}Détail dette — {{ dette.frais_formation.type_frais.libelle }} | BSB{% endblock %}
 
@@ -73,15 +73,15 @@
         <div class="fw-bold text-secondary small mb-3 text-uppercase">Récapitulatif financier</div>
         <div class="row g-2 mb-3">
           <div class="col-4 text-center">
-            <div class="fw-bold fs-5 text-dark">{{ dette.montant_total|floatformat:0 }}</div>
+            <div class="fw-bold fs-5 text-dark">{{ dette.montant_total|floatformat:0|intcomma }}</div>
             <div class="text-muted" style="font-size:.75rem;">Total dû (FCFA)</div>
           </div>
           <div class="col-4 text-center">
-            <div class="fw-bold fs-5 text-success">{{ montant_paye|floatformat:0 }}</div>
+            <div class="fw-bold fs-5 text-success">{{ montant_paye|floatformat:0|intcomma }}</div>
             <div class="text-muted" style="font-size:.75rem;">Payé (FCFA)</div>
           </div>
           <div class="col-4 text-center">
-            <div class="fw-bold fs-5 text-danger">{{ reste|floatformat:0 }}</div>
+            <div class="fw-bold fs-5 text-danger">{{ reste|floatformat:0|intcomma }}</div>
             <div class="text-muted" style="font-size:.75rem;">Restant (FCFA)</div>
           </div>
         </div>
@@ -136,9 +136,9 @@
               {% if t.tranche.est_primordiale %}<span class="badge bg-warning text-dark ms-1">Primordiale</span>{% endif %}
               {% if t.est_cible %}<span class="badge bg-success ms-1">À payer</span>{% endif %}
             </td>
-            <td>{{ t.montant|floatformat:0 }} FCFA</td>
-            <td class="text-success">{{ t.paye|floatformat:0 }} FCFA</td>
-            <td class="text-danger">{{ t.reste|floatformat:0 }} FCFA</td>
+            <td>{{ t.montant|floatformat:0|intcomma }} FCFA</td>
+            <td class="text-success">{{ t.paye|floatformat:0|intcomma }} FCFA</td>
+            <td class="text-danger">{{ t.reste|floatformat:0|intcomma }} FCFA</td>
             <td>
               {% if t.soldee %}
                 <span class="badge bg-success">Soldée</span>
@@ -201,7 +201,7 @@
             <td>
               <span class="badge bg-secondary rounded-pill">Tranche {{ p.tranche }}</span>
             </td>
-            <td class="fw-semibold text-success">{{ p.montant_paiement|floatformat:0 }} FCFA</td>
+            <td class="fw-semibold text-success">{{ p.montant_paiement|floatformat:0|intcomma }} FCFA</td>
             <td>
               {% if p.mode_paiement == 'mobile' %}
                 <span class="badge bg-secondary text-dark">Mobile Money</span>
@@ -240,7 +240,7 @@
         <tfoot>
           <tr class="table-light fw-bold">
             <td>Total</td>
-            <td class="text-success">{{ montant_paye|floatformat:0 }} FCFA</td>
+            <td class="text-success">{{ montant_paye|floatformat:0|intcomma }} FCFA</td>
             <td colspan="5"></td>
           </tr>
         </tfoot>
@@ -272,15 +272,15 @@
             <div class="row g-2 text-center">
               <div class="col-4">
                 <div class="small text-muted">Total dû</div>
-                <div class="fw-bold">{{ dette.montant_total|floatformat:0 }} FCFA</div>
+                <div class="fw-bold">{{ dette.montant_total|floatformat:0|intcomma }} FCFA</div>
               </div>
               <div class="col-4">
                 <div class="small text-muted">Déjà payé</div>
-                <div class="fw-bold text-success">{{ montant_paye|floatformat:0 }} FCFA</div>
+                <div class="fw-bold text-success">{{ montant_paye|floatformat:0|intcomma }} FCFA</div>
               </div>
               <div class="col-4">
                 <div class="small text-muted">Reste à payer</div>
-                <div class="fw-bold text-danger" id="resteDisplay">{{ reste|floatformat:0 }} FCFA</div>
+                <div class="fw-bold text-danger" id="resteDisplay">{{ reste|floatformat:0|intcomma }} FCFA</div>
               </div>
             </div>
           </div>
@@ -290,10 +290,10 @@
             {% if tranche_cible %}
               À régler maintenant : <strong>{{ tranche_cible.libelle }}</strong>
               {% if tranche_cible.est_primordiale %}(primordiale){% endif %}
-              — montant dû : <strong>{{ montant_cible|floatformat:0 }} FCFA</strong>
+              — montant dû : <strong>{{ montant_cible|floatformat:0|intcomma }} FCFA</strong>
             {% else %}
               À régler maintenant : <strong>{{ dette.frais_formation.type_frais.libelle }}</strong>
-              (pas de tranches) — montant dû : <strong>{{ montant_cible|floatformat:0 }} FCFA</strong>
+              (pas de tranches) — montant dû : <strong>{{ montant_cible|floatformat:0|intcomma }} FCFA</strong>
             {% endif %}
           </div>
 
@@ -317,7 +317,7 @@
                      step="1" required>
               <span class="input-group-text bg-white" style="border:2px solid #e2e8f0; border-left:none; border-radius:0 10px 10px 0;">FCFA</span>
             </div>
-            <div class="form-text">Montant maximum : {{ montant_cible|floatformat:0 }} FCFA (tranche/frais en cours).</div>
+            <div class="form-text">Montant maximum : {{ montant_cible|floatformat:0|intcomma }} FCFA (tranche/frais en cours).</div>
             <div class="invalid-feedback" id="montantError"></div>
           </div>
 
@@ -342,7 +342,9 @@
             <label class="form-label fw-semibold small text-secondary">Motif de la dérogation <span class="text-danger">*</span></label>
             <textarea name="motif_derogation" id="motifDerogation" class="form-control form-control-custom mb-2" rows="2"></textarea>
             <label class="form-label fw-semibold small text-secondary">Pièce jointe justificative <span class="text-danger">*</span></label>
-            <input type="file" name="piece_jointe_derogation" id="pieceJointeDerogation" class="form-control form-control-custom">
+            <div style="border:2px dashed #f0b429; background:#fffbeb; border-radius:10px; padding:.75rem;">
+              <input type="file" name="piece_jointe_derogation" id="pieceJointeDerogation" class="form-control-custom" style="border:0; background:transparent; width:100%;">
+            </div>
           </div>
 
           <!-- Enregistré par (info) -->

@@ -32,6 +32,7 @@ urlpatterns = [
     path('student/paiement/quittance/<int:id>', views.telecharger_quittance , name='quittance'),
     path('student/paiement/reportlab-quitt/<int:id>',views.download_quittance,name='reportlab'),
     path('student/inscription/<int:id>/recepisse', views.telecharger_recepisse, name='telecharger_recepisse'),
+    path('student/inscription/<int:id>/attestation', views.telecharger_attestation, name='telecharger_attestation'),
     # TEACHER
     path('teacher/dashboard', views.teacher_dashboard, name='teacher_dashboard'),
     

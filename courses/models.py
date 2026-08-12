@@ -261,6 +261,7 @@ class Cours(TimeStampModel):
 
 class AnneeScolaire(models.Model):
      libelle_anne=models.CharField(max_length=25)
+     date_creation = models.DateTimeField(auto_now_add=True, null=True, verbose_name="Date de création")
 
      def __str__(self):
          return self.libelle_anne

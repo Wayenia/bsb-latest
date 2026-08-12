@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block title %}Effectuer un paiement | BSB{% endblock %}
 
 {% block content %}
@@ -17,11 +18,11 @@
     <div class="grid grid-cols-2 gap-4 text-sm">
       <div>
         <p class="text-gray-400">Montant total du</p>
-        <p class="font-bold text-gray-900">{{ dette.montant_total|floatformat:0 }} FCFA</p>
+        <p class="font-bold text-gray-900">{{ dette.montant_total|floatformat:0|intcomma }} FCFA</p>
       </div>
       <div>
         <p class="text-gray-400">Déjà payé</p>
-        <p class="font-bold text-gray-900">{{ dette.montant_paye|floatformat:0 }} FCFA</p>
+        <p class="font-bold text-gray-900">{{ dette.montant_paye|floatformat:0|intcomma }} FCFA</p>
       </div>
       {% if tranche_cible %}
       <div>
@@ -34,7 +35,7 @@
       {% endif %}
       <div>
         <p class="text-gray-400">Montant à régler maintenant</p>
-        <p class="font-bold text-gray-900">{{ montant_cible|floatformat:0 }} FCFA</p>
+        <p class="font-bold text-gray-900">{{ montant_cible|floatformat:0|intcomma }} FCFA</p>
       </div>
     </div>
   </div>
@@ -56,7 +57,7 @@
           {{ form.montant_paiement.label }}
         </label>
         {{ form.montant_paiement }}
-        <p class="mt-1 text-xs text-gray-400">Vous devez régler exactement le montant dû, soit {{ montant_cible|floatformat:0 }} FCFA.</p>
+        <p class="mt-1 text-xs text-gray-400">Vous devez régler exactement le montant dû, soit {{ montant_cible|floatformat:0|intcomma }} FCFA.</p>
         {% if form.montant_paiement.errors %}
         <p class="mt-1 text-sm text-red-600">{{ form.montant_paiement.errors.0 }}</p>
         {% endif %}
@@ -108,7 +109,7 @@
         </a>
         <button type="submit"
                 class="px-6 py-2.5 bg-yellow-600 text-white text-sm font-bold rounded-lg hover:bg-yellow-700 transition-all shadow-sm">
-          Payer {{ montant_cible|floatformat:0 }} FCFA
+          Payer {{ montant_cible|floatformat:0|intcomma }} FCFA
         </button>
       </div>
     </form>

@@ -1,3 +1,5 @@
+from datetime import date
+
 from django import forms
 from django.forms import inlineformset_factory
 
@@ -5,6 +7,12 @@ from .models import (
     Client_prestation, Prestation_prestation, Facture_prestation,
     LigneFacture_prestation, Utilisateur, Eleve,
 )
+
+
+def max_date_naissance():
+    """Dernier jour de l'année précédente : empêche de choisir une date de
+    naissance dans l'année en cours."""
+    return date(date.today().year - 1, 12, 31)
 
 # ─── Base ───────────────────────────────────────────────────────────────────
 # Palette du module Facturation : rouge vif / jaune or uniquement.
@@ -169,10 +177,14 @@ class ProfilForm(forms.ModelForm):
             'prenom': forms.TextInput(attrs={'class': _BASE_CLASSES}),
             'sexe': forms.Select(attrs={'class': _BASE_CLASSES}),
             'date_naissance': forms.DateInput(attrs={'class': _BASE_CLASSES, 'type': 'date'}, format='%Y-%m-%d'),
-            'tel': forms.TextInput(attrs={'class': _BASE_CLASSES, 'placeholder': '+226 70 00 00 00'}),
+            'tel': forms.TextInput(attrs={'class': _BASE_CLASSES + ' phone-intl', 'placeholder': '+226 70 00 00 00'}),
             'adresse': forms.TextInput(attrs={'class': _BASE_CLASSES}),
             'email': forms.EmailInput(attrs={'class': _BASE_CLASSES}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['date_naissance'].widget.attrs['max'] = max_date_naissance().isoformat()
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip()
@@ -184,6 +196,12 @@ class ProfilForm(forms.ModelForm):
         if qs.exists():
             raise forms.ValidationError("Cette adresse email est déjà utilisée.")
         return email
+
+    def clean_date_naissance(self):
+        naissance = self.cleaned_data.get('date_naissance')
+        if naissance and naissance > max_date_naissance():
+            raise forms.ValidationError("La date de naissance ne peut pas être dans l'année en cours.")
+        return naissance
 
 
 class ProfilEleveForm(ProfilForm):

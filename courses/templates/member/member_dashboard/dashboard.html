@@ -26,6 +26,7 @@
         </div>
 
         <!-- Dashboard Cards -->
+        {% if user.user_type != 'caissier' %}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               <!-- Subscirptions -->
                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4">
@@ -72,6 +73,7 @@
                     </div>
                 </div>
         </div>
+        {% endif %}
 
         <!-- ══════════════════════════════════════════════════════════════
              Navigation — cartes filtrées par permission (matrice de rôles)

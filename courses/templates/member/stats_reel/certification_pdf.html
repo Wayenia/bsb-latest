@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -7,8 +8,20 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Times New Roman', Times, serif; color: #000; font-size: 6.5px; }
 
-  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-  .header-left { font-weight: bold; font-size: 6.5px; text-align: center; line-height: 1.2; }
+  .pdf-watermark {
+    position: fixed;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8cm;
+    opacity: 0.06;
+    z-index: -1;
+  }
+
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .header-left { font-weight: bold; font-size: 6.5px; text-align: center; line-height: 1.2; flex: 1; }
+  .header-center { flex: 0 0 auto; padding: 0 8px; }
+  .header-center img { width: 40px; height: auto; }
   .header-right { text-align: center; font-size: 6.5px; width: 150px; }
   .header-right .pays { font-weight: bold; }
 
@@ -30,9 +43,14 @@
 </head>
 <body>
 
+  <img class="pdf-watermark" src="{{ favicon_data_uri }}" alt="">
+
   <div class="header">
     <div class="header-left">
       {% for line in header_left %}{{ line }}<br>{% endfor %}
+    </div>
+    <div class="header-center">
+      <img src="{{ favicon_data_uri }}" alt="BSB">
     </div>
     <div class="header-right">
       {% for line in header_right %}<div{% if forloop.first %} class="pays"{% endif %}>{{ line }}</div>{% endfor %}

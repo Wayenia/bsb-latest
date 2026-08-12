@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block title %}Historique des paiements | BSB{% endblock %}
 
 {% block content %}
@@ -72,7 +73,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="text-sm font-medium bg-green-600 text-white rounded-lg px-2 py-1">
-                                {{ pmt.montant_paiement|floatformat:0 }} FCFA
+                                {{ pmt.montant_paiement|floatformat:0|intcomma }} FCFA
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ pmt.mode_paiement }}</td>
