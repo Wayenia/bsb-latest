@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.decorators import method_decorator
 from django.contrib.auth import logout
 from django.core.paginator import Paginator
@@ -147,6 +148,21 @@ def documents_view(request):
         for doc in required_doc:
             if doc.est_requis and doc.libelle_piece not in request.FILES:
                 errors.append(f'Le document « {doc.libelle_piece} » est obligatoire.')
+
+        # Seuls des PDF sont acceptés pour les documents envoyés par l'élève :
+        # extension ET signature binaire (%PDF-) verifiees, pour empecher un
+        # fichier .html/.svg renomme en .pdf (vecteur XSS stocke contre le
+        # personnel qui ouvre ces documents via "Visualiser").
+        for doc in required_doc:
+            if doc.libelle_piece in request.FILES:
+                requested_file = request.FILES[doc.libelle_piece]
+                if not requested_file.name.lower().endswith('.pdf'):
+                    errors.append(f'« {doc.libelle_piece} » doit être un fichier PDF (.pdf).')
+                    continue
+                header = requested_file.read(5)
+                requested_file.seek(0)
+                if header != b'%PDF-':
+                    errors.append(f'« {doc.libelle_piece} » n\'est pas un fichier PDF valide.')
 
         if errors:
             for err in errors:
@@ -1300,9 +1316,8 @@ def _get_scope(user):
     Retourne (centres_qs, directions_qs, scope_label)
     selon le rôle de l'utilisateur connecté.
     """
-    # Un superuser (ex: créé via `createsuperuser`, qui ne demande pas user_type
-    # et laisse donc la valeur par défaut "eleve") a toujours une portée globale,
-    # comme le font déjà les décorateurs require_permission/require_role.
+    # Un superuser créé via `createsuperuser` ne demande pas user_type
+    # et laisse donc la valeur par défaut "eleve" il faut donc le capter ici
     if user.is_superuser:
         return (
             CentreFormation.objects.all(),
@@ -2439,7 +2454,12 @@ class CenterCreateView(View):
         if form.is_valid():
             centre = form.save()
             messages.success(request, f'Le centre « {centre.nom_centre} » a été créé avec succès.')
-            return redirect(request.POST.get('next') or 'bsb_admin:center_list')
+            next_url = request.POST.get('next')
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+            ):
+                return redirect(next_url)
+            return redirect('bsb_admin:center_list')
         return render(request, self.template_name, {
             'form': form, 'title': 'Créer un centre', 'action': 'Créer',
         })
@@ -2469,7 +2489,12 @@ class CenterUpdateView(View):
         if form.is_valid():
             centre = form.save()
             messages.success(request, f'Le centre « {centre.nom_centre} » a été modifié avec succès.')
-            return redirect(request.POST.get('next') or 'bsb_admin:center_list')
+            next_url = request.POST.get('next')
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+            ):
+                return redirect(next_url)
+            return redirect('bsb_admin:center_list')
         return render(request, self.template_name, {
             'form': form, 'title': f'Modifier — {centre.nom_centre}', 'action': 'Modifier',
         })
