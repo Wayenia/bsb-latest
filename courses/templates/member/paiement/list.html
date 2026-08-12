@@ -9,7 +9,7 @@
         <div>
             <h1 class="text-3xl font-black text-gray-900">Encaissements</h1>
             <p class="mt-2 text-sm text-gray-600">
-                {% if q %}Résultats de recherche — tous centres{% else %}Inscriptions de {{ centre|default:"votre centre" }} avec reste à payer{% endif %}
+                {% if q %}Résultats de recherche — tous centres{% else %}Inscriptions avec reste à payer — {{ scope_label }}{% endif %}
             </p>
         </div>
         <a href="{% url 'courses:paiement_historique' %}"
@@ -52,7 +52,7 @@
                     <tr>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Apprenant</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Métier</th>
-                        {% if q %}<th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Centre</th>{% endif %}
+                        {% if q or multi_centre %}<th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Centre</th>{% endif %}
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Année scolaire</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total dû</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total payé</th>
@@ -69,7 +69,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ insc.formation.filiere }}
                         </td>
-                        {% if q %}
+                        {% if q or multi_centre %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                             {{ insc.formation.centre }}
                         </td>
@@ -151,7 +151,7 @@
                 {% if q %}Aucun apprenant trouvé{% else %}Aucun reste à payer{% endif %}
             </h3>
             <p class="text-gray-600">
-                {% if q %}Essayez avec un autre nom, identifiant ou numéro.{% else %}Toutes les inscriptions de ce centre sont soldées.{% endif %}
+                {% if q %}Essayez avec un autre nom, identifiant ou numéro.{% else %}Toutes les inscriptions de votre périmètre ({{ scope_label }}) sont soldées.{% endif %}
             </p>
         </div>
         {% endif %}

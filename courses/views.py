@@ -934,16 +934,31 @@ def rejeter_inscription(request,id):
 @require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
 def paiement_list(request):
     """
-    Par défaut : inscriptions du centre du membre connecté dont le reste à
-    payer est strictement positif. Avec une recherche (nom, prénom,
-    identifiant, téléphone), la recherche porte sur tous les centres, pour
+    Par défaut : inscriptions dont le reste à payer est strictement positif,
+    dans le périmètre de l'utilisateur connecté (son centre pour un
+    gestionnaire/caissier, les centres de sa direction pour un directeur
+    inter-régional, tous les centres pour les rôles à portée nationale —
+    voir _get_scope). Avec une recherche (nom, prénom, identifiant,
+    téléphone), la recherche porte sur tous les centres si l'utilisateur a
+    une portée globale ou la permission 'rechercher_tous_centres', pour
     pouvoir encaisser le paiement de n'importe quel apprenant.
+
+    Note : la vue reposait auparavant sur `request.user.membreadministration`
+    seul, ce qui ne couvre que les gestionnaires/caissiers. Un directeur
+    inter-régional (modèle DirecteurInterRegional, distinct de
+    MembreAdministration) ou un rôle à portée nationale (admin, dg, deps,
+    agent_comptable — pas forcément rattachés à un centre) tombait alors sur
+    `centre = None`, ce qui filtrait sur `formation__centre=None` et
+    renvoyait toujours une liste vide, quelles que soient les permissions
+    accordées. On réutilise donc `_get_scope`, déjà utilisé pour les
+    statistiques, qui gère correctement ces cas.
     """
     q = request.GET.get('q', '').strip()
-    membre = getattr(request.user, 'membreadministration', None)
-    centre = membre.structure if membre else None
+    centres_qs, _directions_qs, scope = _get_scope(request.user)
+    multi_centre = scope in ('global', 'direction')
     peut_rechercher_tous_centres = (
         request.user.is_superuser or
+        scope == 'global' or
         request.user.has_perm('courses.rechercher_tous_centres')
     )
     if q and not peut_rechercher_tous_centres:
@@ -970,8 +985,12 @@ def paiement_list(request):
             Q(eleve__matricule__icontains=q) |
             Q(dettes__paiements__numero_quittance__icontains=q)
         ).distinct().order_by('-date_inscription')
+    elif scope == 'none':
+        inscriptions_qs = base_qs.none()
     else:
-        inscriptions_qs = base_qs.filter(formation__centre=centre).order_by('-date_inscription')
+        inscriptions_qs = base_qs.filter(
+            formation__centre_id__in=centres_qs.values_list('id', flat=True)
+        ).order_by('-date_inscription')
 
     # Le reste à payer est calculé à partir des dettes/paiements déjà préchargés :
     # filtrer en Python plutôt qu'avec une agrégation SQL fragile sur deux
@@ -992,28 +1011,46 @@ def paiement_list(request):
     page = request.GET.get('page')
     inscriptions = paginator.get_page(page)
 
+    scope_labels = {
+        'global': "tous les centres",
+        'direction': "les centres de votre direction",
+        'centre': "votre centre",
+        'none': "aucun centre (aucune structure ne vous est rattachée)",
+    }
+
     return render(request, 'member/paiement/list.html', {
         'inscriptions': inscriptions,
         'q': q,
-        'centre': centre,
+        'scope': scope,
+        'scope_label': scope_labels.get(scope, "votre centre"),
+        'multi_centre': multi_centre,
         'peut_rechercher_tous_centres': peut_rechercher_tous_centres,
     })
 
 
 @require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
 def paiement_historique(request):
-    """Historique de tous les paiements du centre du membre connecté."""
-    membre = getattr(request.user, 'membreadministration', None)
-    centre = membre.structure if membre else None
+    """
+    Historique des paiements, dans le périmètre de l'utilisateur connecté
+    (même logique de portée que paiement_list — voir _get_scope).
+    """
+    centres_qs, _directions_qs, scope = _get_scope(request.user)
+    multi_centre = scope in ('global', 'direction')
 
     paiements = Paiement.objects.select_related(
         'dette__inscription__eleve',
         'dette__inscription__formation__filiere',
+        'dette__inscription__formation__centre',
         'dette__frais_formation__type_frais',
         'cree_par',
-    ).filter(
-        dette__inscription__formation__centre=centre
     ).order_by('-date_paiement')
+
+    if scope == 'none':
+        paiements = paiements.none()
+    else:
+        paiements = paiements.filter(
+            dette__inscription__formation__centre_id__in=centres_qs.values_list('id', flat=True)
+        )
 
     q = request.GET.get('q', '').strip()
     if q:
@@ -1028,9 +1065,18 @@ def paiement_historique(request):
     page = request.GET.get('page')
     paiements = paginator.get_page(page)
 
+    scope_labels = {
+        'global': "tous les centres",
+        'direction': "les centres de votre direction",
+        'centre': "votre centre",
+        'none': "aucun centre (aucune structure ne vous est rattachée)",
+    }
+
     return render(request, 'member/paiement/historique.html', {
         'paiements': paiements,
-        'centre': centre,
+        'scope': scope,
+        'scope_label': scope_labels.get(scope, "votre centre"),
+        'multi_centre': multi_centre,
         'q': q,
     })
 
@@ -1442,7 +1488,11 @@ def _can_access_eleve_finances(user, eleve):
     """
     Contrôle d'accès pour les vues financières d'un élève (dettes/quittances) :
     l'élève lui-même, un superuser, ou un membre du personnel dont le périmètre
-    (centre/direction/global) couvre au moins une des inscriptions de l'élève.
+    (centre/direction/global) couvre au moins une des inscriptions de l'élève —
+    ou qui a `rechercher_tous_centres`, qui étend volontairement l'accès à
+    tous les centres (voir migration 0031 : cette permission existe pour que
+    la recherche cross-centre d'un caissier/directeur reste cohérente avec ce
+    qu'`encaisser_paiement` autorise déjà — action jamais limitée par centre).
     """
     if user.is_superuser:
         return True
@@ -1450,6 +1500,8 @@ def _can_access_eleve_finances(user, eleve):
         return True
     if not user.has_perm('courses.voir_inscriptions'):
         return False
+    if user.has_perm('courses.rechercher_tous_centres'):
+        return True
     centres_qs, _, scope = _get_scope(user)
     if scope == "none":
         return False
@@ -1468,6 +1520,8 @@ def _can_access_dette_finances(user, dette):
         return True
     if not user.has_perm('courses.voir_inscriptions'):
         return False
+    if user.has_perm('courses.rechercher_tous_centres'):
+        return True
     centres_qs, _, scope = _get_scope(user)
     if scope == "none":
         return False
@@ -2003,7 +2057,11 @@ def stats_dettes_eleve_view(request, eleve_id):
         .order_by('-date_inscription')
     )
 
-    if not request.user.is_superuser and getattr(request.user, 'pk', None) != eleve.pk:
+    if (
+        not request.user.is_superuser
+        and getattr(request.user, 'pk', None) != eleve.pk
+        and not request.user.has_perm('courses.rechercher_tous_centres')
+    ):
         centres_qs, _, scope = _get_scope(request.user)
         if scope != "global":
             centre_ids = list(centres_qs.values_list("id", flat=True))
