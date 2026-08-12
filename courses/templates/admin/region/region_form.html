@@ -5,7 +5,7 @@
 <div class="max-w-2xl mx-auto py-10 px-4">
   {% include 'partials/messages.html' %}
 
-  <!-- Breadcrumb -->
+  {% comment %} Breadcrumb {% endcomment %}
   <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6">
     <a href="{% url 'bsb_admin:admin_dashboard' %}" class="hover:text-gray-600 transition">Tableau de bord</a>
     
@@ -16,7 +16,7 @@
 
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
 
-    <!-- En-tête formulaire -->
+    {% comment %} En-tête formulaire {% endcomment %}
     <div class="px-8 py-6 bg-gradient-to-r from-red-600 to-red-700 flex items-center gap-4">
       <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
         
@@ -30,11 +30,11 @@
       </div>
     </div>
 
-    <!-- Formulaire -->
+    {% comment %} Formulaire {% endcomment %}
     <form method="post" class="px-8 py-8 space-y-6">
       {% csrf_token %}
 
-      <!-- Nom de la région -->
+      {% comment %} Nom de la région {% endcomment %}
       <div>
         <label for="nom_region" class="block text-sm font-bold text-gray-700 mb-1.5">
           Nom de la région <span class="text-red-500">*</span>
@@ -53,7 +53,7 @@
         {% endif %}
       </div>
 
-      <!-- Chef-lieu -->
+      {% comment %} Chef-lieu {% endcomment %}
       <div>
         <label for="chef_lieu" class="block text-sm font-bold text-gray-700 mb-1.5">
           Chef-lieu <span class="text-red-500">*</span>
@@ -71,7 +71,7 @@
         {% endif %}
       </div>
 
-      <!-- Actions -->
+      {% comment %} Actions {% endcomment %}
       <div class="flex items-center justify-between pt-4 border-t border-gray-100">
         <a href="{% url 'bsb_admin:region_list' %}"
            class="inline-flex items-center gap-2 px-5 py-2.5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50 transition">

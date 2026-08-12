@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.utils.http import url_has_allowed_host_and_scheme
 import qrcode
 from django.db.models import Q, Sum, Count
 from accounts.models import Utilisateur, Formateur, MembreAdministration
@@ -156,7 +157,9 @@ def field_create(request):
         if form.is_valid():
             field = form.save()
             next_url=request.GET.get('next') or request.POST.get('next')
-            if next_url:
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+            ):
                 return redirect(next_url)
             messages.success(request, f'Filière "{field.nom_filiere}" créée avec succès!')
             return redirect('bsb_admin:field_list')
@@ -256,7 +259,9 @@ def center_create(request):
         if form.is_valid():
             center = form.save()
             next_url=request.GET.get('next') or request.POST.get('next')
-            if next_url:
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+            ):
                 return redirect(next_url)
             messages.success(request, f'Centre "{center.nom_centre}" créé avec succès!')
             return redirect('bsb_admin:center_list')

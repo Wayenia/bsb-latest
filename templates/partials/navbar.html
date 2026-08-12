@@ -5,7 +5,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
 
-            <!-- LOGO -->
+            {% comment %} LOGO {% endcomment %}
             <div class="flex-shrink-0 flex items-center cursor-pointer">
                 <a href="{% url 'courses:home' %}" class="flex items-center gap-2">
                     <img src="{% static 'images/logo.png' %}" alt="BSB Logo" class="h-14 w-auto object-contain transition-transform hover:scale-105">
@@ -18,7 +18,7 @@
                 </a>
             </div>
 
-            <!-- LIENS DESKTOP -->
+            {% comment %} LIENS DESKTOP {% endcomment %}
             <div class="hidden sm:flex items-center space-x-1">
 
                 <a href="{% url 'courses:home' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
@@ -110,7 +110,7 @@
 
             </div>
 
-            <!-- BOUTONS AUTH DESKTOP -->
+            {% comment %} BOUTONS AUTH DESKTOP {% endcomment %}
             <div class="hidden sm:flex items-center space-x-3">
                 {% if user.is_authenticated %}
                     <a href="{% url 'courses:redirect_to_dashboard' %}" class="px-5 py-2.5 text-sm font-bold text-white border border-gray-100 bg-yellow-600 rounded-full hover:bg-green-600 transition-all transform hover:-translate-y-0.5">
@@ -132,7 +132,7 @@
                 {% endif %}
             </div>
 
-            <!-- BOUTON HAMBURGER -->
+            {% comment %} BOUTON HAMBURGER {% endcomment %}
             <button id="mobile-menu-btn"
                     class="sm:hidden flex flex-col justify-center items-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
                     aria-label="Menu">
@@ -144,7 +144,7 @@
         </div>
     </div>
 
-    <!-- MENU MOBILE -->
+    {% comment %} MENU MOBILE {% endcomment %}
     <div id="mobile-menu" class="sm:hidden hidden border-t border-gray-100 bg-white">
         <div class="px-4 py-4 space-y-1">
 

@@ -44,8 +44,10 @@
     {% csrf_token %}
     <div>
       <label class="block text-sm font-bold text-gray-800 mb-1.5" for="fichier">Fichier (.xlsx uniquement — 2 feuilles requises)</label>
-      <input type="file" name="fichier" id="fichier" accept=".xlsx" required
-             class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
+      <div class="rounded-xl border-2 border-dashed border-red-300 bg-red-50 hover:bg-red-100 transition-colors px-4 py-4">
+        <input type="file" name="fichier" id="fichier" accept=".xlsx" required
+               class="block w-full text-sm text-gray-600 cursor-pointer file:mr-3 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-red-600 file:text-white hover:file:bg-red-700 file:cursor-pointer file:transition-colors">
+      </div>
     </div>
     <button type="submit"
             class="px-6 py-2.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-all shadow-sm">

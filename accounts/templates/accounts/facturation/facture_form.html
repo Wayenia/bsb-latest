@@ -26,7 +26,7 @@
     </div>
     {% endif %}
 
-    <!-- Client -->
+    {% comment %} Client {% endcomment %}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
       <h2 class="text-lg font-bold text-gray-900 mb-4">Client</h2>
 
@@ -37,7 +37,7 @@
         {{ client_form.type_client }}
       </div>
 
-      <!-- Personne physique -->
+      {% comment %} Personne physique {% endcomment %}
       <div id="section-personne" class="grid grid-cols-1 sm:grid-cols-2 gap-4 hidden">
         <div>
           <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.nom.label }} <span class="text-red-600">*</span></label>
@@ -62,7 +62,7 @@
         </div>
       </div>
 
-      <!-- Entreprise / Autre -->
+      {% comment %} Entreprise / Autre {% endcomment %}
       <div id="section-entreprise" class="grid grid-cols-1 sm:grid-cols-2 gap-4 hidden">
         <div>
           <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.raison_sociale.label }} <span class="text-red-600">*</span></label>
@@ -83,20 +83,20 @@
         </div>
       </div>
 
-      <!-- Adresse : commun aux deux types -->
+      {% comment %} Adresse : commun aux deux types {% endcomment %}
       <div class="mt-4" id="section-adresse">
         <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ client_form.adresse.label }} <span class="text-red-600">*</span></label>
         {{ client_form.adresse }}
       </div>
     </div>
 
-    <!-- Objet -->
+    {% comment %} Objet {% endcomment %}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
       <label class="block text-sm font-bold text-gray-800 mb-1.5">{{ facture_form.objet.label }} <span class="text-red-600">*</span></label>
       {{ facture_form.objet }}
     </div>
 
-    <!-- Lignes de prestation -->
+    {% comment %} Lignes de prestation {% endcomment %}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-bold text-gray-900">Lignes de la facture</h2>
@@ -165,7 +165,7 @@
       </div>
     </div>
 
-    <!-- Actions -->
+    {% comment %} Actions {% endcomment %}
     <div class="flex items-center justify-end gap-3">
       <button type="submit" name="action" value="proforma"
               class="px-6 py-3 bg-gray-700 text-white text-sm font-bold rounded-lg hover:bg-gray-800 transition">
@@ -179,7 +179,7 @@
   </form>
 </div>
 
-<!-- Modale nouvelle prestation -->
+{% comment %} Modale nouvelle prestation {% endcomment %}
 <div id="modal-prestation" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
     <div class="flex items-center justify-between mb-4">

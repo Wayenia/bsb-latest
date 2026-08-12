@@ -4,10 +4,10 @@
 
 {%block content%}
 <div class="max-w-7xl mx-auto py-10 space-y-6">
-    <!-- Messages -->
+    {% comment %} Messages {% endcomment %}
     {% include 'partials/messages.html' %}
 
-    <!-- GCard pour un aperçu des insciptions à valider -->
+    {% comment %} GCard pour un aperçu des insciptions à valider {% endcomment %}
  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4">
          <div class="p-3 bg-green-100 rounded-xl">
             
@@ -18,14 +18,14 @@
          </div>
      
     </div>
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
             <p class="mt-2 text-sm text-gray-600 font-bold">Liste des souscriptions à Valider</p>
         </div>
     </div>
 
-    <!-- Barre de filtres -->
+    {% comment %} Barre de filtres {% endcomment %}
     <form method="get" id="filter-form">
         <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-3 flex-wrap">
             <div class="relative flex-1 min-w-[200px]">
@@ -49,7 +49,7 @@
         </div>
     </form>
 
-    <!-- Table Card -->
+    {% comment %} Table Card {% endcomment %}
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {% if subscriptions %}
         <div class="overflow-x-auto">
@@ -129,7 +129,7 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        {% comment %} Pagination {% endcomment %}
         {% if subscriptions.has_other_pages %}
         <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
             <div class="flex items-center justify-between">

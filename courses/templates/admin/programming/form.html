@@ -6,7 +6,7 @@
 <div class="max-w-4xl mx-auto py-10">
     {% include 'partials/messages.html' %}
 
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="mb-8">
         <div class="flex items-center mb-4">
             <a href="{% url 'bsb_admin:programming_list' %}"
@@ -33,7 +33,7 @@
         </div>
         {% endif %}
 
-        <!-- ===== BLOC 1 : Informations générales ===== -->
+        {% comment %} ===== BLOC 1 : Informations générales ===== {% endcomment %}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
                 <h2 class="text-white font-bold text-lg flex items-center gap-2">
@@ -42,7 +42,7 @@
             </div>
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                <!-- Centre -->
+                {% comment %} Centre {% endcomment %}
                 <div class="md:col-span-2">
                     <label class="block text-sm font-bold text-gray-800 mb-2">
                         {{ form.centre.label }} <span class="text-red-600">*</span>
@@ -61,7 +61,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Type de formation -->
+                {% comment %} Type de formation {% endcomment %}
                 <div class="md:col-span-2">
                     <label class="block text-sm font-bold text-gray-800 mb-2">
                         {{ form.type_formation.label }} <span class="text-red-600">*</span>
@@ -74,7 +74,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Métier (filière) -->
+                {% comment %} Métier (filière) {% endcomment %}
                 <div class="md:col-span-2">
                     <label class="block text-sm font-bold text-gray-800 mb-2">
                         Métier <span class="text-red-600">*</span>
@@ -93,7 +93,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Année scolaire -->
+                {% comment %} Année scolaire {% endcomment %}
                 <div class="md:col-span-2">
                     <label class="block text-sm font-bold text-gray-800 mb-2">
                         {{ form.annee_prog.label }} <span class="text-red-600">*</span>
@@ -106,7 +106,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Date de lancement -->
+                {% comment %} Date de lancement {% endcomment %}
                 <div>
                     <label class="block text-sm font-bold text-gray-800 mb-2">
                         {{ form.date_lancement.label }} <span class="text-red-600">*</span>
@@ -119,7 +119,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Date de fin — OBLIGATOIRE désormais -->
+                {% comment %} Date de fin — OBLIGATOIRE désormais {% endcomment %}
                 <div>
                     <label class="block text-sm font-bold text-gray-800 mb-2">
                         {{ form.date_fin.label }} <span class="text-red-600">*</span>
@@ -132,7 +132,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Date limite d'inscription -->
+                {% comment %} Date limite d'inscription {% endcomment %}
                 <div>
                     <label class="block text-sm font-bold text-gray-800 mb-2">
                         {{ form.date_limite_inscription.label }}
@@ -145,14 +145,14 @@
                     {% endif %}
                 </div>
 
-                <!-- Communiqué + Toggle actif -->
+                {% comment %} Communiqué + Toggle actif {% endcomment %}
                 <div class="md:col-span-2">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 p-5 bg-gray-50 rounded-xl border border-gray-200">
                         <div class="flex-1">
                             <label class="block text-sm font-bold text-gray-800 mb-1">{{ form.communique.label }}</label>
                             <p class="text-xs text-gray-500 mb-2">Fichier PDF ou image du communiqué</p>
                             
-                            <!-- Fichier actuel si existant -->
+                            {% comment %} Fichier actuel si existant {% endcomment %}
                             {% if form.instance.communique %}
                             <div class="mb-2 flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
                                 
@@ -186,7 +186,7 @@
             </div>
         </div>
 
-        <!-- ===== BLOC 2 : Frais ===== -->
+        {% comment %} ===== BLOC 2 : Frais ===== {% endcomment %}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 px-6 py-4 flex items-center justify-between">
                 <h2 class="text-white font-bold text-lg flex items-center gap-2">
@@ -226,7 +226,7 @@
                     <div class="hidden">{{ frais_form.DELETE }}</div>
                 </div>
                 {% empty %}
-                <!-- Message si aucun frais — masqué dès qu'on ajoute une ligne -->
+                {% comment %} Message si aucun frais — masqué dès qu'on ajoute une ligne {% endcomment %}
                 <div id="frais-empty-msg" class="text-center py-6 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
                     
                     <p class="text-sm">Aucun frais ajouté. Cliquez sur "Ajouter" pour en créer.</p>
@@ -235,7 +235,7 @@
             </div>
         </div>
 
-        <!-- ===== BLOC 3 : Documents requis ===== -->
+        {% comment %} ===== BLOC 3 : Documents requis ===== {% endcomment %}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="bg-gradient-to-r from-gray-600 to-gray-700 px-6 py-4 flex items-center justify-between">
                 <h2 class="text-white font-bold text-lg flex items-center gap-2">
@@ -281,7 +281,7 @@
             </div>
         </div>
 
-        <!-- ===== Boutons d'action ===== -->
+        {% comment %} ===== Boutons d'action ===== {% endcomment %}
         <div class="flex items-center justify-between pt-2">
             <a href="{% url 'bsb_admin:programming_list' %}"
                class="inline-flex items-center gap-2 px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:border-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
@@ -293,13 +293,13 @@
             </button>
         </div>
 
-        <!-- Note champs obligatoires -->
+        {% comment %} Note champs obligatoires {% endcomment %}
         <p class="text-xs text-gray-400 text-center">
             Les champs marqués <span class="text-red-500 font-bold">*</span> sont obligatoires.
         </p>
     </form>
 </div>
-<!-- Juste avant le <script> principal -->
+{% comment %} Juste avant le <script> principal {% endcomment %}
 <script>
     const FRAIS_TYPE_OPTIONS = [
         {% for tf in type_frais_options %}

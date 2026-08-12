@@ -5,7 +5,7 @@
 <div class="max-w-7xl mx-auto py-10 space-y-6">
   {% include 'partials/messages.html' %}
 
-  <!-- Header ──────────────────────────────────────────── -->
+  {% comment %} Header ──────────────────────────────────────────── {% endcomment %}
   <div class="px-4 md:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <h1 class="text-3xl font-black text-gray-900">Régions et Provinces</h1>
@@ -27,11 +27,11 @@
     </div>
   </div>
 
-  <!-- Filtres ─────────────────────────────────────────── -->
+  {% comment %} Filtres ─────────────────────────────────────────── {% endcomment %}
   <form method="get" class="px-0">
     <div class="bg-white border border-gray-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center shadow-sm">
 
-      <!-- Recherche -->
+      {% comment %} Recherche {% endcomment %}
       <div class="relative flex-1">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           
@@ -41,7 +41,7 @@
                class="block w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition">
       </div>
 
-      <!-- Filtre chef-lieu -->
+      {% comment %} Filtre chef-lieu {% endcomment %}
       <div class="sm:w-52">
         <select name="chef_lieu"
                 class="block w-full py-2.5 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition">
@@ -52,7 +52,7 @@
         </select>
       </div>
 
-      <!-- Actions -->
+      {% comment %} Actions {% endcomment %}
       <div class="flex gap-2">
         <button type="submit"
                 class="px-4 py-2.5 bg-yellow-500 text-white text-sm font-semibold rounded-lg hover:bg-yellow-600 transition shadow-sm">
@@ -67,16 +67,16 @@
     </div>
   </form>
 
-  <!-- Corps : accordéon régions → provinces ───────────── -->
+  {% comment %} Corps : accordéon régions → provinces ───────────── {% endcomment %}
   {% if regions %}
   <div class="space-y-4">
     {% for region in regions %}
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
 
-      <!-- En-tête région -->
+      {% comment %} En-tête région {% endcomment %}
       <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-red-50 to-yellow-50 border-b border-gray-100">
         <div class="flex items-center gap-4">
-          <!-- Toggle provinces -->
+          {% comment %} Toggle provinces {% endcomment %}
           <button type="button"
                   onclick="toggleProvinces('r{{ region.pk }}')"
                   class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-300 transition-all shadow-sm"
@@ -100,7 +100,7 @@
           </div>
         </div>
 
-        <!-- Actions région -->
+        {% comment %} Actions région {% endcomment %}
         <div class="flex items-center gap-1">
           <a href="{% url 'bsb_admin:province_create' %}?region={{ region.pk }}"
              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-yellow-50 hover:border-yellow-400 hover:text-yellow-700 transition-all"
@@ -116,7 +116,7 @@
         </div>
       </div>
 
-      <!-- Provinces (masquées par défaut) -->
+      {% comment %} Provinces (masquées par défaut) {% endcomment %}
       <div id="r{{ region.pk }}" class="hidden">
         {% with provinces=region.provinces.all %}
         {% if provinces %}
@@ -171,7 +171,7 @@
     {% endfor %}
   </div>
 
-  <!-- Pagination -->
+  {% comment %} Pagination {% endcomment %}
   {% if regions.has_other_pages %}
   <div class="flex items-center justify-between px-1 py-2">
     <p class="text-sm text-gray-500">
@@ -200,7 +200,7 @@
   {% endif %}
 
   {% else %}
-  <!-- État vide -->
+  {% comment %} État vide {% endcomment %}
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm text-center py-16">
     <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
       

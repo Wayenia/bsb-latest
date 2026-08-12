@@ -2,7 +2,7 @@
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
   
-  <!-- Header avec cloche -->
+  {% comment %} Header avec cloche {% endcomment %}
   <div class="mb-8 flex items-start justify-between">
     <div>
       <h2 class="text-3xl serif-font border-l-4 border-red-700 font-bold pl-4 text-slate-900">
@@ -16,7 +16,7 @@
       </p>
     </div>
 
-    <!--  CLOCHE NOTIFICATIONS -->
+    {% comment %}  CLOCHE NOTIFICATIONS {% endcomment %}
     <div class="relative mt-1" id="notif-wrapper">
       <button
         onclick="toggleNotifPanel()"
@@ -33,7 +33,7 @@
         ></span>
       </button>
 
-      <!-- Panneau déroulant -->
+      {% comment %} Panneau déroulant {% endcomment %}
       <div
         id="notif-panel"
         class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden"

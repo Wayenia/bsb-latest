@@ -1,25 +1,24 @@
-<!-- Je dois récupérer les documents renseignés pour la consultation en vrai vooir ces informations comme ce qui
- s'aafichait au niveau de la liste des souscrimptions -->
-
 {% extends 'base.html' %}
+{% comment %} Je dois récupérer les documents renseignés pour la consultation en vrai vooir ces informations comme ce qui
+ s'aafichait au niveau de la liste des souscrimptions {% endcomment %}
 {% block title %}Aperçu d'inscripion | BSB{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 py-12">
   {% include 'partials/messages.html' %}
 
-  <!-- header -->
+  {% comment %} header {% endcomment %}
   <div class="mb-10">
     <h1 class="text-4xl font-light text-slate-800 tracking-tight mb-3">Aperçu du dossier de {{detail.eleve.nom}} {{detail.eleve.prenom}}</h1>
   </div>
 
-  <!-- main card -->
+  {% comment %} main card {% endcomment %}
   <div class="bg-white border border-slate-200 rounded-sm mb-8">
-    <!-- line -->
+    {% comment %} line {% endcomment %}
     <div class="h-1 w-full" style="background-color: #ECAB0F;"></div>
     
     <div class="p-8">
-      <!-- career choosen -->
+      {% comment %} career choosen {% endcomment %}
       <div class="mb-10">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-lg font-light text-slate-800 uppercase">Metier de formation</h3>
@@ -50,10 +49,10 @@
         </div>
       </div>
 
-      <!-- line -->
+      {% comment %} line {% endcomment %}
       <div class="w-full h-px bg-slate-100 my-8"></div>
 
-      <!-- personal info -->
+      {% comment %} personal info {% endcomment %}
       <div class="mb-10">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-lg font-light text-slate-800 uppercase">Informations personnelles</h3>
@@ -97,10 +96,10 @@
         </div>
       </div>
       
-      <!-- line -->
+      {% comment %} line {% endcomment %}
       <div class="w-full h-px bg-slate-100 my-8"></div>
 
-      <!-- documents -->
+      {% comment %} documents {% endcomment %}
                 <div class="mb-10">
             <div class="flex items-center justify-between mb-5">
                 <h3 class="text-lg font-light text-slate-800 uppercase">Documents soumis</h3>
@@ -145,13 +144,13 @@
       
       
       
-      <!-- final info -->
+      {% comment %} final info {% endcomment %}
       <div class="mx-auto text-center mb-10 p-5 bg-slate-50 border border-slate-200">
    
 
-      <!-- BOUTONS DE CONFIRMATION -->
+      {% comment %} BOUTONS DE CONFIRMATION {% endcomment %}
      <div class="flex flex-col sm:flex-row sm:items-center justify-center gap-4">
-          <!-- Valider : POST direct -->
+          {% comment %} Valider : POST direct {% endcomment %}
           <form method="POST" action="{% url 'courses:gerer_inscription' detail.id %}">
             {% csrf_token %}
             <input type="hidden" name="action" value="valide">
@@ -162,7 +161,7 @@
             </button>
           </form>
 
-          <!-- Rejeter : simple lien vers la page motif -->
+          {% comment %} Rejeter : simple lien vers la page motif {% endcomment %}
           <a href="{% url 'courses:rejeter_inscription' detail.id %}"
             class="px-8 py-3 bg-white border border-slate-200 text-slate-600 text-sm font-medium
                     rounded-sm hover:bg-red-500 hover:text-white hover:border-red-500 transition-all text-center">
@@ -172,7 +171,7 @@
     </div>
   </div>
 
-  <!-- Pied de page avec les couleurs BSB -->
+  {% comment %} Pied de page avec les couleurs BSB {% endcomment %}
   <div class="mt-8 flex justify-center space-x-3">
     <span class="h-0.5 w-3" style="background-color: #ECAB0F;"></span>
     <span class="h-0.5 w-3" style="background-color: #E30613;"></span>

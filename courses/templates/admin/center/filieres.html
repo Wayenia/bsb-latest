@@ -5,7 +5,7 @@
 <div class="max-w-7xl mx-auto py-10 space-y-6">
   {% include 'partials/messages.html' %}
 
-  <!-- Header -->
+  {% comment %} Header {% endcomment %}
   <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
     <div class="flex items-center gap-4">
       <a href="{% url 'bsb_admin:center_list' %}" class="text-gray-500 hover:text-gray-800">Retour</a>
@@ -19,7 +19,7 @@
     </div>
   </div>
 
-  <!-- Info rapide centre -->
+  {% comment %} Info rapide centre {% endcomment %}
   <div class="px-4 md:px-0 grid grid-cols-2 sm:grid-cols-4 gap-4">
     <div class="bg-white rounded-lg shadow p-4 text-center">
       <p class="text-xs text-gray-500 uppercase font-semibold">Niveau</p>
@@ -39,7 +39,7 @@
     </div>
   </div>
 
-  <!-- Table filières -->
+  {% comment %} Table filières {% endcomment %}
   <div class="bg-white rounded-xl shadow-lg overflow-hidden">
     {% if page_obj %}
     <div class="overflow-x-auto">
@@ -98,7 +98,7 @@
       </table>
     </div>
 
-    <!-- Pagination -->
+    {% comment %} Pagination {% endcomment %}
     {% if page_obj.has_other_pages %}
     <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
       <div class="flex items-center justify-between">

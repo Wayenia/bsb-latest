@@ -52,7 +52,7 @@
       {% endif %}
     </div>
 
-    <!-- Panneau de détails, rempli par JS au choix du métier -->
+    {% comment %} Panneau de détails, rempli par JS au choix du métier {% endcomment %}
     <div id="metier-details" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-5 space-y-1.5">
       <p class="text-sm text-gray-700"> Durée : <span id="detail-duree" class="font-semibold"></span></p>
       <p class="text-sm text-gray-700"> Conditions d'accès : <span id="detail-niveau" class="font-semibold"></span></p>
@@ -96,7 +96,7 @@
       document.getElementById('detail-duree').textContent = career.duree || '—';
       document.getElementById('detail-niveau').textContent = career.niveau_diplome || '—';
       document.getElementById('detail-titre').textContent = career.titre_professionnel || '—';
-      document.getElementById('detail-frais').textContent = career.total_frais ? (career.total_frais + ' FCFA') : '—';
+      document.getElementById('detail-frais').textContent = career.total_frais ? (career.total_frais.toLocaleString('en-US') + ' FCFA') : '—';
 
       const dateLimiteWrap = document.getElementById('detail-date-limite-wrap');
       if (career.date_limite) {

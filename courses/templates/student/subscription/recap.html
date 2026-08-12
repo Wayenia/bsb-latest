@@ -5,7 +5,7 @@
 <div class="max-w-7xl mx-auto px-4 py-12">
   {% include 'partials/messages.html' %}
 
-  <!-- header -->
+  {% comment %} header {% endcomment %}
   <div class="mb-10">
     <h1 class="text-4xl font-light text-slate-800 tracking-tight mb-3">Aperçu de votre dossier de candidature</h1>
     <p class="text-base text-slate-500 max-w-2xl leading-relaxed">
@@ -14,13 +14,13 @@
     </p>
   </div>
 
-  <!-- main card -->
+  {% comment %} main card {% endcomment %}
   <div class="bg-white border border-slate-200 rounded-sm mb-8">
-    <!-- line -->
+    {% comment %} line {% endcomment %}
     <div class="h-1 w-full" style="background-color: #ECAB0F;"></div>
     
     <div class="p-8">
-      <!-- career choosen -->
+      {% comment %} career choosen {% endcomment %}
       <div class="mb-10">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-lg font-light text-slate-800 uppercase">Metier de formation</h3>
@@ -51,10 +51,10 @@
         </div>
       </div>
 
-      <!-- line -->
+      {% comment %} line {% endcomment %}
       <div class="w-full h-px bg-slate-100 my-8"></div>
 
-      <!-- personal info -->
+      {% comment %} personal info {% endcomment %}
       <div class="mb-10">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-lg font-light text-slate-800 uppercase">Informations personnelles</h3>
@@ -126,10 +126,10 @@
         </div>
       </div>
       
-      <!-- line -->
+      {% comment %} line {% endcomment %}
       <div class="w-full h-px bg-slate-100 my-8"></div>
 
-      <!-- documents -->
+      {% comment %} documents {% endcomment %}
       <div class="mb-10">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-lg font-light text-slate-800 uppercase">Documents soumis</h3>
@@ -147,7 +147,7 @@
                 <span class="text-sm text-slate-700">{{ nom }}</span>
               </div>
               <a href="{{ fic.url }}" target="_blank"
-                 class="text-xs text-slate-400 hover:text-slate-600 transition-colors">
+                 class="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-bold hover:bg-blue-100 transition-colors">
                 Voir
               </a>
             </div>
@@ -160,17 +160,17 @@
         {% endif %}
       </div>
       
-      <!-- line -->
+      {% comment %} line {% endcomment %}
       <div class="w-full h-px bg-slate-100 my-8"></div>
       
-      <!-- final info -->
+      {% comment %} final info {% endcomment %}
       <div class="mx-auto text-center mb-10 p-5 bg-slate-50 border border-slate-200">
         <div class="flex items-start gap-3">
           <span class="text-bsb-gold text-lg">
             
           </span>
           <p class="text-sm text-slate-600 leading-relaxed">
-            Vérifiez attentivement toutes vos informations avant de soumettre.
+            <span class="font-bold text-red-600 text-base">Vérifiez attentivement toutes vos informations avant de soumettre.</span>
             <span class="font-medium text-red-600">Après confirmation, vous ne pourrez plus modifier votre dossier.</span>
             <br>
             <br>
@@ -186,7 +186,7 @@
         </div>
       </div>
 
-      <!-- BOUTONS DE CONFIRMATION -->
+      {% comment %} BOUTONS DE CONFIRMATION {% endcomment %}
       <form method="POST" action="">
         {% csrf_token %}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -207,7 +207,7 @@
     </div>
   </div>
 
-  <!-- Pied de page avec les couleurs BSB -->
+  {% comment %} Pied de page avec les couleurs BSB {% endcomment %}
   <div class="mt-8 flex justify-center space-x-3">
     <span class="h-0.5 w-3" style="background-color: #ECAB0F;"></span>
     <span class="h-0.5 w-3" style="background-color: #E30613;"></span>

@@ -1,4 +1,4 @@
-{% load static %}
+{% load static humanize %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -13,8 +13,20 @@
     line-height: 1.35;
   }
 
-  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-  .header-left { font-weight: bold; font-size: 12px; text-align: center; line-height: 1.3; }
+  .pdf-watermark {
+    position: fixed;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 9cm;
+    opacity: 0.06;
+    z-index: -1;
+  }
+
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .header-left { font-weight: bold; font-size: 12px; text-align: center; line-height: 1.3; flex: 1; }
+  .header-center { flex: 0 0 auto; padding: 0 12px; }
+  .header-center img { width: 55px; height: auto; }
   .header-right { text-align: center; font-size: 12px; width: 220px; }
   .header-right .pays { font-weight: bold; }
   .header-right .devise { font-style: italic; }
@@ -75,9 +87,14 @@
 </head>
 <body>
 
+  <img class="pdf-watermark" src="{{ favicon_data_uri }}" alt="">
+
   <div class="header">
     <div class="header-left">
       {% for line in header_left %}{{ line }}<br>{% endfor %}
+    </div>
+    <div class="header-center">
+      <img src="{{ favicon_data_uri }}" alt="BSB">
     </div>
     <div class="header-right">
       <div class="pays">Burkina Faso</div>
@@ -114,13 +131,13 @@
         <td class="num">{{ forloop.counter }}</td>
         <td class="desig">{{ ligne.prestation.libelle }}</td>
         <td class="qte">{{ ligne.quantite }}</td>
-        <td class="montant">{{ ligne.prix_unitaire|floatformat:0 }}</td>
-        <td class="montant">{{ ligne.montant|floatformat:0 }}</td>
+        <td class="montant">{{ ligne.prix_unitaire|floatformat:0|intcomma }}</td>
+        <td class="montant">{{ ligne.montant|floatformat:0|intcomma }}</td>
       </tr>
       {% endfor %}
       <tr class="total">
         <td colspan="4" class="label-total">Total général HTVA</td>
-        <td class="montant">{{ facture.montant_total|floatformat:0 }}</td>
+        <td class="montant">{{ facture.montant_total|floatformat:0|intcomma }}</td>
       </tr>
     </tbody>
   </table>
@@ -128,7 +145,7 @@
   <p class="arrete">
     Arrêté la présente facture {% if facture.type_facture == 'definitive' %}définitive{% else %}proforma{% endif %}
     à la somme de : <span class="montant-lettres">{{ montant_lettres }}</span>
-    ({{ facture.montant_total|floatformat:0 }}) F CFA HTVA.
+    ({{ facture.montant_total|floatformat:0|intcomma }}) F CFA HTVA.
   </p>
 
   <div class="signature">

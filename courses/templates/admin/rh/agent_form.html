@@ -4,7 +4,7 @@
 <div class="max-w-4xl mx-auto py-10">
     {% include 'partials/messages.html' %}
 
-    <!-- En-tête -->
+    {% comment %} En-tête {% endcomment %}
     <div class="mb-8 flex items-center gap-4">
         <a href="{% url 'bsb_admin:agent_list' %}"
            class="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-700 transition-all">Retour</a>
@@ -25,7 +25,7 @@
             </div>
             {% endif %}
 
-            <!-- ══ RÔLE ══════════════════════════════════════════════════════ -->
+            {% comment %} ══ RÔLE ══════════════════════════════════════════════════════ {% endcomment %}
             <div class="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-xl p-5">
                 <label for="{{ form.user_type.id_for_label }}"
                        class="block text-sm font-bold text-gray-900 mb-2">
@@ -40,7 +40,7 @@
                 {% endif %}
             </div>
 
-            <!-- ══ IDENTITÉ ══════════════════════════════════════════════════ -->
+            {% comment %} ══ IDENTITÉ ══════════════════════════════════════════════════ {% endcomment %}
             <div>
                 <h2 class="text-base font-bold text-gray-800 border-b-2 border-yellow-400 pb-2 mb-5 flex items-center gap-2">
                      Identité
@@ -131,7 +131,7 @@
                 </div>
             </div>
 
-            <!-- ══ SECTION FORMATEUR ═════════════════════════════════════════ -->
+            {% comment %} ══ SECTION FORMATEUR ═════════════════════════════════════════ {% endcomment %}
             <div id="section-formateur" class="hidden role-section">
                 <h2 class="text-base font-bold text-gray-800 border-b-2 border-gray-400 pb-2 mb-5 flex items-center gap-2">
                      Informations Formateur
@@ -186,7 +186,7 @@
 
             {{ filiere_modules_json|json_script:"filiere-modules-data" }}
 
-            <!-- ══ SECTION DIRECTEUR INTER-RÉGIONAL ═════════════════════════ -->
+            {% comment %} ══ SECTION DIRECTEUR INTER-RÉGIONAL ═════════════════════════ {% endcomment %}
             <div id="section-dir" class="hidden role-section">
                 <h2 class="text-base font-bold text-gray-800 border-b-2 border-red-500 pb-2 mb-5 flex items-center gap-2">
                      Directeur inter-régional
@@ -206,7 +206,7 @@
                 </div>
             </div>
 
-            <!-- ══ SECTION CENTRE (gestionnaire / comptable / caissier) ═════ -->
+            {% comment %} ══ SECTION CENTRE (gestionnaire / comptable / caissier) ═════ {% endcomment %}
             <div id="section-centre-role" class="hidden role-section">
                 <h2 class="text-base font-bold text-gray-800 border-b-2 border-yellow-500 pb-2 mb-5 flex items-center gap-2">
                     
@@ -225,7 +225,7 @@
                 </div>
             </div>
 
-            <!-- ══ SECTION ADMIN ══════════════════════════════════════════════ -->
+            {% comment %} ══ SECTION ADMIN ══════════════════════════════════════════════ {% endcomment %}
             <div id="section-admin" class="hidden role-section">
                 <h2 class="text-base font-bold text-gray-800 border-b-2 border-gray-400 pb-2 mb-5 flex items-center gap-2">
                      Administrateur
@@ -244,7 +244,7 @@
                 </div>
             </div>
 
-            <!-- ══ SECTION MEMBRE DE L'ADMINISTRATION (fonction libre) ═════════ -->
+            {% comment %} ══ SECTION MEMBRE DE L'ADMINISTRATION (fonction libre) ═════════ {% endcomment %}
             <div id="section-membre" class="hidden role-section">
                 <h2 class="text-base font-bold text-gray-800 border-b-2 border-gray-400 pb-2 mb-5 flex items-center gap-2">
                      Membre de l'administration
@@ -262,9 +262,9 @@
                 </div>
             </div>
 
-            <!-- deps : aucune section supplémentaire — le rôle seul suffit -->
+            {% comment %} deps : aucune section supplémentaire — le rôle seul suffit {% endcomment %}
 
-            <!-- ══ BOUTONS ════════════════════════════════════════════════════ -->
+            {% comment %} ══ BOUTONS ════════════════════════════════════════════════════ {% endcomment %}
             <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
                 <a href="{% url 'bsb_admin:agent_list' %}"
                    class="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-semibold

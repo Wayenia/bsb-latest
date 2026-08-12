@@ -4,58 +4,59 @@
 {% block title %}Paiement — Recherche apprenant | BSB{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 <style>
   body { background: #f4f6fb; }
   .page-card { background:#fff; border-radius:16px; box-shadow:0 2px 16px rgba(30,58,138,.09); border:none; }
-  .search-input { border-radius: 10px; border: 2px solid #e2e8f0; padding: .65rem 1rem; font-size:.95rem; }
+  .search-input { border-radius: 10px; border: 2px solid #e2e8f0; padding: .65rem 1rem; font-size:.95rem; width:100%; }
   .search-input:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1); outline:none; }
   .eleve-row:hover { background:#f0f4ff !important; cursor:pointer; }
   .badge-type { font-size:.75rem; padding:.3em .7em; border-radius:20px; }
-  .table thead { background: linear-gradient(90deg,#1e3a8a,#2563eb); color:#fff; }
-  .table thead th { font-weight:600; font-size:.85rem; border:none; padding:.85rem 1rem; }
   .btn-detail { background:linear-gradient(135deg,#1e3a8a,#2563eb); color:#fff; border:none; border-radius:8px; font-size:.82rem; padding:.4rem .9rem; font-weight:600; transition:all .2s; }
   .btn-detail:hover { opacity:.88; color:#fff; transform:translateY(-1px); }
   .highlight { background:#fef9c3; border-radius:4px; padding:0 2px; }
+  a { text-decoration: none; }
+  a:hover { text-decoration: none; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 px-4">
+<div class="w-full py-4 px-4">
 
-  <div class="d-flex align-items-center gap-3 mb-4">
-    <a href="{% url 'courses:statistiques' %}" class="btn btn-outline-secondary btn-sm">
+  <div class="flex items-center gap-3 mb-4">
+    <a href="{% url 'courses:statistiques' %}"
+       class="inline-flex items-center px-3 py-1.5 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
       <i class="fas fa-arrow-left"></i>
     </a>
     <div>
-      <h2 class="fw-bold mb-0" style="color:#1e3a8a;">
-        <i class="fas fa-search-dollar me-2 text-success"></i>Paiement — Recherche apprenant
+      <h2 class="font-bold text-xl mb-0" style="color:#1e3a8a;">
+        <i class="fas fa-search-dollar mr-2 text-success"></i>Paiement — Recherche apprenant
       </h2>
-      <p class="text-muted small mb-0">Recherchez un apprenant pour accéder à ses dettes</p>
+      <p class="text-gray-500 text-sm mb-0">Recherchez un apprenant pour accéder à ses dettes</p>
     </div>
   </div>
 
   <div class="page-card p-4 mb-4">
-    <form method="get" class="row g-2 align-items-end">
-      <div class="col-12 col-md-8 col-lg-6">
-        <label class="form-label fw-semibold small text-secondary mb-1">
+    <form method="get" class="flex flex-wrap gap-2 items-end">
+      <div class="w-full md:w-2/3 lg:w-1/2">
+        <label class="block font-semibold text-sm text-gray-500 mb-1">
           Rechercher par nom, identifiant ou téléphone
         </label>
-        <div class="input-group">
-          <span class="input-group-text bg-white border-end-0" style="border:2px solid #e2e8f0; border-radius:10px 0 0 10px;">
-            <i class="fas fa-search text-secondary"></i>
+        <div class="flex">
+          <span class="inline-flex items-center px-3 bg-white text-gray-500" style="border:2px solid #e2e8f0; border-right:none; border-radius:10px 0 0 10px;">
+            <i class="fas fa-search"></i>
           </span>
           <input type="text" name="q" value="{{ query }}"
                  placeholder="Ex: Kaboré, BSB-2024-OUA-..., +226..."
-                 class="form-control search-input border-start-0" style="border-radius:0 10px 10px 0;">
+                 class="search-input" style="border-left:none; border-radius:0 10px 10px 0;">
         </div>
       </div>
-      <div class="col-auto">
-        <button type="submit" class="btn btn-primary px-4">
-          <i class="fas fa-search me-1"></i>Rechercher
+      <div>
+        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg text-white" style="background:#2563eb;">
+          <i class="fas fa-search mr-1"></i>Rechercher
         </button>
         {% if query %}
-        <a href="{% url 'courses:stats_paiement_recherche' %}" class="btn btn-outline-secondary ms-2">
+        <a href="{% url 'courses:stats_paiement_recherche' %}"
+           class="inline-flex items-center px-3 py-2 ml-2 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
           <i class="fas fa-times"></i>
         </a>
         {% endif %}
@@ -65,43 +66,43 @@
 
   {% if query %}
   <div class="page-card p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <span class="fw-semibold" style="color:#1e3a8a;">
+    <div class="flex justify-between items-center mb-3">
+      <span class="font-semibold" style="color:#1e3a8a;">
         {% if eleves %}
-          {{ eleves|length }} résultat{{ eleves|length|pluralize }} pour « <span class="text-primary">{{ query }}</span> »
+          {{ eleves|length }} résultat{{ eleves|length|pluralize }} pour « <span style="color:#2563eb;">{{ query }}</span> »
         {% else %}
-          Aucun résultat pour « <span class="text-danger">{{ query }}</span> »
+          Aucun résultat pour « <span class="text-red-600">{{ query }}</span> »
         {% endif %}
       </span>
     </div>
 
     {% if eleves %}
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
+    <div class="overflow-x-auto">
+      <table class="w-full">
         <thead>
-          <tr>
-            <th>Apprenant</th>
-            <th>Identifiant</th>
-            <th>Téléphone</th>
-            <th>Inscriptions</th>
-            <th class="text-end">Actions</th>
+          <tr class="text-left text-sm text-gray-500 border-b border-gray-200">
+            <th class="py-2">Apprenant</th>
+            <th class="py-2">Identifiant</th>
+            <th class="py-2">Téléphone</th>
+            <th class="py-2">Inscriptions</th>
+            <th class="py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for eleve in eleves %}
-          <tr class="eleve-row">
-            <td>
-              <div class="fw-semibold">{{ eleve.nom }} {{ eleve.prenom }}</div>
-              <div class="text-muted small">{{ eleve.email }}</div>
+          <tr class="eleve-row border-b border-gray-100">
+            <td class="py-2">
+              <div class="font-semibold">{{ eleve.nom }} {{ eleve.prenom }}</div>
+              <div class="text-gray-500 text-sm">{{ eleve.email }}</div>
             </td>
-            <td><code class="small">{{ eleve.numero_identifiant|default:"—" }}</code></td>
-            <td>{{ eleve.tel|default:"—" }}</td>
-            <td>
-              <span class="badge bg-primary rounded-pill">{{ eleve.nb_inscriptions }} formation{{ eleve.nb_inscriptions|pluralize }}</span>
+            <td class="py-2"><code class="text-sm">{{ eleve.numero_identifiant|default:"—" }}</code></td>
+            <td class="py-2">{{ eleve.tel|default:"—" }}</td>
+            <td class="py-2">
+              <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold text-white" style="background:#2563eb;">{{ eleve.nb_inscriptions }} formation{{ eleve.nb_inscriptions|pluralize }}</span>
             </td>
-            <td class="text-end">
-              <a href="{% url 'courses:stats_dettes_eleve' eleve.id %}" class="btn btn-detail">
-                <i class="fas fa-file-invoice-dollar me-1"></i>Voir les dettes
+            <td class="py-2 text-right">
+              <a href="{% url 'courses:stats_dettes_eleve' eleve.id %}" class="btn-detail">
+                <i class="fas fa-file-invoice-dollar mr-1"></i>Voir les dettes
               </a>
             </td>
           </tr>
@@ -110,23 +111,19 @@
       </table>
     </div>
     {% else %}
-    <div class="text-center py-5 text-muted">
-      <i class="fas fa-user-slash fa-3x mb-3 d-block opacity-25"></i>
+    <div class="text-center py-5 text-gray-500">
+      <i class="fas fa-user-slash fa-3x mb-3 block opacity-25"></i>
       Aucun apprenant trouvé. Essayez avec un autre critère.
     </div>
     {% endif %}
   </div>
   {% else %}
-  <div class="text-center py-5 text-muted">
-    <i class="fas fa-search fa-3x mb-3 d-block opacity-20"></i>
+  <div class="text-center py-5 text-gray-500">
+    <i class="fas fa-search fa-3x mb-3 block opacity-20"></i>
     <p>Saisissez un nom, un identifiant ou un numéro de téléphone pour commencer.</p>
   </div>
   {% endif %}
 
 </div>
 
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

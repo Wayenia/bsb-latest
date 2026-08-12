@@ -261,6 +261,7 @@ class Cours(TimeStampModel):
 
 class AnneeScolaire(models.Model):
      libelle_anne=models.CharField(max_length=25)
+     date_creation = models.DateTimeField(auto_now_add=True, null=True, verbose_name="Date de création")
 
      def __str__(self):
          return self.libelle_anne
@@ -704,7 +705,10 @@ class PieceJointeInscription(models.Model):
 class DocumentEleve(models.Model):
     inscription=models.ForeignKey(Inscription,on_delete=models.SET_NULL, null=True, blank=True,verbose_name="Inscriptions")
     piece_requise=models.ForeignKey(PieceJointeInscription,on_delete=models.SET_NULL, null=True, blank=True,verbose_name="Documents requis")
-    piece = models.FileField(upload_to='eleves/pieces', blank=True, null=True, verbose_name="Fichier")
+    piece = models.FileField(
+        upload_to='eleves/pieces', blank=True, null=True, verbose_name="Fichier",
+        validators=[FileExtensionValidator(['pdf'])],
+    )
     date_depot = models.DateTimeField(blank=True,null=True, verbose_name="Date de depot")
 
     def __str__(self):

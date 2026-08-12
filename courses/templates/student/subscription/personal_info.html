@@ -9,7 +9,7 @@
     <div class="h-1 w-full" style="background-color: #ECAB0F;"></div>
     
     <div class="p-8">
-      <!-- head -->
+      {% comment %} head {% endcomment %}
       <div class="mb-8">
         <h3 class="text-xl font-light text-slate-800 mb-1">Informations personnelles</h3>
         <p class="text-sm text-slate-500">
@@ -20,10 +20,10 @@
       <form method="POST" action="">
         {% csrf_token %}
 
-        <!-- Grille 2 colonnes pour tous les champs -->
+        {% comment %} Grille 2 colonnes pour tous les champs {% endcomment %}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
           
-          <!-- Nom -->
+          {% comment %} Nom {% endcomment %}
           <div class="w-full">
             <div class="mb-2">
               <label for="{{ form.nom.id_for_label }}" class="text-base font-medium text-slate-800 block">
@@ -37,7 +37,7 @@
             {% endif %}
           </div>
 
-          <!-- Prénom -->
+          {% comment %} Prénom {% endcomment %}
           <div class="w-full">
             <div class="mb-2">
               <label for="{{ form.prenom.id_for_label }}" class="text-base font-medium text-slate-800 block">
@@ -51,7 +51,7 @@
             {% endif %}
           </div>
 
-          <!-- Sexe -->
+          {% comment %} Sexe {% endcomment %}
           <div class="w-full">
             <div class="mb-2">
               <label for="{{ form.sexe.id_for_label }}" class="text-base font-medium text-slate-800 block">
@@ -62,7 +62,7 @@
             {{ form.sexe }}
           </div>
 
-          <!-- Email -->
+          {% comment %} Email {% endcomment %}
           <div class="w-full">
             <div class="mb-2">
               <label for="{{ form.email.id_for_label }}" class="text-base font-medium text-slate-800 block">
@@ -75,7 +75,7 @@
             {% endif %}
           </div>
 
-          <!-- Téléphone -->
+          {% comment %} Téléphone {% endcomment %}
           <div class="w-full">
             <div class="mb-2">
               <label for="{{ form.tel.id_for_label }}" class="text-base font-medium text-slate-800 block">
@@ -87,7 +87,7 @@
             <span class="text-xs text-slate-400 mt-1 block">Format: +226 XX XX XX XX</span>
           </div>
 
-          <!-- Date de naissance -->
+          {% comment %} Date de naissance {% endcomment %}
           <div class="w-full">
             <div class="mb-2">
               <label for="{{ form.date_naissance.id_for_label }}" class="text-base font-medium text-slate-800 block">
@@ -98,7 +98,7 @@
             {{ form.date_naissance }}
           </div>
 
-          <!-- Lieu de naissance (sur toute la largeur en dessous) -->
+          {% comment %} Lieu de naissance (sur toute la largeur en dessous) {% endcomment %}
           <div class="md:col-span-2 w-full mb-6">
             <div class="mb-2">
               <label for="{{ form.lieu_naissance.id_for_label }}" class="text-base font-medium text-slate-800 block">
@@ -112,7 +112,7 @@
 
         <h3 class="text-xl font-light text-slate-800 mb-2"> Informations de la personne à contacter</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-        <!-- Nom de la personne a prévénir en cas de besoin -->
+        {% comment %} Nom de la personne a prévénir en cas de besoin {% endcomment %}
         <div class="w-full">
           <div class="mb-2">
             <label for="{{form.nom_personne.id_for_label}}" class="text-base font-medium text-slate-800 block">
@@ -122,7 +122,7 @@
           </div>
               {{form.nom_personne}}
         </div>
-        <!-- Prenom de la personne à prevenir en cas de besoin -->
+        {% comment %} Prenom de la personne à prevenir en cas de besoin {% endcomment %}
          <div class="w-full">
           <div class="mb-2">
             <label for="{{form.prenom_personne.id_for_label}}" class="text-base font-medium text-slate-800 block">
@@ -132,7 +132,7 @@
           </div>
               {{form.prenom_personne}}
         </div>
-        <!-- Fonction de la personne à prévenir en cas de besoin -->
+        {% comment %} Fonction de la personne à prévenir en cas de besoin {% endcomment %}
          <div class="w-full">
           <div class="mb-2">
             <label for="{{form.fonction.id_for_label}}" class="text-base font-medium text-slate-800 block">
@@ -142,7 +142,7 @@
           </div>
               {{form.fonction}}
         </div>
-        <!-- Contact de la personne à prévenir en cas de besoin -->
+        {% comment %} Contact de la personne à prévenir en cas de besoin {% endcomment %}
          <div class="w-full">
           <div class="mb-2">
             <label for="{{form.contact.id_for_label}}" class="text-base font-medium text-slate-800 block">
@@ -153,7 +153,7 @@
               {{form.contact}}
         </div>
         </div>
-        <!-- Boutons de navigation -->
+        {% comment %} Boutons de navigation {% endcomment %}
         <div class="flex justify-between mt-10 pt-6 border-t border-slate-200">
           
           <a href="javascript:history.back()"

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'rest_framework',
     'django_filters',
     'corsheaders',
@@ -261,10 +262,16 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_AGE = 86400
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+# True car le site est servi en HTTPS réel via le proxy externe (TLS terminé en
+# amont, cf. règle "jamais de redirection HTTPS ici"). En local (http://localhost),
+# le navigateur n'enverra pas ces cookies : login/CSRF sembleront "casser" en dev
+# HTTP pur, c'est attendu — utiliser un tunnel HTTPS local ou DEBUG-only override
+# si besoin de tester ce flux précis en clair.
+SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_USE_SESSIONS = False
-CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = not DEBUG
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440
 FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440
 SERVER_EMAIL = 'admin@burkinasuudu.com'

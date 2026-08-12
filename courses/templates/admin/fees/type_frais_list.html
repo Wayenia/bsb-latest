@@ -7,7 +7,7 @@
 <div class="max-w-7xl mx-auto py-10 space-y-6">
   {% include 'partials/messages.html' %}
 
-  <!-- Header -->
+  {% comment %} Header {% endcomment %}
   <div class="px-4 md:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <a href="{% url 'bsb_admin:admin_dashboard' %}" class="text-sm text-gray-400 hover:text-gray-600 mb-2 block">Tableau de bord</a>
@@ -24,7 +24,7 @@
     </div>
   </div>
 
-  <!-- Barre de filtre -->
+  {% comment %} Barre de filtre {% endcomment %}
   <form method="get">
     <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex gap-3">
       <input type="text" name="q" value="{{ q|default:'' }}"
@@ -44,7 +44,7 @@
     </div>
   </form>
 
-  <!-- Accordéon type de frais → tranches -->
+  {% comment %} Accordéon type de frais → tranches {% endcomment %}
   {% if types %}
   <div class="space-y-4">
     {% for t in types %}
@@ -126,7 +126,7 @@
     {% endfor %}
   </div>
 
-  <!-- Pagination -->
+  {% comment %} Pagination {% endcomment %}
   {% if types.has_other_pages %}
   <div class="flex items-center justify-between px-1 py-2">
     <p class="text-sm text-gray-500">Page {{ types.number }} / {{ types.paginator.num_pages }}</p>

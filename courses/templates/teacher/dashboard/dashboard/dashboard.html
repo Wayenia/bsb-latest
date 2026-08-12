@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block title %}Dashboard Formateur | BSB{% endblock %}
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
     {% include 'partials/messages.html' %}
 
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 class="text-3xl font-black text-gray-900">
@@ -23,7 +24,7 @@
         </a>
     </div>
 
-    <!-- KPI Cards -->
+    {% comment %} KPI Cards {% endcomment %}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
             <div class="w-11 h-11 bg-yellow-50 rounded-lg flex items-center justify-center">
@@ -63,7 +64,7 @@
         </div>
     </div>
 
-    <!-- Tableau par filière -->
+    {% comment %} Tableau par filière {% endcomment %}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 class="text-lg font-bold text-gray-900">
@@ -117,7 +118,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 text-center text-sm font-medium text-gray-700">
-                            {{ stat.total_encaisse|floatformat:0 }} FCFA
+                            {{ stat.total_encaisse|floatformat:0|intcomma }} FCFA
                         </td>
                         <td class="px-6 py-4 text-center">
                             {% if stat.formation.is_active %}

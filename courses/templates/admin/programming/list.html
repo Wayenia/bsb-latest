@@ -4,10 +4,10 @@
 
 {%block content%}
 <div class="max-w-7xl mx-auto py-10 space-y-6">
-    <!-- Messages -->
+    {% comment %} Messages {% endcomment %}
     {% include 'partials/messages.html' %}
 
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 class="text-3xl font-black text-gray-900 flex items-center">
@@ -23,10 +23,10 @@
             </a>
         </div>
     </div>
-    <!-- Barre de filtre -->
+    {% comment %} Barre de filtre {% endcomment %}
     <form method="get">
            <div class="bg-white px-4 py-4 border border-gray-200 rounded-lg mb-4 flex flex-col sm:flex-row gap-3">
-            <!-- Recherche -->
+            {% comment %} Recherche {% endcomment %}
             <div class="relative flex-1">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     
@@ -34,14 +34,14 @@
                 {{filter.form.formation}}
             </div>
 
-            <!-- Filtre Centre -->
+            {% comment %} Filtre Centre {% endcomment %}
             <div class="sm:w-56">
                 {{filter.form.centre}}
             </div>
         </div>
     </form>
 
-    <!-- Table Card -->
+    {% comment %} Table Card {% endcomment %}
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {% if programs %}
         <div class="overflow-x-auto">
@@ -120,7 +120,7 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        {% comment %} Pagination {% endcomment %}
         {% if programs.has_other_pages %}
         <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
             <div class="flex items-center justify-between">

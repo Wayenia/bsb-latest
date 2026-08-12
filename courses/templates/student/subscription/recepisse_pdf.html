@@ -7,10 +7,19 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: Georgia, serif;
-    background: #fff;
     color: #111;
     font-size: 13px;
     padding: 30px 40px;
+  }
+
+  .pdf-watermark {
+    position: fixed;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 9cm;
+    opacity: 0.06;
+    z-index: -1;
   }
 
   .header {
@@ -116,22 +125,24 @@
 </head>
 <body>
 
-  <!-- EN-TETE -->
+  <img class="pdf-watermark" src="{{ favicon_data_uri }}" alt="">
+
+  {% comment %} EN-TETE {% endcomment %}
   <div class="header">
     <div class="header-left">
       {% for line in header_left %}<p>{{ line }}</p>{% endfor %}
     </div>
     <div class="header-center">
-      <img src="{% static 'images/favicon.png' %}" alt="BSB">
+      <img src="{{ favicon_data_uri }}" alt="BSB">
     </div>
     <div class="header-right">
-      {% for line in header_right %}<p>{{ line }}</p>{% endfor %}
+      {% for line in header_right %}<p{% if 'patrie' in line or 'vaincrons' in line %} style="text-transform:none;"{% endif %}>{{ line }}</p>{% endfor %}
     </div>
   </div>
 
   <h1 class="titre">{{ titre_document }}</h1>
 
-  <!-- NUMERO ET DATE -->
+  {% comment %} NUMERO ET DATE {% endcomment %}
   <div class="ligne">
     <span class="label">N° de dossier :</span>
     <span class="valeur">{{ numero_dossier }}</span>
@@ -143,7 +154,7 @@
 
   <hr class="separateur">
 
-  <!-- APPRENANT -->
+  {% comment %} APPRENANT {% endcomment %}
   <div class="ligne">
     <span class="label">Apprenant :</span>
     <span class="valeur">{{ eleve.nom }} {{ eleve.prenom }}</span>
@@ -163,7 +174,7 @@
 
   <hr class="separateur">
 
-  <!-- STATUT -->
+  {% comment %} STATUT {% endcomment %}
   <div class="ligne">
     <span class="label">Statut de la demande :</span>
     <span class="valeur"><span class="statut-badge statut-{{ inscription.statut }}">{{ inscription.get_statut_display }}</span></span>
@@ -175,7 +186,7 @@
   </div>
   {% endif %}
 
-  <!-- BAS DE PAGE -->
+  {% comment %} BAS DE PAGE {% endcomment %}
   <div class="bas-page">
     BSB-DSI          généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}
   </div>

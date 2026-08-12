@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block title %}Étudiants — {{ formation.filiere.nom_filiere }} | BSB{% endblock %}
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
     {% include 'partials/messages.html' %}
 
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
             <div class="flex items-center gap-3 mb-1">
@@ -20,7 +21,7 @@
             </p>
         </div>
 
-        <!-- Exports -->
+        {% comment %} Exports {% endcomment %}
         <div class="flex items-center gap-2 flex-wrap">
             <a href="{% url 'courses:formateur_export' formation.id 'csv' %}?statut={{ statut_filter }}&q={{ q }}"
                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">
@@ -37,7 +38,7 @@
         </div>
     </div>
 
-    <!-- Compteurs rapides -->
+    {% comment %} Compteurs rapides {% endcomment %}
     <div class="grid grid-cols-2 md:grid-cols-2 gap-4">
         <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-3">
             <div class="w-9 h-9 bg-gray-50 rounded-lg flex items-center justify-center">
@@ -59,7 +60,7 @@
         </div>
     </div>
 
-    <!-- Filtres -->
+    {% comment %} Filtres {% endcomment %}
     <form method="get" class="bg-white border border-gray-200 rounded-xl px-4 py-4 flex flex-col sm:flex-row gap-3">
         <div class="relative flex-1">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -88,7 +89,7 @@
         {% endif %}
     </form>
 
-    <!-- Tableau -->
+    {% comment %} Tableau {% endcomment %}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {% if page_obj %}
         <div class="overflow-x-auto">
@@ -145,13 +146,13 @@
                             {% endwith %}
                         </td>
                         <td class="px-4 py-3 text-right text-sm text-gray-700 font-medium">
-                            {% if item.total_du %}{{ item.total_du|floatformat:0 }} F{% else %}—{% endif %}
+                            {% if item.total_du %}{{ item.total_du|floatformat:0|intcomma }} F{% else %}—{% endif %}
                         </td>
                         <td class="px-4 py-3 text-right text-sm font-medium {% if item.total_paye > 0 %}text-green-700{% else %}text-gray-400{% endif %}">
-                            {% if item.total_paye %}{{ item.total_paye|floatformat:0 }} F{% else %}0 F{% endif %}
+                            {% if item.total_paye %}{{ item.total_paye|floatformat:0|intcomma }} F{% else %}0 F{% endif %}
                         </td>
                         <td class="px-4 py-3 text-right text-sm font-medium {% if item.reste > 0 %}text-red-600{% else %}text-green-600{% endif %}">
-                            {{ item.reste|floatformat:0 }} F
+                            {{ item.reste|floatformat:0|intcomma }} F
                         </td>
                         <td class="px-4 py-3 text-center">
                             {% if item.a_paye %}
@@ -170,7 +171,7 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        {% comment %} Pagination {% endcomment %}
         {% if page_obj.has_other_pages %}
         <div class="bg-gray-50 px-6 py-3 border-t border-gray-100">
             <div class="flex items-center justify-between">

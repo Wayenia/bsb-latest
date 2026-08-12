@@ -1,13 +1,12 @@
-<!-- courses/templates/admin/center/form.html -->
-
 {% extends 'base.html' %}
+{% comment %} courses/templates/admin/center/form.html {% endcomment %}
 
 {% block title %}{{ title }} - Admin BSB{% endblock %}
 {% block page_title %}{{ title }}{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto py-10">
-        <!-- Header -->
+        {% comment %} Header {% endcomment %}
         <div class="mb-8">
             <div class="flex items-center mb-4">
                 <a href="{% url 'bsb_admin:center_list' %}" class="text-gray-800 hover:text-gray-900 mr-4">Retour</a>
@@ -31,7 +30,7 @@
                 </div>
                 {% endif %}
                 
-                <!-- Form Fields -->
+                {% comment %} Form Fields {% endcomment %}
                 {% for field in form %}
                 <div class="form-group">
                     <label for="{{ field.id_for_label }}" class="form-label">
@@ -59,9 +58,9 @@
                 </div>
                 {% endfor %}
                 
-                <!-- For Many-to-Many fields -->
+                {% comment %} For Many-to-Many fields {% endcomment %}
                 
-                 <!-- Ici cest pour ajouter le next -->
+                 {% comment %} Ici cest pour ajouter le next {% endcomment %}
                 <input type="hidden" name="next" value="{{request.GET.next |default:''}}">
                  {% url 'bsb_admin:center_list' as center_list_url %}
                 <div class="pt-6 border-t border-gray-200 flex justify-end space-x-4">

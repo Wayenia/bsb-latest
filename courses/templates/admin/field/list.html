@@ -7,7 +7,7 @@
 
     {% include 'partials/messages.html' %}
 
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 class="text-3xl font-black text-gray-900 flex items-center gap-3">
@@ -27,11 +27,11 @@
         </div>
     </div>
 
-    <!-- Barre de filtres -->
+    {% comment %} Barre de filtres {% endcomment %}
     <form method="get" id="filter-form">
         <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-3 flex-wrap">
 
-            <!-- Recherche -->
+            {% comment %} Recherche {% endcomment %}
             <div class="relative flex-1 min-w-[200px]">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     
@@ -43,7 +43,7 @@
                        id="id_recherche" autocomplete="off">
             </div>
 
-            <!-- Filtre Titre Professionnel -->
+            {% comment %} Filtre Titre Professionnel {% endcomment %}
             <div class="sm:w-52">
                 <select name="titre_professionnel"
                         class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
@@ -56,7 +56,7 @@
                 </select>
             </div>
 
-            <!-- Filtre Disponibilité -->
+            {% comment %} Filtre Disponibilité {% endcomment %}
             <div class="sm:w-44">
                 <select name="is_active"
                         class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
@@ -67,7 +67,7 @@
                 </select>
             </div>
 
-            <!-- Bouton reset -->
+            {% comment %} Bouton reset {% endcomment %}
             <div class="flex items-center">
                 <a href="{% url 'courses:member_field_list' %}"
                    class="inline-flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition"
@@ -79,7 +79,7 @@
         </div>
     </form>
 
-    <!-- Compteur de résultats -->
+    {% comment %} Compteur de résultats {% endcomment %}
     {% if filieres %}
     <div class="px-1">
         <p class="text-sm text-gray-500">
@@ -88,7 +88,7 @@
     </div>
     {% endif %}
 
-    <!-- Table -->
+    {% comment %} Table {% endcomment %}
     <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
         {% if filieres %}
         <div class="overflow-x-auto">
@@ -106,7 +106,7 @@
                     {% for field in filieres %}
                     <tr class="hover:bg-red-50 transition-colors duration-150">
 
-                        <!-- Nom du métier -->
+                        {% comment %} Nom du métier {% endcomment %}
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center gap-3">
                                 <div class="flex-shrink-0 h-10 w-10 bg-red-700 rounded-full flex items-center justify-center shadow">
@@ -116,7 +116,7 @@
                             </div>
                         </td>
 
-                        <!-- Titre professionnel -->
+                        {% comment %} Titre professionnel {% endcomment %}
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if field.filiere.titre_professionnel %}
                             <span class="px-3 py-1 inline-flex text-xs font-bold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">
@@ -127,12 +127,12 @@
                             {% endif %}
                         </td>
 
-                        <!-- Conditions d'accès (ex niveau_diplome) -->
+                        {% comment %} Conditions d'accès (ex niveau_diplome) {% endcomment %}
                         <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
                             <span class="line-clamp-2">{{ field.filiere.niveau_diplome|default:"Non précisé" }}</span>
                         </td>
 
-                        <!-- Disponible -->
+                        {% comment %} Disponible {% endcomment %}
                         <td class="px-6 py-4 whitespace-nowrap text-center">
                             {% if field.is_active %}
                             <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-green-100 text-green-800">
@@ -145,7 +145,7 @@
                             {% endif %}
                         </td>
 
-                        <!-- Actions -->
+                        {% comment %} Actions {% endcomment %}
                         <td class="px-6 py-4 whitespace-nowrap text-right">
                             <div class="flex items-center justify-end gap-2">
                                 <a href="{% url 'bsb_admin:field_update' field.id %}"
@@ -166,7 +166,7 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        {% comment %} Pagination {% endcomment %}
         {% if filieres.has_other_pages %}
         <div class="bg-gray-50 px-6 py-3 border-t border-gray-100">
             <div class="flex items-center justify-between">
@@ -197,7 +197,7 @@
         {% endif %}
 
         {% else %}
-        <!-- État vide -->
+        {% comment %} État vide {% endcomment %}
         <div class="text-center py-16">
             <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 
