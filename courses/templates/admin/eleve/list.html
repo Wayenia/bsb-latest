@@ -4,7 +4,7 @@
 <div class="max-w-7xl mx-auto py-10 space-y-6">
     {% include 'partials/messages.html' %}
 
-    <!-- En-tête -->
+    {% comment %} En-tête {% endcomment %}
     <div class="px-4 md:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-3xl font-black text-gray-900">Apprenants</h1>
@@ -12,7 +12,7 @@
         </div>
     </div>
 
-    <!-- Filtres -->
+    {% comment %} Filtres {% endcomment %}
     <form method="get">
         <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl flex flex-col sm:flex-row gap-3 shadow-sm">
             <div class="relative flex-1">
@@ -33,7 +33,7 @@
         </div>
     </form>
 
-    <!-- Tableau -->
+    {% comment %} Tableau {% endcomment %}
     <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
         {% if eleves %}
         <div class="overflow-x-auto">
@@ -76,7 +76,7 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        {% comment %} Pagination {% endcomment %}
         {% if eleves.has_other_pages %}
         <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex items-center justify-between">
             <p class="text-sm text-gray-600">

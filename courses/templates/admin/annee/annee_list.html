@@ -9,7 +9,7 @@
 <div class="min-h-screen bg-gray-50 py-8">
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="mb-8 flex items-center justify-between">
       <div>
         <a href="{% url 'bsb_admin:admin_dashboard' %}" class="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-2">
@@ -28,7 +28,7 @@
       </div>
     </div>
 
-    <!-- Barre de filtre -->
+    {% comment %} Barre de filtre {% endcomment %}
     <form method="get" class="mb-4">
       <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex gap-3">
         <input type="text" name="q" value="{{ q|default:'' }}"
@@ -48,7 +48,7 @@
       </div>
     </form>
 
-    <!-- Table -->
+    {% comment %} Table {% endcomment %}
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       {% if annees %}
       <table class="w-full text-sm">
@@ -86,7 +86,7 @@
         </tbody>
       </table>
 
-      <!-- Pagination -->
+      {% comment %} Pagination {% endcomment %}
       {% if annees.has_other_pages %}
       <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
         <p class="text-xs text-gray-400">Page {{ annees.number }} / {{ annees.paginator.num_pages }}</p>

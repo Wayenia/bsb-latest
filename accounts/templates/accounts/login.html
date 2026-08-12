@@ -1,12 +1,12 @@
-<!-- accounts/templates/accounts/login.html -->
 {% extends 'base.html' %}
+{% comment %} accounts/templates/accounts/login.html {% endcomment %}
 {% load static %}
 
 {% block title %}Connexion | BSB - Burkina Suudu Bawde{% endblock %}
 
 {% block content %}
 <div class="to-reduce min-h-screen flex items-center justify-center relative overflow-hidden py-6">
-    <!-- Background Logo -->
+    {% comment %} Background Logo {% endcomment %}
     <div class="absolute inset-0 bg-auth-pattern z-0"></div>
     
     <div class="relative z-10 w-full max-w-lg px-4 md:px-6">
@@ -34,7 +34,7 @@
                 <form method="POST" action="{% url 'accounts:login' %}" class="space-y-6">
                     {% csrf_token %}
                     
-                    <!-- Username/Matricule -->
+                    {% comment %} Username/Matricule {% endcomment %}
                     <div>
                         <label class="block text-xl uppercase font-semibold text-gray-900 mb-2">
                             
@@ -45,7 +45,7 @@
                                placeholder="Votre nom d'utilisateur">
                     </div>
                     
-                    <!-- Password -->
+                    {% comment %} Password {% endcomment %}
                     <div>
                         <label class="block text-xl uppercase font-semibold text-gray-900 mb-2">
                             
@@ -56,7 +56,7 @@
                                placeholder="••••••••">
                     </div>
                     
-                    <!-- Remember Me & Forgot Password -->
+                    {% comment %} Remember Me & Forgot Password {% endcomment %}
                     <div class="flex items-center justify-between">
                         <label class="flex items-center">
                             <input type="checkbox" name="remember_me"
@@ -70,14 +70,14 @@
                         </a>
                     </div>
                     
-                    <!-- Submit Button -->
+                    {% comment %} Submit Button {% endcomment %}
                     <button type="submit"
                             class="w-full px-3 py-4 bg-bsb-red hover:bg-red-700 text-white uppercase rounded-xl font-black shadow-xl transition-all">
                         
                         Se connecter
                     </button>
                     
-                     <!-- sign in -->
+                     {% comment %} sign in {% endcomment %}
                     <div class="flex flex-col items-center justify-center text-center mx-auto px-2 py-3 bg-white text-gray-900 rounded-xl font-black transition-all">
                         
                         Nouveau sur la plateforme ?

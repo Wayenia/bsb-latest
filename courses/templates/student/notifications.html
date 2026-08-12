@@ -38,12 +38,12 @@
                 </span>
               </div>
 
-              <!-- Le message construit depuis la vue -->
+              {% comment %} Le message construit depuis la vue {% endcomment %}
               <p class="text-slate-700 text-sm leading-relaxed">
                 {{ notif.message|safe }}
               </p>
 
-              <!-- CTA -->
+              {% comment %} CTA {% endcomment %}
               {% if notif.inscription.statut == 'valide' %}
                 <div class="mt-4">
                   <a href="{% url 'courses:my_subscriptions' %}"

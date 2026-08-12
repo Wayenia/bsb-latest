@@ -45,7 +45,7 @@
                                 <span>{{ subscription.formation.centre.nom_centre }}</span>
                             </div>
 
-                            <!-- Date d'subscription -->
+                            {% comment %} Date d'subscription {% endcomment %}
                             <div class="flex items-center gap-2 text-sm text-slate-500 mt-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"></path>
@@ -95,7 +95,7 @@
                                 {% endif %}
                             {% endif %}
 
-                            <!-- if status = 'valide' display at end right a payment button -->
+                            {% comment %} if status = 'valide' display at end right a payment button {% endcomment %}
                             {% if subscription.statut == 'valide' %}
                                 <a href="{% url 'courses:liste_dettes' subscription.id %}" class="ml-4 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -132,7 +132,7 @@
                 {% endfor %}
             </div>
 
-            <!-- Pagination -->
+            {% comment %} Pagination {% endcomment %}
             {% if subscriptions.has_other_pages %}
             <div class="flex items-center justify-between px-1 py-4">
                 <p class="text-sm text-slate-500">

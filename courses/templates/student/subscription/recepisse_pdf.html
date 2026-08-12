@@ -127,7 +127,7 @@
 
   <img class="pdf-watermark" src="{{ favicon_data_uri }}" alt="">
 
-  <!-- EN-TETE -->
+  {% comment %} EN-TETE {% endcomment %}
   <div class="header">
     <div class="header-left">
       {% for line in header_left %}<p>{{ line }}</p>{% endfor %}
@@ -142,7 +142,7 @@
 
   <h1 class="titre">{{ titre_document }}</h1>
 
-  <!-- NUMERO ET DATE -->
+  {% comment %} NUMERO ET DATE {% endcomment %}
   <div class="ligne">
     <span class="label">N° de dossier :</span>
     <span class="valeur">{{ numero_dossier }}</span>
@@ -154,7 +154,7 @@
 
   <hr class="separateur">
 
-  <!-- APPRENANT -->
+  {% comment %} APPRENANT {% endcomment %}
   <div class="ligne">
     <span class="label">Apprenant :</span>
     <span class="valeur">{{ eleve.nom }} {{ eleve.prenom }}</span>
@@ -174,7 +174,7 @@
 
   <hr class="separateur">
 
-  <!-- STATUT -->
+  {% comment %} STATUT {% endcomment %}
   <div class="ligne">
     <span class="label">Statut de la demande :</span>
     <span class="valeur"><span class="statut-badge statut-{{ inscription.statut }}">{{ inscription.get_statut_display }}</span></span>
@@ -186,7 +186,7 @@
   </div>
   {% endif %}
 
-  <!-- BAS DE PAGE -->
+  {% comment %} BAS DE PAGE {% endcomment %}
   <div class="bas-page">
     BSB-DSI          généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}
   </div>

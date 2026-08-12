@@ -9,7 +9,7 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
     <div>
       <h1 class="text-3xl font-black text-gray-900">Formations disponibles</h1>
-      <!--p class="mt-1 text-sm text-gray-500">Cliquez sur « S'inscrire » pour déposer un dossier</p-->
+      {% comment %}p class="mt-1 text-sm text-gray-500">Cliquez sur « S'inscrire » pour déposer un dossier</p{% endcomment %}
     </div>
     {% if user.is_authenticated %}
     <a href="{% url 'courses:my_subscriptions' %}"
@@ -19,7 +19,7 @@
     {% endif %}
   </div>
 
-  <!-- Recherche d'un métier + téléchargement de son curricula (accessible sans connexion) -->
+  {% comment %} Recherche d'un métier + téléchargement de son curricula (accessible sans connexion) {% endcomment %}
   <div class="bg-white rounded-xl shadow-md border border-gray-200 p-5 mb-8">
     <h2 class="text-lg font-black text-gray-900 mb-1">Télécharger un document (curricula)</h2>
     <p class="text-sm text-gray-500 mb-4">Accessible à tous, sans connexion.</p>
@@ -82,7 +82,7 @@
   <div class="bg-white rounded-xl shadow-lg overflow-hidden">
     {% if available_career %}
 
-    <!-- Vue carte (mobile) -->
+    {% comment %} Vue carte (mobile) {% endcomment %}
     <div class="md:hidden divide-y divide-gray-100">
       {% for career in available_career %}
       <div class="p-5">
@@ -131,7 +131,7 @@
       {% endfor %}
     </div>
 
-    <!-- Vue tableau (desktop) -->
+    {% comment %} Vue tableau (desktop) {% endcomment %}
     <div class="hidden md:block overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
@@ -150,12 +150,12 @@
           {% for career in available_career %}
           <tr class="hover:bg-gray-50 transition-colors">
 
-            <!-- Métier -->
+            {% comment %} Métier {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="text-sm font-bold text-gray-900">{{ career.filiere.nom_filiere }}</span>
             </td>
 
-            <!-- Durée -->
+            {% comment %} Durée {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="inline-flex items-center gap-1 font-medium text-gray-800 text-sm">
                 
@@ -163,7 +163,7 @@
               </span>
             </td>
 
-            <!-- Conditions d'accès -->
+            {% comment %} Conditions d'accès {% endcomment %}
             <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
               {% if career.filiere.niveau_diplome %}
                 <span class="text-sm text-gray-800">{{ career.filiere.niveau_diplome }}</span>
@@ -172,7 +172,7 @@
               {% endif %}
             </td>
 
-            <!-- Titre Professionnel -->
+            {% comment %} Titre Professionnel {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap">
               {% if career.filiere.titre_professionnel %}
                 <span class="px-2 py-1 bg-yellow-50 text-yellow-700 border border-yellow-200 text-xs font-bold rounded-full">
@@ -183,14 +183,14 @@
               {% endif %}
             </td>
 
-            <!-- Centre de Formation -->
+            {% comment %} Centre de Formation {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
               <span class="font-medium text-gray-900">{{ career.centre.nom_centre }}</span><br>
               <span class="text-xs text-gray-400">{{ career.centre.province.nom_province }}</span>
               <span class="text-xs text-gray-400">{{ career.centre.province.chef_lieu }}</span>
             </td>
 
-            <!-- Frais de scolarité -->
+            {% comment %} Frais de scolarité {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap text-left">
               {% if career.total_frais %}
                 <span class="px-2 py-1 bg-red-50 text-red-700 border border-red-200 text-xs font-bold rounded-full">
@@ -201,7 +201,7 @@
               {% endif %}
             </td>
 
-            <!-- Communiqué -->
+            {% comment %} Communiqué {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap text-sm">
               {% if career.communique %}
               <a href="{{ career.communique.url }}"
@@ -214,7 +214,7 @@
               {% endif %}
             </td>
 
-            <!-- Action -->
+            {% comment %} Action {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap text-center">
               <a href="{% url 'courses:subscribe_selection' %}"
                  class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-all transform hover:-translate-y-0.5 shadow hover:shadow-md">

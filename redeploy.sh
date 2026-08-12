@@ -26,7 +26,7 @@ sleep 10
 docker compose ps
 
 echo ""
-echo "=== 5. Migrations (applique 0035_alter_documenteleve_piece.py - AJOUTE un validateur, ne supprime aucune donnee) ==="
+echo "=== 5. Migrations (inclut 0036 + 0037_merge - fusionne deux branches de migration divergentes, AJOUTE un champ + une permission, ne supprime aucune donnee) ==="
 docker compose exec -T suudu_backend python manage.py migrate
 
 echo ""
@@ -43,10 +43,18 @@ curl -s -I http://localhost/ | grep -i "content-security-policy" || echo "ABSENT
 echo -n "Referrer-Policy sur /static/ : "
 curl -s -I http://localhost/static/css/output.css | grep -i "referrer-policy" || echo "ABSENT - a verifier"
 
+echo -n "jQuery local vendorise (attendu 200) : "
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost/static/vendor/jquery/jquery.min.js
+
+echo -n "Ancien Bootstrap5 vendorise bien absent (attendu 404) : "
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost/static/vendor/bootstrap5/css/bootstrap.min.css
+
 echo ""
 echo "=== 7. Verification manuelle des donnees existantes ==="
 echo "Connectez-vous sur le site et confirmez que les comptes/centres/inscriptions"
 echo "crees avant cette mise a jour sont toujours presents."
+echo "Testez aussi le flux d'encaissement complet (modale de paiement) sur"
+echo "une page 'Detail dette' - c'est la partie reecrite avec le plus de risque."
 
 echo ""
 echo "=== Logs backend (Ctrl+C pour quitter) ==="

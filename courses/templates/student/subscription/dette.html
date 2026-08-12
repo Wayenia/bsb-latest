@@ -6,7 +6,7 @@
 {% block content %}
 <div class="max-w-4xl py-10 mx-auto">
    {% include 'partials/messages.html' %}
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="mb-8">
         <div class="flex items-center mb-4">
             <a href="{% url 'courses:my_subscriptions' %}" class="text-gray-600 hover:text-gray-900 mr-4">Retour</a>
@@ -28,7 +28,7 @@
         </p>
     </div>
 
-    <!-- Résumé global -->
+    {% comment %} Résumé global {% endcomment %}
     <div class="grid grid-cols-3 gap-4 mb-8">
         <div class="bg-white rounded-xl shadow p-5 border border-gray-100 text-center">
             <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Total dû</p>
@@ -52,7 +52,7 @@
         </div>
     </div>
 
-    <!-- Liste des dettes -->
+    {% comment %} Liste des dettes {% endcomment %}
     {% if dettes %}
         <div class="space-y-4">
             {% for dette in dettes %}
@@ -61,7 +61,7 @@
                         overflow-hidden">
                 <div class="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     
-                    <!-- Infos frais -->
+                    {% comment %} Infos frais {% endcomment %}
                     <div>
                         <p class="text-lg font-bold text-gray-800">
                             {{ dette.frais_formation.type_frais }}
@@ -74,7 +74,7 @@
                         {% endif %}
                     </div>
 
-                    <!-- Montants -->
+                    {% comment %} Montants {% endcomment %}
                     <div class="flex gap-6 text-center">
                         <div>
                             <p class="text-xs text-gray-500 uppercase font-semibold">Total</p>
@@ -90,7 +90,7 @@
                         </div>
                     </div>
 
-                    <!-- Statut badge -->
+                    {% comment %} Statut badge {% endcomment %}
                     <div>
                         {% if dette.etat_dette == 'soldé' %}
                             <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
@@ -169,7 +169,7 @@
         </div>
 
     {% else %}
-        <!-- Aucune dette -->
+        {% comment %} Aucune dette {% endcomment %}
         <div class="bg-white rounded-xl shadow border border-gray-100 px-8 py-16 text-center">
             
             <p class="text-xl font-bold text-gray-700">Aucune dette enregistrée</p>

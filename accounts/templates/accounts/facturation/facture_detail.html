@@ -34,7 +34,7 @@
         </div>
     </div>
 
-    <!-- Lignes -->
+    {% comment %} Lignes {% endcomment %}
     <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-100">
@@ -100,7 +100,7 @@
     </div>
     {% endif %}
 
-    <!-- Historique des paiements -->
+    {% comment %} Historique des paiements {% endcomment %}
     <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
         <div class="px-6 py-4 border-b border-gray-100">
             <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wide">Paiements encaissés</h2>
@@ -137,7 +137,7 @@
 </div>
 
 {% if facture.type_facture == 'definitive' %}
-<!-- Modale encaissement -->
+{% comment %} Modale encaissement {% endcomment %}
 <div id="modal-encaissement" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between mb-4">

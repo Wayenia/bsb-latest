@@ -17,7 +17,7 @@
         </a>
     </div>
 
-    <!-- Barre de filtre -->
+    {% comment %} Barre de filtre {% endcomment %}
     <form method="get">
         <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex gap-3">
             <input type="text" name="q" value="{{ q|default:'' }}"

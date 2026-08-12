@@ -4,7 +4,6 @@
 {% block title %}Tableau de bord | BSB{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 <style>
   :root {
     --rouge: #C0392B;
@@ -59,10 +58,14 @@
     z-index: 2;
   }
   .filter-card .form-select, .filter-card .form-control {
+    display: block;
+    width: 100%;
+    background: #fff;
     border: 1.5px solid var(--gris-border);
     border-radius: 10px;
     font-size: .85rem;
     color: var(--text-dark);
+    padding: .375rem .75rem;
     transition: border-color .2s, box-shadow .2s;
   }
   .filter-card .form-select:focus, .filter-card .form-control:focus {
@@ -97,7 +100,6 @@
   }
   .btn-reset:hover { background: var(--or-dark); color: #fff; transform: translateY(-1px); }
 
-  /* ── Suppression du soulignement des liens (Bootstrap CDN charge après output.css) ── */
   a { text-decoration: none; }
 
   /* ── Export buttons ───────────────────────────── */
@@ -168,6 +170,7 @@
     color: #fff; font-weight: 600; font-size: .8rem;
     padding: .75rem 1rem; letter-spacing: .03em;
     border: none;
+    text-align: left;
   }
   .bsb-table thead th:first-child { border-radius: 10px 0 0 0; }
   .bsb-table thead th:last-child { border-radius: 0 10px 0 0; }
@@ -207,15 +210,13 @@
 
 {% block content %}
 
-<!-- ══ EN-TÊTE ═══════════════════════════════════════════════════════════════ -->
+{% comment %} ══ EN-TÊTE ═══════════════════════════════════════════════════════════════ {% endcomment %}
 <div class="page-header">
-  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+  <div class="flex flex-wrap justify-between items-start gap-3">
     <div>
-      <div class="d-flex align-items-center gap-2 mb-1">
-        
-        <h4 class="mb-0 fw-bold">Tableau de bord statistique</h4>
+      <div class="flex items-center gap-2 mb-1">
+        <h4 class="mb-0 font-bold text-lg">Tableau de bord statistique</h4>
       </div>
-      <!---p class="mb-2 opacity-75 small">Vue d'ensemble des données de formation — Burkina Savoir &amp; Bâtir</p-->
       <span class="badge-scope">
         {% if scope == "global" %}
           Accès national — toutes les directions
@@ -229,17 +230,17 @@
   </div>
 </div>
 
-<div class="container-fluid px-3 px-md-4 py-3">
+<div class="w-full px-3 md:px-6 py-3">
 
-  <!-- ══ FILTRES ═══════════════════════════════════════════════════════════════ -->
+  {% comment %} ══ FILTRES ═══════════════════════════════════════════════════════════════ {% endcomment %}
   <div class="filter-card">
     <form method="get" id="filterForm">
-      <div class="row g-2 align-items-end">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 items-end">
 
         {% if scope == "global" %}
-        <div class="col-12 col-sm-6 col-lg-2">
-          <label class="form-label small fw-semibold mb-1" style="color:var(--gris);">Direction</label>
-          <select name="direction" class="form-select form-select-sm" onchange="this.form.submit()">
+        <div>
+          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Direction</label>
+          <select name="direction" class="form-select" onchange="this.form.submit()">
             <option value="">— Toutes —</option>
             {% for d in directions %}
               <option value="{{ d.id }}" {% if f_direction == d.id|stringformat:"s" %}selected{% endif %}>{{ d.nom_direction }}</option>
@@ -249,9 +250,9 @@
         {% endif %}
 
         {% if scope in "global direction" %}
-        <div class="col-12 col-sm-6 col-lg-2">
-          <label class="form-label small fw-semibold mb-1" style="color:var(--gris);">Centre</label>
-          <select name="centre" class="form-select form-select-sm" onchange="this.form.submit()">
+        <div>
+          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Centre</label>
+          <select name="centre" class="form-select" onchange="this.form.submit()">
             <option value="">— Tous les centres —</option>
             {% for c in centres %}
               <option value="{{ c.id }}" {% if f_centre == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nom_centre }}</option>
@@ -260,9 +261,9 @@
         </div>
         {% endif %}
 
-        <div class="col-12 col-sm-6 col-lg-2">
-          <label class="form-label small fw-semibold mb-1" style="color:var(--gris);">Métier</label>
-          <select name="filiere" class="form-select form-select-sm">
+        <div>
+          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Métier</label>
+          <select name="filiere" class="form-select">
             <option value="">— Tous les métiers —</option>
             {% for f in filieres %}
               <option value="{{ f.id }}" {% if f_filiere == f.id|stringformat:"s" %}selected{% endif %}>{{ f.nom_filiere }}</option>
@@ -270,9 +271,9 @@
           </select>
         </div>
 
-        <div class="col-12 col-sm-6 col-lg-2">
-          <label class="form-label small fw-semibold mb-1" style="color:var(--gris);">Année scolaire</label>
-          <select name="annee" class="form-select form-select-sm">
+        <div>
+          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Année scolaire</label>
+          <select name="annee" class="form-select">
             <option value="">— Toutes —</option>
             {% for a in annees %}
               <option value="{{ a.id }}" {% if f_annee == a.id|stringformat:"s" %}selected{% endif %}>{{ a.libelle_anne }}</option>
@@ -280,9 +281,9 @@
           </select>
         </div>
 
-        <div class="col-12 col-sm-6 col-lg-2">
-          <label class="form-label small fw-semibold mb-1" style="color:var(--gris);">Statut inscription</label>
-          <select name="statut" class="form-select form-select-sm">
+        <div>
+          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Statut inscription</label>
+          <select name="statut" class="form-select">
             <option value="">— Tous —</option>
             <option value="en_cours" {% if f_statut == "en_cours" %}selected{% endif %}>En attente</option>
             <option value="valide" {% if f_statut == "valide" %}selected{% endif %}>Validé</option>
@@ -291,9 +292,9 @@
           </select>
         </div>
 
-        <div class="col-12 col-sm-6 col-lg-2">
-          <label class="form-label small fw-semibold mb-1" style="color:var(--gris);">Région</label>
-          <select name="region" class="form-select form-select-sm">
+        <div>
+          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Région</label>
+          <select name="region" class="form-select">
             <option value="">— Toutes —</option>
             {% for r in regions %}
               <option value="{{ r.id }}" {% if f_region == r.id|stringformat:"s" %}selected{% endif %}>{{ r.nom_region }}</option>
@@ -301,9 +302,9 @@
           </select>
         </div>
 
-        <div class="col-12 col-sm-6 col-lg-2">
-          <label class="form-label small fw-semibold mb-1" style="color:var(--gris);">Genre</label>
-          <select name="genre" class="form-select form-select-sm">
+        <div>
+          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Genre</label>
+          <select name="genre" class="form-select">
             <option value="">— Tous —</option>
             {% for code, label in genres %}
               <option value="{{ code }}" {% if f_genre == code %}selected{% endif %}>{{ label }}</option>
@@ -311,18 +312,18 @@
           </select>
         </div>
 
-        <div class="col-12 col-sm-6 col-lg-2">
-          <label class="form-label small fw-semibold mb-1" style="color:var(--gris);">Du</label>
-          <input type="date" name="date_debut" value="{{ f_date_debut|default:'' }}" class="form-control form-control-sm">
+        <div>
+          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Du</label>
+          <input type="date" name="date_debut" value="{{ f_date_debut|default:'' }}" class="form-control">
         </div>
 
-        <div class="col-12 col-sm-6 col-lg-2">
-          <label class="form-label small fw-semibold mb-1" style="color:var(--gris);">Au</label>
-          <input type="date" name="date_fin" value="{{ f_date_fin|default:'' }}" class="form-control form-control-sm">
+        <div>
+          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Au</label>
+          <input type="date" name="date_fin" value="{{ f_date_fin|default:'' }}" class="form-control">
         </div>
 
-        <div class="col-12 col-lg-2 d-flex gap-2">
-          <button type="submit" class="btn-filter flex-fill">
+        <div class="flex gap-2">
+          <button type="submit" class="btn-filter flex-1">
             Filtrer
           </button>
           <a href="{% url 'courses:statistiques' %}" class="btn-reset" title="Réinitialiser les filtres">
@@ -336,13 +337,13 @@
       </div>
     </form>
 
-    <!-- Exports -->
-    <div class="d-flex flex-wrap align-items-center gap-3 mt-3 pt-3 border-top">
-      <span class="small fw-semibold" style="color:var(--gris);">
+    {% comment %} Exports {% endcomment %}
+    <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-200">
+      <span class="text-sm font-semibold" style="color:var(--gris);">
         Exporter :
       </span>
       <div class="btn-export-group">
-        <span class="small fw-semibold" style="color:var(--gris);">Inscriptions :</span>
+        <span class="text-sm font-semibold" style="color:var(--gris);">Inscriptions :</span>
         <a href="?{% if f_centre %}centre={{ f_centre }}&{% endif %}{% if f_filiere %}filiere={{ f_filiere }}&{% endif %}{% if f_annee %}annee={{ f_annee }}&{% endif %}type=inscriptions"
            onclick="this.href=buildExportUrl('inscriptions','pdf')" class="btn-exp btn-exp-pdf">
           PDF
@@ -355,7 +356,7 @@
         </a>
       </div>
       <div class="btn-export-group">
-        <span class="small fw-semibold" style="color:var(--gris);">Recouvrement :</span>
+        <span class="text-sm font-semibold" style="color:var(--gris);">Recouvrement :</span>
         <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','pdf'); return false;" class="btn-exp btn-exp-pdf">
           PDF
         </a>
@@ -369,136 +370,104 @@
     </div>
   </div>
 
-  <!-- ══ KPI ═══════════════════════════════════════════════════════════════════ -->
-  <div class="row g-3 mb-4">
+  {% comment %} ══ KPI ═══════════════════════════════════════════════════════════════════ {% endcomment %}
+  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
 
-    <!-- Apprenants -->
-    <div class="col-6 col-md-4 col-xl-3">
-      <div class="kpi-card or">
-        <div class="d-flex align-items-center gap-3">
-          <div class="kpi-icon" style="background:var(--or-soft);">
-            
-          </div>
-          <div>
-            <div class="kpi-value" style="color:var(--or-dark);">{{ stats.total_eleves }}</div>
-            <div class="kpi-label">Apprenants inscrits</div>
-          </div>
+    {% comment %} Apprenants {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div>
+          <div class="kpi-value" style="color:var(--or-dark);">{{ stats.total_eleves }}</div>
+          <div class="kpi-label">Apprenants inscrits</div>
         </div>
       </div>
     </div>
 
-    <!-- Validées -->
-    <div class="col-6 col-md-4 col-xl-3">
-      <div class="kpi-card or">
-        <div class="d-flex align-items-center gap-3">
-          <div class="kpi-icon" style="background:var(--or-soft);">
-            
-          </div>
-          <div>
-            <div class="kpi-value" style="color:var(--or-dark);">{{ stats.inscriptions_validees }}</div>
-            <div class="kpi-label">Inscriptions validées</div>
-          </div>
+    {% comment %} Validées {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div>
+          <div class="kpi-value" style="color:var(--or-dark);">{{ stats.inscriptions_validees }}</div>
+          <div class="kpi-label">Inscriptions validées</div>
         </div>
       </div>
     </div>
 
-    <!-- En attente -->
-    <div class="col-6 col-md-4 col-xl-3">
-      <div class="kpi-card or">
-        <div class="d-flex align-items-center gap-3">
-          <div class="kpi-icon" style="background:var(--or-soft);">
-            
-          </div>
-          <div>
-            <div class="kpi-value" style="color:var(--or-dark);">{{ stats.inscriptions_en_cours }}</div>
-            <div class="kpi-label">En attente de traitement</div>
-          </div>
+    {% comment %} En attente {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div>
+          <div class="kpi-value" style="color:var(--or-dark);">{{ stats.inscriptions_en_cours }}</div>
+          <div class="kpi-label">En attente de traitement</div>
         </div>
       </div>
     </div>
 
-    <!-- Rejetées -->
-    <div class="col-6 col-md-4 col-xl-3">
-      <div class="kpi-card or">
-        <div class="d-flex align-items-center gap-3">
-          <div class="kpi-icon" style="background:var(--or-soft);">
-            
-          </div>
-          <div>
-            <div class="kpi-value" style="color:var(--or-dark);">{{ stats.inscriptions_rejetees }}</div>
-            <div class="kpi-label">Inscriptions rejetées</div>
-          </div>
+    {% comment %} Rejetées {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div>
+          <div class="kpi-value" style="color:var(--or-dark);">{{ stats.inscriptions_rejetees }}</div>
+          <div class="kpi-label">Inscriptions rejetées</div>
         </div>
       </div>
     </div>
 
-    <!-- Encaissé -->
-    <div class="col-6 col-md-4 col-xl-3">
-      <div class="kpi-card or">
-        <div class="d-flex align-items-center gap-3">
-          <div class="kpi-icon" style="background:var(--or-soft);">
-            
-          </div>
-          <div>
-            <div class="kpi-value small-kpi" style="color:var(--or-dark);" data-amount="{{ stats.total_encaisse }}">—</div>
-            <div class="kpi-label">FCFA encaissés</div>
-          </div>
+    {% comment %} Encaissé {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div>
+          <div class="kpi-value small-kpi" style="color:var(--or-dark);" data-amount="{{ stats.total_encaisse }}">—</div>
+          <div class="kpi-label">FCFA encaissés</div>
         </div>
       </div>
     </div>
 
-    <!-- Restant -->
-    <div class="col-6 col-md-4 col-xl-3">
-      <div class="kpi-card or">
-        <div class="d-flex align-items-center gap-3">
-          <div class="kpi-icon" style="background:var(--or-soft);">
-            
-          </div>
-          <div>
-            <div class="kpi-value small-kpi" style="color:var(--or-dark);" data-amount="{{ stats.total_restant }}">—</div>
-            <div class="kpi-label">FCFA restants à payer</div>
-          </div>
+    {% comment %} Restant {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div>
+          <div class="kpi-value small-kpi" style="color:var(--or-dark);" data-amount="{{ stats.total_restant }}">—</div>
+          <div class="kpi-label">FCFA restants à payer</div>
         </div>
       </div>
     </div>
 
-    <!-- Taux recouvrement -->
-    <div class="col-6 col-md-4 col-xl-3">
-      <div class="kpi-card or">
-        <div class="d-flex align-items-center gap-3">
-          <div class="kpi-icon" style="background:var(--or-soft);">
-            
-          </div>
-          <div>
-            <div class="kpi-value" style="color:var(--or-dark);">{{ stats.taux_global }}%</div>
-            <div class="kpi-label">Taux de recouvrement</div>
-          </div>
+    {% comment %} Taux recouvrement {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div>
+          <div class="kpi-value" style="color:var(--or-dark);">{{ stats.taux_global }}%</div>
+          <div class="kpi-label">Taux de recouvrement</div>
         </div>
       </div>
     </div>
 
-    <!-- Centres -->
-    <div class="col-6 col-md-4 col-xl-3">
-      <div class="kpi-card or">
-        <div class="d-flex align-items-center gap-3">
-          <div class="kpi-icon" style="background:var(--or-soft);">
-            
-          </div>
-          <div>
-            <div class="kpi-value" style="color:var(--or-dark);">{{ stats.total_centres }}</div>
-            <div class="kpi-label">Centres{% if scope == "global" %} / {{ stats.total_directions }} directions{% endif %}</div>
-          </div>
+    {% comment %} Centres {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div>
+          <div class="kpi-value" style="color:var(--or-dark);">{{ stats.total_centres }}</div>
+          <div class="kpi-label">Centres{% if scope == "global" %} / {{ stats.total_directions }} directions{% endif %}</div>
         </div>
       </div>
     </div>
 
-  </div><!-- /row KPI -->
+  </div>{% comment %} /grid KPI {% endcomment %}
 
-  <!-- ══ GRAPHIQUES ════════════════════════════════════════════════════════════ -->
-  <div class="row g-4 mb-4">
+  {% comment %} ══ GRAPHIQUES ════════════════════════════════════════════════════════════ {% endcomment %}
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
 
-    <!-- Donut statuts -->
-    <div class="col-12 col-lg-4">
+    {% comment %} Donut statuts {% endcomment %}
+    <div class="lg:col-span-4">
       <div class="section-card">
         <div class="section-title">
           <span class="icon-dot" style="background:var(--rouge);"></span>
@@ -507,26 +476,26 @@
         <div style="height:230px; position:relative;">
           <canvas id="chartStatut"></canvas>
         </div>
-        <!-- Légende custom -->
-        <div class="d-flex flex-wrap gap-3 justify-content-center mt-3">
-          <span class="d-flex align-items-center gap-1 small">
+        {% comment %} Légende custom {% endcomment %}
+        <div class="flex flex-wrap gap-3 justify-center mt-4">
+          <span class="flex items-center gap-1 text-sm">
             <span style="width:12px;height:12px;background:#16A34A;border-radius:3px;display:inline-block;"></span>
-            Validées <strong class="ms-1">{{ stats.inscriptions_validees }}</strong>
+            Validées <strong class="ml-1">{{ stats.inscriptions_validees }}</strong>
           </span>
-          <span class="d-flex align-items-center gap-1 small">
+          <span class="flex items-center gap-1 text-sm">
             <span style="width:12px;height:12px;background:var(--or);border-radius:3px;display:inline-block;"></span>
-            En attente <strong class="ms-1">{{ stats.inscriptions_en_cours }}</strong>
+            En attente <strong class="ml-1">{{ stats.inscriptions_en_cours }}</strong>
           </span>
-          <span class="d-flex align-items-center gap-1 small">
+          <span class="flex items-center gap-1 text-sm">
             <span style="width:12px;height:12px;background:var(--rouge);border-radius:3px;display:inline-block;"></span>
-            Rejetées <strong class="ms-1">{{ stats.inscriptions_rejetees }}</strong>
+            Rejetées <strong class="ml-1">{{ stats.inscriptions_rejetees }}</strong>
           </span>
         </div>
       </div>
     </div>
 
-    <!-- Bar chart top métiers -->
-    <div class="col-12 col-lg-8">
+    {% comment %} Bar chart top métiers {% endcomment %}
+    <div class="lg:col-span-8">
       <div class="section-card">
         <div class="section-title">
           <span class="icon-dot" style="background:var(--or);"></span>
@@ -539,9 +508,9 @@
     </div>
   </div>
 
-  <div class="row g-4 mb-4">
-    <!-- Évolution mensuelle -->
-    <div class="col-12 col-lg-7">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+    {% comment %} Évolution mensuelle {% endcomment %}
+    <div class="lg:col-span-7">
       <div class="section-card">
         <div class="section-title">
           <span class="icon-dot" style="background:var(--rouge);"></span>
@@ -553,8 +522,8 @@
       </div>
     </div>
 
-    <!-- Paiements par mode -->
-    <div class="col-12 col-lg-5">
+    {% comment %} Paiements par mode {% endcomment %}
+    <div class="lg:col-span-5">
       <div class="section-card">
         <div class="section-title">
           <span class="icon-dot" style="background:var(--or);"></span>
@@ -567,9 +536,9 @@
     </div>
   </div>
 
-  <!-- ══ RECOUVREMENT PAR CENTRE ══════════════════════════════════════════════ -->
-  <div class="section-card mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  {% comment %} ══ RECOUVREMENT PAR CENTRE ══════════════════════════════════════════════ {% endcomment %}
+  <div class="section-card mb-6">
+    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
       <div class="section-title mb-0">
         <span class="icon-dot" style="background:var(--rouge);"></span>
         Taux de recouvrement par centre
@@ -592,22 +561,22 @@
           <tr>
             <th>Centre</th>
             {% if scope in "global direction" %}<th>Direction</th>{% endif %}
-            <th class="text-end">Inscrits</th>
-            <th class="text-end">Total dû</th>
-            <th class="text-end">Encaissé</th>
-            <th class="text-end">Restant</th>
+            <th class="text-right">Inscrits</th>
+            <th class="text-right">Total dû</th>
+            <th class="text-right">Encaissé</th>
+            <th class="text-right">Restant</th>
             <th style="min-width:160px;">Taux de recouvrement</th>
           </tr>
         </thead>
         <tbody>
           {% for r in recouvrement_centres %}
           <tr>
-            <td class="fw-semibold">{{ r.nom_centre }}</td>
-            {% if scope in "global direction" %}<td class="text-muted small">{{ r.direction }}</td>{% endif %}
-            <td class="text-end">{{ r.inscrits }}</td>
-            <td class="text-end small"><span class="fmt-amount">{{ r.total_du|floatformat:0 }}</span> F</td>
-            <td class="text-end small fw-semibold" style="color:#16A34A;"><span class="fmt-amount">{{ r.encaisse|floatformat:0 }}</span> F</td>
-            <td class="text-end small" style="color:var(--rouge);"><span class="fmt-amount">{{ r.restant|floatformat:0 }}</span> F</td>
+            <td class="font-semibold">{{ r.nom_centre }}</td>
+            {% if scope in "global direction" %}<td class="text-gray-500 text-sm">{{ r.direction }}</td>{% endif %}
+            <td class="text-right">{{ r.inscrits }}</td>
+            <td class="text-right text-sm"><span class="fmt-amount">{{ r.total_du|floatformat:0 }}</span> F</td>
+            <td class="text-right text-sm font-semibold" style="color:#16A34A;"><span class="fmt-amount">{{ r.encaisse|floatformat:0 }}</span> F</td>
+            <td class="text-right text-sm" style="color:var(--rouge);"><span class="fmt-amount">{{ r.restant|floatformat:0 }}</span> F</td>
             <td>
               <div class="prog-wrap">
                 <div class="prog-bar-outer">
@@ -615,14 +584,13 @@
                     style="width:{{ r.taux }}%; background:{% if r.taux >= 80 %}#16A34A{% elif r.taux >= 50 %}var(--or){% else %}var(--rouge){% endif %};">
                   </div>
                 </div>
-                <span class="small fw-bold" style="min-width:36px; text-align:right;">{{ r.taux }}%</span>
+                <span class="text-sm font-bold" style="min-width:36px; text-align:right;">{{ r.taux }}%</span>
               </div>
             </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="7" class="text-center py-5 text-muted">
-              
+            <td colspan="7" class="text-center py-5 text-gray-500">
               Aucune donnée disponible
             </td>
           </tr>
@@ -632,9 +600,9 @@
     </div>
   </div>
 
-  <!-- ══ DERNIÈRES INSCRIPTIONS ════════════════════════════════════════════════ -->
-  <div class="section-card mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  {% comment %} ══ DERNIÈRES INSCRIPTIONS ════════════════════════════════════════════════ {% endcomment %}
+  <div class="section-card mb-6">
+    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
       <div class="section-title mb-0">
         <span class="icon-dot" style="background:var(--or);"></span>
         Dernières inscriptions
@@ -668,18 +636,18 @@
         <tbody>
           {% for insc in dernieres_inscriptions %}
           <tr>
-            <td class="text-muted small">{{ forloop.counter }}</td>
+            <td class="text-gray-500 text-sm">{{ forloop.counter }}</td>
             <td>
-              <div class="fw-semibold small">{{ insc.eleve.nom }} {{ insc.eleve.prenom }}</div>
-              <div class="text-muted" style="font-size:.72rem;">{{ insc.eleve.numero_identifiant }}</div>
+              <div class="font-semibold text-sm">{{ insc.eleve.nom }} {{ insc.eleve.prenom }}</div>
+              <div class="text-gray-500" style="font-size:.72rem;">{{ insc.eleve.numero_identifiant }}</div>
             </td>
-            <td class="small">{{ insc.formation.filiere.nom_filiere }}</td>
-            <td class="small">{{ insc.formation.centre.nom_centre }}</td>
+            <td class="text-sm">{{ insc.formation.filiere.nom_filiere }}</td>
+            <td class="text-sm">{{ insc.formation.centre.nom_centre }}</td>
             {% if scope in "global direction" %}
-            <td class="small text-muted">{{ insc.formation.centre.direction.nom_direction|default:"—" }}</td>
+            <td class="text-sm text-gray-500">{{ insc.formation.centre.direction.nom_direction|default:"—" }}</td>
             {% endif %}
-            <td class="small">{{ insc.annee_scolaire.libelle_anne|default:"—" }}</td>
-            <td class="small text-muted">{{ insc.date_inscription|date:"d/m/Y" }}</td>
+            <td class="text-sm">{{ insc.annee_scolaire.libelle_anne|default:"—" }}</td>
+            <td class="text-sm text-gray-500">{{ insc.date_inscription|date:"d/m/Y" }}</td>
             <td>
               {% if insc.statut == 'valide' or insc.statut == 'valide_paye' or insc.statut == 'Valide' %}
                 <span class="badge-stat badge-valide">Validé</span>
@@ -692,8 +660,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="8" class="text-center py-5 text-muted">
-              
+            <td colspan="8" class="text-center py-5 text-gray-500">
               Aucune inscription trouvée
             </td>
           </tr>
@@ -703,12 +670,11 @@
     </div>
   </div>
 
-</div><!-- /container -->
+</div>{% comment %} /container {% endcomment %}
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
 <script>
 // ── Data depuis Django ─────────────────────────────────────────────────────
 const evolLabels = {{ evol_labels_json|safe }};

@@ -115,7 +115,7 @@
 
   <img class="pdf-watermark" src="{{ favicon_data_uri }}" alt="">
 
-  <!-- EN-TETE -->
+  {% comment %} EN-TETE {% endcomment %}
   <div class="header">
     <div class="header-left">
       {% for line in header_left %}<p>{{ line }}</p>{% endfor %}
@@ -127,7 +127,7 @@
       {% for line in header_right %}<p{% if 'patrie' in line or 'vaincrons' in line %} style="text-transform:none;"{% endif %}>{{ line }}</p>{% endfor %}
     </div>
   </div>
-  <!-- NUMERO ET DATE -->
+  {% comment %} NUMERO ET DATE {% endcomment %}
   <div class="ligne">
     <span class="label">Numéro de quittance :</span>
     <span class="valeur">{{ quittance_numero }}</span>
@@ -139,7 +139,7 @@
 
   <hr class="separateur">
 
-  <!-- APPRENANT -->
+  {% comment %} APPRENANT {% endcomment %}
   <div class="ligne">
     <span class="label">Apprenant :</span>
     <span class="valeur">{{ eleve.nom }} {{ eleve.prenom }}</span>
@@ -159,7 +159,7 @@
 
   <hr class="separateur">
 
-  <!-- PAIEMENT -->
+  {% comment %} PAIEMENT {% endcomment %}
   <div class="ligne">
     <span class="label">Type de frais :</span>
     <span class="valeur">{{ type_de_frais }}</span>
@@ -179,7 +179,7 @@
 
   <hr class="separateur">
 
-  <!-- RECAP DETTE -->
+  {% comment %} RECAP DETTE {% endcomment %}
   <div class="ligne">
     <span class="label">Total dû :</span>
     <span class="valeur">{{ dette.montant_total|floatformat:0|intcomma }} FCFA</span>
@@ -199,7 +199,7 @@
 
 
 
-  <!-- BAS DE PAGE -->
+  {% comment %} BAS DE PAGE {% endcomment %}
   <div class="bas-page">
     BSB-DSI          généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}
   </div>

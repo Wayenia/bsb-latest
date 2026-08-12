@@ -123,7 +123,7 @@
 
   <img class="pdf-watermark" src="{{ favicon_data_uri }}" alt="">
 
-  <!-- EN-TETE -->
+  {% comment %} EN-TETE {% endcomment %}
   <div class="header">
     <div class="header-left">
       {% for line in header_left %}<p>{{ line }}</p>{% endfor %}
@@ -138,7 +138,7 @@
 
   <h1 class="titre">Attestation d'inscription</h1>
 
-  <!-- NUMERO ET DATE -->
+  {% comment %} NUMERO ET DATE {% endcomment %}
   <div class="ligne">
     <span class="label">N° de dossier :</span>
     <span class="valeur">{{ numero_dossier }}</span>
@@ -184,7 +184,7 @@
     La présente attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.
   </p>
 
-  <!-- SIGNATURE -->
+  {% comment %} SIGNATURE {% endcomment %}
   <div class="footer">
     <div class="signature">
       <p>Le Directeur du centre</p>
@@ -193,7 +193,7 @@
     </div>
   </div>
 
-  <!-- BAS DE PAGE -->
+  {% comment %} BAS DE PAGE {% endcomment %}
   <div class="bas-page">
     BSB-DSI          généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}
   </div>

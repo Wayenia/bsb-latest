@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}BSB - Burkina Suudu Bawdè{% endblock %}</title>
 
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
-    <!-- Custom CSS -->
+    {% comment %} DataTables CSS {% endcomment %}
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/datatables/css/jquery.dataTables.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/datatables/css/buttons.dataTables.min.css' %}">
+    {% comment %} Custom CSS {% endcomment %}
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
 
     <style>
@@ -136,7 +136,7 @@
     {% if not request.path|slice:"0:7" == "/admin/" %}
         {% include 'partials/navbar.html' %}
 
-        <!-- Messages Django globaux -->
+        {% comment %} Messages Django globaux {% endcomment %}
         {% if messages %}
         <div style="position:fixed;top:80px;right:20px;z-index:9999;min-width:300px;max-width:420px;">
             {% for message in messages %}
@@ -162,11 +162,11 @@
             }, 5000);
         </script>
         {% endif %}
-        <!-- Fin messages -->
+        {% comment %} Fin messages {% endcomment %}
 
     {% endif %}
 
-    <!-- Contenu principal -->
+    {% comment %} Contenu principal {% endcomment %}
     <main>
         {% block content %}{% endblock %}
     </main>
@@ -175,19 +175,19 @@
         {% include 'partials/footer.html' %}
     {% endif %}
 
-    <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    {% comment %} Scripts {% endcomment %}
+    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables/js/dataTables.buttons.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables/js/buttons.html5.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables/js/buttons.print.min.js' %}"></script>
 
     <script>
         $(document).ready(function() {
             $('.data-table').DataTable({
                 dom: 'Bfrtip',
                 buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
-                language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/fr-FR.json' }
+                language: { url: '{% static "vendor/datatables/i18n/fr-FR.json" %}' }
             });
         });
 
@@ -212,7 +212,7 @@
 
     {% block extra_js %}{% endblock %}
 
-    <!-- Indicatif téléphonique + validation du nombre de chiffres selon le pays -->
+    {% comment %} Indicatif téléphonique + validation du nombre de chiffres selon le pays {% endcomment %}
     <script>
     (function () {
         var phoneInputs = document.querySelectorAll('.phone-intl');
@@ -220,11 +220,11 @@
 
         var cssLink = document.createElement('link');
         cssLink.rel = 'stylesheet';
-        cssLink.href = 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.5.1/build/css/intlTelInput.css';
+        cssLink.href = '{% static "vendor/intl-tel-input/css/intlTelInput.css" %}';
         document.head.appendChild(cssLink);
 
         var script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.5.1/build/js/intlTelInputWithUtils.min.js';
+        script.src = '{% static "vendor/intl-tel-input/js/intlTelInputWithUtils.min.js" %}';
         script.onload = function () {
             phoneInputs.forEach(function (input) {
                 var iti = window.intlTelInput(input, {
@@ -232,7 +232,7 @@
                     preferredCountries: ['bf', 'ci', 'gh', 'tg', 'bj', 'ml', 'ne'],
                     separateDialCode: true,
                     strictMode: true,
-                    utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.5.1/build/js/utils.js',
+                    utilsScript: '{% static "vendor/intl-tel-input/js/utils.js" %}',
                 });
 
                 var errorEl = document.createElement('p');

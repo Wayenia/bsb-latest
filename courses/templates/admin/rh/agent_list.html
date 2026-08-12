@@ -4,7 +4,7 @@
 <div class="max-w-7xl mx-auto py-10 space-y-6">
     {% include 'partials/messages.html' %}
 
-    <!-- En-tête -->
+    {% comment %} En-tête {% endcomment %}
     <div class="px-4 md:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-3xl font-black text-gray-900">Ressources Humaines</h1>
@@ -24,7 +24,7 @@
         </div>
     </div>
 
-    <!-- Filtres -->
+    {% comment %} Filtres {% endcomment %}
     <form method="get">
         <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl flex flex-col sm:flex-row gap-3 shadow-sm">
             <div class="relative flex-1">
@@ -51,7 +51,7 @@
         </div>
     </form>
 
-    <!-- Tableau -->
+    {% comment %} Tableau {% endcomment %}
     <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
         {% if agents %}
         <div class="overflow-x-auto">
@@ -69,7 +69,7 @@
                     {% for agent in agents %}
                     <tr class="hover:bg-amber-50 transition-colors">
 
-                        <!-- Avatar + nom -->
+                        {% comment %} Avatar + nom {% endcomment %}
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center gap-3">
                                 <div class="h-10 w-10 rounded-full flex items-center justify-center shrink-0 font-bold text-sm text-white
@@ -91,7 +91,7 @@
                             </div>
                         </td>
 
-                        <!-- Badge rôle -->
+                        {% comment %} Badge rôle {% endcomment %}
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
                                 {% if agent.user_type == 'formateur' %}bg-gray-100 text-gray-800
@@ -107,13 +107,13 @@
                             </span>
                         </td>
 
-                        <!-- Contact -->
+                        {% comment %} Contact {% endcomment %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                             <div>{{ agent.email }}</div>
                             <div class="text-xs text-gray-400">{{ agent.tel|default:"—" }}</div>
                         </td>
 
-                        <!-- Structure / Direction -->
+                        {% comment %} Structure / Direction {% endcomment %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                             {% if agent.user_type == 'formateur' %}
                                 {% with agent.formateur.centre as c %}
@@ -144,7 +144,7 @@
                             {% else %}—{% endif %}
                         </td>
 
-                        <!-- Actions -->
+                        {% comment %} Actions {% endcomment %}
                         <td class="px-6 py-4 whitespace-nowrap text-right">
                             <div class="flex items-center justify-end gap-1">
                                 <form method="POST" action="{% url 'bsb_admin:agent_toggle_active' agent.id %}">
@@ -172,7 +172,7 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        {% comment %} Pagination {% endcomment %}
         {% if agents.has_other_pages %}
         <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex items-center justify-between">
             <p class="text-sm text-gray-600">
@@ -201,7 +201,7 @@
         {% endif %}
 
         {% else %}
-        <!-- État vide -->
+        {% comment %} État vide {% endcomment %}
         <div class="text-center py-16">
             <div class="h-20 w-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 

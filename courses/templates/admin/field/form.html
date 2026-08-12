@@ -5,7 +5,7 @@
 {% block content %}
 <div class="max-w-3xl mx-auto py-10">
 
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="mb-8">
         <div class="flex items-center gap-4 mb-2">
             <a href="{% url 'courses:member_field_list' %}"
@@ -15,17 +15,17 @@
         <p class="text-gray-500 text-sm ml-13 pl-1">Remplissez les informations du métier ci-dessous</p>
     </div>
 
-    <!-- Carte formulaire -->
+    {% comment %} Carte formulaire {% endcomment %}
     <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
 
-        <!-- Bandeau rouge en haut -->
+        {% comment %} Bandeau rouge en haut {% endcomment %}
         <div class="h-1.5 bg-gradient-to-r from-red-700 via-yellow-500 to-red-700"></div>
 
         <div class="p-8">
             <form method="POST" class="space-y-6">
                 {% csrf_token %}
 
-                <!-- Erreurs globales -->
+                {% comment %} Erreurs globales {% endcomment %}
                 {% if form.non_field_errors %}
                 <div class="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
                     
@@ -38,7 +38,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                    <!-- Nom du métier (pleine largeur) -->
+                    {% comment %} Nom du métier (pleine largeur) {% endcomment %}
                     <div class="md:col-span-2">
                         <label for="{{ form.nom_filiere.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5">
                             Nom du métier {% if form.nom_filiere.field.required %}<span class="text-red-600">*</span>{% endif %}
@@ -56,7 +56,7 @@
                         {% endif %}
                     </div>
 
-                    <!-- Titre professionnel -->
+                    {% comment %} Titre professionnel {% endcomment %}
                     <div>
                         <label for="{{ form.titre_professionnel.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5">
                             Titre professionnel {% if form.titre_professionnel.field.required %}<span class="text-red-600">*</span>{% endif %}
@@ -70,7 +70,7 @@
                         <p class="mt-1 text-xs text-gray-400">CQP, BQP, BPT ou BPTS</p>
                     </div>
 
-                    <!-- Conditions d'accès (ex niveau_diplome) — pleine largeur -->
+                    {% comment %} Conditions d'accès (ex niveau_diplome) — pleine largeur {% endcomment %}
                     <div class="md:col-span-2">
                         <label for="{{ form.niveau_diplome.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5">
                             Conditions d'accès {% if form.niveau_diplome.field.required %}<span class="text-red-600">*</span>{% endif %}
@@ -84,7 +84,7 @@
                         <p class="mt-1 text-xs text-gray-400">Ex : BEPC, BAC, BAC+2, sans condition de diplôme…</p>
                     </div>
 
-                    <!-- Texte défilant (carrousel accueil) — pleine largeur -->
+                    {% comment %} Texte défilant (carrousel accueil) — pleine largeur {% endcomment %}
                     <div class="md:col-span-2">
                         <label for="{{ form.texte_defilante.id_for_label }}" class="block text-sm font-bold text-gray-800 mb-1.5">
                             Texte défilant <span class="text-gray-400 font-normal">(optionnel)</span>
@@ -98,7 +98,7 @@
                         <p class="mt-1 text-xs text-gray-400">Affiché en bandeau défilant dans le carrousel de la page d'accueil, si renseigné.</p>
                     </div>
 
-                    <!-- Rendre actif -->
+                    {% comment %} Rendre actif {% endcomment %}
                     <div class="md:col-span-2">
                         <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
                             {{ form.is_active }}
@@ -118,10 +118,10 @@
 
                 </div>
 
-                <!-- Champ caché next -->
+                {% comment %} Champ caché next {% endcomment %}
                 <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
 
-                <!-- Boutons d'action -->
+                {% comment %} Boutons d'action {% endcomment %}
                 {% url 'courses:member_field_list' as field_list_url %}
                 <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
                     <a href="{{ request.GET.next|default:field_list_url }}"
@@ -138,7 +138,7 @@
         </div>
     </div>
 
-    <!-- Info -->
+    {% comment %} Info {% endcomment %}
     <div class="mt-5 flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         
         <p class="text-sm text-gray-600">

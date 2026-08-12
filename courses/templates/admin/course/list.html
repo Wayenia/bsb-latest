@@ -1,11 +1,11 @@
-<!-- courses/templates/admin/course/list.html -->
 {% extends 'base.html' %}
+{% comment %} courses/templates/admin/course/list.html {% endcomment %}
 {% block title %}Cours | BSB{% endblock %}
 {% block page_title %}Gestion des Cours{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h3 class="text-lg font-semibold text-gray-800">Liste des Cours</h3>
@@ -20,7 +20,7 @@
         </div>
     </div>
 
-    <!-- Barre de filtres -->
+    {% comment %} Barre de filtres {% endcomment %}
     <form method="get" id="filter-form">
         <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-3 flex-wrap">
             <div class="relative flex-1 min-w-[200px]">
@@ -45,7 +45,7 @@
         </div>
     </form>
 
-    <!-- Table -->
+    {% comment %} Table {% endcomment %}
     <div class="dashboard-card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="table-admin data-table">
@@ -107,7 +107,7 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        {% comment %} Pagination {% endcomment %}
         {% if course.has_other_pages %}
         <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
             <div class="flex items-center justify-between">

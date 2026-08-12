@@ -1,13 +1,13 @@
 {% load static %}
 <footer class="relative mt-auto bg-gray-600">
-    <!-- Decorative Top Border -->
+    {% comment %} Decorative Top Border {% endcomment %}
     <div class="h-1 bg-gradient-to-r from-yellow-400 via-red-500 to-green-500"></div>
     
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <!-- Main Footer Content -->
+        {% comment %} Main Footer Content {% endcomment %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             
-            <!-- About Section -->
+            {% comment %} About Section {% endcomment %}
             <div class="space-y-4">
                 <div class="flex items-center gap-3 mb-4">
                     <img src="{% static 'images/logo.png' %}" alt="BSB Logo" class="h-12 w-auto">
@@ -32,7 +32,7 @@
                 </div>
             </div>
 
-            <!-- Quick Links -->
+            {% comment %} Quick Links {% endcomment %}
             <div>
                 <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
                     
@@ -72,7 +72,7 @@
                 </ul>
             </div>
 
-            <!-- Resources -->
+            {% comment %} Resources {% endcomment %}
             <div>
                 <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
                     
@@ -112,7 +112,7 @@
                 </ul>
             </div>
 
-            <!-- Contact Info -->
+            {% comment %} Contact Info {% endcomment %}
             <div>
                 <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
                     
@@ -141,22 +141,22 @@
             </div>
         </div>
 
-        <!-- Bottom Bar -->
+        {% comment %} Bottom Bar {% endcomment %}
         <div class="border-t border-gray-400 pt-8 mt-8">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="flex items-center gap-2 text-sm text-gray-200">
                     
                     <span>&copy; {% now "Y" %} <span class="font-semibold text-white">SUUDU BAWDE</span> | Burkina Faso</span>
                 </div>
-                <!--div class="text-sm text-gray-200">
+                {% comment %}div class="text-sm text-gray-200">
                     Tous droits réservés |
                     <a href="#" class="hover:text-yellow-400 transition-colors">Mentions légales</a>
-                </div-->
+                </div{% endcomment %}
             </div>
         </div>
     </div>
 
-    <!-- Decorative Elements -->
+    {% comment %} Decorative Elements {% endcomment %}
     <div class="absolute top-10 right-10 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute bottom-10 left-10 w-48 h-48 bg-red-500/5 rounded-full blur-3xl pointer-events-none"></div>
 </footer>

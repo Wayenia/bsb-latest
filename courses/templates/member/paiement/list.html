@@ -19,7 +19,7 @@
         </a>
     </div>
 
-    <!-- Recherche multi-centre -->
+    {% comment %} Recherche multi-centre {% endcomment %}
     {% if peut_rechercher_tous_centres %}
     <form method="get" class="px-4 md:px-0">
         <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl flex flex-col sm:flex-row gap-3">
@@ -44,7 +44,7 @@
     </form>
     {% endif %}
 
-    <!-- Table Card -->
+    {% comment %} Table Card {% endcomment %}
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {% if inscriptions %}
         <div class="overflow-x-auto">
@@ -112,7 +112,7 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        {% comment %} Pagination {% endcomment %}
         {% if inscriptions.has_other_pages %}
         <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
             <div class="hidden sm:flex sm:items-center sm:justify-between">
@@ -159,7 +159,7 @@
     </div>
 </div>
 
-<!-- ===== MODALS ===== -->
+{% comment %} ===== MODALS ===== {% endcomment %}
 {% for insc in inscriptions %}
 <div id="insc-{{ insc.id }}"
      class="fixed inset-0 z-50 hidden items-center flex justify-center p-4"
@@ -282,7 +282,7 @@
 </div>
 {% endfor %}
 
-<!-- MODAL PAIEMENT (réutilisé pour toutes les tranches / tous les types de frais) -->
+{% comment %} MODAL PAIEMENT (réutilisé pour toutes les tranches / tous les types de frais) {% endcomment %}
 <div id="modal-paiement-tranche" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">

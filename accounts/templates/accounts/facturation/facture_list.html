@@ -23,7 +23,7 @@
         </div>
     </div>
 
-    <!-- Filtres -->
+    {% comment %} Filtres {% endcomment %}
     <form method="get" class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-3 flex-wrap">
         <div class="relative flex-1 min-w-[220px]">
             <input type="text" name="q" value="{{ q|default:'' }}"
@@ -51,7 +51,7 @@
         </div>
     </form>
 
-    <!-- Table -->
+    {% comment %} Table {% endcomment %}
     <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
         {% if factures %}
         <div class="overflow-x-auto">

@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="max-w-4xl mx-auto py-10">
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
      {% include 'partials/messages.html' %}
     <div class="mb-8">
         <div class="flex items-center mb-4">
@@ -16,7 +16,7 @@
         <p class="text-gray-600 ml-12">Remplissez les informations ci-dessous</p>
     </div>
 
-    <!-- Form Card -->
+    {% comment %} Form Card {% endcomment %}
     <div class="bg-white rounded-xl shadow-lg p-8">
         <form method="POST" class="space-y-6">
             {% csrf_token %}
@@ -36,7 +36,7 @@
             {% endif %}
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- centre -->
+                {% comment %} centre {% endcomment %}
                 <div class="">
                     <label for="{{ form.centre.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
                         {{ form.centre.label }}
@@ -54,7 +54,7 @@
                   
                 </div>
 
-                <!-- Filière -->
+                {% comment %} Filière {% endcomment %}
                 <div>
                     <label for="{{ form.filiere.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
                         {{ form.filiere.label }}
@@ -134,7 +134,7 @@
         </form>
     </div>
 
-    <!-- Help Section -->
+    {% comment %} Help Section {% endcomment %}
     <div class="mt-6 bg-red-100 border-l-4 border-red-500 p-4">
         <div class="flex">
             

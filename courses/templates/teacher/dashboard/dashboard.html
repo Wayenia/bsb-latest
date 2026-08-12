@@ -9,7 +9,7 @@
 <div class="min-h-screen bg-gray-50 py-8">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-    <!-- ── Header ──────────────────────────────────────────────────────────── -->
+    {% comment %} ── Header ──────────────────────────────────────────────────────────── {% endcomment %}
     <div class="mb-8 flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-black text-gray-900">Tableau de bord</h1>
@@ -21,9 +21,9 @@
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════
+    {% comment %} ══════════════════════════════════════════════════════════════════════
          Navigation — cartes filtrées par permission (matrice de rôles)
-    ═══════════════════════════════════════════════════════════════════════ -->
+    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
     {% if perms.courses.voir_statistiques or perms.courses.gerer_statistiques_reelles or perms.courses.voir_inscriptions or perms.courses.gerer_centres or perms.courses.encaisser_paiement or perms.courses.gerer_paiements or perms.courses.gerer_metiers or perms.courses.gerer_programmations or perms.courses.gerer_modules or perms.courses.gerer_regions or perms.courses.gerer_directions or perms.courses.gerer_frais or perms.courses.gerer_annees or perms.accounts.gerer_agents or perms.accounts.gerer_permissions or perms.accounts.gerer_facturation or perms.accounts.encaisser_prestation %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Pilotage</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
@@ -214,7 +214,7 @@
     </div>
     {% endif %}
 
-    <!-- ── Formations actives de la direction ──────────────────────────────── -->
+    {% comment %} ── Formations actives de la direction ──────────────────────────────── {% endcomment %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Formations actives</p>
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-100 text-sm">

@@ -6,7 +6,7 @@
 {% block content%}
 <div class="max-w-4xl mx-auto py-10">
     {% include 'partials/messages.html' %}
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="mb-8">
         <div class="flex items-center mb-4">
             <a href="{% url 'bsb_admin:module_list' %}" class="text-gray-800 hover:text-gray-900 mr-4">Retour</a>
@@ -17,7 +17,7 @@
         <p class="text-gray-600 ml-12">Remplissez les informations ci-dessous</p>
     </div>
 
-     <!-- Form Card -->
+     {% comment %} Form Card {% endcomment %}
     <div class="bg-white rounded-xl shadow-lg p-8">
         <form method="POST" class="space-y-6" enctype="multipart/form-data">
             {% csrf_token %}
@@ -37,7 +37,7 @@
             {% endif %}
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- métiers-->
+                {% comment %} métiers{% endcomment %}
                 <div class="md:col-span-2">
                     <label for="{{ form.filieres.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
                         {{ form.filieres.label }}
@@ -61,7 +61,7 @@
 
                 </div>
         
-                    <!-- Nom module -->
+                    {% comment %} Nom module {% endcomment %}
                     <div >
                         <label for="{{ form.nom_module.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
                             {{ form.nom_module.label }}
@@ -82,7 +82,7 @@
                         {% endif %}
                     </div>
 
-                    <!-- Volume Horaires -->
+                    {% comment %} Volume Horaires {% endcomment %}
                                 
                     <div >
                         <label for="{{ form.volume_h_cours.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
@@ -107,7 +107,7 @@
                             </div>
                         </div>
             </div>
-            <!-- Action Buttons -->
+            {% comment %} Action Buttons {% endcomment %}
             <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
                 <a href="{% url 'bsb_admin:module_list' %}"
                    class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-red-200 transition-all">
@@ -120,7 +120,7 @@
             </div>
         </form>
     </div>
-     <!-- Help Section -->
+     {% comment %} Help Section {% endcomment %}
     <div class="mt-6 bg-red-100 border-l-4 border-red-500 p-4">
         <div class="flex">
             

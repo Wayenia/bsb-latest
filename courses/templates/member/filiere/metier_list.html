@@ -7,7 +7,7 @@
 
     {% include 'partials/messages.html' %}
 
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="px-4 md:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-3xl font-black text-gray-900">Métiers et Modules</h1>
@@ -29,11 +29,11 @@
         </div>
     </div>
 
-    <!-- Barre de filtres -->
+    {% comment %} Barre de filtres {% endcomment %}
     <form method="get" id="filter-form">
         <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-3 flex-wrap">
 
-            <!-- Recherche -->
+            {% comment %} Recherche {% endcomment %}
             <div class="relative flex-1 min-w-[200px]">
                 <input type="text" name="recherche"
                        value="{{ filter.form.recherche.value|default:'' }}"
@@ -42,7 +42,7 @@
                        id="id_recherche" autocomplete="off">
             </div>
 
-            <!-- Filtre Titre Professionnel -->
+            {% comment %} Filtre Titre Professionnel {% endcomment %}
             <div class="sm:w-52">
                 <select name="titre_professionnel"
                         class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
@@ -55,7 +55,7 @@
                 </select>
             </div>
 
-            <!-- Filtre Disponibilité -->
+            {% comment %} Filtre Disponibilité {% endcomment %}
             <div class="sm:w-44">
                 <select name="is_active"
                         class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
@@ -66,7 +66,7 @@
                 </select>
             </div>
 
-            <!-- Bouton reset -->
+            {% comment %} Bouton reset {% endcomment %}
             <div class="flex items-center">
                 <a href="{% url 'courses:member_field_list' %}"
                    class="inline-flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition"
@@ -77,7 +77,7 @@
         </div>
     </form>
 
-    <!-- Compteur de résultats -->
+    {% comment %} Compteur de résultats {% endcomment %}
     {% if filieres %}
     <div class="px-1">
         <p class="text-sm text-gray-500">
@@ -86,13 +86,13 @@
     </div>
     {% endif %}
 
-    <!-- Corps : accordéon métiers → modules ───────────── -->
+    {% comment %} Corps : accordéon métiers → modules ───────────── {% endcomment %}
     {% if filieres %}
     <div class="space-y-4">
         {% for field in filieres %}
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
 
-            <!-- En-tête métier -->
+            {% comment %} En-tête métier {% endcomment %}
             <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-red-50 to-yellow-50 border-b border-gray-100">
                 <div class="flex items-center gap-4">
                     <button type="button"
@@ -130,7 +130,7 @@
                     </div>
                 </div>
 
-                <!-- Actions métier -->
+                {% comment %} Actions métier {% endcomment %}
                 <div class="flex items-center gap-1">
                     {% if field.curricula %}
                     <a href="{{ field.curricula.url }}" target="_blank"
@@ -153,7 +153,7 @@
                 </div>
             </div>
 
-            <!-- Modules (masqués par défaut) -->
+            {% comment %} Modules (masqués par défaut) {% endcomment %}
             <div id="m{{ field.pk }}" class="hidden">
                 {% with modules=field.modules.all %}
                 {% if modules %}
@@ -203,7 +203,7 @@
         {% endfor %}
     </div>
 
-    <!-- Pagination -->
+    {% comment %} Pagination {% endcomment %}
     {% if filieres.has_other_pages %}
     <div class="flex items-center justify-between px-1 py-2">
         <p class="text-sm text-gray-500">
@@ -232,7 +232,7 @@
     {% endif %}
 
     {% else %}
-    <!-- État vide -->
+    {% comment %} État vide {% endcomment %}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm text-center py-16">
         <h3 class="text-lg font-bold text-gray-800 mb-1">Aucun métier trouvé</h3>
         <p class="text-sm text-gray-500 mb-6">Modifiez vos filtres ou créez un nouveau métier.</p>

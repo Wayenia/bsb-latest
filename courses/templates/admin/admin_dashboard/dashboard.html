@@ -9,7 +9,7 @@
 <div class="min-h-screen bg-gray-50 py-8">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-    <!-- ── Header ──────────────────────────────────────────────────────────── -->
+    {% comment %} ── Header ──────────────────────────────────────────────────────────── {% endcomment %}
     <div class="mb-8 flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-black text-gray-900">Tableau de bord</h1>
@@ -21,7 +21,7 @@
       </div>
     </div>
 
-    <!-- ── KPI Stats ───────────────────────────────────────────────────────── -->
+    {% comment %} ── KPI Stats ───────────────────────────────────────────────────────── {% endcomment %}
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
       <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
         <p class="text-2xl font-black text-gray-900">{{ stats.total_subscriptions }}</p>
@@ -49,15 +49,15 @@
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════
+    {% comment %} ══════════════════════════════════════════════════════════════════════
          SECTION 1 — Pilotage (accès direct aux écrans les plus utilisés)
-    ═══════════════════════════════════════════════════════════════════════ -->
+    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
     {% if perms.courses.voir_statistiques or perms.courses.gerer_statistiques_reelles or perms.courses.voir_inscriptions or perms.courses.gerer_paiements or perms.courses.encaisser_paiement %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Pilotage</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
 
       {% if perms.courses.voir_statistiques %}
-      <!-- Statistiques -->
+      {% comment %} Statistiques {% endcomment %}
       <a href="{% url 'courses:statistiques' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
@@ -69,7 +69,7 @@
       {% endif %}
 
       {% if perms.courses.gerer_statistiques_reelles %}
-      <!-- Statistiques réelles -->
+      {% comment %} Statistiques réelles {% endcomment %}
       <a href="{% url 'courses:stats_reel_dashboard' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
@@ -80,7 +80,7 @@
       {% endif %}
 
       {% if perms.courses.voir_inscriptions %}
-      <!-- Inscriptions -->
+      {% comment %} Inscriptions {% endcomment %}
       <a href="{% url 'bsb_admin:subscription_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-red-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
@@ -92,7 +92,7 @@
       {% endif %}
 
       {% if perms.courses.gerer_paiements or perms.courses.encaisser_paiement %}
-      <!-- Paiements -->
+      {% comment %} Paiements {% endcomment %}
       <a href="{% url 'courses:paiement_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-green-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
@@ -106,15 +106,15 @@
     </div>
     {% endif %}
 
-    <!-- ══════════════════════════════════════════════════════════════════════
+    {% comment %} ══════════════════════════════════════════════════════════════════════
          SECTION 2 — Offre de formation
-    ═══════════════════════════════════════════════════════════════════════ -->
+    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
     {% if perms.courses.gerer_metiers or perms.courses.gerer_programmations or perms.courses.gerer_centres or perms.courses.gerer_modules %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Offre de formation</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
 
       {% if perms.courses.gerer_modules %}
-      <!-- Modules -->
+      {% comment %} Modules {% endcomment %}
       <a href="{% url 'bsb_admin:module_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
@@ -126,7 +126,7 @@
       {% endif %}
 
       {% if perms.courses.gerer_metiers %}
-      <!-- Métiers -->
+      {% comment %} Métiers {% endcomment %}
       <a href="{% url 'bsb_admin:field_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
@@ -138,7 +138,7 @@
       {% endif %}
 
       {% if perms.courses.gerer_programmations %}
-      <!-- Programmations -->
+      {% comment %} Programmations {% endcomment %}
       <a href="{% url 'bsb_admin:programming_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-teal-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
@@ -150,7 +150,7 @@
       {% endif %}
 
       {% if perms.courses.gerer_centres %}
-      <!-- Centres -->
+      {% comment %} Centres {% endcomment %}
       <a href="{% url 'courses:center_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-green-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
@@ -164,15 +164,15 @@
     </div>
     {% endif %}
 
-    <!-- ══════════════════════════════════════════════════════════════════════
+    {% comment %} ══════════════════════════════════════════════════════════════════════
          SECTION 3 — Organisation territoriale
-    ═══════════════════════════════════════════════════════════════════════ -->
+    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
     {% if perms.courses.gerer_directions or perms.courses.gerer_regions %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Organisation territoriale</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
 
       {% if perms.courses.gerer_directions %}
-      <!-- Directions inter-régionales -->
+      {% comment %} Directions inter-régionales {% endcomment %}
       <a href="{% url 'bsb_admin:direction_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
@@ -184,7 +184,7 @@
       {% endif %}
 
       {% if perms.courses.gerer_regions %}
-      <!-- Régions et Provinces -->
+      {% comment %} Régions et Provinces {% endcomment %}
       <a href="{% url 'bsb_admin:region_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
@@ -198,15 +198,15 @@
     </div>
     {% endif %}
 
-    <!-- ══════════════════════════════════════════════════════════════════════
+    {% comment %} ══════════════════════════════════════════════════════════════════════
          SECTION 4 — Paramétrage
-    ═══════════════════════════════════════════════════════════════════════ -->
+    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
     {% if perms.courses.gerer_frais or perms.courses.gerer_annees %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Paramétrage</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
 
       {% if perms.courses.gerer_frais %}
-      <!-- Types de frais -->
+      {% comment %} Types de frais {% endcomment %}
       <a href="{% url 'bsb_admin:type_frais_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
@@ -218,7 +218,7 @@
       {% endif %}
 
       {% if perms.courses.gerer_annees %}
-      <!-- Années scolaires -->
+      {% comment %} Années scolaires {% endcomment %}
       <a href="{% url 'bsb_admin:annee_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-yellow-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
@@ -232,9 +232,9 @@
     </div>
     {% endif %}
 
-    <!-- ══════════════════════════════════════════════════════════════════════
+    {% comment %} ══════════════════════════════════════════════════════════════════════
          SECTION 5 — Ressources humaines (pleine largeur, mise en avant)
-    ═══════════════════════════════════════════════════════════════════════ -->
+    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
     {% if perms.accounts.gerer_agents or perms.accounts.gerer_eleves or perms.accounts.gerer_permissions %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Ressources humaines</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -272,9 +272,9 @@
     </div>
     {% endif %}
 
-    <!-- ══════════════════════════════════════════════════════════════════════
+    {% comment %} ══════════════════════════════════════════════════════════════════════
          SECTION 6 — Facturation et Prestation
-    ═══════════════════════════════════════════════════════════════════════ -->
+    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
     {% if perms.accounts.gerer_facturation or perms.accounts.encaisser_prestation %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Facturation et Prestation</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">

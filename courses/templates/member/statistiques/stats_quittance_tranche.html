@@ -4,13 +4,9 @@
 {% block title %}Quittance — Tranche {{ tranche }} | BSB{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 <style>
   body { background:#f4f6fb; }
   .page-card { background:#fff; border-radius:16px; box-shadow:0 2px 16px rgba(55, 65, 81,.09); border:none; }
-  .table thead { background:linear-gradient(90deg,#374151,#6b7280); color:#fff; }
-  .table thead th { font-weight:600; font-size:.85rem; border:none; padding:.85rem 1rem; }
-  .table tbody tr:hover { background:#f0f4ff; }
   .btn-dl { background:linear-gradient(135deg,#dc2626,#ef4444); color:#fff; border:none; border-radius:8px; font-size:.82rem; padding:.38rem .9rem; font-weight:700; transition:all .15s; }
   .btn-dl:hover { background:linear-gradient(135deg,#b91c1c,#dc2626); color:#fff; transform:translateY(-1px); }
   .tranche-badge { background:linear-gradient(135deg,#374151,#6b7280); color:#fff; font-size:1rem; padding:.45em 1.1em; border-radius:20px; font-weight:700; }
@@ -22,26 +18,29 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 px-4">
+<div class="w-full py-4 px-4">
 
-  <!-- Breadcrumb -->
-  <nav class="mb-3" aria-label="breadcrumb">
-    <ol class="breadcrumb small">
-      <li class="breadcrumb-item"><a href="{% url 'courses:statistiques' %}">Statistiques</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'courses:paiement_list' %}">Encaissements</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'courses:stats_dettes_eleve' eleve.id %}">{{ eleve.nom }} {{ eleve.prenom }}</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'courses:stats_detail_dette' dette.id %}">{{ dette.frais_formation.type_frais.libelle }}</a></li>
-      <li class="breadcrumb-item active">Tranche {{ tranche }}</li>
-    </ol>
+  {% comment %} Breadcrumb {% endcomment %}
+  <nav class="mb-3 text-sm text-gray-500" aria-label="breadcrumb">
+    <a href="{% url 'courses:statistiques' %}" class="hover:text-gray-700">Statistiques</a>
+    <span class="mx-1">/</span>
+    <a href="{% url 'courses:paiement_list' %}" class="hover:text-gray-700">Encaissements</a>
+    <span class="mx-1">/</span>
+    <a href="{% url 'courses:stats_dettes_eleve' eleve.id %}" class="hover:text-gray-700">{{ eleve.nom }} {{ eleve.prenom }}</a>
+    <span class="mx-1">/</span>
+    <a href="{% url 'courses:stats_detail_dette' dette.id %}" class="hover:text-gray-700">{{ dette.frais_formation.type_frais.libelle }}</a>
+    <span class="mx-1">/</span>
+    <span class="text-gray-700">Tranche {{ tranche }}</span>
   </nav>
 
-  <div class="d-flex align-items-center gap-3 mb-4">
-    <a href="{% url 'courses:stats_detail_dette' dette.id %}" class="btn btn-outline-secondary btn-sm">Retour</a>
+  <div class="flex items-center gap-3 mb-4">
+    <a href="{% url 'courses:stats_detail_dette' dette.id %}"
+       class="inline-flex items-center px-3 py-1.5 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Retour</a>
     <div>
-      <h2 class="fw-bold mb-0" style="color:#374151;">
+      <h2 class="font-bold text-xl mb-0" style="color:#374151;">
         Quittance — Tranche {{ tranche }}
       </h2>
-      <p class="text-muted small mb-0">
+      <p class="text-gray-500 text-sm mb-0">
         {{ dette.frais_formation.type_frais.libelle }} •
         {{ dette.inscription.formation.filiere.nom_filiere }} •
         {{ dette.inscription.formation.centre.nom_centre }}
@@ -49,95 +48,95 @@
     </div>
   </div>
 
-  <div class="row g-4">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-    <!-- Infos apprenant + dette -->
-    <div class="col-12 col-lg-4">
-      <div class="page-card p-4 h-100">
-        <div class="fw-bold text-secondary small text-uppercase mb-3">Apprenant</div>
-        <div class="info-row d-flex justify-content-between">
-          <span class="text-muted small">Nom complet</span>
-          <span class="fw-semibold small">{{ eleve.nom }} {{ eleve.prenom }}</span>
+    {% comment %} Infos apprenant + dette {% endcomment %}
+    <div class="lg:col-span-4">
+      <div class="page-card p-4 h-full">
+        <div class="font-bold text-gray-500 text-sm uppercase mb-3">Apprenant</div>
+        <div class="info-row flex justify-between">
+          <span class="text-gray-500 text-sm">Nom complet</span>
+          <span class="font-semibold text-sm">{{ eleve.nom }} {{ eleve.prenom }}</span>
         </div>
-        <div class="info-row d-flex justify-content-between">
-          <span class="text-muted small">Identifiant</span>
-          <code class="small">{{ eleve.numero_identifiant|default:"—" }}</code>
+        <div class="info-row flex justify-between">
+          <span class="text-gray-500 text-sm">Identifiant</span>
+          <code class="text-sm">{{ eleve.numero_identifiant|default:"—" }}</code>
         </div>
-        <div class="info-row d-flex justify-content-between">
-          <span class="text-muted small">Téléphone</span>
-          <span class="small">{{ eleve.tel|default:"—" }}</span>
+        <div class="info-row flex justify-between">
+          <span class="text-gray-500 text-sm">Téléphone</span>
+          <span class="text-sm">{{ eleve.tel|default:"—" }}</span>
         </div>
-        <div class="info-row d-flex justify-content-between">
-          <span class="text-muted small">Métier</span>
-          <span class="small fw-semibold">{{ dette.inscription.formation.filiere.nom_filiere }}</span>
+        <div class="info-row flex justify-between">
+          <span class="text-gray-500 text-sm">Métier</span>
+          <span class="text-sm font-semibold">{{ dette.inscription.formation.filiere.nom_filiere }}</span>
         </div>
-        <div class="info-row d-flex justify-content-between">
-          <span class="text-muted small">Centre</span>
-          <span class="small">{{ dette.inscription.formation.centre.nom_centre }}</span>
+        <div class="info-row flex justify-between">
+          <span class="text-gray-500 text-sm">Centre</span>
+          <span class="text-sm">{{ dette.inscription.formation.centre.nom_centre }}</span>
         </div>
-        <div class="info-row d-flex justify-content-between">
-          <span class="text-muted small">Type de frais</span>
-          <span class="small fw-semibold">{{ dette.frais_formation.type_frais.libelle }}</span>
+        <div class="info-row flex justify-between">
+          <span class="text-gray-500 text-sm">Type de frais</span>
+          <span class="text-sm font-semibold">{{ dette.frais_formation.type_frais.libelle }}</span>
         </div>
-        <div class="info-row d-flex justify-content-between">
-          <span class="text-muted small">Tranche</span>
+        <div class="info-row flex justify-between">
+          <span class="text-gray-500 text-sm">Tranche</span>
           <span class="tranche-badge">Tranche {{ tranche }}</span>
         </div>
-        <hr>
-        <div class="d-flex justify-content-between">
-          <span class="text-muted small">Total dû</span>
-          <span class="fw-bold">{{ dette.montant_total|floatformat:0|intcomma }} FCFA</span>
+        <hr class="border-gray-200">
+        <div class="flex justify-between">
+          <span class="text-gray-500 text-sm">Total dû</span>
+          <span class="font-bold">{{ dette.montant_total|floatformat:0|intcomma }} FCFA</span>
         </div>
-        <div class="d-flex justify-content-between mt-1">
-          <span class="text-muted small">Total payé</span>
-          <span class="fw-bold text-success">{{ dette.montant_paye|floatformat:0|intcomma }} FCFA</span>
+        <div class="flex justify-between mt-1">
+          <span class="text-gray-500 text-sm">Total payé</span>
+          <span class="font-bold text-emerald-600">{{ dette.montant_paye|floatformat:0|intcomma }} FCFA</span>
         </div>
-        <div class="d-flex justify-content-between mt-1">
-          <span class="text-muted small">Reste à payer</span>
-          <span class="fw-bold text-danger">{{ dette.reste_a_payer|floatformat:0|intcomma }} FCFA</span>
+        <div class="flex justify-between mt-1">
+          <span class="text-gray-500 text-sm">Reste à payer</span>
+          <span class="font-bold text-red-600">{{ dette.reste_a_payer|floatformat:0|intcomma }} FCFA</span>
         </div>
       </div>
     </div>
 
-    <!-- Liste des paiements de la tranche -->
-    <div class="col-12 col-lg-8">
+    {% comment %} Liste des paiements de la tranche {% endcomment %}
+    <div class="lg:col-span-8">
       <div class="page-card p-4">
-        <div class="fw-bold mb-3" style="color:#374151; font-size:1.05rem;">
+        <div class="font-bold mb-3" style="color:#374151; font-size:1.05rem;">
           Paiements de la tranche {{ tranche }}
         </div>
 
         {% if paiements %}
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
+        <div class="overflow-x-auto">
+          <table class="w-full">
             <thead>
-              <tr>
-                <th>#</th>
-                <th>N° Quittance</th>
-                <th>Montant</th>
-                <th>Mode</th>
-                <th>Date</th>
-                <th class="text-end">Télécharger</th>
+              <tr class="text-left text-sm text-gray-500 border-b border-gray-200">
+                <th class="py-2">#</th>
+                <th class="py-2">N° Quittance</th>
+                <th class="py-2">Montant</th>
+                <th class="py-2">Mode</th>
+                <th class="py-2">Date</th>
+                <th class="py-2 text-right">Télécharger</th>
               </tr>
             </thead>
             <tbody>
               {% for p in paiements %}
-              <tr>
-                <td class="text-muted small">{{ forloop.counter }}</td>
-                <td><code class="small">{{ p.numero_quittance }}</code></td>
-                <td class="fw-semibold text-success">{{ p.montant_paiement|floatformat:0|intcomma }} FCFA</td>
-                <td>
+              <tr class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="py-2 text-gray-500 text-sm">{{ forloop.counter }}</td>
+                <td class="py-2"><code class="text-sm">{{ p.numero_quittance }}</code></td>
+                <td class="py-2 font-semibold text-emerald-600">{{ p.montant_paiement|floatformat:0|intcomma }} FCFA</td>
+                <td class="py-2">
                   {% if p.mode_paiement == 'mobile' %}
-                    <span class="badge bg-secondary text-dark">Mobile Money</span>
+                    <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Mobile Money</span>
                   {% elif p.mode_paiement == 'espece' %}
-                    <span class="badge bg-secondary text-dark">Espèce</span>
+                    <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Espèce</span>
                   {% else %}
-                    <span class="badge bg-secondary">Chèque</span>
+                    <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Chèque</span>
                   {% endif %}
                 </td>
-                <td class="small text-muted">{{ p.date_paiement|date:"d/m/Y à H:i" }}</td>
-                <td class="text-end">
+                <td class="py-2 text-sm text-gray-500">{{ p.date_paiement|date:"d/m/Y à H:i" }}</td>
+                <td class="py-2 text-right">
                   <a href="{% url 'courses:stats_download_quittance' p.id %}"
-                     class="btn btn-dl btn-sm"
+                     class="btn-dl text-sm"
                      title="Télécharger la quittance PDF">
                     PDF
                   </a>
@@ -146,9 +145,9 @@
               {% endfor %}
             </tbody>
             <tfoot>
-              <tr class="table-light fw-bold">
-                <td colspan="2">Total tranche {{ tranche }}</td>
-                <td class="text-success">
+              <tr class="bg-gray-50 font-bold">
+                <td class="py-2" colspan="2">Total tranche {{ tranche }}</td>
+                <td class="py-2 text-emerald-600">
                   {% with total=0 %}
                     {% for p in paiements %}
                       {% with total=total|add:p.montant_paiement %}{% endwith %}
@@ -162,8 +161,7 @@
           </table>
         </div>
         {% else %}
-        <div class="text-center py-5 text-muted">
-          
+        <div class="text-center py-5 text-gray-500">
           Aucun paiement pour cette tranche.
         </div>
         {% endif %}
@@ -172,8 +170,4 @@
 
   </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

@@ -5,7 +5,7 @@
 {% block content %}
 <div class="max-w-4xl mx-auto py-10">
     {% include 'partials/messages.html' %}
-    <!-- Header -->
+    {% comment %} Header {% endcomment %}
     <div class="mb-8">
         <div class="flex items-center mb-4">
             <a href="{% url 'bsb_admin:payment_list' %}" class="text-gray-800 hover:text-gray-900 mr-4">Retour</a>
@@ -16,7 +16,7 @@
         <p class="text-gray-600 ml-12">Remplissez les informations ci-dessous</p>
     </div>
 
-    <!-- Form Card -->
+    {% comment %} Form Card {% endcomment %}
     <div class="bg-white rounded-xl shadow-lg p-8">
         <form method="POST" class="space-y-6">
             {% csrf_token %}
@@ -30,7 +30,7 @@
             {% endif %}
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Dette -->
+                {% comment %} Dette {% endcomment %}
                 <div class="md:col-span-2">
                     <label for="{{ form.dette.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
                         {{ form.dette.label }}
@@ -42,7 +42,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Tranche -->
+                {% comment %} Tranche {% endcomment %}
                 <div>
                     <label for="{{ form.tranche.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
                         {{ form.tranche.label }}
@@ -54,7 +54,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Tranche de frais -->
+                {% comment %} Tranche de frais {% endcomment %}
                 <div>
                     <label for="{{ form.tranche_frais.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
                         {{ form.tranche_frais.label }}
@@ -66,7 +66,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Montant -->
+                {% comment %} Montant {% endcomment %}
                 <div>
                     <label for="{{ form.montant_paiement.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
                         {{ form.montant_paiement.label }}
@@ -78,7 +78,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Mode de paiement -->
+                {% comment %} Mode de paiement {% endcomment %}
                 <div>
                     <label for="{{ form.mode_paiement.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
                         {{ form.mode_paiement.label }}
@@ -90,7 +90,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Numéro de quittance -->
+                {% comment %} Numéro de quittance {% endcomment %}
                 <div>
                     <label for="{{ form.numero_quittance.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
                         {{ form.numero_quittance.label }}
@@ -103,7 +103,7 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
+            {% comment %} Action Buttons {% endcomment %}
             <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
                 <a href="{% url 'bsb_admin:payment_list' %}"
                    class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-red-200 transition-all">
@@ -117,7 +117,7 @@
         </form>
     </div>
 
-    <!-- Help Section -->
+    {% comment %} Help Section {% endcomment %}
     <div class="mt-6 bg-red-100 border-l-4 border-red-500 p-4">
         <p class="text-sm text-gray-500">
             Les champs marqués d'un astérisque (<span class="text-red-600">*</span>) sont obligatoires.

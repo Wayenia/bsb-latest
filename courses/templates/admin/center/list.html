@@ -5,7 +5,7 @@
 <div class="max-w-7xl mx-auto py-10 space-y-6">
   {% include 'partials/messages.html' %}
 
-  <!-- Header -->
+  {% comment %} Header {% endcomment %}
   <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
     <div>
       <h1 class="text-3xl font-black text-gray-900">Les centres de formation</h1>
@@ -21,11 +21,11 @@
     </div>
   </div>
 
-  <!-- Filtres -->
+  {% comment %} Filtres {% endcomment %}
   <form method="get" class="px-4 md:px-0">
     <div class="bg-white px-4 py-4 border border-gray-200 rounded-lg flex flex-col sm:flex-row gap-3">
 
-      <!-- Recherche -->
+      {% comment %} Recherche {% endcomment %}
       <div class="relative flex-1">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           
@@ -35,7 +35,7 @@
                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
       </div>
 
-      <!-- Filtre Direction -->
+      {% comment %} Filtre Direction {% endcomment %}
       <div class="sm:w-56">
         <select name="direction"
                 class="block w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
@@ -48,7 +48,7 @@
         </select>
       </div>
 
-      <!-- Filtre Niveau -->
+      {% comment %} Filtre Niveau {% endcomment %}
       <div class="sm:w-40">
         <select name="niveau"
                 class="block w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
@@ -61,7 +61,7 @@
         </select>
       </div>
 
-      <!-- Boutons -->
+      {% comment %} Boutons {% endcomment %}
       <div class="flex gap-2">
         <button type="submit"
                 class="px-4 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition-all text-sm">
@@ -76,7 +76,7 @@
     </div>
   </form>
 
-  <!-- Table -->
+  {% comment %} Table {% endcomment %}
   <div class="bg-white rounded-xl shadow-lg overflow-hidden">
     {% if centers %}
     <div class="overflow-x-auto">
@@ -95,17 +95,17 @@
           {% for center in centers %}
           <tr class="hover:bg-gray-50 transition-colors">
 
-            <!-- 1. Nom du centre -->
+            {% comment %} 1. Nom du centre {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="text-sm font-medium text-gray-900">{{ center.nom_centre }}</span>
             </td>
 
-            <!-- 2. Direction -->
+            {% comment %} 2. Direction {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="text-sm text-gray-900">{{ center.direction|default:"—" }}</span>
             </td>
 
-            <!-- 3. Niveau -->
+            {% comment %} 3. Niveau {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap">
               {% if center.niveau_centre %}
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
@@ -116,17 +116,17 @@
               {% endif %}
             </td>
 
-            <!-- 4. Province -->
+            {% comment %} 4. Province {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="text-sm text-gray-900">{{ center.province|default:"—" }}</span>
             </td>
 
-            <!-- 5. Téléphone -->
+            {% comment %} 5. Téléphone {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="text-sm text-gray-500">{{ center.tel|default:"—" }}</span>
             </td>
 
-            <!-- 6. Actions -->
+            {% comment %} 6. Actions {% endcomment %}
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <div class="flex items-center justify-end space-x-2">
                 <a href="{% url 'courses:center_filieres' center.pk %}"
@@ -147,7 +147,7 @@
       </table>
     </div>
 
-    <!-- Pagination -->
+    {% comment %} Pagination {% endcomment %}
     {% if centers.has_other_pages %}
     <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
       <div class="flex items-center justify-between">

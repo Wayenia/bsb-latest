@@ -13,7 +13,7 @@
         </div>
     </div>
 
-    <!-- Barre de filtres -->
+    {% comment %} Barre de filtres {% endcomment %}
     <form method="get" id="filter-form">
         <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-3 flex-wrap">
             <div class="relative flex-1 min-w-[200px]">
@@ -39,7 +39,7 @@
         </div>
     </form>
 
-    <!-- Table Card -->
+    {% comment %} Table Card {% endcomment %}
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {% if inscriptions %}
         <div class="overflow-x-auto">
@@ -104,7 +104,7 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        {% comment %} Pagination {% endcomment %}
         {% if inscriptions.has_other_pages %}
         <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
             <div class="hidden sm:flex sm:items-center sm:justify-between">
@@ -144,7 +144,7 @@
     </div>
 </div>
 
-<!-- ===== MODALS ===== -->
+{% comment %} ===== MODALS ===== {% endcomment %}
 {% for insc in inscriptions %}
 <div id="insc-{{ insc.id }}"
      class="fixed inset-0 z-50 hidden items-center flex justify-center p-4"

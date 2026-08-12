@@ -70,7 +70,7 @@
 <div class="stats-body">
 <div style="max-width:1100px;margin:0 auto;">
 
-  <!-- Entête -->
+  {% comment %} Entête {% endcomment %}
   <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
     <a href="{% url 'courses:paiement_list' %}" class="btn-back">
       Retour
@@ -83,7 +83,7 @@
     </div>
   </div>
 
-  <!-- Carte apprenant -->
+  {% comment %} Carte apprenant {% endcomment %}
   <div class="page-card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;">
       <div style="display:flex;align-items:center;gap:1rem;">
@@ -104,7 +104,7 @@
     </div>
   </div>
 
-  <!-- Inscriptions avec dettes -->
+  {% comment %} Inscriptions avec dettes {% endcomment %}
   {% for item in inscriptions_dettes %}
   <div style="margin-bottom:1.25rem;">
 
@@ -213,7 +213,7 @@
 </div>
 </div>
 
-<!-- MODAL PAIEMENT (réutilisé pour toutes les tranches) -->
+{% comment %} MODAL PAIEMENT (réutilisé pour toutes les tranches) {% endcomment %}
 <div id="modal-paiement-tranche" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
