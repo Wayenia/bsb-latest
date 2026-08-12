@@ -6,9 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}BSB - Burkina Suudu Bawdè{% endblock %}</title>
 
-    {% comment %} DataTables CSS {% endcomment %}
-    <link rel="stylesheet" type="text/css" href="{% static 'vendor/datatables/css/jquery.dataTables.min.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'vendor/datatables/css/buttons.dataTables.min.css' %}">
     {% comment %} Custom CSS {% endcomment %}
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
 
@@ -176,21 +173,9 @@
     {% endif %}
 
     {% comment %} Scripts {% endcomment %}
-    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
-    <script src="{% static 'vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
-    <script src="{% static 'vendor/datatables/js/dataTables.buttons.min.js' %}"></script>
-    <script src="{% static 'vendor/datatables/js/buttons.html5.min.js' %}"></script>
-    <script src="{% static 'vendor/datatables/js/buttons.print.min.js' %}"></script>
+    <script src="{% static 'js/data-table.js' %}"></script>
 
     <script>
-        $(document).ready(function() {
-            $('.data-table').DataTable({
-                dom: 'Bfrtip',
-                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
-                language: { url: '{% static "vendor/datatables/i18n/fr-FR.json" %}' }
-            });
-        });
-
         function openModal(modalId) {
             document.getElementById(modalId).classList.remove('hidden');
             document.body.style.overflow = 'hidden';
