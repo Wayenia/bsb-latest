@@ -125,14 +125,20 @@
                                 Durée : {{ career.duree_display }}
                             </p>
                             {% if career.annee_prog %}
-                            <p class="text-sm text-gray-500 mb-3">
-                                
-                                {{ career.annee_prog }}
+                            <p class="text-sm text-gray-500 mb-1">
+
+                                Année scolaire : {{ career.annee_prog }}
+                            </p>
+                            {% endif %}
+                            {% if career.date_limite_proche %}
+                            <p class="text-sm font-bold text-red-600 mb-3">
+
+                                Inscriptions ouvertes jusqu'au {{ career.date_limite_proche|date:"d/m/Y" }}
                             </p>
                             {% endif %}
 
-                            <p class="text-base font-bold text-gray-800 mb-4">
-                                
+                            <p class="text-sm text-gray-500 mb-4">
+
                                 Titre professionnel : {{ career.filiere.titre_professionnel }}
                             </p>
                             <br>

@@ -28,6 +28,7 @@ from django.db.models import Prefetch
 import weasyprint
 from django.db.models import Sum
 import io
+import base64
 import os
 from reportlab.lib.pagesizes import A5
 from reportlab.lib import colors
@@ -44,7 +45,13 @@ from django.conf import settings
 def subscribe_selection_view(request):
     annees = AnneeScolaire.objects.all()
     centres = CentreFormation.objects.all()
-    selected_annee_id = request.GET.get('annee') or ''
+    if 'annee' in request.GET:
+        # Choix explicite de l'utilisateur (y compris "revenir à ---Sélectionnez---") : respecté tel quel.
+        selected_annee_id = request.GET.get('annee') or ''
+    else:
+        # Premier chargement de la page : présélectionner l'année scolaire la plus récente.
+        derniere_annee = AnneeScolaire.objects.order_by('-date_creation').first()
+        selected_annee_id = str(derniere_annee.id) if derniere_annee else ''
     selected_centre_id = request.GET.get('centre') or ''
 
     careers = []
@@ -403,12 +410,12 @@ def effectuer_paiment(request, id):
             # entière) ; les autres rôles (caisse, admin, gestionnaire...)
             # peuvent régler un montant partiel.
             if is_self and paiement.montant_paiement != montant_cible:
-                messages.error(request, f"Vous devez régler exactement le montant dû ({montant_cible} FCFA).")
+                messages.error(request, f"Vous devez régler exactement le montant dû ({montant_cible:,.0f} FCFA).")
                 return render(request, 'student/paiement/form.html', {
                     'form': form, 'dette': dette, 'tranche_cible': tranche_cible, 'montant_cible': montant_cible,
                 })
             if paiement.montant_paiement <= 0 or paiement.montant_paiement > montant_cible:
-                messages.error(request, f"Le montant saisi dépasse le montant dû ({montant_cible} FCFA).")
+                messages.error(request, f"Le montant saisi dépasse le montant dû ({montant_cible:,.0f} FCFA).")
                 return render(request, 'student/paiement/form.html', {
                     'form': form, 'dette': dette, 'tranche_cible': tranche_cible, 'montant_cible': montant_cible,
                 })
@@ -437,7 +444,7 @@ def effectuer_paiment(request, id):
                 dette.etat_dette = "soldé"
                 dette.save()
 
-            messages.success(request, f'Paiement de {paiement.montant_paiement} FCFA enregistré.')
+            messages.success(request, f'Paiement de {paiement.montant_paiement:,.0f} FCFA enregistré.')
             return redirect('courses:mes_paiements')
     else:
         form = PaiementForm(initial={'tranche': tranche_suivante, 'montant_paiement': montant_cible})
@@ -488,6 +495,44 @@ def _pdf_header_lines(centre=None, direction=None):
     right = ["BURKINA FASO", "**********", "la patrie ou la mort,", "nous vaincrons"]
     return left, right
 
+
+_FAVICON_DATA_URI_CACHE = None
+
+
+def _pdf_logo_data_uri():
+    """Logo encodé en base64, à insérer directement dans le HTML des PDF
+    weasyprint (`<img src="{{ favicon_data_uri }}">`). Nécessaire car
+    `weasyprint.HTML(string=...)` ne peut pas résoudre une URL `{% static %}`
+    en environnement conteneurisé (pas de serveur HTTP réellement joignable
+    depuis le worker qui génère le PDF) — on évite tout aller-retour réseau
+    ou résolution de fichier au moment du rendu."""
+    global _FAVICON_DATA_URI_CACHE
+    if _FAVICON_DATA_URI_CACHE is None:
+        favicon_path = os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
+        with open(favicon_path, 'rb') as f:
+            encoded = base64.b64encode(f.read()).decode('ascii')
+        _FAVICON_DATA_URI_CACHE = f"data:image/png;base64,{encoded}"
+    return _FAVICON_DATA_URI_CACHE
+
+
+def _draw_pdf_watermark(p, width, height, favicon_path=None):
+    """Filigrane discret (logo centré, faible opacité) dessiné en premier —
+    donc derrière tout le reste — sur un canvas reportlab (A5/A4)."""
+    favicon_path = favicon_path or os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
+    size = min(width, height) * 0.6
+    try:
+        p.saveState()
+        p.setFillAlpha(0.06)
+        p.drawImage(
+            ImageReader(favicon_path),
+            x=(width - size) / 2, y=(height - size) / 2,
+            width=size, height=size,
+            preserveAspectRatio=True, mask='auto',
+        )
+        p.restoreState()
+    except Exception:
+        pass
+
 # ─────────────────────────────────────────────
 # ELEVE — Télécharger la quittance PDF
 # ─────────────────────────────────────────────
@@ -522,8 +567,9 @@ def telecharger_quittance(request, id):
          'quittance_numero':paiement.numero_quittance,
          'header_left': header_left,
          'header_right': header_right,
+         'favicon_data_uri': _pdf_logo_data_uri(),
      })
-    pdf_file = weasyprint.HTML(string=html_string).write_pdf()
+    pdf_file = weasyprint.HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
 
     response = HttpResponse(pdf_file, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="quittance_{paiement.numero_quittance}.pdf"'
@@ -566,11 +612,57 @@ def telecharger_recepisse(request, id):
         'titre_document': titre_document,
         'header_left': header_left,
         'header_right': header_right,
+        'favicon_data_uri': _pdf_logo_data_uri(),
     })
-    pdf_file = weasyprint.HTML(string=html_string).write_pdf()
+    pdf_file = weasyprint.HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
 
     response = HttpResponse(pdf_file, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="recepisse_{inscription.id}.pdf"'
+    return response
+
+
+# ─────────────────────────────────────────────
+# ATTESTATION D'INSCRIPTION (nécessite au moins un paiement)
+# ─────────────────────────────────────────────
+@login_required
+def telecharger_attestation(request, id):
+    inscription = get_object_or_404(
+        Inscription.objects.select_related(
+            'eleve', 'formation__centre', 'formation__filiere', 'annee_scolaire'
+        ),
+        id=id
+    )
+
+    if inscription.eleve != request.user.eleve:
+        messages.error(request, "Action non autorisée.")
+        return redirect('courses:my_subscriptions')
+
+    a_un_paiement = Paiement.objects.filter(dette__inscription=inscription).exists()
+    if not a_un_paiement:
+        messages.error(
+            request,
+            "L'attestation d'inscription est disponible après un premier versement pour cette inscription."
+        )
+        return redirect('courses:my_subscriptions')
+
+    centre = inscription.formation.centre
+    header_left, header_right = _pdf_header_lines(centre)
+
+    html_string = render_to_string('student/subscription/attestation_pdf.html', {
+        'inscription': inscription,
+        'eleve': inscription.eleve,
+        'annee_scolaire': inscription.annee_scolaire,
+        'centre': centre,
+        'filiere': inscription.formation.filiere,
+        'numero_dossier': f"DOSS-{inscription.id:06d}",
+        'header_left': header_left,
+        'header_right': header_right,
+        'favicon_data_uri': _pdf_logo_data_uri(),
+    })
+    pdf_file = weasyprint.HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
+
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="attestation_{inscription.id}.pdf"'
     return response
 
 
@@ -591,6 +683,7 @@ def download_quittance(request,id):
     p = canvas.Canvas(buffer, pagesize=A5)
     width, height = A5
     favicon_path = os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
+    _draw_pdf_watermark(p, width, height, favicon_path)
     header_left, header_right = _pdf_header_lines(inscription.formation.centre)
     line_h = 0.28*cm
     y_left = height - 0.6*cm
@@ -612,14 +705,35 @@ def download_quittance(request,id):
     y = height - 5.2*cm
     p.setLineWidth(0.8)
     p.line(1.5*cm, y, width-1.5*cm, y)
-    # FONCTION HELPER 
+    # FONCTION HELPER — bascule automatiquement sur plusieurs lignes si la
+    # valeur (ex. nom de centre ou de métier à rallonge) dépasse la largeur
+    # disponible entre la colonne valeur et la marge droite.
     def ligne(label, valeur, y_pos):
         p.setFont("Helvetica-Bold", 10)
         p.drawString(1.5*cm, y_pos, label)
         p.setFont("Helvetica", 10)
-        p.drawString(7*cm, y_pos, str(valeur))
-        return y_pos - 0.5*cm  # <-- était 0.7*cm (chevauchait le QR code plus bas)
-    #  INFOS QUITTANCE 
+        valeur = str(valeur)
+        max_width = (width - 1.5*cm) - 7*cm
+        if p.stringWidth(valeur, "Helvetica", 10) <= max_width:
+            p.drawString(7*cm, y_pos, valeur)
+            return y_pos - 0.5*cm  # <-- était 0.7*cm (chevauchait le QR code plus bas)
+        mots = valeur.split()
+        lignes, courante = [], ""
+        for mot in mots:
+            essai = f"{courante} {mot}".strip()
+            if p.stringWidth(essai, "Helvetica", 10) <= max_width:
+                courante = essai
+            else:
+                if courante:
+                    lignes.append(courante)
+                courante = mot
+        if courante:
+            lignes.append(courante)
+        line_h = 0.42*cm
+        for i, texte in enumerate(lignes):
+            p.drawString(7*cm, y_pos - i*line_h, texte)
+        return y_pos - len(lignes)*line_h - 0.1*cm
+    #  INFOS QUITTANCE
     y -= 0.5*cm
     y = ligne("Numéro de quittance :", paiement.numero_quittance, y)
     y = ligne("Date de paiement :", paiement.date_paiement.strftime("%d/%m/%Y à %H:%M"), y)
@@ -725,7 +839,12 @@ def student_dashboard(request):
 # MY SUBSCRIPTIONS
 @login_required
 def my_subscriptions(request):
-    subscriptions = Inscription.objects.filter(eleve=request.user.eleve).select_related('formation__centre', 'formation__filiere').order_by('-date_inscription')
+    subscriptions = (
+        Inscription.objects.filter(eleve=request.user.eleve)
+        .select_related('formation__centre', 'formation__filiere')
+        .prefetch_related('dettes__paiements')
+        .order_by('-date_inscription')
+    )
     # Inscriptions rejetées pour lesquelles une réinscription (non re-rejetée) existe déjà :
     # leur bouton "Se réinscrire" doit être désactivé.
     deja_reinscrites_ids = set(
@@ -738,6 +857,11 @@ def my_subscriptions(request):
     paginator = Paginator(subscriptions, 10)
     page = request.GET.get('page')
     subscriptions = paginator.get_page(page)
+
+    # Attestation téléchargeable seulement si au moins un paiement existe
+    # (voir dettes__paiements préchargé ci-dessus — pas de requête par ligne).
+    for insc in subscriptions:
+        insc.has_payment = any(dette.paiements.all() for dette in insc.dettes.all())
 
     context = {'subscriptions': subscriptions, 'deja_reinscrites_ids': deja_reinscrites_ids}
     return render(request, 'student/dashboard/my_subscriptions.html', context)
@@ -950,16 +1074,31 @@ def rejeter_inscription(request,id):
 @require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
 def paiement_list(request):
     """
-    Par défaut : inscriptions du centre du membre connecté dont le reste à
-    payer est strictement positif. Avec une recherche (nom, prénom,
-    identifiant, téléphone), la recherche porte sur tous les centres, pour
+    Par défaut : inscriptions dont le reste à payer est strictement positif,
+    dans le périmètre de l'utilisateur connecté (son centre pour un
+    gestionnaire/caissier, les centres de sa direction pour un directeur
+    inter-régional, tous les centres pour les rôles à portée nationale —
+    voir _get_scope). Avec une recherche (nom, prénom, identifiant,
+    téléphone), la recherche porte sur tous les centres si l'utilisateur a
+    une portée globale ou la permission 'rechercher_tous_centres', pour
     pouvoir encaisser le paiement de n'importe quel apprenant.
+
+    Note : la vue reposait auparavant sur `request.user.membreadministration`
+    seul, ce qui ne couvre que les gestionnaires/caissiers. Un directeur
+    inter-régional (modèle DirecteurInterRegional, distinct de
+    MembreAdministration) ou un rôle à portée nationale (admin, dg, deps,
+    agent_comptable — pas forcément rattachés à un centre) tombait alors sur
+    `centre = None`, ce qui filtrait sur `formation__centre=None` et
+    renvoyait toujours une liste vide, quelles que soient les permissions
+    accordées. On réutilise donc `_get_scope`, déjà utilisé pour les
+    statistiques, qui gère correctement ces cas.
     """
     q = request.GET.get('q', '').strip()
-    membre = getattr(request.user, 'membreadministration', None)
-    centre = membre.structure if membre else None
+    centres_qs, _directions_qs, scope = _get_scope(request.user)
+    multi_centre = scope in ('global', 'direction')
     peut_rechercher_tous_centres = (
         request.user.is_superuser or
+        scope == 'global' or
         request.user.has_perm('courses.rechercher_tous_centres')
     )
     if q and not peut_rechercher_tous_centres:
@@ -986,8 +1125,12 @@ def paiement_list(request):
             Q(eleve__matricule__icontains=q) |
             Q(dettes__paiements__numero_quittance__icontains=q)
         ).distinct().order_by('-date_inscription')
+    elif scope == 'none':
+        inscriptions_qs = base_qs.none()
     else:
-        inscriptions_qs = base_qs.filter(formation__centre=centre).order_by('-date_inscription')
+        inscriptions_qs = base_qs.filter(
+            formation__centre_id__in=centres_qs.values_list('id', flat=True)
+        ).order_by('-date_inscription')
 
     # Le reste à payer est calculé à partir des dettes/paiements déjà préchargés :
     # filtrer en Python plutôt qu'avec une agrégation SQL fragile sur deux
@@ -1008,28 +1151,46 @@ def paiement_list(request):
     page = request.GET.get('page')
     inscriptions = paginator.get_page(page)
 
+    scope_labels = {
+        'global': "tous les centres",
+        'direction': "les centres de votre direction",
+        'centre': "votre centre",
+        'none': "aucun centre (aucune structure ne vous est rattachée)",
+    }
+
     return render(request, 'member/paiement/list.html', {
         'inscriptions': inscriptions,
         'q': q,
-        'centre': centre,
+        'scope': scope,
+        'scope_label': scope_labels.get(scope, "votre centre"),
+        'multi_centre': multi_centre,
         'peut_rechercher_tous_centres': peut_rechercher_tous_centres,
     })
 
 
 @require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
 def paiement_historique(request):
-    """Historique de tous les paiements du centre du membre connecté."""
-    membre = getattr(request.user, 'membreadministration', None)
-    centre = membre.structure if membre else None
+    """
+    Historique des paiements, dans le périmètre de l'utilisateur connecté
+    (même logique de portée que paiement_list — voir _get_scope).
+    """
+    centres_qs, _directions_qs, scope = _get_scope(request.user)
+    multi_centre = scope in ('global', 'direction')
 
     paiements = Paiement.objects.select_related(
         'dette__inscription__eleve',
         'dette__inscription__formation__filiere',
+        'dette__inscription__formation__centre',
         'dette__frais_formation__type_frais',
         'cree_par',
-    ).filter(
-        dette__inscription__formation__centre=centre
     ).order_by('-date_paiement')
+
+    if scope == 'none':
+        paiements = paiements.none()
+    else:
+        paiements = paiements.filter(
+            dette__inscription__formation__centre_id__in=centres_qs.values_list('id', flat=True)
+        )
 
     q = request.GET.get('q', '').strip()
     if q:
@@ -1044,9 +1205,18 @@ def paiement_historique(request):
     page = request.GET.get('page')
     paiements = paginator.get_page(page)
 
+    scope_labels = {
+        'global': "tous les centres",
+        'direction': "les centres de votre direction",
+        'centre': "votre centre",
+        'none': "aucun centre (aucune structure ne vous est rattachée)",
+    }
+
     return render(request, 'member/paiement/historique.html', {
         'paiements': paiements,
-        'centre': centre,
+        'scope': scope,
+        'scope_label': scope_labels.get(scope, "votre centre"),
+        'multi_centre': multi_centre,
         'q': q,
     })
 
@@ -1173,13 +1343,27 @@ def home(request):
         .select_related('centre', 'filiere', 'annee_prog')
         .order_by('-date_lancement')
     )
+    # Un carrousel représente un métier, mais un même métier peut être
+    # programmé sur plusieurs centres/années (plusieurs CentreEtFiliere) :
+    # on garde une seule carte par métier (la plus récemment lancée), mais on
+    # calcule quand même, sur l'ENSEMBLE de ses formations actives, la date
+    # limite d'inscription qui expire le plus tôt.
     seen_filieres = set()
     active_careers = []
+    earliest_deadlines = {}
     for career in careers_qs:
+        if career.date_limite_inscription:
+            current = earliest_deadlines.get(career.filiere_id)
+            if current is None or career.date_limite_inscription < current:
+                earliest_deadlines[career.filiere_id] = career.date_limite_inscription
         if career.filiere_id in seen_filieres:
             continue
         seen_filieres.add(career.filiere_id)
         active_careers.append(career)
+
+    for career in active_careers:
+        career.date_limite_proche = earliest_deadlines.get(career.filiere_id)
+
     return render(request, "third_pages/home.html", {'active_careers': active_careers})
 
 # ABOUT
@@ -1457,7 +1641,11 @@ def _can_access_eleve_finances(user, eleve):
     """
     Contrôle d'accès pour les vues financières d'un élève (dettes/quittances) :
     l'élève lui-même, un superuser, ou un membre du personnel dont le périmètre
-    (centre/direction/global) couvre au moins une des inscriptions de l'élève.
+    (centre/direction/global) couvre au moins une des inscriptions de l'élève —
+    ou qui a `rechercher_tous_centres`, qui étend volontairement l'accès à
+    tous les centres (voir migration 0031 : cette permission existe pour que
+    la recherche cross-centre d'un caissier/directeur reste cohérente avec ce
+    qu'`encaisser_paiement` autorise déjà — action jamais limitée par centre).
     """
     if user.is_superuser:
         return True
@@ -1465,6 +1653,8 @@ def _can_access_eleve_finances(user, eleve):
         return True
     if not user.has_perm('courses.voir_inscriptions'):
         return False
+    if user.has_perm('courses.rechercher_tous_centres'):
+        return True
     centres_qs, _, scope = _get_scope(user)
     if scope == "none":
         return False
@@ -1483,6 +1673,8 @@ def _can_access_dette_finances(user, dette):
         return True
     if not user.has_perm('courses.voir_inscriptions'):
         return False
+    if user.has_perm('courses.rechercher_tous_centres'):
+        return True
     centres_qs, _, scope = _get_scope(user)
     if scope == "none":
         return False
@@ -1992,7 +2184,10 @@ def export_pdf(request):
     )
     story.append(Paragraph(f"BSB-DSI          généré sur YU-PAAN le : {now}", footer_style))
 
-    doc.build(story)
+    def _watermark_page(canvas_obj, doc_obj):
+        _draw_pdf_watermark(canvas_obj, doc_obj.pagesize[0], doc_obj.pagesize[1])
+
+    doc.build(story, onFirstPage=_watermark_page, onLaterPages=_watermark_page)
     buffer.seek(0)
     response = HttpResponse(buffer, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="rapport_{export_type}.pdf"'
@@ -2018,7 +2213,11 @@ def stats_dettes_eleve_view(request, eleve_id):
         .order_by('-date_inscription')
     )
 
-    if not request.user.is_superuser and getattr(request.user, 'pk', None) != eleve.pk:
+    if (
+        not request.user.is_superuser
+        and getattr(request.user, 'pk', None) != eleve.pk
+        and not request.user.has_perm('courses.rechercher_tous_centres')
+    ):
         centres_qs, _, scope = _get_scope(request.user)
         if scope != "global":
             centre_ids = list(centres_qs.values_list("id", flat=True))
@@ -2246,6 +2445,7 @@ def stats_download_quittance_view(request, paiement_id):
     width, height = A5
 
     favicon_path = os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
+    _draw_pdf_watermark(p, width, height, favicon_path)
     header_left, header_right = _pdf_header_lines(inscription.formation.centre)
     line_h = 0.28*cm
     y_left = height - 0.6*cm
@@ -2272,12 +2472,33 @@ def stats_download_quittance_view(request, paiement_id):
     p.setLineWidth(0.8)
     p.line(1.5*cm, y, width-1.5*cm, y)
 
+    # Bascule automatiquement sur plusieurs lignes si la valeur (ex. nom de
+    # centre ou de métier à rallonge) dépasse la largeur disponible.
     def ligne(label, valeur, y_pos):
         p.setFont("Helvetica-Bold", 10)
         p.drawString(1.5*cm, y_pos, label)
         p.setFont("Helvetica", 10)
-        p.drawString(7*cm, y_pos, str(valeur))
-        return y_pos - 0.5*cm   # <-- était 0.7*cm
+        valeur = str(valeur)
+        max_width = (width - 1.5*cm) - 7*cm
+        if p.stringWidth(valeur, "Helvetica", 10) <= max_width:
+            p.drawString(7*cm, y_pos, valeur)
+            return y_pos - 0.5*cm   # <-- était 0.7*cm
+        mots = valeur.split()
+        lignes, courante = [], ""
+        for mot in mots:
+            essai = f"{courante} {mot}".strip()
+            if p.stringWidth(essai, "Helvetica", 10) <= max_width:
+                courante = essai
+            else:
+                if courante:
+                    lignes.append(courante)
+                courante = mot
+        if courante:
+            lignes.append(courante)
+        line_h = 0.42*cm
+        for i, texte in enumerate(lignes):
+            p.drawString(7*cm, y_pos - i*line_h, texte)
+        return y_pos - len(lignes)*line_h - 0.1*cm
 
     y -= 0.5*cm
     y = ligne("Numéro de quittance :", paiement.numero_quittance, y)
@@ -2862,7 +3083,7 @@ def formateur_export(request, formation_id, format):
         from reportlab.lib.pagesizes import A4, landscape
         from reportlab.lib import colors as rl_colors
         from reportlab.lib.units import cm
-        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
         buffer = io.BytesIO()
@@ -2874,6 +3095,28 @@ def formateur_export(request, formation_id, format):
         )
         styles = getSampleStyleSheet()
         elements = []
+
+        # En-tête (logo centré, petit)
+        favicon_path = os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
+        header_line_style = ParagraphStyle(
+            'header_line', parent=styles['Normal'], fontSize=6, leading=8,
+            alignment=1, fontName='Helvetica-Bold',
+        )
+        header_left_fe, header_right_fe = _pdf_header_lines(formation.centre)
+        header_table = Table(
+            [[
+                Paragraph('<br/>'.join(header_left_fe), header_line_style),
+                Image(favicon_path, width=1.6*cm, height=1.6*cm),
+                Paragraph('<br/>'.join(header_right_fe), header_line_style),
+            ]],
+            colWidths=[10*cm, 3*cm, 10*cm],
+        )
+        header_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        elements.append(header_table)
+        elements.append(Spacer(1, 12))
 
         # Titre
         title_style = ParagraphStyle(
@@ -2931,7 +3174,10 @@ def formateur_export(request, formation_id, format):
             footer_style
         ))
 
-        doc.build(elements)
+        def _watermark_page_fe(canvas_obj, doc_obj):
+            _draw_pdf_watermark(canvas_obj, doc_obj.pagesize[0], doc_obj.pagesize[1], favicon_path)
+
+        doc.build(elements, onFirstPage=_watermark_page_fe, onLaterPages=_watermark_page_fe)
         buffer.seek(0)
         response = HttpResponse(buffer, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="etudiants_{label}.pdf"'

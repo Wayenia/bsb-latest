@@ -1,4 +1,4 @@
-{% load static %}
+{% load static humanize %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -7,10 +7,19 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: Georgia, serif;
-    background: #fff;
     color: #111;
     font-size: 13px;
     padding: 30px 40px;
+  }
+
+  .pdf-watermark {
+    position: fixed;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 9cm;
+    opacity: 0.06;
+    z-index: -1;
   }
 
   .header {
@@ -104,16 +113,18 @@
 </head>
 <body>
 
+  <img class="pdf-watermark" src="{{ favicon_data_uri }}" alt="">
+
   <!-- EN-TETE -->
   <div class="header">
     <div class="header-left">
       {% for line in header_left %}<p>{{ line }}</p>{% endfor %}
     </div>
     <div class="header-center">
-      <img src="{% static 'images/favicon.png' %}" alt="BSB">
+      <img src="{{ favicon_data_uri }}" alt="BSB">
     </div>
     <div class="header-right">
-      {% for line in header_right %}<p>{{ line }}</p>{% endfor %}
+      {% for line in header_right %}<p{% if 'patrie' in line or 'vaincrons' in line %} style="text-transform:none;"{% endif %}>{{ line }}</p>{% endfor %}
     </div>
   </div>
   <!-- NUMERO ET DATE -->
@@ -163,7 +174,7 @@
   </div>
   <div class="ligne">
     <span class="label">Montant payé :</span>
-    <span class="valeur montant-final">{{ paiement.montant_paiement|floatformat:0 }} FCFA</span>
+    <span class="valeur montant-final">{{ paiement.montant_paiement|floatformat:0|intcomma }} FCFA</span>
   </div>
 
   <hr class="separateur">
@@ -171,15 +182,15 @@
   <!-- RECAP DETTE -->
   <div class="ligne">
     <span class="label">Total dû :</span>
-    <span class="valeur">{{ dette.montant_total|floatformat:0 }} FCFA</span>
+    <span class="valeur">{{ dette.montant_total|floatformat:0|intcomma }} FCFA</span>
   </div>
   <div class="ligne">
     <span class="label">Total payé :</span>
-    <span class="valeur">{{ dette.montant_paye|floatformat:0 }} FCFA</span>
+    <span class="valeur">{{ dette.montant_paye|floatformat:0|intcomma }} FCFA</span>
   </div>
   <div class="ligne">
     <span class="label">Reste à payer :</span>
-    <span class="valeur montant-final">{{ dette.reste_a_payer|floatformat:0 }} FCFA</span>
+    <span class="valeur montant-final">{{ dette.reste_a_payer|floatformat:0|intcomma }} FCFA</span>
   </div>
   <div class="ligne">
     <span class="label">État de la dette :</span>

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block title %} Paiements | BSB{% endblock %}
 
 {% block content %}
@@ -72,18 +73,18 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap ">
                             <span class="text-sm font-medium bg-yellow-500 text-white rounded-lg px-2 py-1">
-                                {{ insc.total_du }} FCFA
+                                {{ insc.total_du|floatformat:0|intcomma }} FCFA
                             </span>
                             
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="text-sm font-medium bg-green-500 text-white rounded-lg px-2 py-1">
-                                {{ insc.total_paye }} FCFA
+                                {{ insc.total_paye|floatformat:0|intcomma }} FCFA
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="text-sm font-medium bg-red-500 text-white rounded-lg px-2 py-1">
-                                {{ insc.reste }} FCFA
+                                {{ insc.reste|floatformat:0|intcomma }} FCFA
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -171,7 +172,7 @@
                         {{ dette.frais_formation.type_frais }}
                     </span>
                     <span class="text-xs text-gray-500">
-                        Total dû : <strong>{{ dette.montant_total }} FCFA</strong>
+                        Total dû : <strong>{{ dette.montant_total|floatformat:0|intcomma }} FCFA</strong>
                     </span>
                 </div>
 
@@ -192,7 +193,7 @@
                             <td class="px-4 py-2 font-medium text-gray-800">Tranche {{ pmt.tranche }}</td>
                             <td class="px-4 py-2">
                                 <span class="bg-green-500 text-white text-xs rounded-md px-2 py-0.5">
-                                    {{ pmt.montant_paiement }} FCFA
+                                    {{ pmt.montant_paiement|floatformat:0|intcomma }} FCFA
                                 </span>
                             </td>
                             <td class="px-4 py-2 text-gray-600">{{ pmt.date_paiement|date:"d/m/Y H:i" }}</td>
@@ -213,13 +214,13 @@
 
         <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-end gap-8 text-sm">
             <span class="text-gray-600">
-                Total dû : <span class="font-bold text-yellow-500">{{ insc.total_du }} FCFA</span>
+                Total dû : <span class="font-bold text-yellow-500">{{ insc.total_du|floatformat:0|intcomma }} FCFA</span>
             </span>
             <span class="text-gray-600">
-                Total payé : <span class="font-bold text-green-600">{{ insc.total_paye }} FCFA</span>
+                Total payé : <span class="font-bold text-green-600">{{ insc.total_paye|floatformat:0|intcomma }} FCFA</span>
             </span>
             <span class="text-gray-600">
-                Reste : <span class="font-bold text-red-600">{{ insc.reste }} FCFA</span>
+                Reste : <span class="font-bold text-red-600">{{ insc.reste|floatformat:0|intcomma }} FCFA</span>
             </span>
         </div>
     </div>

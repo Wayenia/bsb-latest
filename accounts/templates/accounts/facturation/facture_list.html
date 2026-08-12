@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block title %}Encaissement/Prestation | BSB{% endblock %}
 
 {% block content %}
@@ -77,9 +78,9 @@
                             <span class="px-3 py-1 inline-flex text-xs font-bold rounded-full bg-yellow-100 text-yellow-800">Proforma</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">{{ facture.montant_total|floatformat:0 }} FCFA</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">{{ facture.montant_total|floatformat:0|intcomma }} FCFA</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-700">
-                            {% if facture.type_facture == 'definitive' %}{{ facture.reste_a_payer|floatformat:0 }} FCFA{% else %}—{% endif %}
+                            {% if facture.type_facture == 'definitive' %}{{ facture.reste_a_payer|floatformat:0|intcomma }} FCFA{% else %}—{% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right">
                             <div class="flex items-center justify-end gap-2">

@@ -32,7 +32,7 @@ from courses.bulk_import.specs import ColumnSpec, ImportSpec
 
 from .models import AnneeScolaire, CentreEtFiliere, EffectifReel, Filiere, Inscription
 from .permissions import require_permission
-from .views import _get_scope, _pdf_header_lines
+from .views import _get_scope, _pdf_header_lines, _pdf_logo_data_uri
 
 ROUGE = "C0392B"
 OR = "D4A017"
@@ -626,8 +626,9 @@ def stats_reel_export_nominatif(request):
         'header_right': header_right,
         'date_generation': timezone.now(),
         'annee_libelle': annee_obj.libelle_anne if annee_obj else "toutes années",
+        'favicon_data_uri': _pdf_logo_data_uri(),
     })
-    pdf_file = weasyprint.HTML(string=html_string).write_pdf()
+    pdf_file = weasyprint.HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
     response = HttpResponse(pdf_file, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="liste_nominative_residentielle{_annee_suffix(annee_id)}.pdf"'
     return response
@@ -827,8 +828,9 @@ def stats_reel_export_certification(request):
         'header_right': header_right,
         'date_generation': timezone.now(),
         'annee_libelle': annee_obj.libelle_anne if annee_obj else "toutes années",
+        'favicon_data_uri': _pdf_logo_data_uri(),
     })
-    pdf_file = weasyprint.HTML(string=html_string).write_pdf()
+    pdf_file = weasyprint.HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
     response = HttpResponse(pdf_file, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="resultats_examens_certification{_annee_suffix(annee_id)}.pdf"'
     return response
@@ -889,8 +891,9 @@ def stats_reel_export_handicap(request):
         'header_right': header_right,
         'date_generation': timezone.now(),
         'annee_libelle': annee_obj.libelle_anne if annee_obj else "toutes années",
+        'favicon_data_uri': _pdf_logo_data_uri(),
     })
-    pdf_file = weasyprint.HTML(string=html_string).write_pdf()
+    pdf_file = weasyprint.HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
     response = HttpResponse(pdf_file, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="repartition_handicap{_annee_suffix(annee_id)}.pdf"'
     return response

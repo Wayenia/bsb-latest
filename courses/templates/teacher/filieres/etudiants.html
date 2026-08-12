@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block title %}Étudiants — {{ formation.filiere.nom_filiere }} | BSB{% endblock %}
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
@@ -145,13 +146,13 @@
                             {% endwith %}
                         </td>
                         <td class="px-4 py-3 text-right text-sm text-gray-700 font-medium">
-                            {% if item.total_du %}{{ item.total_du|floatformat:0 }} F{% else %}—{% endif %}
+                            {% if item.total_du %}{{ item.total_du|floatformat:0|intcomma }} F{% else %}—{% endif %}
                         </td>
                         <td class="px-4 py-3 text-right text-sm font-medium {% if item.total_paye > 0 %}text-green-700{% else %}text-gray-400{% endif %}">
-                            {% if item.total_paye %}{{ item.total_paye|floatformat:0 }} F{% else %}0 F{% endif %}
+                            {% if item.total_paye %}{{ item.total_paye|floatformat:0|intcomma }} F{% else %}0 F{% endif %}
                         </td>
                         <td class="px-4 py-3 text-right text-sm font-medium {% if item.reste > 0 %}text-red-600{% else %}text-green-600{% endif %}">
-                            {{ item.reste|floatformat:0 }} F
+                            {{ item.reste|floatformat:0|intcomma }} F
                         </td>
                         <td class="px-4 py-3 text-center">
                             {% if item.a_paye %}

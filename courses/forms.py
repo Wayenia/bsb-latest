@@ -1,3 +1,5 @@
+from datetime import date
+
 from django import forms
 from .models import (
     TITRE_PROFESSIONNEL_CHOICE, Direction_reg, Filiere, CentreFormation, Module,
@@ -5,6 +7,14 @@ from .models import (
     AnneeScolaire, TrancheFrais, Region
 )
 from django.forms import inlineformset_factory
+
+
+def max_date_naissance():
+    """Dernier jour de l'année précédente : empêche de choisir une date de
+    naissance dans l'année en cours (personne ne s'inscrit l'année de sa
+    naissance)."""
+    return date(date.today().year - 1, 12, 31)
+
 
 ############### BASE FORM / COMMON FORM #############
 class BaseModelForm(forms.ModelForm):
@@ -133,6 +143,16 @@ class PersonalInfoForm(forms.Form):
             'placeholder':'+226 65 08 57 40'
         })
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['date_naissance'].widget.attrs['max'] = max_date_naissance().isoformat()
+
+    def clean_date_naissance(self):
+        naissance = self.cleaned_data.get('date_naissance')
+        if naissance and naissance > max_date_naissance():
+            raise forms.ValidationError("La date de naissance ne peut pas être dans l'année en cours.")
+        return naissance
 
 
 # SUBSCRIPTION
@@ -603,6 +623,12 @@ class CentreEtFiliereForm(BaseModelForm):
                 self.initial['date_fin'] = self.instance.date_fin.strftime('%Y-%m-%dT%H:%M')
             if self.instance.date_limite_inscription:
                 self.initial['date_limite_inscription'] = self.instance.date_limite_inscription.strftime('%Y-%m-%dT%H:%M')
+        else:
+            # Nouvelle programmation : présélectionner l'année scolaire la plus
+            # récemment créée plutôt que de forcer un choix manuel à chaque fois.
+            derniere_annee = AnneeScolaire.objects.order_by('-date_creation').first()
+            if derniere_annee:
+                self.initial['annee_prog'] = derniere_annee.pk
 
 class PieceJointeForm(forms.ModelForm):
     class Meta:
@@ -797,6 +823,7 @@ class AgentForm(forms.ModelForm):
         ).strip()
         self.fields['tel'].required = False
         self.fields['date_naissance'].required = False
+        self.fields['date_naissance'].widget.attrs['max'] = max_date_naissance().isoformat()
         self.fields['adresse'].required = False
 
         # ── Préremplissage en mode modification ───────────────────────────────
@@ -851,6 +878,12 @@ class AgentForm(forms.ModelForm):
             self.fields['module'].queryset = Module.objects.none()
 
     # ── Validations ───────────────────────────────────────────────────────────
+
+    def clean_date_naissance(self):
+        naissance = self.cleaned_data.get('date_naissance')
+        if naissance and naissance > max_date_naissance():
+            raise forms.ValidationError("La date de naissance ne peut pas être dans l'année en cours.")
+        return naissance
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').strip()
@@ -1081,11 +1114,19 @@ class EleveForm(forms.ModelForm):
         )
         for field in self.fields.values():
             field.widget.attrs.setdefault('class', base)
+        self.fields['tel'].widget.attrs['class'] = base + ' phone-intl'
         self.fields['tel'].required = False
         self.fields['adresse'].required = False
         self.fields['date_naissance'].required = False
+        self.fields['date_naissance'].widget.attrs['max'] = max_date_naissance().isoformat()
         self.fields['nationalite'].required = False
         self.fields['niveau_scolaire'].required = False
+
+    def clean_date_naissance(self):
+        naissance = self.cleaned_data.get('date_naissance')
+        if naissance and naissance > max_date_naissance():
+            raise forms.ValidationError("La date de naissance ne peut pas être dans l'année en cours.")
+        return naissance
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').strip()

@@ -13,7 +13,7 @@
         
         <div class="text-center mb-10">
             <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-3">
-                Inscription <span class="text-yellow-600">sur Yupan</span>
+                Inscription sur <span class="text-yellow-600">Yupaan</span>
             </h1>
             <p class="text-xl text-gray-600 max-w-2xl mx-auto">
                 La maison des compétences du BURKINA FASO
@@ -128,8 +128,8 @@
                                         <input type="tel" name="tel" id="id_tel" required value="{{ form_data.tel|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none phone-intl" placeholder="+22670010300">
                                     </div>
                                     <div class="space-y-2">
-                                        <label class="text-sm font-bold text-gray-700">Adresse / Localité <span class="text-red-700">*</span></label>
-                                        <input type="text" name="adresse" required value="{{ form_data.adresse|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" placeholder="Ouagadougou, Secteur 15">
+                                        <label class="text-sm font-bold text-gray-700">Adresse / Localité</label>
+                                        <input type="text" name="adresse" value="{{ form_data.adresse|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" placeholder="Ouagadougou, Secteur 15">
                                     </div>
                                     <div class="space-y-2 col-span-full">
                                         <label class="text-sm font-bold text-gray-700">Adresse Email</label>
@@ -149,7 +149,28 @@
                                     </div>
                                     <div class="space-y-2">
                                         <label class="text-sm font-bold text-gray-700">Date de naissance</label>
-                                        <input type="date" name="date_naissance" value="{{ form_data.date_naissance|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                        {% now "Y" as current_year %}
+                                        <input type="date" name="date_naissance" id="id_date_naissance" value="{{ form_data.date_naissance|default:'' }}" max="{{ current_year|add:'-1' }}-12-31" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700">Nom du père <span class="text-red-700">*</span></label>
+                                        <input type="text" name="nom_pere" required value="{{ form_data.nom_pere|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700">Prénom du père <span class="text-red-700">*</span></label>
+                                        <input type="text" name="prenom_pere" required value="{{ form_data.prenom_pere|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700">Nom de la mère <span class="text-red-700">*</span></label>
+                                        <input type="text" name="nom_mere" required value="{{ form_data.nom_mere|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700">Prénom de la mère <span class="text-red-700">*</span></label>
+                                        <input type="text" name="prenom_mere" required value="{{ form_data.prenom_mere|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                    </div>
+                                    <div class="space-y-2 col-span-full hidden" id="nip-wrap">
+                                        <label class="text-sm font-bold text-gray-700">NIP (Numéro d'Identification Personnel) <span class="text-red-700">*</span></label>
+                                        <input type="text" name="nip" id="id_nip" maxlength="20" value="{{ form_data.nip|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" placeholder="Obligatoire à partir de 18 ans">
                                     </div>
                                 </div>
                             </div>
@@ -280,6 +301,34 @@
     document.getElementById('registrationForm').onsubmit = function() {
         return validateCurrentStep();
     };
+
+    // Âge >= 18 ans calculé à partir de la date de naissance -> NIP obligatoire
+    function toggleNip() {
+        var dateInput = document.getElementById('id_date_naissance');
+        var wrap = document.getElementById('nip-wrap');
+        var nipInput = document.getElementById('id_nip');
+        if (!dateInput.value) {
+            wrap.classList.add('hidden');
+            nipInput.required = false;
+            return;
+        }
+        var naissance = new Date(dateInput.value);
+        var today = new Date();
+        var age = today.getFullYear() - naissance.getFullYear();
+        var pasEncoreAnniversaire = (today.getMonth() < naissance.getMonth()) ||
+            (today.getMonth() === naissance.getMonth() && today.getDate() < naissance.getDate());
+        if (pasEncoreAnniversaire) { age--; }
+
+        if (age >= 18) {
+            wrap.classList.remove('hidden');
+            nipInput.required = true;
+        } else {
+            wrap.classList.add('hidden');
+            nipInput.required = false;
+        }
+    }
+    document.getElementById('id_date_naissance').addEventListener('change', toggleNip);
+    toggleNip();
 
     showStep(1);
 </script>

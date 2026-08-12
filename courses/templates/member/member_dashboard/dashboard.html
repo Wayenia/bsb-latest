@@ -26,6 +26,7 @@
         </div>
 
         <!-- Dashboard Cards -->
+        {% if user.user_type != 'caissier' %}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               <!-- Subscirptions -->
                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4">
@@ -72,6 +73,7 @@
                     </div>
                 </div>
         </div>
+        {% endif %}
 
         <!-- ══════════════════════════════════════════════════════════════
              Navigation — cartes filtrées par permission (matrice de rôles)
@@ -112,7 +114,7 @@
             {% endif %}
 
             {% if perms.courses.encaisser_paiement or perms.courses.gerer_paiements %}
-            <a href="{% if membre %}{% url 'courses:paiement_list' %}{% else %}{% url 'bsb_admin:payment_list' %}{% endif %}"
+            <a href="{% url 'courses:paiement_list' %}"
                class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-green-200 transition-all duration-200 p-6 flex items-start gap-4">
                 <div class="flex-1">
                     <h2 class="text-base font-bold text-gray-600 underline group-hover:text-gray-800 transition-colors">Encaissements</h2>

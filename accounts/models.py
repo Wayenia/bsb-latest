@@ -107,6 +107,16 @@ class Utilisateur(AbstractUser):
 class Eleve(Utilisateur):
     lieu_naissance = models.CharField(max_length=225, verbose_name="Lieu de naissance")
 
+    nom_pere = models.CharField(max_length=150, verbose_name="Nom du père")
+    prenom_pere = models.CharField(max_length=150, verbose_name="Prénom du père")
+    nom_mere = models.CharField(max_length=150, verbose_name="Nom de la mère")
+    prenom_mere = models.CharField(max_length=150, verbose_name="Prénom de la mère")
+    nip = models.CharField(
+        max_length=20, blank=True, null=True,
+        verbose_name="NIP (Numéro d'Identification Personnel)",
+        help_text="Obligatoire à partir de 18 ans."
+    )
+
     numero_identifiant = models.CharField(
         max_length=50,
         unique=True,

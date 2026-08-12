@@ -54,7 +54,7 @@
     font-size: 18px;
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
   }
 
   hr {
@@ -82,15 +82,11 @@
     margin: 22px 0;
   }
 
-  .statut-badge {
-    display: inline-block;
-    font-weight: bold;
-    padding: 4px 12px;
-    border-radius: 4px;
+  .texte-attestation {
+    text-align: justify;
+    line-height: 1.7;
+    margin: 24px 0;
   }
-  .statut-en_cours { background: #FEF3C7; color: #92400E; }
-  .statut-valide { background: #D1FAE5; color: #065F46; }
-  .statut-rejete { background: #FEE2E2; color: #991B1B; }
 
   .footer {
     margin-top: 60px;
@@ -140,7 +136,7 @@
     </div>
   </div>
 
-  <h1 class="titre">{{ titre_document }}</h1>
+  <h1 class="titre">Attestation d'inscription</h1>
 
   <!-- NUMERO ET DATE -->
   <div class="ligne">
@@ -148,16 +144,28 @@
     <span class="valeur">{{ numero_dossier }}</span>
   </div>
   <div class="ligne">
-    <span class="label">Date de dépôt :</span>
-    <span class="valeur">{{ inscription.date_inscription|date:"d/m/Y à H:i" }}</span>
+    <span class="label">Date de délivrance :</span>
+    <span class="valeur">{% now "d/m/Y" %}</span>
   </div>
 
   <hr class="separateur">
 
-  <!-- APPRENANT -->
+  <p class="texte-attestation">
+    La Direction Générale de Burkina Suudu Bawdè atteste que
+    <strong>{{ eleve.nom }} {{ eleve.prenom }}</strong>, né(e) le {{ eleve.date_naissance|date:"d/m/Y"|default:"—" }}
+    à {{ eleve.lieu_naissance|default:"—" }}, est régulièrement inscrit(e) au sein du centre
+    <strong>{{ centre }}</strong> pour la formation <strong>{{ filiere }}</strong>, au titre de
+    l'année scolaire <strong>{{ annee_scolaire }}</strong>, et a effectué un versement au titre de
+    cette inscription.
+  </p>
+
   <div class="ligne">
     <span class="label">Apprenant :</span>
     <span class="valeur">{{ eleve.nom }} {{ eleve.prenom }}</span>
+  </div>
+  <div class="ligne">
+    <span class="label">Identifiant :</span>
+    <span class="valeur">{{ eleve.numero_identifiant|default:"—" }}</span>
   </div>
   <div class="ligne">
     <span class="label">Centre :</span>
@@ -172,19 +180,18 @@
     <span class="valeur">{{ annee_scolaire }}</span>
   </div>
 
-  <hr class="separateur">
+  <p class="texte-attestation">
+    La présente attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.
+  </p>
 
-  <!-- STATUT -->
-  <div class="ligne">
-    <span class="label">Statut de la demande :</span>
-    <span class="valeur"><span class="statut-badge statut-{{ inscription.statut }}">{{ inscription.get_statut_display }}</span></span>
+  <!-- SIGNATURE -->
+  <div class="footer">
+    <div class="signature">
+      <p>Le Directeur du centre</p>
+      <div style="height:50px;"></div>
+      <div class="ligne-sign"></div>
+    </div>
   </div>
-  {% if inscription.statut == 'rejete' %}
-  <div class="ligne">
-    <span class="label">Motif de rejet :</span>
-    <span class="valeur">{{ inscription.motif_rejet }}</span>
-  </div>
-  {% endif %}
 
   <!-- BAS DE PAGE -->
   <div class="bas-page">

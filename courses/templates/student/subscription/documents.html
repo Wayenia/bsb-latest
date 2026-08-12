@@ -76,13 +76,15 @@
               {% endif %}
             </div>
             
-            <input
-              type="file"
-              name="{{ doc.libelle_piece }}"
-              id="{{ doc.libelle_piece }}"
-              {% if doc.est_requis %}required{% endif %}
-              class="block w-full text-base text-slate-600 py-3 px-0 border-0 border-b-2 border-slate-200 bg-transparent focus:border-yellow-600 focus:outline-none transition-colors file:mr-4 file:py-2 file:px-0 file:border-0 file:text-base file:font-medium file:bg-transparent file:text-yellow-600"
-            >
+            <div class="rounded-xl border-2 border-dashed border-yellow-400 bg-yellow-50 hover:bg-yellow-100 transition-colors px-4 py-4">
+              <input
+                type="file"
+                name="{{ doc.libelle_piece }}"
+                id="{{ doc.libelle_piece }}"
+                {% if doc.est_requis %}required{% endif %}
+                class="block w-full text-sm text-slate-600 cursor-pointer file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-yellow-600 file:text-white hover:file:bg-yellow-700 file:cursor-pointer file:transition-colors"
+              >
+            </div>
 
             <div class="flex items-center gap-4 mt-2">
               <span class="text-xs text-slate-400">PDF 10 Mo max</span>
