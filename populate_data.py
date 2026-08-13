@@ -528,7 +528,7 @@ nom, prenom, username, email, mdp = DG_DATA
 obj, created = Utilisateur.objects.get_or_create(
     username=username,
     defaults={
-        "nom": nom, "prenom": prenom, "email": email, "sexe": "m",
+        "nom": nom.upper(), "prenom": prenom, "email": email, "sexe": "m",
         "user_type": "dg", "password": make_password(mdp), "is_active": True,
     }
 )
@@ -539,7 +539,7 @@ for nom, prenom, username, email, mdp, direction_nom in DIR_DATA:
     obj, created = DirecteurInterRegional.objects.get_or_create(
         username=username,
         defaults={
-            "nom": nom, "prenom": prenom, "email": email, "sexe": "m",
+            "nom": nom.upper(), "prenom": prenom, "email": email, "sexe": "m",
             "password": make_password(mdp), "is_active": True,
             "direction": directions[direction_nom],
         }
@@ -551,7 +551,7 @@ nom, prenom, username, email, mdp = DAF_DATA
 obj, created = DAF.objects.get_or_create(
     username=username,
     defaults={
-        "nom": nom, "prenom": prenom, "email": email, "sexe": "m",
+        "nom": nom.upper(), "prenom": prenom, "email": email, "sexe": "m",
         "password": make_password(mdp), "is_active": True,
     }
 )
@@ -562,7 +562,7 @@ for nom, prenom, username, email, mdp, centre_nom in CENTRE_DIRECTEURS_DATA:
     obj, created = MembreAdministration.objects.get_or_create(
         username=username,
         defaults={
-            "nom": nom, "prenom": prenom, "email": email, "sexe": "m",
+            "nom": nom.upper(), "prenom": prenom, "email": email, "sexe": "m",
             "password": make_password(mdp), "is_active": True,
             "user_type": "gestionnaire",
             "structure": centres[centre_nom], "direction": None,
@@ -576,7 +576,7 @@ for nom, prenom, username, email, mdp, centre_nom in CAISSIERS_CENTRE_DATA:
     obj, created = MembreAdministration.objects.get_or_create(
         username=username,
         defaults={
-            "nom": nom, "prenom": prenom, "email": email, "sexe": "m",
+            "nom": nom.upper(), "prenom": prenom, "email": email, "sexe": "m",
             "password": make_password(mdp), "is_active": True,
             "user_type": "caissier",
             "structure": centres[centre_nom], "direction": None,
@@ -590,7 +590,7 @@ for nom, prenom, username, email, mdp, emploi, user_type in MEMBRES_SIEGE_DATA:
     obj, created = MembreAdministration.objects.get_or_create(
         username=username,
         defaults={
-            "nom": nom, "prenom": prenom, "email": email, "sexe": "m",
+            "nom": nom.upper(), "prenom": prenom, "email": email, "sexe": "m",
             "password": make_password(mdp), "is_active": True,
             "user_type": user_type,
             "structure": None, "direction": None,
