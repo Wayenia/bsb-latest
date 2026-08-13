@@ -177,7 +177,7 @@ class ProfilForm(forms.ModelForm):
             'prenom': forms.TextInput(attrs={'class': _BASE_CLASSES}),
             'sexe': forms.Select(attrs={'class': _BASE_CLASSES}),
             'date_naissance': forms.DateInput(attrs={'class': _BASE_CLASSES, 'type': 'date'}, format='%Y-%m-%d'),
-            'tel': forms.TextInput(attrs={'class': _BASE_CLASSES + ' phone-intl', 'placeholder': '+226 70 00 00 00'}),
+            'tel': forms.TextInput(attrs={'class': _BASE_CLASSES + ' phone-intl', 'placeholder': '70 00 00 00'}),
             'adresse': forms.TextInput(attrs={'class': _BASE_CLASSES}),
             'email': forms.EmailInput(attrs={'class': _BASE_CLASSES}),
         }

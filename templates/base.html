@@ -212,6 +212,18 @@
         script.src = '{% static "vendor/intl-tel-input/js/intlTelInputWithUtils.min.js" %}';
         script.onload = function () {
             phoneInputs.forEach(function (input) {
+                // Création : champ vide -> indicatif +226 (Burkina Faso) sélectionné
+                // par défaut, dépliable pour choisir un autre pays (comportement
+                // natif du plugin via initialCountry).
+                // Modification : le champ arrive déjà rempli par Django avec le
+                // numéro complet enregistré (ex. +2250700000000). initialCountry
+                // ne s'applique qu'aux champs vides, donc on le mémorise ici et on
+                // le repasse explicitement à setNumber() une fois la librairie
+                // prête : c'est ce qui fait détecter et sélectionner le bon pays
+                // (au lieu de rester bloqué sur +226) tout en laissant l'indicatif
+                // modifiable normalement ensuite.
+                var valeurInitiale = input.value.trim();
+
                 var iti = window.intlTelInput(input, {
                     initialCountry: 'bf',
                     preferredCountries: ['bf', 'ci', 'gh', 'tg', 'bj', 'ml', 'ne'],
@@ -219,6 +231,12 @@
                     strictMode: true,
                     utilsScript: '{% static "vendor/intl-tel-input/js/utils.js" %}',
                 });
+
+                if (valeurInitiale) {
+                    iti.promise.then(function () {
+                        iti.setNumber(valeurInitiale);
+                    });
+                }
 
                 var errorEl = document.createElement('p');
                 errorEl.className = 'text-xs text-red-600 mt-1 hidden';

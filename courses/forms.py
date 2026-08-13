@@ -84,7 +84,7 @@ class PersonalInfoForm(forms.Form):
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 phone-intl',
-            'placeholder': 'Ex: +226 70 00 00 00'
+            'placeholder': 'Ex: 70 00 00 00'
         })
     )
     date_naissance = forms.DateField(
@@ -140,7 +140,7 @@ class PersonalInfoForm(forms.Form):
         required=True,
         widget=forms.TextInput(attrs={
             'class':'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 phone-intl',
-            'placeholder':'+226 65 08 57 40'
+            'placeholder':'65 08 57 40'
         })
     )
 
@@ -470,7 +470,7 @@ class CentreFormationForm(forms.ModelForm):
             }),
             'tel': forms.TextInput(attrs={
                 'class': 'form-control phone-intl',
-                'placeholder': 'Ex : +226 25 00 00 00'
+                'placeholder': 'Ex : 25 00 00 00'
             }),
         }
         labels = {
@@ -791,7 +791,7 @@ class AgentForm(forms.ModelForm):
             'prenom':         forms.TextInput(attrs={'placeholder': 'Ex: Moussa'}),
             'username':       forms.TextInput(attrs={'placeholder': 'Ex: moussa.ouedraogo'}),
             'email':          forms.EmailInput(attrs={'placeholder': 'Ex: moussa@bsb.bf'}),
-            'tel':            forms.TextInput(attrs={'placeholder': 'Ex: +226 70 00 00 00'}),
+            'tel':            forms.TextInput(attrs={'placeholder': 'Ex: 70 00 00 00'}),
             'sexe':           forms.Select(),
             'date_naissance': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'adresse':        forms.TextInput(attrs={'placeholder': 'Ex: Secteur 12, Ouagadougou'}),
@@ -1097,7 +1097,7 @@ class EleveForm(forms.ModelForm):
             'prenom':          forms.TextInput(attrs={'placeholder': 'Ex: Moussa'}),
             'username':        forms.TextInput(attrs={'placeholder': 'Ex: moussa.ouedraogo'}),
             'email':           forms.EmailInput(attrs={'placeholder': 'Ex: moussa@exemple.com'}),
-            'tel':             forms.TextInput(attrs={'placeholder': 'Ex: +226 70 00 00 00'}),
+            'tel':             forms.TextInput(attrs={'placeholder': 'Ex: 70 00 00 00'}),
             'sexe':            forms.Select(),
             'date_naissance':  forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'adresse':         forms.TextInput(attrs={'placeholder': 'Ex: Secteur 12, Ouagadougou'}),
