@@ -56,6 +56,165 @@
     </form>
 
     {% comment %} Table Card {% endcomment %}
+    {% if mode == 'accordeon' %}
+    {% comment %} Accordéon centres -> inscriptions (même principe que régions -> provinces) {% endcomment %}
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        {% if centres_page %}
+        <div class="divide-y divide-gray-100">
+            {% for centre in centres_page %}
+            <div>
+                <div class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-4">
+                        {% if centre_ouvert.id == centre.id %}
+                        <a href="?page={{ centres_page.number }}"
+                           class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-300 transition-all shadow-sm"
+                           title="Masquer les inscriptions">
+                            <svg class="w-4 h-4 transition-transform rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% else %}
+                        <a href="?centre={{ centre.id }}&page={{ centres_page.number }}"
+                           class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-300 transition-all shadow-sm"
+                           title="Afficher les inscriptions">
+                            <svg class="w-4 h-4 transition-transform" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% endif %}
+                        <div>
+                            <span class="text-sm font-bold text-gray-900">{{ centre.nom_centre }}</span>
+                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
+                                {{ centre.nb_inscriptions }} inscription{{ centre.nb_inscriptions|pluralize }}
+                            </span>
+                        </div>
+                    </div>
+                    {% if centre_ouvert.id == centre.id %}
+                    <a href="?page={{ centres_page.number }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900">Masquer</a>
+                    {% else %}
+                    <a href="?centre={{ centre.id }}&page={{ centres_page.number }}" class="text-sm font-semibold text-red-700 hover:text-red-900">Voir</a>
+                    {% endif %}
+                </div>
+
+                {% comment %} Inscriptions du centre déplié {% endcomment %}
+                <div id="c{{ centre.id }}" class="{% if centre_ouvert.id != centre.id %}hidden{% endif %} bg-gray-50 border-t border-gray-100">
+                    {% if centre_ouvert.id == centre.id %}
+                        {% if subscriptions %}
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th scope="col" class="pl-16 pr-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Apprenant</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Formation</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date d'Inscrition</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Année scolaire</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Statut</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    {% for s in subscriptions %}
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="pl-16 pr-6 py-3.5 whitespace-nowrap text-sm font-bold text-gray-900">{{ s.eleve.nom }} {{ s.eleve.prenom }}</td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm font-medium text-gray-900">{{ s.formation }}</td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900">{{ s.date_inscription }}</td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900">{{ s.annee_scolaire }}</td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm">
+                                            {% if s.statut == "en_cours" %}
+                                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">En cours</span>
+                                            {% elif s.statut == "valide" %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Valide</span>
+                                            {% else %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Rejeté</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-right text-sm font-medium">
+                                            <div class="flex items-center justify-end gap-1">
+                                                <a href="{% url 'bsb_admin:subscription_update' s.id %}"
+                                                   class="inline-flex items-center gap-1 p-1.5 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
+                                                   title="Modifier">{% include 'partials/icon_edit.html' %}</a>
+                                                <a href="{% url 'bsb_admin:subscription_delete' s.id %}"
+                                                   class="inline-flex items-center gap-1 p-1.5 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-all"
+                                                   title="Supprimer">{% include 'partials/icon_delete.html' %}</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% comment %} Pagination des inscriptions du centre déplié {% endcomment %}
+                        {% if subscriptions.has_other_pages %}
+                        <div class="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+                            <p class="text-xs text-gray-500">
+                                Page {{ subscriptions.number }} sur {{ subscriptions.paginator.num_pages }}
+                            </p>
+                            <nav class="inline-flex rounded-lg shadow-sm overflow-hidden border border-gray-200 divide-x divide-gray-200">
+                                {% if subscriptions.has_previous %}
+                                <a href="?centre={{ centre.id }}&page={{ centres_page.number }}&ipage={{ subscriptions.previous_page_number }}"
+                                   class="px-3 py-1.5 bg-white text-xs text-gray-600 hover:bg-gray-50 transition">Précédent</a>
+                                {% endif %}
+                                {% for num in subscriptions.paginator.page_range %}
+                                    {% if subscriptions.number == num %}
+                                    <span class="px-3 py-1.5 bg-bsb-gold text-white text-xs font-bold">{{ num }}</span>
+                                    {% else %}
+                                    <a href="?centre={{ centre.id }}&page={{ centres_page.number }}&ipage={{ num }}"
+                                       class="px-3 py-1.5 bg-white text-xs text-gray-700 hover:bg-gray-50 transition">{{ num }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if subscriptions.has_next %}
+                                <a href="?centre={{ centre.id }}&page={{ centres_page.number }}&ipage={{ subscriptions.next_page_number }}"
+                                   class="px-3 py-1.5 bg-white text-xs text-gray-600 hover:bg-gray-50 transition">Suivant</a>
+                                {% endif %}
+                            </nav>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="px-16 py-5 text-sm text-gray-400 italic">
+                            Aucune inscription pour ce centre.
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% comment %} Pagination centres {% endcomment %}
+        {% if centres_page.has_other_pages %}
+        <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div class="hidden sm:flex sm:items-center sm:justify-between">
+                <p class="text-sm text-gray-700">
+                    Page <span class="font-medium">{{ centres_page.number }}</span> sur
+                    <span class="font-medium">{{ centres_page.paginator.num_pages }}</span>
+                </p>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% if centres_page.has_previous %}
+                    <a href="?page={{ centres_page.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Précédent</a>
+                    {% endif %}
+                    {% for num in centres_page.paginator.page_range %}
+                        {% if centres_page.number == num %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-bsb-gold bg-bsb-gold text-sm font-medium text-white">{{ num }}</span>
+                        {% else %}
+                        <a href="?page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if centres_page.has_next %}
+                    <a href="?page={{ centres_page.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Suivant</a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-12">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun centre</h3>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {% if subscriptions %}
         <div class="overflow-x-auto">
@@ -63,7 +222,7 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                           Eleve
+                           Apprenant
                         </th>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Formation
@@ -192,6 +351,7 @@
         </div>
         {% endif %}
     </div>
+    {% endif %}
 </div>
 
 {%endblock%}

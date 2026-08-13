@@ -1,3 +1,4 @@
+import re
 from datetime import date
 
 from rest_framework import serializers
@@ -34,8 +35,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if naissance:
             today = date.today()
             age = today.year - naissance.year - ((today.month, today.day) < (naissance.month, naissance.day))
-            if age >= 18 and not attrs.get('nip', '').strip():
+            nip = attrs.get('nip', '').strip()
+            if age >= 18 and not nip:
                 raise serializers.ValidationError({"nip": "Le NIP est obligatoire à partir de 18 ans."})
+            if nip and not re.fullmatch(r'\d{17}', nip):
+                raise serializers.ValidationError({"nip": "Le NIP doit contenir exactement 17 chiffres."})
 
         return attrs
 

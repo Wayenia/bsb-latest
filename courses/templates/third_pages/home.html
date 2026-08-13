@@ -137,7 +137,7 @@
                             {% if career.date_limite_proche %}
                             <p class="text-sm font-bold text-red-600 mb-3">
 
-                                Inscriptions ouvertes jusqu'au {{ career.date_limite_proche|date:"d/m/Y" }}
+                                Date limite d'inscription : {{ career.date_limite_proche|date:"d/m/Y" }}
                             </p>
                             {% endif %}
 
@@ -190,10 +190,13 @@
                     Notre mission
                 </h2>
                 <p class="text-lg text-gray-700 mb-6 leading-relaxed">
-                    Le <strong>Burkina Suudu Bawdè (BSB)</strong> est l'institution nationale de référence
-                    pour la formation professionnelle et technique au Burkina Faso. Nous accompagnons
-                    les jeunes burkinabè dans leur insertion professionnelle à travers des formations
-                    adaptées aux besoins du marché du travail.
+                    Les missions de <strong>Burkina Suudu Bawdè (BSB)</strong> s'inscrivent dans la vision
+                    du plan sectoriel éducation et formation et aux missions assignées au ministère de
+                    l'enseignement secondaire et de la formation technique et professionnelle en matière
+                    de formation professionnelle. Ainsi, BSB en tant que principal opérateur public de
+                    développement des compétences techniques et professionnelles au Burkina Faso a pour
+                    mission de « contribuer à la mise en œuvre de la politique du Gouvernement en matière
+                    de développement des compétences techniques et professionnelles ».
                 </p>
                 <div class="space-y-4">
                     <div class="flex items-start">
@@ -377,10 +380,23 @@
                 <h3 class="text-2xl font-bold mb-6 flex items-center">
                     Contact
                 </h3>
-                <p class="text-gray-700 mb-2">
-                    Tél: +226 25 30 18 75 / 70 32 60 68 / 25 30 18 76 / 73 51 23 23 /
-                    73 07 36 36 / 73 01 97 97 / 73 48 91 91
-                </p>
+                <ul class="space-y-2.5 mb-4">
+                    <li class="text-gray-700 text-sm leading-relaxed">
+                        <span class="font-semibold text-gray-900">Service de la communication et des relations presses</span> : +226 70 32 60 68
+                    </li>
+                    <li class="text-gray-700 text-sm leading-relaxed">
+                        <span class="font-semibold text-gray-900">Direction de l'information et l'orientation professionnelle</span> : +226 73 01 97 97
+                    </li>
+                    <li class="text-gray-700 text-sm leading-relaxed">
+                        <span class="font-semibold text-gray-900">Direction inter-régionale N° 1 (Ouagadougou)</span> : +226 73 07 36 36
+                    </li>
+                    <li class="text-gray-700 text-sm leading-relaxed">
+                        <span class="font-semibold text-gray-900">Direction inter-régionale N° 2 (Bobo-Dioulasso)</span> : +226 73 48 91 91
+                    </li>
+                    <li class="text-gray-700 text-sm leading-relaxed">
+                        <span class="font-semibold text-gray-900">Direction inter-régionale N° 3 (Ziniaré)</span> : +226 73 51 23 23
+                    </li>
+                </ul>
                 <p class="text-gray-700">Email: info@bsb.gov.bf</p>
             </div>
 

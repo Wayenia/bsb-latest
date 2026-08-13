@@ -145,7 +145,7 @@
 
   <p class="texte-attestation" style="text-align:center; font-weight:bold; margin:20px 0;">
     {{ eleve.nom }} {{ eleve.prenom }}, né(e) le {{ eleve.date_naissance|date:"d/m/Y"|default:"—" }}
-    à {{ eleve.lieu_naissance|default:"—" }}
+    à {{ eleve.lieu_naissance|default:"—" }}, matricule n° {{ eleve.matricule|default:"—" }}
   </p>
 
   <p class="texte-attestation">

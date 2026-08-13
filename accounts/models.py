@@ -73,7 +73,7 @@ class Utilisateur(AbstractUser):
         'admin': 'Admin',
         'dg': 'Directeur Général',
         'dir': 'Directeur Inter-régional',
-        'deps': 'DEPS',
+        'deps': 'DESP',
         'gestionnaire': 'Directeur de Centre',
         'caissier': 'Caissier',
         'agent_comptable': 'Agent Comptable',
@@ -118,7 +118,10 @@ class Eleve(Utilisateur):
     )
 
     numero_identifiant = models.CharField(
-        max_length=50,
+        # 200 : le NIP (17 chiffres) tient largement, mais la concaténation
+        # utilisée pour les moins de 18 ans (nom/prénoms/lieu de naissance)
+        # peut dépasser 50 caractères avec des noms/lieux longs.
+        max_length=200,
         unique=True,
         blank=True,
         null=True,
@@ -136,16 +139,29 @@ class Eleve(Utilisateur):
         verbose_name="Niveau scolaire"
     )
 
+    def a_18_ans_ou_plus(self):
+        if not self.date_naissance:
+            return False
+        aujourdhui = timezone.now().date()
+        age = aujourdhui.year - self.date_naissance.year - (
+            (aujourdhui.month, aujourdhui.day) < (self.date_naissance.month, self.date_naissance.day)
+        )
+        return age >= 18
+
     def generate_identifiant(self):
-        annee = timezone.now().year
+        """L'identifiant de l'apprenant est le NIP pour les 18 ans et plus
+        (déjà validé à 17 chiffres à l'inscription), ou une concaténation
+        déterministe de son état-civil pour les moins de 18 ans (pas de NIP)."""
+        if self.a_18_ans_ou_plus() and self.nip:
+            return self.nip
 
-        ville_code = (self.lieu_naissance[:3] if self.lieu_naissance else "XXX").upper()
-
-        random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-
-        count = Eleve.objects.count() + 1
-
-        return f"BSB-{annee}-{ville_code}-{random_part}-{str(count).zfill(6)}"
+        parties = [
+            self.nom, self.prenom, self.nom_mere, self.prenom_mere,
+            self.prenom_pere, self.lieu_naissance,
+            self.date_naissance.strftime('%Y%m%d') if self.date_naissance else '',
+        ]
+        brut = ''.join(p or '' for p in parties)
+        return ''.join(brut.upper().split())
 
     def generate_matricule(self):
         annee = timezone.now().year
@@ -166,10 +182,11 @@ class Eleve(Utilisateur):
 
         if not self.numero_identifiant:
             identifiant = self.generate_identifiant()
-
-            while Eleve.objects.filter(numero_identifiant=identifiant).exists():
-                identifiant = self.generate_identifiant()
-
+            if Eleve.objects.filter(numero_identifiant=identifiant).exclude(pk=self.pk).exists():
+                raise ValidationError(
+                    "Un apprenant avec les mêmes informations d'identification "
+                    "(NIP, ou nom/prénom/parents/lieu et date de naissance) existe déjà."
+                )
             self.numero_identifiant = identifiant
 
         super().save(*args, **kwargs)

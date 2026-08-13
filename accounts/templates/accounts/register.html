@@ -170,7 +170,7 @@
                                     </div>
                                     <div class="space-y-2 col-span-full hidden" id="nip-wrap">
                                         <label class="text-sm font-bold text-gray-700">NIP (Numéro d'Identification Personnel) <span class="text-red-700">*</span></label>
-                                        <input type="text" name="nip" id="id_nip" maxlength="20" value="{{ form_data.nip|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" placeholder="Obligatoire à partir de 18 ans">
+                                        <input type="text" name="nip" id="id_nip" maxlength="17" pattern="\d{17}" title="17 chiffres" value="{{ form_data.nip|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" placeholder="17 chiffres, obligatoire à partir de 18 ans">
                                     </div>
                                 </div>
                             </div>

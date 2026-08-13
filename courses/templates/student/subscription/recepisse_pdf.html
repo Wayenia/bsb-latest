@@ -160,6 +160,10 @@
     <span class="valeur">{{ eleve.nom }} {{ eleve.prenom }}</span>
   </div>
   <div class="ligne">
+    <span class="label">Matricule :</span>
+    <span class="valeur">{{ eleve.matricule|default:"—" }}</span>
+  </div>
+  <div class="ligne">
     <span class="label">Centre :</span>
     <span class="valeur">{{ centre }}</span>
   </div>
