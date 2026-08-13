@@ -119,15 +119,16 @@
                     {% endif %}
                 </div>
 
-                {% comment %} Date de fin — OBLIGATOIRE désormais {% endcomment %}
+                {% comment %} Durée — la date de fin est calculée automatiquement {% endcomment %}
                 <div>
                     <label class="block text-sm font-bold text-gray-800 mb-2">
-                        {{ form.date_fin.label }} <span class="text-red-600">*</span>
+                        {{ form.duree_jours.label }} <span class="text-red-600">*</span>
                     </label>
-                    {{ form.date_fin }}
-                    {% if form.date_fin.errors %}
+                    {{ form.duree_jours }}
+                    <p class="mt-1.5 text-xs text-gray-500">La date de fin est calculée automatiquement à partir de la date de lancement.</p>
+                    {% if form.duree_jours.errors %}
                     <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
-                         {{ form.date_fin.errors.0 }}
+                         {{ form.duree_jours.errors.0 }}
                     </p>
                     {% endif %}
                 </div>

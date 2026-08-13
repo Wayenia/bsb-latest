@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from accounts.models import phone_validator
@@ -158,7 +160,6 @@ TITRE_PROFESSIONNEL_CHOICE = [
 
 class Filiere(TimeStampModel):
     nom_filiere = models.CharField(max_length=225, unique=True, verbose_name="Nom de la filiere")
-    duree_formation = models.IntegerField(verbose_name="Duree de formation", null=True, blank=True)
     nom_diplome = models.CharField(max_length=225, verbose_name="Nom du diplome",null=True,blank=True)# a supprimmer
     titre_professionnel = models.CharField(max_length=10, choices=TITRE_PROFESSIONNEL_CHOICE, verbose_name="Titre professionnel", null=True,blank=True)  # ← remplace nom_diplom
     niveau_diplome = models.TextField(blank=True, null=True, verbose_name="Niveau du diplome")
@@ -279,6 +280,37 @@ TYPE_FORMATION_CHOICE = [
     ("modulaire_qualifiante", "Modulaire qualifiante"),
 ]
 
+
+def _format_duree_en_jours(total_jours):
+    """Formate un nombre de jours en texte lisible ("15 jrs", "9 mois",
+    "1 an / 2 mois"...) — utilisé par CentreEtFiliere.duree_display, que la
+    durée vienne du champ `duree_jours` ou d'un calcul par différence de
+    dates."""
+    if not total_jours or total_jours <= 0:
+        return "—"
+
+    if total_jours < 30:
+        return f"{total_jours} jr{'s' if total_jours > 1 else ''}"
+
+    mois_total = total_jours // 30
+    jours_restants = total_jours % 30
+
+    if mois_total >= 12:
+        annees = mois_total // 12
+        mois_restants = mois_total % 12
+        parties = [f"{annees} an{'s' if annees > 1 else ''}"]
+        if mois_restants:
+            parties.append(f"{mois_restants} mois")
+        if jours_restants:
+            parties.append(f"{jours_restants} jrs")
+        return " / ".join(parties)
+
+    parties = [f"{mois_total} mois"]
+    if jours_restants:
+        parties.append(f"{jours_restants} jrs")
+    return " / ".join(parties)
+
+
 class CentreEtFiliere(models.Model):
     centre = models.ForeignKey(CentreFormation, on_delete=models.CASCADE, verbose_name="Centre")
     type_formation = models.CharField(max_length=30, choices=TYPE_FORMATION_CHOICE, verbose_name="Type de formation", null=True,blank=True)  # ← AJOUTE
@@ -292,12 +324,22 @@ class CentreEtFiliere(models.Model):
     )
     annee_prog=models.ForeignKey(AnneeScolaire,on_delete=models.SET_NULL,null=True,blank=True,verbose_name="Année Scolaire")
     date_lancement = models.DateTimeField(null=True, blank=True, verbose_name="Date de lancement", default=timezone.now)
-    date_fin = models.DateTimeField(null=True, blank=True)
+    duree_jours = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Durée (en jours)",
+        help_text="Ex : 15, 45, 270 (≈ 9 mois). La date de fin est calculée automatiquement."
+    )
+    date_fin = models.DateTimeField(null=True, blank=True, verbose_name="Date de fin (calculée automatiquement)")
     date_limite_inscription = models.DateTimeField(null=True, blank=True, verbose_name="Date limite d'inscription")
     date_creation = models.DateTimeField(auto_now_add=True, null=True, verbose_name="Date de création")
+
     def __str__(self):
         return f"Centre: {self.centre}, Filiere: {self.filiere}"
-    
+
+    def save(self, *args, **kwargs):
+        if self.duree_jours and self.date_lancement:
+            self.date_fin = self.date_lancement + timedelta(days=self.duree_jours)
+        super().save(*args, **kwargs)
+
     class Meta:
         verbose_name = "Programmer une formation"
         verbose_name_plural = "Programmations"
@@ -306,39 +348,16 @@ class CentreEtFiliere(models.Model):
         permissions = [
             ("gerer_programmations", "Gérer les associations centre-métier"),
         ]
-        
-    # Dans models.py — CentreEtFiliere
+
     @property
     def duree_display(self):
-        if not self.date_lancement or not self.date_fin:
-            return "—"
-
-        delta = self.date_fin - self.date_lancement
-        total_jours = delta.days
-
-        if total_jours <= 0:
-            return "—"
-
-        if total_jours < 30:
-            return f"{total_jours} jr{'s' if total_jours > 1 else ''}"
-
-        mois_total = total_jours // 30
-        jours_restants = total_jours % 30
-
-        if mois_total >= 12:
-            annees = mois_total // 12
-            mois_restants = mois_total % 12
-            parties = [f"{annees} an{'s' if annees > 1 else ''}"]
-            if mois_restants:
-                parties.append(f"{mois_restants} mois")
-            if jours_restants:
-                parties.append(f"{jours_restants} jrs")
-            return " / ".join(parties)
-
-        parties = [f"{mois_total} mois"]
-        if jours_restants:
-            parties.append(f"{jours_restants} jrs")
-        return " / ".join(parties)
+        if self.duree_jours:
+            return _format_duree_en_jours(self.duree_jours)
+        if self.date_lancement and self.date_fin:
+            total_jours = (self.date_fin - self.date_lancement).days
+            if total_jours > 0:
+                return _format_duree_en_jours(total_jours)
+        return "—"
 
 
 # ─────────────────────────────────────────────

@@ -570,7 +570,7 @@ class CoursForm(BaseModelForm):
 class CentreEtFiliereForm(BaseModelForm):
     class Meta:
         model = CentreEtFiliere
-        fields = ['centre', 'type_formation', 'filiere', 'is_active', 'communique', 'annee_prog', 'date_lancement', 'date_fin', 'date_limite_inscription']
+        fields = ['centre', 'type_formation', 'filiere', 'is_active', 'communique', 'annee_prog', 'date_lancement', 'duree_jours', 'date_limite_inscription']
         labels = {
             'centre': 'Centre de formation',
             'type_formation': 'Type de formation',
@@ -579,7 +579,7 @@ class CentreEtFiliereForm(BaseModelForm):
             'communique': 'Communiqué',
             'annee_prog': 'Année de programmation',
             'date_lancement': 'Date de lancement',
-            'date_fin': 'Date de fin',
+            'duree_jours': 'Durée (en jours)',
             'date_limite_inscription': "Date limite d'inscription",
         }
         widgets = {
@@ -595,10 +595,10 @@ class CentreEtFiliereForm(BaseModelForm):
                 attrs={'type': 'datetime-local', 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all'},
                 format='%Y-%m-%dT%H:%M'
             ),
-            'date_fin': forms.DateTimeInput(
-                attrs={'type': 'datetime-local', 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all'},
-                format='%Y-%m-%dT%H:%M'
-            ),
+            'duree_jours': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all',
+                'min': 1, 'placeholder': 'Ex : 15, 45, 270',
+            }),
             'date_limite_inscription': forms.DateTimeInput(
                 attrs={'type': 'datetime-local', 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all'},
                 format='%Y-%m-%dT%H:%M'
@@ -615,12 +615,11 @@ class CentreEtFiliereForm(BaseModelForm):
         # les centres de sa propre direction) — non restreint par défaut.
         if centre_queryset is not None:
             self.fields['centre'].queryset = centre_queryset
-        # Les deux dates sont maintenant OBLIGATOIRES — on supprime le required=False
+        # Date de lancement, durée et date limite d'inscription sont OBLIGATOIRES
+        self.fields['duree_jours'].required = True
         if self.instance and self.instance.pk:
             if self.instance.date_lancement:
                 self.initial['date_lancement'] = self.instance.date_lancement.strftime('%Y-%m-%dT%H:%M')
-            if self.instance.date_fin:
-                self.initial['date_fin'] = self.instance.date_fin.strftime('%Y-%m-%dT%H:%M')
             if self.instance.date_limite_inscription:
                 self.initial['date_limite_inscription'] = self.instance.date_limite_inscription.strftime('%Y-%m-%dT%H:%M')
         else:

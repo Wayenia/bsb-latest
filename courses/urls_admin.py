@@ -80,6 +80,8 @@ urlpatterns = [
     path('programmings/create',views_admin.programming_create,name='program_create'),
     path('programmings/<int:id>/update',views_admin.update_pregramming,name='programming_update'),
     path('programmings/<int:id>/delete',views_admin.programming_delete,name='programming_delete'),
+    path('programmings/import/modele', views_admin.programming_import_template, name='programming_import_template'),
+    path('programmings/import', views_admin.programming_import, name='programming_import'),
 
 
     #Année scolaire

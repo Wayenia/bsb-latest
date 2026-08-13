@@ -20,12 +20,12 @@ class CentreFormationAdmin(admin.ModelAdmin):
 # FIELD
 @admin.register(Filiere)
 class FiliereAdmin(admin.ModelAdmin):
-    list_display = ["nom_filiere", "duree_formation", "nom_diplome", "niveau_diplome", "is_active"]
+    list_display = ["nom_filiere", "nom_diplome", "niveau_diplome", "is_active"]
 
 # CENTER-FIELD JONCTION
 @admin.register(CentreEtFiliere)
 class CentreEtFiliereAdmin(admin.ModelAdmin):
-    list_display = ["centre", "filiere", "is_active","communique"]
+    list_display = ["centre", "filiere", "duree_display", "is_active", "communique"]
 
 @admin.register(DocumentEleve)
 class DocumentEleveAdmin(admin.ModelAdmin):

@@ -57,23 +57,6 @@
                     {% endif %}
                 </div>
 
-                {% comment %} duree_formation {% endcomment %}
-                <div>
-                    <label for="{{ form.duree_formation.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">
-                        {{ form.duree_formation.label }}
-                        {% if form.duree_formation.field.required %}
-                        <span class="text-red-600">*</span>
-                        {% endif %}
-                    </label>
-                    {{ form.duree_formation }}
-                    {% if form.duree_formation.errors %}
-                    <p class="mt-2 text-sm text-red-600">
-                        <i class="fas fa-exclamation-circle mr-1"></i>
-                        {{ form.duree_formation.errors.0 }}
-                    </p>
-                    {% endif %}
-                </div>
-
                 {% comment %} nom_diplome {% endcomment %}
                 <div>
                     <label for="{{ form.region.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">

@@ -823,6 +823,21 @@ def programming_delete(request, id):
         return redirect('bsb_admin:programming_list')
     return render(request, 'admin/programming/confirm_delete.html', {'object': program})
 
+
+@require_permission('courses.gerer_programmations')
+def programming_import_template(request):
+    from .bulk_import_registry import SPEC_PROGRAMMATION
+    from .bulk_import.views_helpers import render_import_template
+    return render_import_template(request, SPEC_PROGRAMMATION)
+
+
+@require_permission('courses.gerer_programmations')
+def programming_import(request):
+    from .bulk_import_registry import SPEC_PROGRAMMATION
+    from .bulk_import.views_helpers import handle_import_upload
+    return handle_import_upload(request, SPEC_PROGRAMMATION)
+
+
 @require_permission('courses.gerer_annees')
 def annee_create(request):
     if request.method == 'POST':

@@ -15,10 +15,12 @@
             </h1>
             <p class="mt-2 text-sm text-gray-600">Liste des formations</p>
         </div>
-        <div class="mt-4 sm:mt-0">
+        <div class="mt-4 sm:mt-0 flex gap-3 flex-wrap">
+            {% url 'bsb_admin:programming_import' as programming_import_url %}
+            {% include 'partials/import_export_buttons.html' with upload_url=programming_import_url label="Importer des formations" %}
             <a href="{% url 'bsb_admin:program_create' %}"
                class="inline-flex items-center px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
-                
+
                 Lancer une formation
             </a>
         </div>

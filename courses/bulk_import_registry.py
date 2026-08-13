@@ -5,12 +5,16 @@ d'implémentation pour le détail des vues/formulaires réutilisés."""
 
 import secrets
 import string
+from datetime import datetime
+
+from django.utils import timezone
 
 from accounts.models import Utilisateur
 
 from courses.models import (
-    AnneeScolaire, CentreFormation, Cours, Direction_reg, Filiere, Module,
-    Province, Region, TITRE_PROFESSIONNEL_CHOICE, TypeFrais,
+    AnneeScolaire, CentreEtFiliere, CentreFormation, Cours, Direction_reg,
+    Filiere, Frais, Module, Province, Region, TITRE_PROFESSIONNEL_CHOICE,
+    TYPE_FORMATION_CHOICE, TypeFrais,
 )
 from courses.forms import (
     AgentForm, AnneeScolaireForm, CentreFormationForm, CoursForm,
@@ -333,4 +337,139 @@ SPEC_AGENT = ImportSpec(
     template_url_name="agent_import_template",
     upload_url_name="agent_import",
     list_url_name="agent_list",
+)
+
+
+# ─── Programmation (CentreEtFiliere) — mode manuel car une ligne touche 3 ──
+# modèles : Filiere (créée ou mise à jour, dédupliquée par nom — plusieurs
+# centres partagent souvent le même métier), CentreEtFiliere (la formation
+# elle-même) et Frais (propre à CHAQUE couple centre+métier, jamais partagé).
+
+def _parse_date_aware(value):
+    """resolve_column(kind="date") renvoie une chaîne "AAAA-MM-JJ" ; les 3
+    champs date de CentreEtFiliere sont des DateTimeField — on la convertit
+    en datetime timezone-aware (minuit) pour éviter l'avertissement Django
+    sur les datetimes naïfs (USE_TZ=True)."""
+    if not value:
+        return None
+    naive = datetime.strptime(value, "%Y-%m-%d")
+    return timezone.make_aware(naive)
+
+
+def _programmation_validator(resolved):
+    centre_id = resolved.get("centre")
+    nom_filiere = (resolved.get("nom_filiere") or "").strip()
+    errors = []
+    if not centre_id:
+        errors.append("Le centre est obligatoire.")
+    if not nom_filiere:
+        errors.append("Le métier est obligatoire.")
+    if errors:
+        return False, None, errors
+
+    if CentreEtFiliere.objects.filter(centre_id=centre_id, filiere__nom_filiere__iexact=nom_filiere).exists():
+        return False, None, [f"Cette formation « {nom_filiere} » existe déjà pour ce centre."]
+
+    # Filiere : dédupliquée par nom. Le fichier Excel fait autorité — si le
+    # métier existe déjà, ses infos sont mises à jour avec les valeurs de la
+    # ligne (plutôt que de garder silencieusement l'ancienne valeur).
+    filiere = Filiere.objects.filter(nom_filiere__iexact=nom_filiere).first()
+    filiere_fields = {
+        "niveau_diplome": resolved.get("niveau_diplome") or None,
+        "titre_professionnel": resolved.get("titre_professionnel") or None,
+    }
+    if filiere:
+        changed = False
+        for attr, val in filiere_fields.items():
+            if val not in (None, "") and getattr(filiere, attr) != val:
+                setattr(filiere, attr, val)
+                changed = True
+        if changed:
+            filiere.save()
+    else:
+        filiere = Filiere.objects.create(nom_filiere=nom_filiere, is_active=True, **filiere_fields)
+
+    annee_id = resolved.get("annee_prog")
+    if not annee_id:
+        derniere_annee = AnneeScolaire.objects.order_by("-date_creation").first()
+        annee_id = derniere_annee.pk if derniere_annee else None
+
+    duree_jours = resolved.get("duree_jours_override") or (resolved.get("duree_mois") or 0) * 30
+
+    cef_kwargs = dict(
+        centre_id=centre_id,
+        filiere=filiere,
+        type_formation=resolved.get("type_formation") or "initiale",
+        is_active=True if resolved.get("is_active") is None else resolved["is_active"],
+        annee_prog_id=annee_id,
+        duree_jours=duree_jours or None,
+        date_limite_inscription=_parse_date_aware(resolved.get("date_limite_inscription")),
+    )
+    date_lancement = _parse_date_aware(resolved.get("date_lancement"))
+    if date_lancement:
+        cef_kwargs["date_lancement"] = date_lancement
+    formation = CentreEtFiliere.objects.create(**cef_kwargs)
+
+    montant = resolved.get("montant_frais")
+    if montant:
+        type_frais = TypeFrais.objects.filter(libelle__iexact="Scolarité").first()
+        if not type_frais:
+            type_frais = TypeFrais.objects.create(libelle="Scolarité")
+        Frais.objects.create(formation=formation, type_frais=type_frais, montant=montant)
+
+    return True, formation, []
+
+
+def _programmation_label_fn(obj):
+    return f"{obj.filiere.nom_filiere} — {obj.centre.nom_centre}"
+
+
+SPEC_PROGRAMMATION = ImportSpec(
+    slug="programmation",
+    verbose_name="Formation à lancer (centre × métier)",
+    model=CentreEtFiliere,
+    mode="manual",
+    manual_validator=_programmation_validator,
+    label_fn=_programmation_label_fn,
+    columns=[
+        ColumnSpec("Centre de formation", "centre", required=True, kind="fk_pk",
+                    fk_model=CentreFormation, fk_lookup_field="nom_centre"),
+        ColumnSpec("Métier", "nom_filiere", required=True, kind="text"),
+        ColumnSpec("Conditions d'accès", "niveau_diplome", required=False, kind="text"),
+        ColumnSpec("Titre professionnel", "titre_professionnel", required=False,
+                    kind="choice_static", choices=TITRE_PROFESSIONNEL_CHOICE),
+        ColumnSpec("Durée (mois)", "duree_mois", required=True, kind="int"),
+        ColumnSpec("Durée (jours) — si formation courte, remplace la colonne mois",
+                    "duree_jours_override", required=False, kind="int",
+                    help_text="À utiliser pour une formation courte (ex: 15 ou 45 jours) ; prime sur la colonne Durée (mois)."),
+        ColumnSpec("Type de formation", "type_formation", required=False,
+                    kind="choice_static", choices=TYPE_FORMATION_CHOICE,
+                    help_text="Laisser vide = Initiale."),
+        ColumnSpec("Frais de formation (FCFA)", "montant_frais", required=False, kind="int",
+                    help_text="Laisser vide si aucun frais n'est encore fixé pour cette formation."),
+        ColumnSpec("Année scolaire", "annee_prog", required=False, kind="fk_pk",
+                    fk_model=AnneeScolaire, fk_lookup_field="libelle_anne",
+                    help_text="Laisser vide = année scolaire la plus récemment créée."),
+        ColumnSpec("Date limite d'inscription (JJ/MM/AAAA)", "date_limite_inscription",
+                    required=False, kind="date"),
+        ColumnSpec("Date de lancement (JJ/MM/AAAA)", "date_lancement", required=False, kind="date"),
+        ColumnSpec("Actif (Oui/Non)", "is_active", required=False, kind="bool",
+                    help_text="Laisser vide = Oui (formation immédiatement ouverte aux inscriptions)."),
+    ],
+    intro=(
+        "Une ligne = une formation (couple centre + métier). Si le métier "
+        "existe déjà en base, ses conditions d'accès/titre professionnel "
+        "sont mis à jour avec les valeurs de cette ligne (le fichier "
+        "fait autorité). La durée et la date de lancement appartiennent à "
+        "la formation (pas au métier) — la date de fin est calculée "
+        "automatiquement à partir de la date de lancement et de la durée. "
+        "Une formation déjà existante pour ce couple centre+métier est "
+        "rejetée avec une erreur plutôt que dupliquée. Par défaut la "
+        "formation créée est active (visible et ouverte aux inscriptions) "
+        "— mettre « Non » dans la colonne Actif pour la créer désactivée."
+    ),
+    url_namespace="bsb_admin",
+    template_url_name="programming_import_template",
+    upload_url_name="programming_import",
+    list_url_name="programming_list",
 )
