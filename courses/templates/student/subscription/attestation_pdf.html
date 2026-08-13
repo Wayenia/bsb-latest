@@ -138,58 +138,36 @@
 
   <h1 class="titre">Attestation d'inscription</h1>
 
-  {% comment %} NUMERO ET DATE {% endcomment %}
-  <div class="ligne">
-    <span class="label">N° de dossier :</span>
-    <span class="valeur">{{ numero_dossier }}</span>
-  </div>
-  <div class="ligne">
-    <span class="label">Date de délivrance :</span>
-    <span class="valeur">{% now "d/m/Y" %}</span>
-  </div>
-
-  <hr class="separateur">
-
   <p class="texte-attestation">
-    La Direction Générale de Burkina Suudu Bawdè atteste que
-    <strong>{{ eleve.nom }} {{ eleve.prenom }}</strong>, né(e) le {{ eleve.date_naissance|date:"d/m/Y"|default:"—" }}
-    à {{ eleve.lieu_naissance|default:"—" }}, est régulièrement inscrit(e) au sein du centre
-    <strong>{{ centre }}</strong> pour la formation <strong>{{ filiere }}</strong>, au titre de
-    l'année scolaire <strong>{{ annee_scolaire }}</strong>, et a effectué un versement au titre de
-    cette inscription.
+    Je soussigné(e), <strong>{{ directeur_nom }}</strong>, agissant en qualité de Directeur(trice)
+    du <strong>{{ centre }}</strong>, atteste par la présente que :
   </p>
 
-  <div class="ligne">
-    <span class="label">Apprenant :</span>
-    <span class="valeur">{{ eleve.nom }} {{ eleve.prenom }}</span>
-  </div>
-  <div class="ligne">
-    <span class="label">Identifiant :</span>
-    <span class="valeur">{{ eleve.numero_identifiant|default:"—" }}</span>
-  </div>
-  <div class="ligne">
-    <span class="label">Centre :</span>
-    <span class="valeur">{{ centre }}</span>
-  </div>
-  <div class="ligne">
-    <span class="label">Métier :</span>
-    <span class="valeur">{{ filiere }}</span>
-  </div>
-  <div class="ligne">
-    <span class="label">Année scolaire :</span>
-    <span class="valeur">{{ annee_scolaire }}</span>
-  </div>
+  <p class="texte-attestation" style="text-align:center; font-weight:bold; margin:20px 0;">
+    {{ eleve.nom }} {{ eleve.prenom }}, né(e) le {{ eleve.date_naissance|date:"d/m/Y"|default:"—" }}
+    à {{ eleve.lieu_naissance|default:"—" }}
+  </p>
 
   <p class="texte-attestation">
-    La présente attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.
+    Est régulièrement inscrit(e) au sein de notre établissement dans le métier
+    <strong>{{ filiere }}</strong>, pour l'année de formation <strong>{{ annee_scolaire }}</strong>.
+  </p>
+
+  <p class="texte-attestation">
+    En foi de quoi, la présente attestation est établie pour servir et valoir ce que de droit.
+  </p>
+
+  <p style="margin-top:30px;">
+    Fait à {{ ville }}, le {% now "d/m/Y" %}
   </p>
 
   {% comment %} SIGNATURE {% endcomment %}
   <div class="footer">
     <div class="signature">
-      <p>Le Directeur du centre</p>
+      <p>Le Directeur</p>
       <div style="height:50px;"></div>
       <div class="ligne-sign"></div>
+      <p style="text-transform:none; font-weight:bold; color:#111; font-size:11px; letter-spacing:normal;">{{ directeur_nom }}</p>
     </div>
   </div>
 

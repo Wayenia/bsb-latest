@@ -648,13 +648,24 @@ def telecharger_attestation(request, id):
     centre = inscription.formation.centre
     header_left, header_right = _pdf_header_lines(centre)
 
+    # "Directeur du centre" = le membre de l'administration rattaché à ce
+    # centre avec le rôle "gestionnaire" (= Directeur de Centre — voir
+    # ROLE_GROUPS). À défaut (poste vacant), on retombe sur une formule
+    # générique plutôt que de laisser un nom vide sur le document officiel.
+    directeur_centre = MembreAdministration.objects.filter(
+        structure=centre, user_type='gestionnaire'
+    ).first()
+    directeur_nom = f"{directeur_centre.prenom} {directeur_centre.nom}" if directeur_centre else "Le Directeur du centre"
+    ville = centre.province.chef_lieu if centre.province_id else centre.nom_centre
+
     html_string = render_to_string('student/subscription/attestation_pdf.html', {
         'inscription': inscription,
         'eleve': inscription.eleve,
         'annee_scolaire': inscription.annee_scolaire,
         'centre': centre,
         'filiere': inscription.formation.filiere,
-        'numero_dossier': f"DOSS-{inscription.id:06d}",
+        'directeur_nom': directeur_nom,
+        'ville': ville,
         'header_left': header_left,
         'header_right': header_right,
         'favicon_data_uri': _pdf_logo_data_uri(),
