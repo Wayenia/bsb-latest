@@ -130,6 +130,10 @@
                                 Année scolaire : {{ career.annee_prog }}
                             </p>
                             {% endif %}
+                            <p class="text-sm text-gray-500 mb-4">
+
+                                Titre professionnel : {{ career.filiere.titre_professionnel }}
+                            </p>
                             {% if career.date_limite_proche %}
                             <p class="text-sm font-bold text-red-600 mb-3">
 
@@ -137,10 +141,7 @@
                             </p>
                             {% endif %}
 
-                            <p class="text-sm text-gray-500 mb-4">
-
-                                Titre professionnel : {{ career.filiere.titre_professionnel }}
-                            </p>
+                            
                             <br>
                             {% if career.filiere.texte_defilante %}
                                 <div class="bsb-ticker bg-gradient-to-r from-bsb-red to-bsb-gold mb-4">
@@ -366,10 +367,10 @@
         <div class="grid md:grid-cols-3 gap-12">
             <div>
                 <h3 class="text-2xl font-bold mb-6 flex items-center">
-                    Siège national
+                    Adresse
                 </h3>
                 <p class="text-gray-700 mb-2">Ouagadougou, Burkina Faso</p>
-                <p class="text-gray-700">Ministère de l'Enseignement Secondaire et de la Formation Professionnelle et Technique</p>
+                <p class="text-gray-700">1504 Avenue Dimdolobsom - Secteur 11, Dapoya 1 01 BP 6181 Ouagadougou 01, Burkina Faso</p>
             </div>
             
             <div>
@@ -380,7 +381,7 @@
                     Tél: +226 25 30 18 75 / 70 32 60 68 / 25 30 18 76 / 73 51 23 23 /
                     73 07 36 36 / 73 01 97 97 / 73 48 91 91
                 </p>
-                <p class="text-gray-700">Email: contact@bsb.gov.bf</p>
+                <p class="text-gray-700">Email: info@bsb.gov.bf</p>
             </div>
 
             <div>
