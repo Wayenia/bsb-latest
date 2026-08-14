@@ -1,9 +1,6 @@
 #!/bin/bash
 # ============================================================
-# redeploy.sh — Met a jour le code sur le serveur SANS toucher
-# aux donnees existantes (pas de -v, jamais).
-#
-# A lancer sur le SERVEUR, depuis le dossier bsb-latest-version deja clone :
+# A lancer depuis le dossier bsb-latest-version deja clone :
 #   git pull doit avoir ete fait au prealable OU est fait ici.
 #   ./redeploy.sh
 # ============================================================
