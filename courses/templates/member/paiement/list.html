@@ -10,7 +10,8 @@
         <div>
             <h1 class="text-3xl font-black text-gray-900">Encaissements</h1>
             <p class="mt-2 text-sm text-gray-600">
-                {% if q %}Résultats de recherche — tous centres{% else %}Inscriptions avec reste à payer — {{ scope_label }}{% endif %}
+                {% if q %}Résultats de recherche — tous centres
+                {% else %}Inscriptions avec reste à payer — {{ scope_label }}{% endif %}
             </p>
         </div>
         <a href="{% url 'courses:paiement_historique' %}"
@@ -44,7 +45,190 @@
     </form>
     {% endif %}
 
-    {% comment %} Table Card {% endcomment %}
+    {% if mode == 'accordeon' %}
+    {% comment %} Accordéon centres -> inscriptions (même principe que régions -> provinces) {% endcomment %}
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        {% if centres_page %}
+        <div class="divide-y divide-gray-100">
+            {% for centre in centres_page %}
+            <div>
+                <div class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-4">
+                        {% if centre_ouvert.id == centre.id %}
+                        <a href="?page={{ centres_page.number }}"
+                           class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-yellow-600 hover:border-yellow-300 transition-all shadow-sm"
+                           title="Masquer les inscriptions">
+                            <svg class="w-4 h-4 transition-transform rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% else %}
+                        <a href="?centre={{ centre.id }}&page={{ centres_page.number }}"
+                           class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-yellow-600 hover:border-yellow-300 transition-all shadow-sm"
+                           title="Afficher les inscriptions">
+                            <svg class="w-4 h-4 transition-transform" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% endif %}
+                        <div>
+                            <span class="text-sm font-bold text-gray-900">{{ centre.nom_centre }}</span>
+                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
+                                {{ centre.nb_inscriptions }} inscription{{ centre.nb_inscriptions|pluralize }}
+                            </span>
+                        </div>
+                    </div>
+                    {% if centre_ouvert.id == centre.id %}
+                    <a href="?page={{ centres_page.number }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900">Masquer</a>
+                    {% else %}
+                    <a href="?centre={{ centre.id }}&page={{ centres_page.number }}" class="text-sm font-semibold text-yellow-700 hover:text-yellow-900">Voir</a>
+                    {% endif %}
+                </div>
+
+                {% comment %} Inscriptions du centre déplié {% endcomment %}
+                <div id="c{{ centre.id }}" class="{% if centre_ouvert.id != centre.id %}hidden{% endif %} bg-gray-50 border-t border-gray-100">
+                    {% if centre_ouvert.id == centre.id %}
+                        {% if inscriptions %}
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="pl-16 pr-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Apprenant</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Métier</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Année scolaire</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total dû</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total payé</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Reste à payer</th>
+                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    {% for insc in inscriptions %}
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="pl-16 pr-6 py-3.5 whitespace-nowrap text-sm font-bold text-gray-900">
+                                            {{ insc.eleve.nom }} {{ insc.eleve.prenom }}
+                                        </td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900">
+                                            {{ insc.formation.filiere }}
+                                        </td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900">
+                                            {{ insc.annee_scolaire|default:"—" }}
+                                        </td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap">
+                                            <span class="text-sm font-medium bg-gray-700 text-white rounded-lg px-2 py-1">
+                                                {{ insc.total_du|floatformat:0|intcomma }} FCFA
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap">
+                                            <span class="text-sm font-medium bg-green-600 text-white rounded-lg px-2 py-1">
+                                                {{ insc.total_paye|floatformat:0|intcomma }} FCFA
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap">
+                                            <span class="text-sm font-medium bg-red-600 text-white rounded-lg px-2 py-1">
+                                                {{ insc.reste|floatformat:0|intcomma }} FCFA
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-right">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <button
+                                                    onclick="openModal('insc-{{ insc.id }}')"
+                                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-all">
+                                                    Détails
+                                                </button>
+                                                <a href="{% url 'courses:stats_dettes_eleve' insc.eleve.id %}?inscription={{ insc.id }}"
+                                                   class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-700 text-white hover:bg-gray-800 transition-all">
+                                                    Voir les dettes
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% comment %} Pagination des inscriptions du centre déplié {% endcomment %}
+                        {% if inscriptions.has_other_pages %}
+                        <div class="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+                            <p class="text-xs text-gray-500">
+                                Page {{ inscriptions.number }} sur {{ inscriptions.paginator.num_pages }}
+                            </p>
+                            <nav class="inline-flex rounded-lg shadow-sm overflow-hidden border border-gray-200 divide-x divide-gray-200">
+                                {% if inscriptions.has_previous %}
+                                <a href="?centre={{ centre.id }}&page={{ centres_page.number }}&ipage={{ inscriptions.previous_page_number }}"
+                                   class="px-3 py-1.5 bg-white text-xs text-gray-600 hover:bg-gray-50 transition">Précédent</a>
+                                {% endif %}
+                                {% for num in inscriptions.paginator.page_range %}
+                                    {% if inscriptions.number == num %}
+                                    <span class="px-3 py-1.5 bg-yellow-600 text-white text-xs font-bold">{{ num }}</span>
+                                    {% else %}
+                                    <a href="?centre={{ centre.id }}&page={{ centres_page.number }}&ipage={{ num }}"
+                                       class="px-3 py-1.5 bg-white text-xs text-gray-700 hover:bg-gray-50 transition">{{ num }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if inscriptions.has_next %}
+                                <a href="?centre={{ centre.id }}&page={{ centres_page.number }}&ipage={{ inscriptions.next_page_number }}"
+                                   class="px-3 py-1.5 bg-white text-xs text-gray-600 hover:bg-gray-50 transition">Suivant</a>
+                                {% endif %}
+                            </nav>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="px-16 py-5 text-sm text-gray-400 italic">
+                            Aucune inscription avec reste à payer dans ce centre.
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% comment %} Pagination centres {% endcomment %}
+        {% if centres_page.has_other_pages %}
+        <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div class="hidden sm:flex sm:items-center sm:justify-between">
+                <p class="text-sm text-gray-700">
+                    Page <span class="font-medium">{{ centres_page.number }}</span> sur
+                    <span class="font-medium">{{ centres_page.paginator.num_pages }}</span>
+                </p>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% if centres_page.has_previous %}
+                    <a href="?page={{ centres_page.previous_page_number }}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">
+                        Précédent
+                    </a>
+                    {% endif %}
+                    {% for num in centres_page.paginator.page_range %}
+                        {% if centres_page.number == num %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-yellow-600 bg-yellow-600 text-sm font-medium text-white">{{ num }}</span>
+                        {% else %}
+                        <a href="?page={{ num }}"
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if centres_page.has_next %}
+                    <a href="?page={{ centres_page.next_page_number }}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">
+                        Suivant
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-12">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun centre</h3>
+            <p class="text-gray-600">Aucun centre n'est rattaché à votre périmètre ({{ scope_label }}).</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% else %}
+    {% comment %} Mode plat : recherche cross-centre, ou portée mono-centre {% endcomment %}
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {% if inscriptions %}
         <div class="overflow-x-auto">
@@ -53,7 +237,7 @@
                     <tr>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Apprenant</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Métier</th>
-                        {% if q or multi_centre %}<th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Centre</th>{% endif %}
+                        {% if q %}<th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Centre</th>{% endif %}
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Année scolaire</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total dû</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total payé</th>
@@ -70,7 +254,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ insc.formation.filiere }}
                         </td>
-                        {% if q or multi_centre %}
+                        {% if q %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                             {{ insc.formation.centre }}
                         </td>
@@ -157,6 +341,7 @@
         </div>
         {% endif %}
     </div>
+    {% endif %}
 </div>
 
 {% comment %} ===== MODALS ===== {% endcomment %}

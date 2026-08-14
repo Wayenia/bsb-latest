@@ -288,6 +288,23 @@ def recap_view(request):
             messages.error(request, 'Vous avez déjà déposé une demande d\'inscription pour cette formation.')
             return redirect('courses:my_subscriptions')
 
+        if career.type_formation == 'initiale':
+            conflit = Inscription.objects.filter(
+                eleve=request.user.eleve,
+                annee_scolaire=career.annee_prog,
+                formation__type_formation='initiale',
+            ).exclude(statut='rejete').exclude(formation=career).select_related(
+                'formation__filiere', 'formation__centre'
+            ).first()
+            if conflit:
+                messages.error(
+                    request,
+                    "Vous avez déjà une demande d'inscription en Formation Initiale "
+                    f"({conflit.formation.filiere} - {conflit.formation.centre}) pour cette année scolaire. "
+                    "Une inscription en Formation Initiale dans un autre centre n'est pas autorisée la même année."
+                )
+                return redirect('courses:my_subscriptions')
+
         from_rejected_id = request.session.get('from_rejected_id')
         rejected_inscription = None
         if from_rejected_id:
@@ -754,8 +771,9 @@ def download_quittance(request,id):
     p.line(1.5*cm, y, width-1.5*cm, y)
     p.setDash()
     y -= 0.5*cm
-    # INFOS APPRENANT 
+    # INFOS APPRENANT
     y = ligne("Apprenant :", f"{eleve.nom} {eleve.prenom}", y)
+    y = ligne("Matricule :", eleve.matricule or "—", y)
     y = ligne("Centre de Formation :", str(inscription.formation.centre), y)
     y=ligne("Métier :" ,str(inscription.formation.filiere),y)
     y = ligne("Année scolaire :", str(inscription.annee_scolaire), y)
@@ -1052,13 +1070,29 @@ def gerer_inscription(request,id):
      centre = membre.structure if membre else None
      subscription=get_object_or_404(Inscription,id=id,formation__centre=centre)
      if request.method == 'POST':
-         action=request.POST.get('action') 
+         action=request.POST.get('action')
          if action == 'valide':
+             if subscription.formation and subscription.formation.type_formation == 'initiale':
+                 conflit = Inscription.objects.filter(
+                     eleve=subscription.eleve,
+                     annee_scolaire=subscription.annee_scolaire,
+                     formation__type_formation='initiale',
+                     statut__in=['valide', 'valide_paye'],
+                 ).exclude(pk=subscription.pk).select_related(
+                     'formation__filiere', 'formation__centre'
+                 ).first()
+                 if conflit:
+                     messages.error(
+                         request,
+                         "Cet apprenant a déjà une inscription validée en Formation Initiale "
+                         f"({conflit.formation.filiere} - {conflit.formation.centre}) pour cette année scolaire."
+                     )
+                     return redirect("courses:valide_inscription")
              subscription.statut='valide'
              subscription.date_validation=timezone.now()
              subscription.motif_rejet=None
              messages.success(request, "Inscription validée et dettes générées.")
-         subscription.save()
+             subscription.save()
      return redirect("courses:valide_inscription")
 
 @require_permission('courses.rejeter_inscription')
@@ -1105,6 +1139,7 @@ def paiement_list(request):
     statistiques, qui gère correctement ces cas.
     """
     q = request.GET.get('q', '').strip()
+    centre_id = request.GET.get('centre', '').strip()
     centres_qs, _directions_qs, scope = _get_scope(request.user)
     multi_centre = scope in ('global', 'direction')
     peut_rechercher_tous_centres = (
@@ -1114,6 +1149,8 @@ def paiement_list(request):
     )
     if q and not peut_rechercher_tous_centres:
         q = ''
+    if not multi_centre:
+        centre_id = ''
 
     base_qs = Inscription.objects.select_related(
         'eleve',
@@ -1158,10 +1195,6 @@ def paiement_list(request):
         if insc.reste > 0:
             inscriptions_avec_reste.append(insc)
 
-    paginator = Paginator(inscriptions_avec_reste, 10)
-    page = request.GET.get('page')
-    inscriptions = paginator.get_page(page)
-
     scope_labels = {
         'global': "tous les centres",
         'direction': "les centres de votre direction",
@@ -1169,7 +1202,53 @@ def paiement_list(request):
         'none': "aucun centre (aucune structure ne vous est rattachée)",
     }
 
+    # Recherche cross-centre ou portée mono-centre : liste plate, comme
+    # avant (une recherche cible un apprenant précis, peu importe son centre ;
+    # un gestionnaire/caissier n'a qu'un seul centre, pas besoin d'accordéon).
+    if q or not multi_centre:
+        paginator = Paginator(inscriptions_avec_reste, 10)
+        inscriptions = paginator.get_page(request.GET.get('page'))
+        return render(request, 'member/paiement/list.html', {
+            'mode': 'plat',
+            'inscriptions': inscriptions,
+            'q': q,
+            'scope': scope,
+            'scope_label': scope_labels.get(scope, "votre centre"),
+            'multi_centre': multi_centre,
+            'peut_rechercher_tous_centres': peut_rechercher_tous_centres,
+        })
+
+    # Portée multi-centres, sans recherche : accordéon centres -> inscriptions
+    # (même principe que régions -> provinces) : la liste des centres est
+    # paginée (10/page) et, pour le centre déplié (paramètre ?centre=), ses
+    # inscriptions à reste à payer sont elles-mêmes paginées (10/page,
+    # paramètre ?ipage=) — sans recharger toute la liste des centres.
+    compte_par_centre = {}
+    inscriptions_par_centre = {}
+    for insc in inscriptions_avec_reste:
+        cid = insc.formation.centre_id
+        compte_par_centre[cid] = compte_par_centre.get(cid, 0) + 1
+        inscriptions_par_centre.setdefault(cid, []).append(insc)
+
+    centres_annotes = list(centres_qs.order_by('nom_centre'))
+    for c in centres_annotes:
+        c.nb_inscriptions = compte_par_centre.get(c.id, 0)
+
+    paginator = Paginator(centres_annotes, 10)
+    centres_page = paginator.get_page(request.GET.get('page'))
+
+    centre_ouvert = None
+    inscriptions = None
+    if centre_id:
+        centre_ouvert = centres_qs.filter(pk=centre_id).first()
+        if centre_ouvert:
+            ipaginator = Paginator(inscriptions_par_centre.get(centre_ouvert.id, []), 10)
+            inscriptions = ipaginator.get_page(request.GET.get('ipage'))
+
     return render(request, 'member/paiement/list.html', {
+        'mode': 'accordeon',
+        'centres_page': centres_page,
+        'centre_ouvert': centre_ouvert,
         'inscriptions': inscriptions,
         'q': q,
         'scope': scope,
@@ -2519,6 +2598,7 @@ def stats_download_quittance_view(request, paiement_id):
 
     y = ligne("Apprenant :", f"{eleve.nom} {eleve.prenom}", y)
     y = ligne("Identifiant :", eleve.numero_identifiant or "—", y)
+    y = ligne("Matricule :", eleve.matricule or "—", y)
     y = ligne("Centre :", str(inscription.formation.centre), y)
     y = ligne("Métier :", str(inscription.formation.filiere), y)
     y = ligne("Année scolaire :", str(inscription.annee_scolaire or "—"), y)

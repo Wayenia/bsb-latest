@@ -170,7 +170,33 @@
                                     </div>
                                     <div class="space-y-2 col-span-full hidden" id="nip-wrap">
                                         <label class="text-sm font-bold text-gray-700">NIP (Numéro d'Identification Personnel) <span class="text-red-700">*</span></label>
-                                        <input type="text" name="nip" id="id_nip" maxlength="20" value="{{ form_data.nip|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" placeholder="Obligatoire à partir de 18 ans">
+                                        <input type="text" name="nip" id="id_nip" maxlength="17" pattern="\d{17}" title="17 chiffres" value="{{ form_data.nip|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" placeholder="17 chiffres, obligatoire à partir de 18 ans avec un numéro burkinabè (+226)">
+                                    </div>
+                                    <div class="col-span-full hidden" id="document-wrap">
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div class="space-y-2">
+                                                <label class="text-sm font-bold text-gray-700">Type de document <span class="text-red-700">*</span></label>
+                                                <select name="type_document" id="id_type_document" data-doc-field class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                                    <option value="">Sélectionnez…</option>
+                                                    <option value="acte_naissance" {% if form_data.type_document == 'acte_naissance' %}selected{% endif %}>Acte de naissance</option>
+                                                    <option value="cni" {% if form_data.type_document == 'cni' %}selected{% endif %}>Carte d'identité</option>
+                                                    <option value="permis" {% if form_data.type_document == 'permis' %}selected{% endif %}>Permis de conduire</option>
+                                                    <option value="passeport" {% if form_data.type_document == 'passeport' %}selected{% endif %}>Passeport</option>
+                                                    <option value="carte_militaire" {% if form_data.type_document == 'carte_militaire' %}selected{% endif %}>Carte militaire</option>
+                                                    <option value="carte_consulaire" {% if form_data.type_document == 'carte_consulaire' %}selected{% endif %}>Carte consulaire</option>
+                                                    <option value="autre" {% if form_data.type_document == 'autre' %}selected{% endif %}>Autre</option>
+                                                </select>
+                                            </div>
+                                            <div class="space-y-2">
+                                                <label class="text-sm font-bold text-gray-700">Numéro du document <span class="text-red-700">*</span></label>
+                                                <input type="text" name="numero_document" id="id_numero_document" data-doc-field value="{{ form_data.numero_document|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                            </div>
+                                            <div class="space-y-2">
+                                                <label class="text-sm font-bold text-gray-700">Date d'établissement <span class="text-red-700">*</span></label>
+                                                {% now "Y-m-d" as today_iso %}
+                                                <input type="date" name="date_etablissement_document" id="id_date_etablissement_document" data-doc-field value="{{ form_data.date_etablissement_document|default:'' }}" max="{{ today_iso }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -264,6 +290,13 @@
                 errorMsg.className = 'field-error text-red-600 text-[10px] font-bold mt-1 uppercase';
                 errorMsg.innerText = 'Ce champ est obligatoire';
                 input.parentNode.appendChild(errorMsg);
+            } else if (input.id === 'id_nip' && !/^\d{17}$/.test(input.value.trim())) {
+                isValid = false;
+                input.classList.add('border-red-500');
+                const errorMsg = document.createElement('p');
+                errorMsg.className = 'field-error text-red-600 text-[10px] font-bold mt-1 uppercase';
+                errorMsg.innerText = 'Le NIP doit contenir exactement 17 chiffres';
+                input.parentNode.appendChild(errorMsg);
             }
         });
 
@@ -302,16 +335,34 @@
         return validateCurrentStep();
     };
 
-    // Âge >= 18 ans calculé à partir de la date de naissance -> NIP obligatoire
-    function toggleNip() {
+    // Le NIP n'est demandé que pour un majeur avec un indicatif téléphonique
+    // burkinabè (+226) ; sinon (mineur, ou indicatif étranger) c'est un
+    // document d'identité (type + numéro + date d'établissement) qui sert
+    // de base à l'identifiant.
+    function indicatifBurkina() {
+        var telInput = document.getElementById('id_tel');
+        // Pas encore initialisé (plugin en cours de chargement) -> on suppose
+        // l'indicatif par défaut +226 (initialCountry: 'bf').
+        if (!telInput || !telInput.iti) { return true; }
+        var pays = telInput.iti.getSelectedCountryData();
+        return !!pays && pays.dialCode === '226';
+    }
+
+    function updateIdentityFields() {
         var dateInput = document.getElementById('id_date_naissance');
-        var wrap = document.getElementById('nip-wrap');
+        var nipWrap = document.getElementById('nip-wrap');
         var nipInput = document.getElementById('id_nip');
+        var docWrap = document.getElementById('document-wrap');
+        var docInputs = docWrap.querySelectorAll('[data-doc-field]');
+
         if (!dateInput.value) {
-            wrap.classList.add('hidden');
+            nipWrap.classList.add('hidden');
             nipInput.required = false;
+            docWrap.classList.add('hidden');
+            docInputs.forEach(function (el) { el.required = false; });
             return;
         }
+
         var naissance = new Date(dateInput.value);
         var today = new Date();
         var age = today.getFullYear() - naissance.getFullYear();
@@ -319,16 +370,16 @@
             (today.getMonth() === naissance.getMonth() && today.getDate() < naissance.getDate());
         if (pasEncoreAnniversaire) { age--; }
 
-        if (age >= 18) {
-            wrap.classList.remove('hidden');
-            nipInput.required = true;
-        } else {
-            wrap.classList.add('hidden');
-            nipInput.required = false;
-        }
+        var utiliseNip = age >= 18 && indicatifBurkina();
+
+        nipWrap.classList.toggle('hidden', !utiliseNip);
+        nipInput.required = utiliseNip;
+        docWrap.classList.toggle('hidden', utiliseNip);
+        docInputs.forEach(function (el) { el.required = !utiliseNip; });
     }
-    document.getElementById('id_date_naissance').addEventListener('change', toggleNip);
-    toggleNip();
+    document.getElementById('id_date_naissance').addEventListener('change', updateIdentityFields);
+    document.getElementById('id_tel').addEventListener('countrychange', updateIdentityFields);
+    updateIdentityFields();
 
     showStep(1);
 </script>

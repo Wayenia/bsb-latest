@@ -231,6 +231,10 @@
                     strictMode: true,
                     utilsScript: '{% static "vendor/intl-tel-input/js/utils.js" %}',
                 });
+                // Expose l'instance sur l'input pour que d'autres scripts de
+                // page (ex. le formulaire d'inscription) puissent lire le
+                // pays/indicatif sélectionné une fois le plugin chargé.
+                input.iti = iti;
 
                 if (valeurInitiale) {
                     iti.promise.then(function () {

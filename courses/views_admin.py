@@ -513,20 +513,66 @@ def course_delete(request, id):
 # SUBSCRIPTION CRUD Faudra peut etre filter par année aussi cça sera bien pour les staistiques
 @require_permission('courses.voir_inscriptions')
 def subscription_list(request):
-    subscriptions = Inscription.objects.select_related('eleve', 'formation')\
+    subscriptions = Inscription.objects.select_related('eleve', 'formation__centre')\
     .exclude(statut="en-cours")\
     .order_by('-date_inscription')
     centres_qs, _, scope = _get_scope(request.user)
+    multi_centre = scope == "global" or scope == "direction"
     if scope != "global":
         centre_ids = list(centres_qs.values_list("id", flat=True))
         subscriptions = subscriptions.filter(formation__centre_id__in=centre_ids)
-    # total_incrit_annee=Inscription.objects.filter(statut="valide").count()
-    # total_valide=Inscription.objects.filter()
+
     f=SubscriptionFilter(request.GET,queryset=subscriptions)
-    paginator = Paginator(f.qs, 10)
-    page = request.GET.get('page')
-    subscriptions = paginator.get_page(page)
-    return render(request, 'admin/subscription/list.html', {'subscriptions': subscriptions, 'filter': f})
+
+    centre_id = request.GET.get('centre', '').strip()
+    if not multi_centre:
+        centre_id = ''
+    filtre_actif = bool(
+        request.GET.get('recherche') or request.GET.get('statut') or request.GET.get('formation')
+    )
+
+    # Filtre (recherche/statut/formation) actif, ou portée mono-centre :
+    # liste plate, comme avant.
+    if filtre_actif or not multi_centre:
+        paginator = Paginator(f.qs, 10)
+        subscriptions = paginator.get_page(request.GET.get('page'))
+        return render(request, 'admin/subscription/list.html', {
+            'mode': 'plat',
+            'subscriptions': subscriptions,
+            'filter': f,
+        })
+
+    # Portée multi-centres, sans filtre : accordéon centres -> inscriptions
+    # (même principe que régions -> provinces) : la liste des centres est
+    # paginée (10/page) et, pour le centre déplié (paramètre ?centre=), ses
+    # inscriptions sont elles-mêmes paginées (10/page, paramètre ?ipage=)
+    # sans recharger toute la liste des centres.
+    compte_par_centre = {
+        row['formation__centre_id']: row['n']
+        for row in f.qs.values('formation__centre_id').annotate(n=Count('id'))
+    }
+    centres_annotes = list(centres_qs.order_by('nom_centre'))
+    for c in centres_annotes:
+        c.nb_inscriptions = compte_par_centre.get(c.id, 0)
+    paginator = Paginator(centres_annotes, 10)
+    centres_page = paginator.get_page(request.GET.get('page'))
+
+    centre_ouvert = None
+    subscriptions = None
+    if centre_id:
+        centre_ouvert = centres_qs.filter(pk=centre_id).first()
+        if centre_ouvert:
+            iqs = f.qs.filter(formation__centre_id=centre_ouvert.id)
+            ipaginator = Paginator(iqs, 10)
+            subscriptions = ipaginator.get_page(request.GET.get('ipage'))
+
+    return render(request, 'admin/subscription/list.html', {
+        'mode': 'accordeon',
+        'centres_page': centres_page,
+        'centre_ouvert': centre_ouvert,
+        'subscriptions': subscriptions,
+        'filter': f,
+    })
 
 @require_permission('courses.valider_inscription')
 def subscription_create(request):
@@ -582,13 +628,29 @@ def gerer_inscription(request,id):
      if scope != "global" and (not subscription.formation_id or not centres_qs.filter(pk=subscription.formation.centre_id).exists()):
          raise PermissionDenied("Vous n'avez pas accès à cette inscription.")
      if request.method == 'POST':
-         action=request.POST.get('action') 
+         action=request.POST.get('action')
          if action == 'valide':
+             if subscription.formation and subscription.formation.type_formation == 'initiale':
+                 conflit = Inscription.objects.filter(
+                     eleve=subscription.eleve,
+                     annee_scolaire=subscription.annee_scolaire,
+                     formation__type_formation='initiale',
+                     statut__in=['valide', 'valide_paye'],
+                 ).exclude(pk=subscription.pk).select_related(
+                     'formation__filiere', 'formation__centre'
+                 ).first()
+                 if conflit:
+                     messages.error(
+                         request,
+                         "Cet apprenant a déjà une inscription validée en Formation Initiale "
+                         f"({conflit.formation.filiere} - {conflit.formation.centre}) pour cette année scolaire."
+                     )
+                     return redirect("bsb_admin:subscription_en_cours")
              subscription.statut='valide'
              subscription.date_validation=timezone.now()
              subscription.motif_rejet=None
              messages.success(request, "Inscription validée et dettes générées.")
-         subscription.save()
+             subscription.save()
      return redirect("bsb_admin:subscription_en_cours")
 
 @require_permission('courses.rejeter_inscription')
@@ -1073,7 +1135,7 @@ MATRIX_CODENAMES = [codename for codename, _, _ in MATRIX_PERMISSIONS]
 # Ordre d'affichage des colonnes (rôle = groupe Django), aligné sur
 # accounts.Utilisateur.ROLE_GROUPS.
 MATRIX_ROLES = [
-    'Admin', 'Directeur Général', 'Directeur Inter-régional', 'DEPS',
+    'Admin', 'Directeur Général', 'Directeur Inter-régional', 'DESP',
     'Directeur de Centre', 'Caissier', 'Agent Comptable', 'Formateur',
     'Membre Administration', 'DAF',
 ]
