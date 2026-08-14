@@ -202,7 +202,7 @@
                             </dl>
 
                             {% if career.date_limite_proche %}
-                            <p class="text-sm font-bold text-bsb-primary mb-3">Inscriptions ouvertes jusqu'au {{ career.date_limite_proche|date:"d/m/Y" }}</p>
+                            <p class="text-sm font-bold text-bsb-primary mb-3">Date limite d'inscription : {{ career.date_limite_proche|date:"d/m/Y" }}</p>
                             {% endif %}
 
                             {% if career.filiere.texte_defilante %}
