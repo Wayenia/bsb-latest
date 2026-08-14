@@ -105,6 +105,16 @@ class Utilisateur(AbstractUser):
 
 
 class Eleve(Utilisateur):
+    TYPE_DOCUMENT_CHOICES = [
+        ("acte_naissance", "Acte de naissance"),
+        ("cni", "Carte d'identité"),
+        ("permis", "Permis de conduire"),
+        ("passeport", "Passeport"),
+        ("carte_militaire", "Carte militaire"),
+        ("carte_consulaire", "Carte consulaire"),
+        ("autre", "Autre"),
+    ]
+
     lieu_naissance = models.CharField(max_length=225, verbose_name="Lieu de naissance")
 
     nom_pere = models.CharField(max_length=150, verbose_name="Nom du père")
@@ -114,13 +124,20 @@ class Eleve(Utilisateur):
     nip = models.CharField(
         max_length=20, blank=True, null=True,
         verbose_name="NIP (Numéro d'Identification Personnel)",
-        help_text="Obligatoire à partir de 18 ans."
+        help_text="Obligatoire à partir de 18 ans, pour un numéro de téléphone burkinabè (+226)."
     )
+    type_document = models.CharField(
+        max_length=20, choices=TYPE_DOCUMENT_CHOICES, blank=True, null=True,
+        verbose_name="Type de document d'identité",
+        help_text="Requis si mineur, ou majeur avec un indicatif téléphonique autre que +226."
+    )
+    numero_document = models.CharField(max_length=100, blank=True, null=True, verbose_name="Numéro du document")
+    date_etablissement_document = models.DateField(blank=True, null=True, verbose_name="Date d'établissement du document")
 
     numero_identifiant = models.CharField(
         # 200 : le NIP (17 chiffres) tient largement, mais la concaténation
-        # utilisée pour les moins de 18 ans (nom/prénoms/lieu de naissance)
-        # peut dépasser 50 caractères avec des noms/lieux longs.
+        # utilisée hors NIP (numéro de document + type + dates + lieu de
+        # naissance) peut dépasser 50 caractères avec des lieux longs.
         max_length=200,
         unique=True,
         blank=True,
@@ -148,17 +165,26 @@ class Eleve(Utilisateur):
         )
         return age >= 18
 
+    def utilise_nip(self):
+        """Le NIP ne fait office d'identifiant que pour un majeur avec un
+        numéro de téléphone burkinabè (+226) — un mineur, ou un majeur avec
+        un indicatif étranger, s'identifie par un document (voir
+        generate_identifiant)."""
+        return self.a_18_ans_ou_plus() and bool(self.tel) and self.tel.startswith('+226')
+
     def generate_identifiant(self):
-        """L'identifiant de l'apprenant est le NIP pour les 18 ans et plus
-        (déjà validé à 17 chiffres à l'inscription), ou une concaténation
-        déterministe de son état-civil pour les moins de 18 ans (pas de NIP)."""
-        if self.a_18_ans_ou_plus() and self.nip:
+        """L'identifiant de l'apprenant est le NIP (majeur, +226), ou une
+        concaténation déterministe de son document d'identité + dates + lieu
+        de naissance dans tous les autres cas (mineur, ou indicatif
+        étranger)."""
+        if self.utilise_nip() and self.nip:
             return self.nip
 
         parties = [
-            self.nom, self.prenom, self.nom_mere, self.prenom_mere,
-            self.prenom_pere, self.lieu_naissance,
+            self.numero_document, self.type_document,
+            self.date_etablissement_document.strftime('%Y%m%d') if self.date_etablissement_document else '',
             self.date_naissance.strftime('%Y%m%d') if self.date_naissance else '',
+            self.lieu_naissance,
         ]
         brut = ''.join(p or '' for p in parties)
         return ''.join(brut.upper().split())
