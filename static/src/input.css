@@ -20,3 +20,119 @@
     @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors;
   }
 }
+
+/* Charte BSB (pages publiques accueil et à propos) — voir yupaan.bsb.gov.bf */
+
+:root {
+  --bsb-primary: #e53935;
+  --bsb-primary-dark: #b71c1c;
+  --bsb-secondary: #fbc02d;
+  --bsb-accent: #ffd600;
+  --bsb-text: #1f2937;
+  --bsb-text-soft: #6b7280;
+  --bsb-cream: #fff8e1;
+  --bsb-amber: #fbbf24;
+  --bsb-gradient: linear-gradient(135deg, #e53935 0%, #fbc02d 100%);
+  --bsb-radius: 16px;
+  --bsb-radius-lg: 24px;
+  --bsb-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --bsb-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --bsb-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Dégradé signature rouge → jaune */
+.bsb-gradient { background: var(--bsb-gradient); }
+
+/* Texte en dégradé (titre héros, signature « Burkina Suudu Bawdè ») */
+.bsb-gradient-text {
+  background: linear-gradient(45deg, #ffffff, #e0e7ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Section héros */
+.bsb-hero {
+  background: var(--bsb-gradient);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Cartes d'information (fond crème, survol relevé) */
+.bsb-info-card {
+  background: var(--bsb-cream);
+  border-radius: var(--bsb-radius);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.bsb-info-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--bsb-shadow-lg);
+}
+
+/* Pastille d'icône en dégradé */
+.bsb-info-icon {
+  width: 60px;
+  height: 60px;
+  background: var(--bsb-gradient);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+/* Filet dégradé sous les titres de section */
+.bsb-rule {
+  height: 4px;
+  width: 72px;
+  border-radius: 9999px;
+  background: var(--bsb-gradient);
+}
+
+/* Boutons de la charte */
+.bsb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+.bsb-btn-primary {
+  /* couleur figee : base.html redefinit --bsb-primary en gris ardoise */
+  background: #e53935;
+  color: #ffffff;
+  box-shadow: var(--bsb-shadow-md);
+}
+.bsb-btn-primary:hover {
+  background: var(--bsb-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--bsb-shadow-lg);
+}
+.bsb-btn-light {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--bsb-primary-dark);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.bsb-btn-light:hover {
+  background: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: var(--bsb-shadow-lg);
+}
+
+/* Bandeau défilant des cartes de formation (page d'accueil) */
+.bsb-ticker { overflow: hidden; }
+.bsb-ticker__inner {
+  display: inline-block;
+  white-space: nowrap;
+  padding-left: 100%;
+  animation: bsb-ticker-scroll 12s linear infinite;
+}
+@keyframes bsb-ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}

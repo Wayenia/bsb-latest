@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} une actualité | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-10 px-4 md:px-6">
+    {% include 'partials/messages.html' %}
+
+    <h1 class="text-3xl font-black text-gray-900 mb-2">{{ action }} une actualité</h1>
+    <p class="text-sm text-gray-600 mb-8">Les abonnés sont prévenus par e-mail au moment de la publication.</p>
+
+    <form method="post" enctype="multipart/form-data" class="bg-white border border-gray-200 rounded-lg p-6 space-y-5">
+        {% csrf_token %}
+        {% for field in form %}
+        <div>
+            <label for="{{ field.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>{% endif %}
+            {% for erreur in field.errors %}<p class="mt-1 text-xs text-red-600">{{ erreur }}</p>{% endfor %}
+        </div>
+        {% endfor %}
+
+        <div class="flex gap-3 pt-4 border-t border-gray-100">
+            <button type="submit" class="px-6 py-3 bg-bsb-primary text-white font-bold rounded-lg hover:bg-bsb-dark">Enregistrer</button>
+            <a href="{% url 'bsb_actualites:actualite_list' %}" class="px-6 py-3 bg-gray-100 text-gray-800 font-bold rounded-lg">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

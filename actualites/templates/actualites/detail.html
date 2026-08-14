@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ actualite.titre }} | Actualités BSB{% endblock %}
+
+{% block content %}
+<section class="bsb-hero">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+        <a href="{% url 'actualites:liste' %}" class="inline-block text-white/80 hover:text-white text-sm font-semibold mb-10">&larr; Toutes les actualités</a>
+        <time datetime="{{ actualite.date_publication|date:'c' }}" class="block text-white/85 text-xs font-bold uppercase tracking-widest mb-5">
+            {{ actualite.date_publication|date:"d F Y" }}
+        </time>
+        <h1 class="text-white font-bold text-2xl md:text-4xl leading-tight mb-6">{{ actualite.titre }}</h1>
+        <div class="w-16 h-1 bg-white/70 rounded-full mb-6"></div>
+        <p class="text-white/90 text-base md:text-lg leading-relaxed max-w-3xl">{{ actualite.chapeau }}</p>
+    </div>
+</section>
+
+<article class="py-16 md:py-24 bg-white">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% if actualite.image %}
+        <img src="{{ actualite.image.url }}" alt="{{ actualite.titre }}" class="w-full rounded-2xl shadow-md mb-12">
+        {% endif %}
+
+        <div class="text-gray-700 text-base md:text-lg leading-loose space-y-6">{{ actualite.contenu|urlize|linebreaks }}</div>
+
+        <div class="mt-14 pt-8 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+            {% if actualite.auteur %}
+            <p class="text-sm text-bsb-muted">Publié par {{ actualite.auteur }}</p>
+            {% endif %}
+            <a href="{% url 'actualites:liste' %}" class="text-sm font-bold text-bsb-primary hover:text-bsb-dark">Retour aux actualités</a>
+        </div>
+    </div>
+</article>
+
+{% if autres %}
+<section class="py-16 md:py-24 bg-bsb-cream">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-bsb-ink mb-4">À lire également</h2>
+        <div class="bsb-rule mb-12"></div>
+        <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+            {% for actu in autres %}
+            <a href="{{ actu.get_absolute_url }}" class="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col h-full">
+                <div class="h-1.5 bsb-gradient"></div>
+                <div class="p-7">
+                    <time class="block text-xs font-bold uppercase tracking-wider text-bsb-primary mb-3">{{ actu.date_publication|date:"d F Y" }}</time>
+                    <h3 class="text-base font-extrabold text-bsb-ink leading-snug mb-3">{{ actu.titre }}</h3>
+                    <p class="text-sm text-bsb-muted leading-relaxed">{{ actu.chapeau|truncatechars:110 }}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% include 'actualites/_newsletter.html' %}
+{% endblock %}

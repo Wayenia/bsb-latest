@@ -4,172 +4,230 @@
 {% block title %}Accueil | BSB - Burkina Suudu Bawdè{% endblock %}
 
 {% block content %}
-{% comment %} Hero Section {% endcomment %}
-<section class="relative bg-gradient-to-br from-yellow-500 via-bsb-gold to-yellow-700 py-10 overflow-hidden">
-    <div class="absolute inset-0 opacity-10">
-        <div class="absolute inset-0" style="background-image: url('{% static 'images/logo.png' %}'); background-size: 400px; background-repeat: repeat;"></div>
-    </div>
-    
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center">
-            <div class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6">
-                <span class="text-gray-900 text-xl font-semibold">Ministère de l'Enseignement Secondaire et de la Formation Professionnelle et Technique</span>
+{% comment %} Charte : rouge #e53935, jaune #fbc02d, crème #fff8e1 — classes .bsb-* dans static/src/input.css {% endcomment %}
+
+<section class="bsb-hero">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div class="grid lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+            {% comment %} Identification de l'institution {% endcomment %}
+            <div class="lg:col-span-7">
+                <p class="text-white font-bold leading-snug text-xl md:text-2xl lg:text-3xl mb-4 mt-2">
+                    Ministère de l'Enseignement Secondaire,<br class="hidden sm:block">
+                    de la Formation Professionnelle et Technique
+                </p>
+
+                <h1 class="text-white font-bold leading-snug text-xl md:text-3xl lg:text-3xl mb-4 mt-2">Burkina Suudu Bawdè</h1>
+
+                <p class="text-white font-bold leading-snug text-lg md:text-2xl lg:text-2xl mb-4 mt-2">La Maison des compétences du Burkina</p>
+
+                <p class="text-white font-bold leading-snug text-base md:text-xl lg:text-2xl mb-5 min-h-[1rem] lg:min-h-[1.5rem]" id="typewriter"></p>
+
+                <!-- <div class="w-20 h-1 bg-white/70 rounded-full mb-6"></div> -->
+
+                <!-- <p class="text-white/85 text-base md:text-lg leading-relaxed max-w-2xl mb-8">
+                    Plateforme officielle d'inscription aux formations professionnelles initiales
+                    et de suivi des dossiers de scolarité des centres du réseau Burkina Suudu Bawdè,
+                    principal opérateur public de formation professionnelle au Burkina Faso.
+                </p> -->
+
+                <div class="flex flex-wrap gap-3">
+                    {% if user.is_staff %}
+                    <a href="{% url 'bsb_admin:admin_dashboard' %}" class="bsb-btn bsb-btn-light">Accéder à mon espace</a>
+                    {% elif user.is_authenticated %}
+                    <a href="{% url 'courses:redirect_to_dashboard' %}" class="bsb-btn bsb-btn-light">Accéder à mon compte</a>
+                    {% else %}
+                    <a href="{% url 'accounts:login' %}" class="bsb-btn bsb-btn-light">Se connecter</a>
+                    {% endif %}
+
+                    <a href="{% url 'courses:available_career' %}" class="bsb-btn border-2 border-white/60 text-white hover:bg-white hover:text-bsb-dark">Consulter les formations ouvertes</a>
+                </div>
             </div>
-            
-            <h1 class="text-5xl md:text-6xl font-black text-gray-900 mb-6">
-                Burkina Suudu Bawdè 
-            </h1>
-            <p class="text-xl md:text-2xl text-red-800 font-semibold mb-4" id="typewriter"></p>
-            <p class="text-lg text-gray-800 max-w-3xl mx-auto mb-10">
-                Développer les compétences de la jeunesse burkinabè à travers une formation de qualité
-                pour un avenir professionnel épanoui et durable.
-            </p>
-            
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                {% if user.is_staff %}
-                <a href="{% url 'bsb_admin:admin_dashboard' %}"
-                   class="inline-flex items-center justify-center px-8 py-3 text-sm font-bold text-gray-900 hover:text-white border border-gray-300 bg-yellow-100 rounded-full hover:bg-yellow-600 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
-                    Accéder à mon espace
-                </a>
-                {% else %}
-                {% if not user.is_staff %}
-                <a href="{% url 'courses:redirect_to_dashboard' %}"
-                   class="inline-flex items-center justify-center px-8 py-3 text-sm font-bold text-gray-900 hover:text-white border border-gray-300 bg-yellow-100 rounded-full hover:bg-yellow-600 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
-                    Accéder à mon compte
-                </a>
-                {% else %}
-                <a href="{% url 'accounts:login' %}"
-                   class="inline-flex items-center justify-center px-8 py-3 text-sm font-bold text-gray-900 hover:text-white border border-gray-300 bg-yellow-100 rounded-full hover:bg-yellow-600 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
-                    Se connecter
-                </a>
-                {% endif %}
-                {% endif %}
-                <a href="#formations"
-                   class="inline-flex items-center justify-center px-8 py-3 px-5 py-2.5 text-sm font-bold text-gray-800 hover:text-white border border-gray-300 bg-bsb-red rounded-full hover:bg-red-700 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
-                    Découvrir les formations
-                </a>
+
+            {% comment %} Encart de procédure — reprend les 4 étapes réelles du formulaire {% endcomment %}
+            <div class="lg:col-span-5">
+                <div class="bg-white rounded-lg border border-black/10 overflow-hidden">
+                    <div class="bg-bsb-cream px-6 py-4 border-b border-black/10">
+                        <h2 class="font-bold text-bsb-ink">Inscription sur Yu-Paan</h2>
+                        <p class="text-xs text-bsb-muted mt-0.5">Procédure en quatre étapes</p>
+                    </div>
+
+                    <ol class="divide-y divide-gray-100">
+                        <li class="flex items-start gap-4 px-6 py-4">
+                            <span class="bsb-gradient flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold">1</span>
+                            <div>
+                                <p class="font-semibold text-bsb-ink text-sm">Création du compte</p>
+                                <p class="text-sm text-bsb-muted">Identité, coordonnées et mot de passe.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4 px-6 py-4">
+                            <span class="bsb-gradient flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold">2</span>
+                            <div>
+                                <p class="font-semibold text-bsb-ink text-sm">Choix de la formation</p>
+                                <p class="text-sm text-bsb-muted">Un métier, un centre, une année scolaire.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4 px-6 py-4">
+                            <span class="bsb-gradient flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold">3</span>
+                            <div>
+                                <p class="font-semibold text-bsb-ink text-sm">Dépôt des pièces justificatives</p>
+                                <p class="text-sm text-bsb-muted">Documents exigés par le centre de formation.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4 px-6 py-4">
+                            <span class="bsb-gradient flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold">4</span>
+                            <div>
+                                <p class="font-semibold text-bsb-ink text-sm">Suivi du dossier</p>
+                                <p class="text-sm text-bsb-muted">Validation, échéances et quittances de paiement.</p>
+                            </div>
+                        </li>
+                    </ol>
+
+                    <div class="px-6 py-5 border-t border-black/10 bg-gray-50">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'courses:subscribe_selection' %}" class="block w-full text-center px-5 py-3 bg-bsb-primary text-white font-bold rounded-xl hover:bg-bsb-dark transition-colors duration-200 text-sm">
+                            Déposer ma candidature
+                        </a>
+                        {% else %}
+                        <a href="{% url 'accounts:register' %}" class="block w-full text-center px-5 py-3 bg-bsb-primary text-white font-bold rounded-xl hover:bg-bsb-dark transition-colors duration-200 text-sm">
+                            Créer mon compte
+                        </a>
+                        <p class="text-center text-xs text-bsb-muted mt-3">
+                            Compte déjà créé ?
+                            <a href="{% url 'accounts:login' %}" class="text-bsb-primary font-semibold hover:text-bsb-dark">Se connecter</a>
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-{% comment %} Statistics Section {% endcomment %}
+{% comment %} Le réseau en chiffres {% endcomment %}
 <section class="py-16 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div class="text-center">
-                <div class="text-5xl font-black text-bsb-gold mb-2">32</div>
-                <div class="text-gray-600 font-semibold">
-                    <a href="{% url 'bsb_admin:center_list' %}" class="bg-white text-gray-500 hover:text-red-700">
-                        Centres de formation
-                    </a>
-                </div>
+        <div class="text-center mb-4 py-2">
+            <p class="text-bsb-muted text-lg mx-auto">Une plateforme publique de formation professionnelle présente dans chaque région du pays.</p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+            <a href="{% url 'bsb_admin:center_list' %}" class="bsb-info-card block p-6 text-center">
+                <span class="block text-4xl font-extrabold text-bsb-primary leading-none mb-3">32</span>
+                <h3 class="font-bold text-bsb-ink mb-1">Centres de formation</h3>
+                <p class="text-sm text-bsb-muted">Sur tout le territoire national.</p>
+            </a>
+
+            <a href="{% url 'bsb_admin:field_list' %}" class="bsb-info-card block p-6 text-center">
+                <span class="block text-4xl font-extrabold text-bsb-primary leading-none mb-3">144</span>
+                <h3 class="font-bold text-bsb-ink mb-1">Métiers enseignés</h3>
+                <p class="text-sm text-bsb-muted">En 8 domaines d'apprentissage.</p>
+            </a>
+
+            <div class="bsb-info-card p-6 text-center">
+                <span class="block text-4xl font-extrabold text-bsb-primary leading-none mb-3">15 000+</span>
+                <h3 class="font-bold text-bsb-ink mb-1">Apprenants formés</h3>
+                <p class="text-sm text-bsb-muted">Depuis son ouverture.</p>
             </div>
-            <div class="text-center">
-                <div class="text-5xl font-black text-bsb-gold mb-2">144</div>
-                <div class="text-gray-600 font-semibold">
-                    <a href="{% url 'bsb_admin:field_list' %}" class="bg-white text-gray-500 hover:text-red-700">
-                        Metiers de formation
-                    </a>
-                </div>
-            </div>
-            <div class="text-center">
-                <div class="text-5xl font-black text-bsb-gold mb-2">15000+</div>
-                <div class="text-gray-600 font-semibold">Apprenants formés</div>
-            </div>
-            <div class="text-center">
-                <div class="text-5xl font-black text-bsb-gold mb-2">13</div>
-                <div class="text-gray-600 font-semibold">
-                    <a href="{% url 'bsb_admin:field_list' %}" class="bg-white text-gray-500 hover:text-red-700">
-                        Régionales couvertes
-                    </a>
-                </div>
+
+            <div class="bsb-info-card p-6 text-center">
+                <span class="block text-4xl font-extrabold text-bsb-primary leading-none mb-3">13</span>
+                <h3 class="font-bold text-bsb-ink mb-1">Régions couvertes</h3>
+                <p class="text-sm text-bsb-muted">Une implantation par région.</p>
             </div>
         </div>
+
+        <p class="text-center mt-10">
+            <a href="{% url 'courses:about' %}" class="text-bsb-primary font-semibold hover:text-bsb-dark underline">
+                En savoir plus sur BSB, sa mission et ses piliers
+            </a>
+        </p>
     </div>
 </section>
+
 {% comment %} Carousel Formations Actives {% endcomment %}
-<section class="py-14 bg-gradient-to-b from-white to-gray-50 overflow-hidden">
+<section class="py-16 bg-bsb-cream overflow-hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-10">
-            <h2 class="text-4xl font-black text-yellow-600 mb-3">Formations en cours</h2>
-            <p class="text-gray-500 text-lg">Inscrivez-vous dès maintenant à nos formations actives</p>
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-bsb-ink mb-4">Formations en cours</h2>
+            <div class="bsb-rule mx-auto mb-4"></div>
+            <p class="text-bsb-muted text-lg">Consultez et inscrivez-vous à nos formations en cours</p>
         </div>
 
         <div class="relative">
             {% comment %} Flèches de navigation {% endcomment %}
-            <button id="carousel-prev"
-                class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white border-2 border-bsb-gold text-bsb-gold shadow-lg rounded-full w-11 h-11 flex items-center justify-center hover:bg-bsb-gold hover:text-white transition-all duration-200 focus:outline-none">Précédent</button>
-            <button id="carousel-next"
-                class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white border-2 border-bsb-gold text-bsb-gold shadow-lg rounded-full w-11 h-11 flex items-center justify-center hover:bg-bsb-gold hover:text-white transition-all duration-200 focus:outline-none">Suivant</button>
+            <button id="carousel-prev" aria-label="Formation précédente" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 lg:-translate-x-4 z-10 bg-white border-2 border-bsb-primary text-bsb-primary shadow-lg rounded-full w-11 h-11 flex items-center justify-center hover:bg-bsb-primary hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-bsb-primary focus:ring-offset-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <button id="carousel-next" aria-label="Formation suivante" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 lg:translate-x-4 z-10 bg-white border-2 border-bsb-primary text-bsb-primary shadow-lg rounded-full w-11 h-11 flex items-center justify-center hover:bg-bsb-primary hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-bsb-primary focus:ring-offset-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>
 
             {% comment %} Conteneur glissant {% endcomment %}
             <div class="overflow-hidden rounded-2xl" id="carousel-wrapper">
                 <div id="carousel-track" class="flex gap-6 transition-transform duration-500 ease-in-out">
                     {% for career in active_careers %}
-                    <div class="carousel-card flex-shrink-0 w-72 sm:w-80 bg-white rounded-2xl border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col overflow-hidden">
-                        
+                    <div class="carousel-card flex-shrink-0 w-72 sm:w-80 bg-white rounded-2xl border border-black/5 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col overflow-hidden">
+                        {% comment %} Filet dégradé en tête de carte {% endcomment %}
+                        <div class="h-1.5 bsb-gradient"></div>
+
                         <div class="p-6 flex flex-col flex-1">
-                            {% comment %} Badge filière / domaine {% endcomment %}
+                            {% comment %} Badge type de formation {% endcomment %}
                             <div class="mb-3">
-                                <span class="inline-block px-3 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-700">
-                                    Type formation : {{ career.get_type_formation_display }}
+                                <span class="inline-block px-3 py-1 text-xs font-bold rounded-full bg-bsb-cream text-bsb-dark border border-bsb-yellow/40">
+                                    {{ career.get_type_formation_display }}
                                 </span>
                             </div>
 
-                            <h3 class="text-lg font-black text-gray-900 mb-1 leading-tight">
-                                {{ career.filiere.nom_filiere }}
-                            </h3>
-                            <p class="text-sm text-gray-500 mb-1">
-                                
-                                Durée : {{ career.duree_display }}
-                            </p>
-                            {% if career.annee_prog %}
-                            <p class="text-sm text-gray-500 mb-1">
+                            <h3 class="text-lg font-extrabold text-bsb-ink mb-3 leading-tight">{{ career.filiere.nom_filiere }}</h3>
 
-                                Année scolaire : {{ career.annee_prog }}
-                            </p>
-                            {% endif %}
-                            <p class="text-sm text-gray-500 mb-4">
+                            <dl class="text-sm text-bsb-muted space-y-1 mb-4">
+                                <div class="flex justify-between gap-3">
+                                    <dt class="font-medium">Durée</dt>
+                                    <dd class="text-right text-bsb-ink">{{ career.duree_display }}</dd>
+                                </div>
+                                {% if career.annee_prog %}
+                                <div class="flex justify-between gap-3">
+                                    <dt class="font-medium">Année scolaire</dt>
+                                    <dd class="text-right text-bsb-ink">{{ career.annee_prog }}</dd>
+                                </div>
+                                {% endif %}
+                                <div class="flex justify-between gap-3">
+                                    <dt class="font-medium">Titre</dt>
+                                    <dd class="text-right text-bsb-ink">{{ career.filiere.titre_professionnel }}</dd>
+                                </div>
+                            </dl>
 
-                                Titre professionnel : {{ career.filiere.titre_professionnel }}
-                            </p>
                             {% if career.date_limite_proche %}
-                            <p class="text-sm font-bold text-red-600 mb-3">
-
-                                Date limite d'inscription : {{ career.date_limite_proche|date:"d/m/Y" }}
-                            </p>
+                            <p class="text-sm font-bold text-bsb-primary mb-3">Date limite d'inscription : {{ career.date_limite_proche|date:"d/m/Y" }}</p>
                             {% endif %}
 
-                            
-                            <br>
                             {% if career.filiere.texte_defilante %}
-                                <div class="bsb-ticker bg-gradient-to-r from-bsb-red to-bsb-gold mb-4">
+                                <div class="bsb-ticker bsb-gradient rounded-lg mb-4">
                                     <div class="bsb-ticker__inner text-xs font-bold text-white py-1.5">
                                         {{ career.filiere.texte_defilante }}
                                     </div>
                                 </div>
                             {% endif %}
-                            <div class="mt-auto">
+
+                            <div class="mt-auto pt-2">
                                 {% if user.is_authenticated %}
-                                    <a href="{% url 'courses:subscribe_selection' %}"
-                                       class="block w-full text-center px-5 py-2.5 bg-bsb-red text-white font-bold rounded-xl hover:bg-red-700 transition-colors duration-200 text-sm">
-                                         S'inscrire
+                                    <a href="{% url 'courses:subscribe_selection' %}" class="block w-full text-center px-5 py-2.5 bg-bsb-primary text-white font-bold rounded-xl hover:bg-bsb-dark transition-colors duration-200 text-sm">
+                                        S'inscrire
                                     </a>
                                 {% else %}
-                                    <a href="{% url 'accounts:login' %}?next={% url 'courses:subscribe_selection' %}"
-                                       class="block w-full text-center px-5 py-2.5 bg-yellow-500 text-white font-bold rounded-xl hover:bg-yellow-600 transition-colors duration-200 text-sm">
-                                         Se connecter pour s'inscrire
+                                    <a href="{% url 'accounts:login' %}?next={% url 'courses:subscribe_selection' %}" class="block w-full text-center px-5 py-2.5 border-2 border-bsb-primary text-bsb-primary font-bold rounded-xl hover:bg-bsb-primary hover:text-white transition-colors duration-200 text-sm">
+                                        Se connecter pour s'inscrire
                                     </a>
                                 {% endif %}
                             </div>
                         </div>
-                        {% comment %} Barre de couleur en bas {% endcomment %}
-                        <div class="h-1.5 rounded-b-2xl bg-bsb-gold"></div>
                     </div>
                     {% empty %}
-                    <div class="w-full text-center py-16 text-gray-400">
-                        
+                    <div class="w-full text-center py-16 text-bsb-muted">
                         Aucune formation active pour le moment.
                     </div>
                     {% endfor %}
@@ -177,356 +235,312 @@
             </div>
 
             {% comment %} Indicateurs (dots) {% endcomment %}
-            <div id="carousel-dots" class="flex justify-center gap-2 mt-6"></div>
+            <div id="carousel-dots" class="flex justify-center gap-2 mt-8"></div>
         </div>
     </div>
 </section>
-{% comment %} About Section {% endcomment %}
-<section class="py-10 bg-gray-50">
+
+{% comment %} Mission  {% endcomment %}
+<section class="py-16 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-                <h2 class="text-4xl text-yellow-600 font-black mb-6">
-                    Notre mission
-                </h2>
-                <p class="text-lg text-gray-700 mb-6 leading-relaxed">
-                    Les missions de <strong>Burkina Suudu Bawdè (BSB)</strong> s'inscrivent dans la vision
-                    du plan sectoriel éducation et formation et aux missions assignées au ministère de
-                    l'enseignement secondaire et de la formation technique et professionnelle en matière
-                    de formation professionnelle. Ainsi, BSB en tant que principal opérateur public de
-                    développement des compétences techniques et professionnelles au Burkina Faso a pour
-                    mission de « contribuer à la mise en œuvre de la politique du Gouvernement en matière
-                    de développement des compétences techniques et professionnelles ».
+        <div class="grid lg:grid-cols-12 gap-8 lg:gap-14">
+            <div class="lg:col-span-8">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-bsb-ink mb-4">Notre mission</h2>
+                <div class="bsb-rule mb-3"></div>
+
+                <p class="text-gray-700 leading-relaxed mb-2">
+                    Les missions de Burkina Suudu Bawdè(BSB) s'inscrivent dans la vision du plan sectoriel éducation et formation
+                    et aux missions assignées au ministère de l'enseignement secondaire et de la formation
+                    technique et professionnelle en matière de formation professionnelle.
                 </p>
-                <div class="space-y-4">
-                    <div class="flex items-start">
-                        <div class="ml-4">
-                            <h3 class="font-bold text-gray-900">Formation de qualité</h3>
-                            <p class="text-gray-600">Programmes certifiés et reconnus nationalement</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0 h-10 w-10 bg-bsb-gold rounded-full flex items-center justify-center">
-                            
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="font-bold text-gray-900">Insertion Professionnelle</h3>
-                            <p class="text-gray-600">Accompagnement vers l'emploi et l'entrepreneuriat</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0 h-10 w-10 bg-bsb-red rounded-full flex items-center justify-center">
-                            
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="font-bold text-gray-900">Couverture Nationale</h3>
-                            <p class="text-gray-600">Présent dans les 13 régions du Burkina Faso</p>
-                        </div>
-                    </div>
+
+                <div class="bg-bsb-cream rounded-2xl p-3 md:p-4">
+                    <div class="w-3 h-0.5 bsb-gradient rounded-full mb-1"></div>
+                    <p class="text-lg text-bsb-ink leading-relaxed">
+                        Ainsi, BSB en tant que principal opérateur public de développement des compétences
+                        techniques et professionnelles au Burkina Faso a pour mission de
+                        <strong class="font-semibold">« contribuer à la mise en œuvre de la politique du
+                        Gouvernement en matière de développement des compétences techniques et
+                        professionnelles »</strong>.
+                    </p>
                 </div>
             </div>
-            <div>
-                <img src="{% static 'images/logo.png' %}" alt="BSB Logo" class="w-full max-w-md mx-auto">
+
+            {% comment %} logo {% endcomment %}
+            <div class="lg:col-span-4">
+                <div class="bg-bsb-cream rounded-2xl h-full flex items-center justify-center p-6 lg:p-10">
+                    <img src="{% static 'images/logo.png' %}" alt="Logo Burkina Suudu Bawdè" class="w-full max-w-[190px] sm:max-w-[220px] lg:max-w-none mix-blend-multiply">
+                </div>
             </div>
         </div>
     </div>
-
 </section>
-{% comment %} Formations Section {% endcomment %}
-<section id="formations" class="py-10 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-black text-yellow-600 mb-4">Nos offres de formation</h2>
-            <p class="text-lg text-gray-600 max-w-3xl mx-auto">
-                32 centres de formation - 8 domaines d'apprentissage - 144 métiers - plus des formations à la carte
+
+{% comment %} Formations section {% endcomment %}
+<section id="formations" class="py-12 bg-bsb-cream">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-bsb-ink mb-4">Nos offres de formation</h2>
+            <div class="bsb-rule mx-auto mb-4"></div>
+            <p class="text-lg text-bsb-muted max-w-3xl mx-auto">
+                32 centres de formation · 8 domaines d'apprentissage · 144 métiers
             </p>
         </div>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {% comment %} AGRO ALIMENTAIRE {% endcomment %}
-            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <h3 class="text-xl font-bold text-bsb-gold mb-4">AGRO ALIMENTAIRE</h3>
-                <p class="text-gray-700 mb-4">
-                    Transformation et valorisation des produits alimentaires
-                </p>
-                <ul class="space-y-2 text-sm text-gray-600">
-                    <li>Boulanger</li>
-                    <li>Pâtissier</li>
-                </ul>
-            </div>
+        <div class="space-y-4">
+            <details class="group bg-white rounded-2xl shadow-md open:shadow-xl transition-shadow" open>
+                <summary class="flex items-center gap-4 p-5 sm:p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span class="bsb-gradient w-11 h-11 rounded-xl flex items-center justify-center text-white font-extrabold flex-shrink-0">01</span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block font-extrabold text-bsb-ink uppercase tracking-wide text-sm sm:text-base">Génie électrique</span>
+                        <span class="text-xs sm:text-sm text-bsb-muted line-clamp-2 sm:line-clamp-1">Electrotechnique · Froid et climatisation · Energie solaire photovoltaïque · Electronique · Informatique</span>
+                    </span>
+                    <span class="hidden sm:block text-xs font-bold text-bsb-dark bg-bsb-cream border border-bsb-yellow/40 px-3 py-1 rounded-full flex-shrink-0">12 métiers</span>
+                    <svg class="w-5 h-5 text-bsb-primary flex-shrink-0 transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="px-5 sm:px-6 pb-6 pt-4 border-t border-gray-100">
+                    <ul class="text-sm text-gray-700 sm:columns-2 lg:columns-3 gap-x-8">
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Electricien du bâtiment</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Monteur /dépanneur en climatisation individuelle</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Electromécanicien</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Mécatronicien</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Installateur de système solaire photovoltaïque</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Monteur/dépanneur en climatisation centralisée</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Câbleur industriel</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Electronicien de maintenance</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Electronicien des installations domestique et tertiaire</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Aide-électricien</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Maintenancier des équipements et systèmes informatiques</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Domoticien</li>
+                    </ul>
+                </div>
+            </details>
 
-            {% comment %} GÉNIE CIVIL {% endcomment %}
-            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <h3 class="text-xl font-bold text-bsb-gold mb-4">GÉNIE CIVIL</h3>
-                <p class="text-gray-700 mb-4">
-                    Formation aux métiers du bâtiment, des travaux publics et de la construction
-                </p>
-                <ul class="space-y-2 text-sm text-gray-600">
-                    <li>Maçon polyvalent</li>
-                    <li>Carreleur</li>
-                    <li>Plombier polyvalent</li>
-                    <li>Menuisier bois</li>
-                </ul>
-            </div>
+            <details class="group bg-white rounded-2xl shadow-md open:shadow-xl transition-shadow">
+                <summary class="flex items-center gap-4 p-5 sm:p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span class="bsb-gradient w-11 h-11 rounded-xl flex items-center justify-center text-white font-extrabold flex-shrink-0">02</span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block font-extrabold text-bsb-ink uppercase tracking-wide text-sm sm:text-base">Génie civil</span>
+                        <span class="text-xs sm:text-sm text-bsb-muted line-clamp-2 sm:line-clamp-1">Construction batiment · Plomberie sanitaire · Structure metallique · Menuiserie bois et materiaux associes</span>
+                    </span>
+                    <span class="hidden sm:block text-xs font-bold text-bsb-dark bg-bsb-cream border border-bsb-yellow/40 px-3 py-1 rounded-full flex-shrink-0">11 métiers</span>
+                    <svg class="w-5 h-5 text-bsb-primary flex-shrink-0 transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="px-5 sm:px-6 pb-6 pt-4 border-t border-gray-100">
+                    <ul class="text-sm text-gray-700 sm:columns-2 lg:columns-3 gap-x-8">
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Maçon polyvalent</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Plombier Polyvalent</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Constructeur métallique</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Menuisier agenceur</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Menuisier métallique</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Maçon</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Plombier</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Menuisier bois</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Menuisier aluminium</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Chef de chantier</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Métreur-vérificateur</li>
+                    </ul>
+                </div>
+            </details>
 
-            {% comment %} GÉNIE ÉLECTRIQUE {% endcomment %}
-            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <h3 class="text-xl font-bold text-bsb-gold mb-4">GÉNIE ÉLECTRIQUE</h3>
-                <p class="text-gray-700 mb-4">
-                    Électricité, électronique, froid, climatisation et télécommunications
-                </p>
-                <ul class="space-y-2 text-sm text-gray-600">
-                    <li>Electricien du bâtiment</li>
-                    <li>Domoticien</li>
-                    <li>Monteur/dépanneur en climatisation individuelle</li>
-                    <li>Spécialiste réseaux télécoms</li>
-                </ul>
-            </div>
+            <details class="group bg-white rounded-2xl shadow-md open:shadow-xl transition-shadow">
+                <summary class="flex items-center gap-4 p-5 sm:p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span class="bsb-gradient w-11 h-11 rounded-xl flex items-center justify-center text-white font-extrabold flex-shrink-0">03</span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block font-extrabold text-bsb-ink uppercase tracking-wide text-sm sm:text-base">Génie mécanique</span>
+                        <span class="text-xs sm:text-sm text-bsb-muted line-clamp-2 sm:line-clamp-1">Mecanique automobile · Mecanique de precision · Mecanique rurale · Structure metallique</span>
+                    </span>
+                    <span class="hidden sm:block text-xs font-bold text-bsb-dark bg-bsb-cream border border-bsb-yellow/40 px-3 py-1 rounded-full flex-shrink-0">10 métiers</span>
+                    <svg class="w-5 h-5 text-bsb-primary flex-shrink-0 transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="px-5 sm:px-6 pb-6 pt-4 border-t border-gray-100">
+                    <ul class="text-sm text-gray-700 sm:columns-2 lg:columns-3 gap-x-8">
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Maintenancier automobile</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Electronicien automobile</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Operateur de machines-outils</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Dessinateur industriel</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Technicien de maintenance automobile</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Tourneur/fraiseur</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Mécanicien automobile</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Mécanicien de vélomoteurs et motocycles</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Mécanicien des Machines Agricoles</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Constructeur métallique</li>
+                    </ul>
+                </div>
+            </details>
 
-            {% comment %} GÉNIE INFORMATIQUE {% endcomment %}
-            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <h3 class="text-xl font-bold text-bsb-gold mb-4">GÉNIE INFORMATIQUE</h3>
-                <p class="text-gray-700 mb-4">
-                    Développement, réseaux et maintenance informatique
-                </p>
-                <ul class="space-y-2 text-sm text-gray-600">
-                    <li>Développeur d'applications web</li>
-                    <li>Administrateur de réseaux informatiques</li>
-                    <li>Maintenancier des équipements et systèmes informatiques</li>
-                    <li>Technicien en réseau et maintenance informatique</li>
-                </ul>
-            </div>
+            <details class="group bg-white rounded-2xl shadow-md open:shadow-xl transition-shadow">
+                <summary class="flex items-center gap-4 p-5 sm:p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span class="bsb-gradient w-11 h-11 rounded-xl flex items-center justify-center text-white font-extrabold flex-shrink-0">04</span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block font-extrabold text-bsb-ink uppercase tracking-wide text-sm sm:text-base">Génie informatique</span>
+                        <span class="text-xs sm:text-sm text-bsb-muted line-clamp-2 sm:line-clamp-1">Informatique · Telecommunication · Electrotechnique</span>
+                    </span>
+                    <span class="hidden sm:block text-xs font-bold text-bsb-dark bg-bsb-cream border border-bsb-yellow/40 px-3 py-1 rounded-full flex-shrink-0">8 métiers</span>
+                    <svg class="w-5 h-5 text-bsb-primary flex-shrink-0 transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="px-5 sm:px-6 pb-6 pt-4 border-t border-gray-100">
+                    <ul class="text-sm text-gray-700 sm:columns-2 lg:columns-3 gap-x-8">
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Maintenancier des équipements et systèmes informatiques</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Maintenancier des équipements d&#x27;impression et de reprographie</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Technicien de ligne télécom</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Spécialiste réseaux télécoms</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Développeur d’applications</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Technicien en maintenance et réseau informatique</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Administrateur de réseaux informatiques</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Electricien du bâtiment</li>
+                    </ul>
+                </div>
+            </details>
 
-            {% comment %} GÉNIE MÉCANIQUE {% endcomment %}
-            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <h3 class="text-xl font-bold text-bsb-gold mb-4">GÉNIE MÉCANIQUE</h3>
-                <p class="text-gray-700 mb-4">
-                    Mécanique automobile, mécanique générale et usinage
-                </p>
-                <ul class="space-y-2 text-sm text-gray-600">
-                    <li>Mécanicien automobile</li>
-                    <li>Maintenancier automobile</li>
-                    <li>Tourneur/fraiseur</li>
-                    <li>Constructeur métallique</li>
-                </ul>
-            </div>
+            <details class="group bg-white rounded-2xl shadow-md open:shadow-xl transition-shadow">
+                <summary class="flex items-center gap-4 p-5 sm:p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span class="bsb-gradient w-11 h-11 rounded-xl flex items-center justify-center text-white font-extrabold flex-shrink-0">05</span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block font-extrabold text-bsb-ink uppercase tracking-wide text-sm sm:text-base">Textile habillement cuir peau</span>
+                        <span class="text-xs sm:text-sm text-bsb-muted line-clamp-2 sm:line-clamp-1">Fabrication de vetements et autres textiles</span>
+                    </span>
+                    <span class="hidden sm:block text-xs font-bold text-bsb-dark bg-bsb-cream border border-bsb-yellow/40 px-3 py-1 rounded-full flex-shrink-0">5 métiers</span>
+                    <svg class="w-5 h-5 text-bsb-primary flex-shrink-0 transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="px-5 sm:px-6 pb-6 pt-4 border-t border-gray-100">
+                    <ul class="text-sm text-gray-700 sm:columns-2 lg:columns-3 gap-x-8">
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Tailleur</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Styliste-modéliste</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Couturier dame</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Coiffeur dame</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Couturier homme</li>
+                    </ul>
+                </div>
+            </details>
 
-            {% comment %} HYGIÈNE SOINS CORPORELS {% endcomment %}
-            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <h3 class="text-xl font-bold text-bsb-gold mb-4">HYGIÈNE SOINS CORPORELS</h3>
-                <p class="text-gray-700 mb-4">
-                    Coiffure, esthétique et bien-être
-                </p>
-                <ul class="space-y-2 text-sm text-gray-600">
-                    <li>Coiffeur dame</li>
-                    <li>Esthéticien</li>
-                </ul>
-            </div>
+            <details class="group bg-white rounded-2xl shadow-md open:shadow-xl transition-shadow">
+                <summary class="flex items-center gap-4 p-5 sm:p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span class="bsb-gradient w-11 h-11 rounded-xl flex items-center justify-center text-white font-extrabold flex-shrink-0">06</span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block font-extrabold text-bsb-ink uppercase tracking-wide text-sm sm:text-base">Maintenance industrielle</span>
+                        <span class="text-xs sm:text-sm text-bsb-muted line-clamp-2 sm:line-clamp-1">Maintenance des equipements mecaniques industriels</span>
+                    </span>
+                    <span class="hidden sm:block text-xs font-bold text-bsb-dark bg-bsb-cream border border-bsb-yellow/40 px-3 py-1 rounded-full flex-shrink-0">2 métiers</span>
+                    <svg class="w-5 h-5 text-bsb-primary flex-shrink-0 transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="px-5 sm:px-6 pb-6 pt-4 border-t border-gray-100">
+                    <ul class="text-sm text-gray-700 sm:columns-2 lg:columns-3 gap-x-8">
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Mécanicien d’usine</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Maintenancier des équipements industriels de production et de surveillance</li>
+                    </ul>
+                </div>
+            </details>
 
-            {% comment %} MAINTENANCE INDUSTRIELLE {% endcomment %}
-            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <h3 class="text-xl font-bold text-bsb-gold mb-4">MAINTENANCE INDUSTRIELLE</h3>
-                <p class="text-gray-700 mb-4">
-                    Maintenance préventive et corrective des équipements industriels
-                </p>
-                <ul class="space-y-2 text-sm text-gray-600">
-                    <li>Maintenancier des équipements industriels de production et de surveillance</li>
-                    <li>Electromécanicien</li>
-                    <li>Mécatronicien</li>
-                    <li>Maintenancier en froid domestique et commercial</li>
-                </ul>
-            </div>
+            <details class="group bg-white rounded-2xl shadow-md open:shadow-xl transition-shadow">
+                <summary class="flex items-center gap-4 p-5 sm:p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span class="bsb-gradient w-11 h-11 rounded-xl flex items-center justify-center text-white font-extrabold flex-shrink-0">07</span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block font-extrabold text-bsb-ink uppercase tracking-wide text-sm sm:text-base">Génie alimentaire</span>
+                        <span class="text-xs sm:text-sm text-bsb-muted line-clamp-2 sm:line-clamp-1">Agroalimentaire</span>
+                    </span>
+                    <span class="hidden sm:block text-xs font-bold text-bsb-dark bg-bsb-cream border border-bsb-yellow/40 px-3 py-1 rounded-full flex-shrink-0">2 métiers</span>
+                    <svg class="w-5 h-5 text-bsb-primary flex-shrink-0 transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="px-5 sm:px-6 pb-6 pt-4 border-t border-gray-100">
+                    <ul class="text-sm text-gray-700 sm:columns-2 lg:columns-3 gap-x-8">
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Pâtissier</li>
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Boulanger</li>
+                    </ul>
+                </div>
+            </details>
 
-            {% comment %} TEXTILE – HABILLEMENT – CUIR – PEAU {% endcomment %}
-            <div class="bg-white/50 rounded-2xl p-8 border-2 border-bsb-gold hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <h3 class="text-xl font-bold text-bsb-gold mb-4">TEXTILE – HABILLEMENT – CUIR – PEAU</h3>
-                <p class="text-gray-700 mb-4">
-                    Couture, stylisme et métiers de la mode et du textile
-                </p>
-                <ul class="space-y-2 text-sm text-gray-600">
-                    <li>Couturier dame</li>
-                    <li>Couturier homme</li>
-                    <li>Styliste-modéliste</li>
-                    <li>Tisserand</li>
-                </ul>
-            </div>
+            <details class="group bg-white rounded-2xl shadow-md open:shadow-xl transition-shadow">
+                <summary class="flex items-center gap-4 p-5 sm:p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span class="bsb-gradient w-11 h-11 rounded-xl flex items-center justify-center text-white font-extrabold flex-shrink-0">08</span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block font-extrabold text-bsb-ink uppercase tracking-wide text-sm sm:text-base">Hygiène soins corporels</span>
+                        <span class="text-xs sm:text-sm text-bsb-muted line-clamp-2 sm:line-clamp-1">Coiffure esthetique</span>
+                    </span>
+                    <span class="hidden sm:block text-xs font-bold text-bsb-dark bg-bsb-cream border border-bsb-yellow/40 px-3 py-1 rounded-full flex-shrink-0">1 métier</span>
+                    <svg class="w-5 h-5 text-bsb-primary flex-shrink-0 transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="px-5 sm:px-6 pb-6 pt-4 border-t border-gray-100">
+                    <ul class="text-sm text-gray-700 sm:columns-2 lg:columns-3 gap-x-8">
+                        <li class="break-inside-avoid flex gap-2.5 py-1.5"><span class="bsb-gradient mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0"></span>Coiffeur dame</li>
+                    </ul>
+                </div>
+            </details>
         </div>
     </div>
 </section>
 
-{% comment %} CTA Section {% endcomment %}
-<section class="py-10 bg-bsb-gold">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <a href="#contact"
-            class="inline-flex items-center justify-center px-8 py-4 bg-gray-100 bg-gray-900 text-white text-lg rounded-xl shadow-xl">
-            Nous contacter
-        </a>
-    </div>
-</section>
 
 {% comment %} Contact Section {% endcomment %}
-<section id="contact" class="py-10 bg-gray-100 text-gray-700">
+<section id="contact" class="py-16 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid md:grid-cols-3 gap-12">
-            <div>
-                <h3 class="text-2xl font-bold mb-6 flex items-center">
-                    Adresse
-                </h3>
-                <p class="text-gray-700 mb-2">Ouagadougou, Burkina Faso</p>
-                <p class="text-gray-700">1504 Avenue Dimdolobsom - Secteur 11, Dapoya 1 01 BP 6181 Ouagadougou 01, Burkina Faso</p>
-            </div>
-            
-            <div>
-                <h3 class="text-2xl font-bold mb-6 flex items-center">
-                    Contact
-                </h3>
-                <ul class="space-y-2.5 mb-4">
-                    <li class="text-gray-700 text-sm leading-relaxed">
-                        <span class="font-semibold text-gray-900">Service de la communication et des relations presses</span> : +226 70 32 60 68
-                    </li>
-                    <li class="text-gray-700 text-sm leading-relaxed">
-                        <span class="font-semibold text-gray-900">Direction de l'information et l'orientation professionnelle</span> : +226 73 01 97 97
-                    </li>
-                    <li class="text-gray-700 text-sm leading-relaxed">
-                        <span class="font-semibold text-gray-900">Direction inter-régionale N° 1 (Ouagadougou)</span> : +226 73 07 36 36
-                    </li>
-                    <li class="text-gray-700 text-sm leading-relaxed">
-                        <span class="font-semibold text-gray-900">Direction inter-régionale N° 2 (Bobo-Dioulasso)</span> : +226 73 48 91 91
-                    </li>
-                    <li class="text-gray-700 text-sm leading-relaxed">
-                        <span class="font-semibold text-gray-900">Direction inter-régionale N° 3 (Ziniaré)</span> : +226 73 51 23 23
-                    </li>
-                </ul>
-                <p class="text-gray-700">Email: info@bsb.gov.bf</p>
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-bsb-ink mb-4">Nous contacter</h2>
+            <div class="bsb-rule mx-auto"></div>
+        </div>
+
+        {% comment %} Deux cartes de même hauteur : annuaire à gauche, coordonnées à droite {% endcomment %}
+        <div class="grid md:grid-cols-12 gap-6">
+            <div class="md:col-span-7">
+                <div class="bg-bsb-cream rounded-2xl overflow-hidden h-full">
+                    <div class="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-white">
+                        <span class="bsb-gradient w-9 h-9 rounded-lg flex items-center justify-center text-white flex-shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        </span>
+                        <h3 class="text-lg font-bold text-bsb-ink">Contacts directs</h3>
+                    </div>
+                    <ul class="divide-y divide-white">
+                        <li class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-1 px-5 sm:px-6 py-4">
+                            <span class="text-sm font-semibold text-bsb-ink">Service de la communication et des relations presses</span>
+                            <a href="tel:+22670326068" class="text-sm font-bold text-bsb-primary hover:text-bsb-dark whitespace-nowrap">+226 70 32 60 68</a>
+                        </li>
+                        <li class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-1 px-5 sm:px-6 py-4">
+                            <span class="text-sm font-semibold text-bsb-ink">Direction de l'information et l'orientation professionnelle</span>
+                            <a href="tel:+22673019797" class="text-sm font-bold text-bsb-primary hover:text-bsb-dark whitespace-nowrap">+226 73 01 97 97</a>
+                        </li>
+                        <li class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-1 px-5 sm:px-6 py-4">
+                            <span class="text-sm font-semibold text-bsb-ink">Direction inter-régionale N° 1 (Ouagadougou)</span>
+                            <a href="tel:+22673073636" class="text-sm font-bold text-bsb-primary hover:text-bsb-dark whitespace-nowrap">+226 73 07 36 36</a>
+                        </li>
+                        <li class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-1 px-5 sm:px-6 py-4">
+                            <span class="text-sm font-semibold text-bsb-ink">Direction inter-régionale N° 2 (Bobo-Dioulasso)</span>
+                            <a href="tel:+22673489191" class="text-sm font-bold text-bsb-primary hover:text-bsb-dark whitespace-nowrap">+226 73 48 91 91</a>
+                        </li>
+                        <li class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-1 px-5 sm:px-6 py-4">
+                            <span class="text-sm font-semibold text-bsb-ink">Direction inter-régionale N° 3 (Ziniaré)</span>
+                            <a href="tel:+22673512323" class="text-sm font-bold text-bsb-primary hover:text-bsb-dark whitespace-nowrap">+226 73 51 23 23</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
 
-            <div>
-                <h3 class="text-2xl font-bold mb-6 flex items-center">
-                    Horaires
-                </h3>
-                <p class="text-gray-700 mb-2">Lundi - Jeudi: 7h30 - 16h00</p>
-                <p class="text-gray-700">Vendredi: 7h30 - 16h30</p>
+            <div class="md:col-span-5">
+                <div class="bg-bsb-cream rounded-2xl p-5 sm:p-6 h-full">
+                    <div class="flex items-center gap-3 mb-5">
+                        <span class="bsb-gradient w-9 h-9 rounded-lg flex items-center justify-center text-white flex-shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        </span>
+                        <h3 class="text-lg font-bold text-bsb-ink">Adresse &amp; e-mail</h3>
+                    </div>
+
+                    <p class="text-sm text-bsb-muted mb-1">Ouagadougou, Burkina Faso</p>
+                    <p class="text-sm text-bsb-muted">1504 Avenue Dimdolobsom — Secteur 11, Dapoya 1<br>01 BP 6181 Ouagadougou 01</p>
+
+                    <div class="border-t border-white my-5"></div>
+
+                    <p class="text-sm text-bsb-muted mb-1">+226 25 30 18 75 · +226 25 30 18 76</p>
+                    <p class="text-sm"><a href="mailto:info@bsb.gov.bf" class="text-bsb-primary font-semibold hover:text-bsb-dark">info@bsb.gov.bf</a></p>
+
+                    <div class="border-t border-white my-5"></div>
+
+                    <p class="text-xs font-bold uppercase tracking-wider text-bsb-ink mb-2">Horaires d'ouverture</p>
+                    <p class="text-sm text-bsb-muted">Lundi — jeudi : 7h30 à 16h00</p>
+                    <p class="text-sm text-bsb-muted">Vendredi : 7h30 à 16h30</p>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<script>
-  const termes = ["Bienvenue sur Yu-Paan", "Plateforme de gestion des formations aux métiers"];
-  let i = 0, j = 0, suppression = false;
-
-  function ecrire() {
-    const el = document.getElementById('typewriter');
-    const mot = termes[i];
-
-    if (!suppression) {
-      el.textContent = mot.substring(0, j++);
-      if (j > mot.length) { suppression = true; setTimeout(ecrire, 1500); return; }
-    } else {
-      el.textContent = mot.substring(0, j--);
-      if (j < 0) { suppression = false; i = (i + 1) % termes.length; j = 0; }
-    }
-    setTimeout(ecrire, suppression ? 50 : 100);
-  }
-
-  ecrire();
-</script>
-<script>
-(function () {
-    const track = document.getElementById('carousel-track');
-    const prevBtn = document.getElementById('carousel-prev');
-    const nextBtn = document.getElementById('carousel-next');
-    const dotsContainer = document.getElementById('carousel-dots');
-
-    if (!track) return;
-
-    const cards = track.querySelectorAll('.carousel-card');
-    if (!cards.length) return;
-
-    let current = 0;
-
-    // Calcul du nombre de cartes visibles selon la largeur
-    function visibleCount() {
-        const w = document.getElementById('carousel-wrapper').offsetWidth;
-        if (w >= 1024) return 3;
-        if (w >= 640) return 2;
-        return 1;
-    }
-
-    function cardWidth() {
-        // largeur carte + gap (gap-6 = 24px)
-        return cards[0].offsetWidth + 24;
-    }
-
-    function maxIndex() {
-        return Math.max(0, cards.length - visibleCount());
-    }
-
-    // Création des dots
-    function buildDots() {
-        dotsContainer.innerHTML = '';
-        const total = maxIndex() + 1;
-        for (let i = 0; i < total; i++) {
-            const d = document.createElement('button');
-            d.className = 'w-2.5 h-2.5 rounded-full transition-all duration-300 ' +
-                (i === current ? 'bg-yellow-500 w-6' : 'bg-gray-300');
-            d.addEventListener('click', () => goTo(i));
-            dotsContainer.appendChild(d);
-        }
-    }
-
-    function updateDots() {
-        const dots = dotsContainer.querySelectorAll('button');
-        dots.forEach((d, i) => {
-            d.className = 'rounded-full transition-all duration-300 h-2.5 ' +
-                (i === current ? 'w-6 bg-yellow-500' : 'w-2.5 bg-gray-300');
-        });
-    }
-
-    function goTo(index) {
-        current = Math.max(0, Math.min(index, maxIndex()));
-        track.style.transform = `translateX(-${current * cardWidth()}px)`;
-        updateDots();
-        prevBtn.disabled = current === 0;
-        nextBtn.disabled = current === maxIndex();
-        prevBtn.classList.toggle('opacity-40', current === 0);
-        nextBtn.classList.toggle('opacity-40', current === maxIndex());
-    }
-
-    prevBtn.addEventListener('click', () => goTo(current - 1));
-    nextBtn.addEventListener('click', () => goTo(current + 1));
-
-    // Touch / swipe
-    let startX = 0;
-    track.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
-    track.addEventListener('touchend', e => {
-        const diff = startX - e.changedTouches[0].clientX;
-        if (Math.abs(diff) > 50) goTo(diff > 0 ? current + 1 : current - 1);
-    });
-
-    // Init & resize
-    function init() {
-        buildDots();
-        goTo(0);
-    }
-
-    init();
-    window.addEventListener('resize', () => { buildDots(); goTo(Math.min(current, maxIndex())); });
-})();
-</script>
-<style>
-    .bsb-ticker {
-        overflow: hidden;
-    }
-    .bsb-ticker__inner {
-        display: inline-block;
-        white-space: nowrap;
-        padding-left: 100%;
-        animation: bsb-ticker-scroll 12s linear infinite;
-    }
-    @keyframes bsb-ticker-scroll {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(-100%); }
-    }
-</style>
+<script src="{% static 'js/home.js' %}"></script>
 {% endblock %}

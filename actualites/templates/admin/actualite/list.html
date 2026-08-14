@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Actualités | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 px-4 md:px-6 space-y-6">
+    {% include 'partials/messages.html' %}
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Actualités</h1>
+            <p class="mt-2 text-sm text-gray-600">Publications diffusées sur le site et par e-mail aux abonnés</p>
+        </div>
+        <div class="flex gap-3 flex-wrap">
+            <a href="{% url 'bsb_actualites:abonne_list' %}" class="inline-flex items-center px-5 py-3 bg-white border border-gray-300 text-gray-800 font-bold rounded-lg hover:bg-gray-50">Abonnés</a>
+            <a href="{% url 'bsb_actualites:actualite_create' %}" class="inline-flex items-center px-6 py-3 bg-bsb-primary text-white font-bold rounded-lg shadow-lg hover:bg-bsb-dark">Créer une actualité</a>
+        </div>
+    </div>
+
+    <form method="get" class="bg-white px-4 py-4 border border-gray-200 rounded-lg flex flex-col sm:flex-row gap-3">
+        <input type="text" name="q" value="{{ q }}" placeholder="Rechercher un titre..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
+        <button type="submit" class="px-6 py-2 bg-gray-800 text-white font-bold rounded-lg">Rechercher</button>
+    </form>
+
+    <div class="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-left">
+                <tr>
+                    <th class="px-4 py-3 font-bold">Titre</th>
+                    <th class="px-4 py-3 font-bold">Statut</th>
+                    <th class="px-4 py-3 font-bold">Publication</th>
+                    <th class="px-4 py-3 font-bold">Abonnés</th>
+                    <th class="px-4 py-3 font-bold text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for actu in actualites %}
+                <tr>
+                    <td class="px-4 py-3 font-semibold text-gray-900">{{ actu.titre }}</td>
+                    <td class="px-4 py-3">
+                        {% if actu.statut == 'publiee' %}
+                        <span class="px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-bold">Publiée</span>
+                        {% else %}
+                        <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-bold">Brouillon</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">{{ actu.date_publication|date:"d/m/Y H:i"|default:"—" }}</td>
+                    <td class="px-4 py-3 text-gray-600">{% if actu.abonnes_notifies %}Notifiés{% else %}—{% endif %}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex gap-2 justify-end flex-wrap">
+                            {% if not actu.abonnes_notifies and perms.actualites.publier_actualite %}
+                            <form method="post" action="{% url 'bsb_actualites:actualite_publier' actu.id %}"
+                                  onsubmit="return confirm('Publier cette actualité et prévenir tous les abonnés ?');">
+                                {% csrf_token %}
+                                <button type="submit" class="px-3 py-1.5 bg-bsb-primary text-white text-xs font-bold rounded">Publier &amp; notifier</button>
+                            </form>
+                            {% endif %}
+                            <a href="{% url 'bsb_actualites:actualite_update' actu.id %}" class="px-3 py-1.5 bg-gray-100 text-gray-800 text-xs font-bold rounded">Modifier</a>
+                            <form method="post" action="{% url 'bsb_actualites:actualite_delete' actu.id %}"
+                                  onsubmit="return confirm('Supprimer définitivement cette actualité ?');">
+                                {% csrf_token %}
+                                <button type="submit" class="px-3 py-1.5 bg-red-100 text-red-700 text-xs font-bold rounded">Supprimer</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="px-4 py-10 text-center text-gray-500">Aucune actualité.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if actualites.has_other_pages %}
+    <div class="flex justify-center gap-2">
+        {% if actualites.has_previous %}<a href="?page={{ actualites.previous_page_number }}&q={{ q }}" class="px-4 py-2 border rounded-lg">Précédent</a>{% endif %}
+        <span class="px-4 py-2 text-sm text-gray-600">Page {{ actualites.number }} / {{ actualites.paginator.num_pages }}</span>
+        {% if actualites.has_next %}<a href="?page={{ actualites.next_page_number }}&q={{ q }}" class="px-4 py-2 border rounded-lg">Suivant</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

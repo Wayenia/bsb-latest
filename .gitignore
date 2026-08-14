@@ -29,3 +29,6 @@ media/
 *.log
 security.log
 .claude/
+CLAUDE.md
+.shot
+zzresources/

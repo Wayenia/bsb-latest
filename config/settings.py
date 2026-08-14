@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'accounts',
     'apis', 
     'courses.apps.DetteConfig',
+    'actualites',
    
 
     # third party for erd
@@ -274,8 +275,19 @@ CSRF_USE_SESSIONS = False
 CSRF_COOKIE_SECURE = not DEBUG
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440
 FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440
+# E-mail : SMTP si renseigne dans .env, sinon affichage en console (dev)
+EMAIL_HOST = env('EMAIL_HOST', default='')
+if EMAIL_HOST:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+    EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+    EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+    EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 SERVER_EMAIL = 'admin@burkinasuudu.com'
-DEFAULT_FROM_EMAIL = 'noreply@burkinasuudu.com'
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@burkinasuudu.com')
 
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
