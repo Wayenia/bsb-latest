@@ -27,11 +27,24 @@ module.exports = {
           600: "#2563eb",
           900: "#1e3a8a",
         },
+        // Charte graphique reprise de l'ancienne plateforme (yupaan.bsb.gov.bf) :
+        // rouge vif + jaune, dégradé 135° rouge→jaune, fond crème. Les clés
+        // historiques (gold/red/green/gray) sont conservées — elles sont utilisées
+        // dans tout le back-office — seul `red` est réaligné sur le rouge officiel.
         bsb: {
           gold: "#ca8a04",
-          red: "#dc2626",
+          red: "#e53935",       // --primary-color de l'ancienne plateforme
           green: "#16a34a",
           gray: "#6b7280",
+
+          primary: "#e53935",   // rouge vif
+          dark: "#b71c1c",      // --primary-dark
+          yellow: "#fbc02d",    // --secondary-color
+          accent: "#ffd600",    // --accent-color
+          amber: "#fbbf24",     // chiffres des statistiques sur fond dégradé
+          cream: "#fff8e1",     // --bg-secondary
+          ink: "#1f2937",       // --text-primary
+          muted: "#6b7280",     // --text-secondary
         },
 
         // =======
