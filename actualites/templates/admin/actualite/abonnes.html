@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Abonnés newsletter | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-10 px-4 md:px-6 space-y-6">
+    {% include 'partials/messages.html' %}
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Abonnés à la newsletter</h1>
+            <p class="mt-2 text-sm text-gray-600">{{ total_actifs }} abonnement(s) actif(s)</p>
+        </div>
+        <a href="{% url 'bsb_actualites:actualite_list' %}" class="px-5 py-3 bg-white border border-gray-300 font-bold rounded-lg">Retour aux actualités</a>
+    </div>
+
+    <form method="get" class="bg-white px-4 py-4 border border-gray-200 rounded-lg flex flex-col sm:flex-row gap-3">
+        <input type="text" name="q" value="{{ q }}" placeholder="Rechercher une adresse..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
+        <button type="submit" class="px-6 py-2 bg-gray-800 text-white font-bold rounded-lg">Rechercher</button>
+    </form>
+
+    <div class="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-left">
+                <tr>
+                    <th class="px-4 py-3 font-bold">Adresse</th>
+                    <th class="px-4 py-3 font-bold">État</th>
+                    <th class="px-4 py-3 font-bold">Inscription</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for abonne in abonnes %}
+                <tr>
+                    <td class="px-4 py-3 text-gray-900">{{ abonne.email }}</td>
+                    <td class="px-4 py-3">
+                        {% if abonne.actif %}
+                        <span class="px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-bold">Actif</span>
+                        {% else %}
+                        <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">Désabonné</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">{{ abonne.date_inscription|date:"d/m/Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="px-4 py-10 text-center text-gray-500">Aucun abonné.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+Nouvelle actualité sur Yu-Paan
+
+{{ actualite.titre }}
+
+{{ actualite.chapeau }}
+
+Lire l'actualité : {{ lien_actu }}
+
+--
+Burkina Suudu Bawdè — La Maison des compétences du Burkina
+Se désabonner : {{ lien_desabonnement }}

@@ -98,7 +98,7 @@
                         Métiers de formation
                         <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
                     </a>
-                    <a href="#" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                    <a href="{% url 'actualites:liste' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
                         Actualités
                         <span class="absolute bottom-0 left-0 w-full h-0.5 bg-green-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
                     </a>
@@ -190,7 +190,7 @@
             {% else %}
                 {# ── NON CONNECTE ────────────────────────────────────────────── #}
                 <a href="{% url 'courses:available_career' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Métiers de formation</a>
-                <a href="#" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Actualités</a>
+                <a href="{% url 'actualites:liste' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Actualités</a>
                 <a href="{% url 'courses:about' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">ℹ️ À propos</a>
             {% endif %}
 

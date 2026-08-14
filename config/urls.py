@@ -12,7 +12,9 @@ urlpatterns = [
 
     # COURSES
     path('', include('courses.urls')),
-    path('bsb/', include('courses.urls_admin', namespace='bsb_admin')),  # Correct namespace for bsb_admin
+    path('bsb/', include('courses.urls_admin', namespace='bsb_admin')),
+    path('actualites/', include('actualites.urls', namespace='actualites')),
+    path('bsb/actualites/', include('actualites.urls_admin', namespace='bsb_actualites')),  # Correct namespace for bsb_admin
 ]
 
 if settings.DEBUG:

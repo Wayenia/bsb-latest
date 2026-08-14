@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Actualités | BSB - Burkina Suudu Bawdè{% endblock %}
+
+{% block content %}
+<section class="bsb-hero">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
+        <h1 class="text-white font-bold text-3xl md:text-5xl leading-tight mb-6">Actualités</h1>
+        <div class="w-20 h-1 bg-white/70 rounded-full mx-auto mb-8"></div>
+        <p class="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
+            Communiqués, avis de recrutement et vie des centres du réseau Burkina Suudu Bawdè.
+        </p>
+    </div>
+</section>
+
+<section class="py-16 md:py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% include 'partials/messages.html' %}
+
+        {% if actualites %}
+        {% comment %} La plus récente, mise en avant {% endcomment %}
+        {% with une=actualites.0 %}
+        <article class="bg-white rounded-3xl shadow-lg border border-black/5 overflow-hidden mb-16 md:mb-20">
+            <div class="h-2 bsb-gradient"></div>
+            <div class="grid lg:grid-cols-2">
+                {% if une.image %}
+                <img src="{{ une.image.url }}" alt="{{ une.titre }}" class="w-full h-64 lg:h-full object-cover">
+                {% else %}
+                <div class="bsb-gradient hidden lg:flex items-center justify-center p-12">
+                    <span class="text-white/90 font-bold uppercase tracking-[0.2em] text-sm text-center">Burkina Suudu Bawdè</span>
+                </div>
+                {% endif %}
+                <div class="p-8 md:p-12 flex flex-col justify-center">
+                    <span class="inline-flex self-start items-center bg-bsb-cream text-bsb-dark border border-bsb-yellow/40 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
+                        À la une
+                    </span>
+                    <time datetime="{{ une.date_publication|date:'c' }}" class="block text-xs font-bold uppercase tracking-wider text-bsb-primary mb-4">
+                        {{ une.date_publication|date:"d F Y" }}
+                    </time>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-bsb-ink leading-snug mb-5">{{ une.titre }}</h2>
+                    <p class="text-bsb-muted leading-relaxed mb-8">{{ une.chapeau }}</p>
+                    <a href="{{ une.get_absolute_url }}" class="bsb-btn bsb-btn-primary self-start">Lire l'actualité</a>
+                </div>
+            </div>
+        </article>
+        {% endwith %}
+
+        {% if actualites|length > 1 %}
+        <div class="mb-10 mt-10">
+            <h2 class="text-2xl md:text-3xl font-extrabold text-bsb-ink mb-4">Actualités précédentes</h2>
+            <div class="bsb-rule"></div>
+        </div>
+
+        <div class="grid gap-8 md:grid-cols-2 auto-rows-fr">
+            {% for actu in actualites %}{% if not forloop.first %}
+            <article class="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-black/5 overflow-hidden flex flex-col h-full">
+                <div class="h-2 bsb-gradient"></div>
+                {% if actu.image %}
+                <img src="{{ actu.image.url }}" alt="{{ actu.titre }}" class="w-full h-52 object-cover">
+                {% endif %}
+                <div class="p-8 md:p-10 flex flex-col flex-1">
+                    <time datetime="{{ actu.date_publication|date:'c' }}" class="block text-xs font-bold uppercase tracking-widest text-bsb-primary mb-4">
+                        {{ actu.date_publication|date:"d F Y" }}
+                    </time>
+                    <h3 class="text-xl md:text-2xl font-extrabold text-bsb-ink leading-snug mb-4">{{ actu.titre }}</h3>
+                    <p class="text-bsb-muted leading-relaxed mb-8">{{ actu.chapeau }}</p>
+                    <a href="{{ actu.get_absolute_url }}" class="bsb-btn bsb-btn-primary self-start mt-auto">Lire l'actualité</a>
+                </div>
+            </article>
+            {% endif %}{% endfor %}
+        </div>
+        {% endif %}
+
+        {% if actualites.has_other_pages %}
+        <nav class="flex justify-center items-center gap-3 mt-16">
+            {% if actualites.has_previous %}
+            <a href="?page={{ actualites.previous_page_number }}" class="px-5 py-2.5 rounded-full border-2 border-bsb-primary text-bsb-primary font-bold text-sm hover:bg-bsb-primary hover:text-white">Précédent</a>
+            {% endif %}
+            <span class="px-4 py-2 text-sm text-bsb-muted">Page {{ actualites.number }} sur {{ actualites.paginator.num_pages }}</span>
+            {% if actualites.has_next %}
+            <a href="?page={{ actualites.next_page_number }}" class="px-5 py-2.5 rounded-full border-2 border-bsb-primary text-bsb-primary font-bold text-sm hover:bg-bsb-primary hover:text-white">Suivant</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="bsb-info-card p-14 text-center max-w-xl mx-auto">
+            <p class="text-bsb-ink font-bold text-lg mb-3">Aucune actualité publiée pour le moment.</p>
+            <p class="text-sm text-bsb-muted">Abonnez-vous pour être prévenu dès la première publication.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{% include 'actualites/_newsletter.html' %}
+{% endblock %}
