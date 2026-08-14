@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Années scolaires | BSB{% endblock %}
+{% block title %}Années de formation | BSB{% endblock %}
 
 {% block content %}
 {% include 'partials/messages.html' %}
@@ -15,7 +15,7 @@
         <a href="{% url 'bsb_admin:admin_dashboard' %}" class="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-2">
            Tableau de bord
         </a>
-        <h1 class="text-2xl font-black text-gray-900">Années scolaires</h1>
+        <h1 class="text-2xl font-black text-gray-900">Années de formation</h1>
         <p class="text-gray-500 text-sm mt-1">{{ annees.paginator.count }} année{{ annees.paginator.count|pluralize }} enregistrée{{ annees.paginator.count|pluralize }}</p>
       </div>
       <div class="flex gap-3 flex-wrap">
@@ -106,7 +106,7 @@
         <div class="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
           
         </div>
-        <p class="text-gray-500 font-medium">Aucune année scolaire enregistrée</p>
+        <p class="text-gray-500 font-medium">Aucune année de formation enregistrée</p>
         <a href="{% url 'bsb_admin:annee_create' %}" class="mt-4 inline-block text-sm font-bold text-yellow-600 hover:underline">
           Créer la première
         </a>

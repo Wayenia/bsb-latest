@@ -175,7 +175,7 @@ class InscriptionForm(BaseModelForm):
         fields = ['eleve', 'annee_scolaire', 'statut']
         labels = {
             'eleve': 'Élève',
-            'annee_scolaire': 'Année scolaire',
+            'annee_scolaire': 'Année de formation',
             'statut': 'Statut'
         }
         widgets = {
@@ -1177,7 +1177,7 @@ class AnneeScolaireForm(forms.ModelForm):
             })
         }
         labels = {
-            'libelle_anne': "Libellé de l'année scolaire",
+            'libelle_anne': "Libellé de l'année de formation",
         }
 
     def clean_libelle_anne(self):

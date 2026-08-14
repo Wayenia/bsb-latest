@@ -97,10 +97,6 @@
     text-align: center;
     width: 160px;
   }
-  .signature .ligne-sign {
-    border-top: 1px solid #111;
-    margin-bottom: 6px;
-  }
   .signature p {
     font-size: 10px;
     color: #555;
@@ -114,8 +110,9 @@
     padding-top: 8px;
     font-size: 10px;
     color: #777;
-    text-align: center;
     font-style: italic;
+    display: flex;
+    justify-content: space-between;
   }
 </style>
 </head>
@@ -139,8 +136,8 @@
   <h1 class="titre">Attestation d'inscription</h1>
 
   <p class="texte-attestation">
-    Je soussigné(e), <strong>{{ directeur_nom }}</strong>, agissant en qualité de Directeur(trice)
-    du <strong>{{ centre }}</strong>, atteste par la présente que :
+    Je soussigné(e), {{ directeur_civilite }} {{ directeur_nom }}, agissant en qualité de Directeur(trice)
+    du {{ centre }}, atteste par la présente que :
   </p>
 
   <p class="texte-attestation" style="text-align:center; font-weight:bold; margin:20px 0;">
@@ -157,7 +154,7 @@
     En foi de quoi, la présente attestation est établie pour servir et valoir ce que de droit.
   </p>
 
-  <p style="margin-top:30px;">
+  <p style="margin-top:30px; text-align:right;">
     Fait à {{ ville }}, le {% now "d/m/Y" %}
   </p>
 
@@ -165,15 +162,15 @@
   <div class="footer">
     <div class="signature">
       <p>Le Directeur</p>
-      <div style="height:50px;"></div>
-      <div class="ligne-sign"></div>
-      <p style="text-transform:none; font-weight:bold; color:#111; font-size:11px; letter-spacing:normal;">{{ directeur_nom }}</p>
+      <div style="height:56px;"></div>
+      <p style="text-transform:none; font-weight:bold; color:#111; font-size:11px; letter-spacing:normal; text-decoration:underline;">{{ directeur_civilite }} {{ directeur_nom }}</p>
     </div>
   </div>
 
   {% comment %} BAS DE PAGE {% endcomment %}
   <div class="bas-page">
-    BSB-DSI          généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}
+    <span>BSB</span>
+    <span>généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}</span>
   </div>
 
 </body>

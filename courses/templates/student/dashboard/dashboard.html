@@ -8,6 +8,9 @@
       <h2 class="text-3xl serif-font border-l-4 border-red-700 font-bold pl-4 text-slate-900">
         Bienvenu(e) {{ request.user.nom }} {{ request.user.prenom }} !
       </h2>
+      <p class="text-slate-500 pl-5 mt-1 text-sm">
+        Matricule : <span class="font-semibold text-slate-700">{{ request.user.matricule|default:"—" }}</span>
+      </p>
       <p class="text-slate-500 pl-5 mt-2">
         Aperçu de votre parcours a
         <span class="text-red-600 text-xs font-bold uppercase">Burkina</span>

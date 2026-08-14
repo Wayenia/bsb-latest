@@ -643,7 +643,7 @@ def gerer_inscription(request,id):
                      messages.error(
                          request,
                          "Cet apprenant a déjà une inscription validée en Formation Initiale "
-                         f"({conflit.formation.filiere} - {conflit.formation.centre}) pour cette année scolaire."
+                         f"({conflit.formation.filiere} - {conflit.formation.centre}) pour cette année de formation."
                      )
                      return redirect("bsb_admin:subscription_en_cours")
              subscription.statut='valide'
@@ -809,7 +809,7 @@ from .models import TypeFrais, PieceJointeInscription  # assure-toi des imports
 @require_permission('courses.gerer_programmations')
 def programming_create(request):
     if not AnneeScolaire.objects.exists():
-        messages.warning(request, "Aucune année scolaire disponible. Veuillez en créer une d'abord.")
+        messages.warning(request, "Aucune année de formation disponible. Veuillez en créer une d'abord.")
         return redirect('bsb_admin:annee_create')
 
     centres_qs, _, _ = _get_scope(request.user)
@@ -1112,7 +1112,7 @@ MATRIX_PERMISSIONS = [
     ('gerer_programmations', "Gérer les associations centre-métier", 'courses'),
     ('gerer_modules', "Gérer les modules et cours", 'courses'),
     ('gerer_frais', "Gérer les frais et types de frais", 'courses'),
-    ('gerer_annees', "Gérer les années scolaires", 'courses'),
+    ('gerer_annees', "Gérer les années de formation", 'courses'),
     ('gerer_agents', "Gérer les comptes utilisateurs", 'accounts'),
     ('gerer_eleves', "Gérer les comptes apprenants", 'accounts'),
     ('gerer_permissions', "Gérer les permissions", 'accounts'),

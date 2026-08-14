@@ -120,7 +120,7 @@ SPEC_TYPE_FRAIS = ImportSpec(
 
 SPEC_ANNEE = ImportSpec(
     slug="annee",
-    verbose_name="Année scolaire",
+    verbose_name="Année de formation",
     model=AnneeScolaire,
     form_class=AnneeScolaireForm,
     columns=[
@@ -447,9 +447,9 @@ SPEC_PROGRAMMATION = ImportSpec(
                     help_text="Laisser vide = Initiale."),
         ColumnSpec("Frais de formation (FCFA)", "montant_frais", required=False, kind="int",
                     help_text="Laisser vide si aucun frais n'est encore fixé pour cette formation."),
-        ColumnSpec("Année scolaire", "annee_prog", required=False, kind="fk_pk",
+        ColumnSpec("Année de formation", "annee_prog", required=False, kind="fk_pk",
                     fk_model=AnneeScolaire, fk_lookup_field="libelle_anne",
-                    help_text="Laisser vide = année scolaire la plus récemment créée."),
+                    help_text="Laisser vide = année de formation la plus récemment créée."),
         ColumnSpec("Date limite d'inscription (JJ/MM/AAAA)", "date_limite_inscription",
                     required=False, kind="date"),
         ColumnSpec("Date de lancement (JJ/MM/AAAA)", "date_lancement", required=False, kind="date"),

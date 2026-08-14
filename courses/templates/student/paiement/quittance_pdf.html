@@ -103,10 +103,10 @@
   .bas-page {
     margin-top: 40px;
     border-top: 1px solid #111;
-    padding-top: 8px;
-    font-size: 10px;
-    color: #777;
-    text-align: center;
+    padding-top: 6px;
+    font-size: 8px;
+    color: #999;
+    text-align: right;
     font-style: italic;
   }
 </style>
@@ -157,7 +157,7 @@
     <span class="valeur">{{ filiere }}</span>
   </div>
   <div class="ligne">
-    <span class="label">Année scolaire :</span>
+    <span class="label">Année de formation :</span>
     <span class="valeur">{{ annee_scolaire }}</span>
   </div>
 
@@ -205,7 +205,7 @@
 
   {% comment %} BAS DE PAGE {% endcomment %}
   <div class="bas-page">
-    BSB-DSI          généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}
+    BSB — généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}
   </div>
 
 </body>

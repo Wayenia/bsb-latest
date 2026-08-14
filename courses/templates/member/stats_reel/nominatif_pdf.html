@@ -39,7 +39,7 @@
   td { font-size: 8px; }
   td.centre { text-align: center; }
 
-  .pied-page { margin-top: 14px; text-align: right; font-size: 8px; font-style: italic; color: #444; }
+  .pied-page { margin-top: 14px; font-size: 8px; font-style: italic; color: #444; display: flex; justify-content: space-between; }
 </style>
 </head>
 <body>
@@ -59,7 +59,7 @@
   </div>
 
   <div class="titre">Liste nominative des apprenants en résidentielle</div>
-  <div class="sous-titre">Année scolaire : {{ annee_libelle }} — Générée le {{ date_generation|date:"d/m/Y à H:i" }}</div>
+  <div class="sous-titre">Année de formation : {{ annee_libelle }} — Générée le {{ date_generation|date:"d/m/Y à H:i" }}</div>
 
   {% for direction_nom, inscriptions in directions.items %}
   <div class="direction-titre">{{ direction_nom }}</div>
@@ -111,7 +111,8 @@
   {% endfor %}
 
   <div class="pied-page">
-    BSB-DSI          généré sur YU-PAAN le : {{ date_generation|date:"d/m/Y à H:i" }}
+    <span>BSB</span>
+    <span>généré sur YU-PAAN le : {{ date_generation|date:"d/m/Y à H:i" }}</span>
   </div>
 
 </body>

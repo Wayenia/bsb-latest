@@ -336,7 +336,7 @@ def stats_reel_formation_template(request, formation_id):
 
     annee = _resolve_annee(request, formation)
     if not annee:
-        messages.error(request, "Aucune année scolaire n'existe encore dans l'application.")
+        messages.error(request, "Aucune année de formation n'existe encore dans l'application.")
         return redirect('courses:stats_reel_dashboard')
 
     wb = Workbook()
@@ -425,8 +425,8 @@ def stats_reel_formation_template(request, formation_id):
         cell.font = header_font
         cell.alignment = center_align
     ws3.append([
-        "—", f"Année scolaire : {annee.libelle_anne}", "—",
-        "Ce fichier ne couvre que cette année scolaire — les élèves d'une autre année ne sont pas inclus."
+        "—", f"Année de formation : {annee.libelle_anne}", "—",
+        "Ce fichier ne couvre que cette année de formation — les élèves d'une autre année ne sont pas inclus."
     ])
     ws3.append([NOMINATIF_SHEET, "(colonnes N° à Tuteur/parent)", "Non", "Déjà connu de l'application — pré-rempli, ne pas modifier."])
     for col in _NOMINATIF_COLUMNS[1:]:
@@ -470,7 +470,7 @@ def stats_reel_formation_upload(request, formation_id):
 
     annee = _resolve_annee(request, formation)
     if not annee:
-        messages.error(request, "Aucune année scolaire n'existe encore dans l'application.")
+        messages.error(request, "Aucune année de formation n'existe encore dans l'application.")
         return redirect('courses:stats_reel_dashboard')
 
     if request.method != 'POST':
@@ -533,7 +533,7 @@ def stats_reel_formation_upload(request, formation_id):
             nominatif_result['updated'].append((row_number, str(eleve)))
         except Inscription.DoesNotExist:
             nominatif_result['errors'].append((row_number, [
-                f"Aucune inscription n°{resolved['id']} trouvée pour cette formation et cette année scolaire "
+                f"Aucune inscription n°{resolved['id']} trouvée pour cette formation et cette année de formation "
                 f"({annee.libelle_anne}) — ID incorrect, ligne d'une autre formation, ou d'une autre année."
             ]))
         except Exception as e:

@@ -25,7 +25,7 @@
     <form method="get" class="px-4 md:px-0">
         <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
-                <input type="text" name="q" value="{{ q }}"
+                <input type="text" name="q" value="{{ q }}{% if not q %}BSB{% now "Y" %}{% endif %}"
                        placeholder="Rechercher un apprenant par nom, identifiant ou téléphone (tous centres)…"
                        class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
             </div>
@@ -95,7 +95,7 @@
                                     <tr>
                                         <th class="pl-16 pr-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Apprenant</th>
                                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Métier</th>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Année scolaire</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Année de formation</th>
                                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total dû</th>
                                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total payé</th>
                                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Reste à payer</th>
@@ -238,7 +238,7 @@
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Apprenant</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Métier</th>
                         {% if q %}<th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Centre</th>{% endif %}
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Année scolaire</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Année de formation</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total dû</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total payé</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Reste à payer</th>

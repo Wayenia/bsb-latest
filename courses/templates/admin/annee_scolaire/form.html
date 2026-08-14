@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ action }} Année Scolaire | BSB{% endblock %}
+{% block title %}{{ action }} Année de formation | BSB{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto py-10">
@@ -9,7 +9,7 @@
         <div class="flex items-center mb-4">
             <a href="{% url 'bsb_admin:fees_list' %}" class="text-gray-800 hover:text-gray-900 mr-4">Retour</a>
             <h1 class="text-3xl font-black text-gray-900 flex items-center">
-                {{ action }} une année scolaire
+                {{ action }} une année de formation
             </h1>
         </div>
         <p class="text-gray-600 ml-12">Remplissez les informations ci-dessous</p>

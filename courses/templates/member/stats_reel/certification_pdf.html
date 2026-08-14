@@ -38,7 +38,7 @@
   tr.direction-total td { background: #C0392B; color: #fff; font-weight: bold; }
   tr.total-bsb td { background: #000; color: #fff; font-weight: bold; }
 
-  .pied-page { margin-top: 10px; text-align: right; font-size: 7px; font-style: italic; color: #444; }
+  .pied-page { margin-top: 10px; font-size: 7px; font-style: italic; color: #444; display: flex; justify-content: space-between; }
 </style>
 </head>
 <body>
@@ -58,7 +58,7 @@
   </div>
 
   <div class="titre">Résultats aux examens de certification</div>
-  <div class="sous-titre">Résultat par titre professionnel — Année scolaire : {{ annee_libelle }} — Généré le {{ date_generation|date:"d/m/Y à H:i" }}</div>
+  <div class="sous-titre">Résultat par titre professionnel — Année de formation : {{ annee_libelle }} — Généré le {{ date_generation|date:"d/m/Y à H:i" }}</div>
 
   <table>
     <thead>
@@ -111,7 +111,8 @@
   </table>
 
   <div class="pied-page">
-    BSB-DSI          généré sur YU-PAAN le : {{ date_generation|date:"d/m/Y à H:i" }}
+    <span>BSB</span>
+    <span>généré sur YU-PAAN le : {{ date_generation|date:"d/m/Y à H:i" }}</span>
   </div>
 
 </body>

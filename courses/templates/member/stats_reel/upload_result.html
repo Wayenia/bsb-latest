@@ -12,7 +12,7 @@
         Résultat de l'import — {{ formation.centre.nom_centre }} / {{ formation.filiere.nom_filiere }}
       </h1>
       <span class="inline-flex items-center px-3 py-1 mt-2 rounded-full text-xs font-bold bg-red-100 text-red-800">
-        Année scolaire : {{ annee.libelle_anne }}
+        Année de formation : {{ annee.libelle_anne }}
       </span>
     </div>
     {% url 'courses:stats_reel_formation_upload' formation.id as upload_again_url %}

@@ -35,7 +35,7 @@
 
   tr.total-row td { background: #D4A017; color: #fff; font-weight: bold; }
 
-  .pied-page { margin-top: 10px; text-align: right; font-size: 7px; font-style: italic; color: #444; }
+  .pied-page { margin-top: 10px; font-size: 7px; font-style: italic; color: #444; display: flex; justify-content: space-between; }
 </style>
 </head>
 <body>
@@ -55,7 +55,7 @@
   </div>
 
   <div class="titre">Répartition des apprenants vivant avec un handicap par métier et par sexe</div>
-  <div class="sous-titre">Année scolaire : {{ annee_libelle }} — Généré le {{ date_generation|date:"d/m/Y à H:i" }}</div>
+  <div class="sous-titre">Année de formation : {{ annee_libelle }} — Généré le {{ date_generation|date:"d/m/Y à H:i" }}</div>
 
   <table>
     <thead>
@@ -99,7 +99,8 @@
   </table>
 
   <div class="pied-page">
-    BSB-DSI          généré sur YU-PAAN le : {{ date_generation|date:"d/m/Y à H:i" }}
+    <span>BSB</span>
+    <span>généré sur YU-PAAN le : {{ date_generation|date:"d/m/Y à H:i" }}</span>
   </div>
 
 </body>

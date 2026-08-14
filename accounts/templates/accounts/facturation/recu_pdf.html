@@ -35,7 +35,7 @@
   .separateur { border: none; border-top: 1px dashed #888; margin: 16px 0; }
   .montant-final { font-size: 15px; font-weight: bold; }
 
-  .pied-page { margin-top: 40px; border-top: 2px solid #000; padding-top: 6px; text-align: center; font-size: 9px; }
+  .pied-page { margin-top: 40px; border-top: 2px solid #000; padding-top: 6px; font-size: 9px; display: flex; justify-content: space-between; }
 </style>
 </head>
 <body>
@@ -79,7 +79,8 @@
   <div class="ligne"><span class="label">Reste à payer :</span><span class="valeur">{{ facture.reste_a_payer|floatformat:0|intcomma }} F CFA</span></div>
 
   <div class="pied-page">
-    BSB-DSI          généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}
+    <span>BSB</span>
+    <span>généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}</span>
   </div>
 
 </body>

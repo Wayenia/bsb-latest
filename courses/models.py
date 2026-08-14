@@ -267,9 +267,10 @@ class AnneeScolaire(models.Model):
      def __str__(self):
          return self.libelle_anne
      class Meta:
-         verbose_name="L' année scolaire  "
+         verbose_name = "Année de formation"
+         verbose_name_plural = "Années de formation"
          permissions = [
-             ("gerer_annees", "Gérer les années scolaires"),
+             ("gerer_annees", "Gérer les années de formation"),
          ]
 
 # CENTER-FIELD JUNCTION
@@ -322,7 +323,7 @@ class CentreEtFiliere(models.Model):
     blank=True,
     verbose_name="Communique de la formation"
     )
-    annee_prog=models.ForeignKey(AnneeScolaire,on_delete=models.SET_NULL,null=True,blank=True,verbose_name="Année Scolaire")
+    annee_prog=models.ForeignKey(AnneeScolaire,on_delete=models.SET_NULL,null=True,blank=True,verbose_name="Année de formation")
     date_lancement = models.DateTimeField(null=True, blank=True, verbose_name="Date de lancement", default=timezone.now)
     duree_jours = models.PositiveIntegerField(
         null=True, blank=True, verbose_name="Durée (en jours)",
@@ -382,7 +383,7 @@ class EffectifReel(models.Model):
     # d'une année sur l'autre.
     annee_scolaire = models.ForeignKey(
         AnneeScolaire, on_delete=models.CASCADE, null=True, blank=True,
-        related_name="effectifs_reels", verbose_name="Année scolaire"
+        related_name="effectifs_reels", verbose_name="Année de formation"
     )
     effectif_hommes = models.PositiveIntegerField(default=0, verbose_name="Effectif hommes inscrits")
     effectif_femmes = models.PositiveIntegerField(default=0, verbose_name="Effectif femmes inscrits")

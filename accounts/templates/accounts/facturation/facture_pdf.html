@@ -83,6 +83,7 @@
   }
   .pied-page hr { border: none; border-top: 3px solid #000; margin-bottom: 6px; }
   .pied-page .bsb { font-weight: bold; }
+  .pied-page .genere { display: flex; justify-content: space-between; font-size: 9px; margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -169,7 +170,10 @@
     <hr>
     <div class="bsb">BURKINA SUUDU BAWDE</div>
     <div>01 BP 6181 Ouagadougou 01 ; Compte Trésor N° 443310000083, N° IFU 00222956X</div>
-    <div>BSB-DSI          généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}</div>
+    <div class="genere">
+      <span>BSB</span>
+      <span>généré sur YU-PAAN le : {% now "d/m/Y à H:i" %}</span>
+    </div>
   </div>
 
 </body>

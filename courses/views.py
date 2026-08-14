@@ -289,19 +289,25 @@ def recap_view(request):
             return redirect('courses:my_subscriptions')
 
         if career.type_formation == 'initiale':
+            # Autant de demandes en Formation Initiale que voulu, dans
+            # n'importe quel centre, tant qu'aucune n'est encore validée
+            # cette année scolaire — seule une inscription déjà VALIDÉE
+            # bloque de nouvelles demandes (les demandes en attente
+            # n'empêchent pas d'en déposer d'autres en parallèle).
             conflit = Inscription.objects.filter(
                 eleve=request.user.eleve,
                 annee_scolaire=career.annee_prog,
                 formation__type_formation='initiale',
-            ).exclude(statut='rejete').exclude(formation=career).select_related(
+                statut__in=['valide', 'valide_paye'],
+            ).exclude(formation=career).select_related(
                 'formation__filiere', 'formation__centre'
             ).first()
             if conflit:
                 messages.error(
                     request,
-                    "Vous avez déjà une demande d'inscription en Formation Initiale "
-                    f"({conflit.formation.filiere} - {conflit.formation.centre}) pour cette année scolaire. "
-                    "Une inscription en Formation Initiale dans un autre centre n'est pas autorisée la même année."
+                    "Vous avez déjà une inscription validée en Formation Initiale "
+                    f"({conflit.formation.filiere} - {conflit.formation.centre}) pour cette année de formation. "
+                    "Une nouvelle inscription en Formation Initiale n'est pas autorisée la même année."
                 )
                 return redirect('courses:my_subscriptions')
 
@@ -613,7 +619,7 @@ def telecharger_recepisse(request, id):
     header_left, header_right = _pdf_header_lines(centre)
 
     if inscription.statut == 'valide':
-        titre_document = "Récépissé de validation"
+        titre_document = "Récépissé de validation de candidature"
     elif inscription.statut == 'rejete':
         titre_document = "Récépissé de demande d'inscription"
     else:
@@ -673,6 +679,12 @@ def telecharger_attestation(request, id):
         structure=centre, user_type='gestionnaire'
     ).first()
     directeur_nom = f"{directeur_centre.prenom} {directeur_centre.nom}" if directeur_centre else "Le Directeur du centre"
+    if directeur_centre and directeur_centre.sexe == 'f':
+        directeur_civilite = "Mme"
+    elif directeur_centre and directeur_centre.sexe == 'm':
+        directeur_civilite = "M."
+    else:
+        directeur_civilite = ""
     ville = centre.province.chef_lieu if centre.province_id else centre.nom_centre
 
     html_string = render_to_string('student/subscription/attestation_pdf.html', {
@@ -682,6 +694,7 @@ def telecharger_attestation(request, id):
         'centre': centre,
         'filiere': inscription.formation.filiere,
         'directeur_nom': directeur_nom,
+        'directeur_civilite': directeur_civilite,
         'ville': ville,
         'header_left': header_left,
         'header_right': header_right,
@@ -776,7 +789,7 @@ def download_quittance(request,id):
     y = ligne("Matricule :", eleve.matricule or "—", y)
     y = ligne("Centre de Formation :", str(inscription.formation.centre), y)
     y=ligne("Métier :" ,str(inscription.formation.filiere),y)
-    y = ligne("Année scolaire :", str(inscription.annee_scolaire), y)
+    y = ligne("Année de formation :", str(inscription.annee_scolaire), y)
     y -= 0.3*cm
     p.setDash(3, 3)
     p.line(1.5*cm, y, width-1.5*cm, y)
@@ -808,7 +821,7 @@ def download_quittance(request,id):
         f"Apprenant : {eleve.nom} {eleve.prenom}\n"
         f"Centre : {inscription.formation.centre}\n"
         f"Métier : {inscription.formation.filiere}\n"
-        f"Année scolaire : {inscription.annee_scolaire}\n"
+        f"Année de formation : {inscription.annee_scolaire}\n"
         f"Type de frais : {dette.frais_formation.type_frais.libelle}\n"
         f"Tranche : {paiement.tranche}\n"
         f"Mode de paiement : {paiement.get_mode_paiement_display()}\n"
@@ -835,10 +848,10 @@ def download_quittance(request,id):
     p.setFillColor(colors.grey)
     p.drawCentredString(width/2, 1.6*cm, "Scannez pour vérifier")
 
-    #  PIED DE PAGE 
-    p.setFont("Helvetica-Oblique", 8)
+    #  PIED DE PAGE — à droite, en petit, pour ne pas chevaucher le QR code centré
+    p.setFont("Helvetica-Oblique", 6)
     p.setFillColor(colors.grey)
-    p.drawCentredString(width/2, 1*cm, f"BSB-DSI          généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
+    p.drawRightString(width - 1.5*cm, 0.6*cm, f"BSB — généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
     p.showPage()
     p.save()
     buffer.seek(0)
@@ -1085,7 +1098,7 @@ def gerer_inscription(request,id):
                      messages.error(
                          request,
                          "Cet apprenant a déjà une inscription validée en Formation Initiale "
-                         f"({conflit.formation.filiere} - {conflit.formation.centre}) pour cette année scolaire."
+                         f"({conflit.formation.filiere} - {conflit.formation.centre}) pour cette année de formation."
                      )
                      return redirect("courses:valide_inscription")
              subscription.statut='valide'
@@ -2268,11 +2281,26 @@ def export_pdf(request):
     )
     story.append(Paragraph(signataire, signature_style))
 
-    footer_style = ParagraphStyle(
-        "footer_bsb", parent=styles["Normal"], fontSize=7,
-        textColor=rl_colors.grey, alignment=1, spaceBefore=24,
+    footer_style_left = ParagraphStyle(
+        "footer_bsb_left", parent=styles["Normal"], fontSize=7,
+        textColor=rl_colors.grey, alignment=0,
     )
-    story.append(Paragraph(f"BSB-DSI          généré sur YU-PAAN le : {now}", footer_style))
+    footer_style_right = ParagraphStyle(
+        "footer_bsb_right", parent=styles["Normal"], fontSize=7,
+        textColor=rl_colors.grey, alignment=2,
+    )
+    footer_table = Table(
+        [[Paragraph("BSB", footer_style_left), Paragraph(f"généré sur YU-PAAN le : {now}", footer_style_right)]],
+        colWidths=[doc.width / 2, doc.width / 2],
+    )
+    footer_table.setStyle(TableStyle([
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+    ]))
+    story.append(Spacer(1, 24))
+    story.append(footer_table)
 
     def _watermark_page(canvas_obj, doc_obj):
         _draw_pdf_watermark(canvas_obj, doc_obj.pagesize[0], doc_obj.pagesize[1])
@@ -2601,7 +2629,7 @@ def stats_download_quittance_view(request, paiement_id):
     y = ligne("Matricule :", eleve.matricule or "—", y)
     y = ligne("Centre :", str(inscription.formation.centre), y)
     y = ligne("Métier :", str(inscription.formation.filiere), y)
-    y = ligne("Année scolaire :", str(inscription.annee_scolaire or "—"), y)
+    y = ligne("Année de formation :", str(inscription.annee_scolaire or "—"), y)
     y -= 0.3*cm
     p.setDash(3, 3); p.line(1.5*cm, y, width-1.5*cm, y); p.setDash(); y -= 0.5*cm
 
@@ -2644,8 +2672,10 @@ def stats_download_quittance_view(request, paiement_id):
     p.setFont("Helvetica-Oblique", 7)
     p.setFillColor(colors.grey)
     p.drawCentredString(width/2, 1.6*cm, "Scannez pour vérifier")
-    p.drawCentredString(width/2, 1*cm,
-                        f"BSB-DSI          généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
+    # Pied de page à droite, en petit, pour ne pas chevaucher le QR code centré
+    p.setFont("Helvetica-Oblique", 6)
+    p.drawRightString(width - 1.5*cm, 0.6*cm,
+                       f"BSB — généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
     p.showPage()
     p.save()
     buffer.seek(0)
@@ -3256,14 +3286,29 @@ def formateur_export(request, formation_id, format):
         )
         elements.append(Paragraph(f"Le Formateur — {formateur.nom} {formateur.prenom}", signature_style))
 
-        footer_style = ParagraphStyle(
-            'footer_bsb', parent=styles['Normal'], fontSize=7,
-            textColor=rl_colors.grey, alignment=1, spaceBefore=24,
+        footer_style_left = ParagraphStyle(
+            'footer_bsb_left', parent=styles['Normal'], fontSize=7,
+            textColor=rl_colors.grey, alignment=0,
         )
-        elements.append(Paragraph(
-            f"BSB-DSI          généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}",
-            footer_style
-        ))
+        footer_style_right = ParagraphStyle(
+            'footer_bsb_right', parent=styles['Normal'], fontSize=7,
+            textColor=rl_colors.grey, alignment=2,
+        )
+        footer_table = Table(
+            [[
+                Paragraph("BSB", footer_style_left),
+                Paragraph(f"généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}", footer_style_right),
+            ]],
+            colWidths=[doc.width / 2, doc.width / 2],
+        )
+        footer_table.setStyle(TableStyle([
+            ('TOPPADDING', (0, 0), (-1, -1), 0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ]))
+        elements.append(Spacer(1, 24))
+        elements.append(footer_table)
 
         def _watermark_page_fe(canvas_obj, doc_obj):
             _draw_pdf_watermark(canvas_obj, doc_obj.pagesize[0], doc_obj.pagesize[1], favicon_path)
