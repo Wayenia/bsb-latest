@@ -42,17 +42,24 @@ from django.conf import settings
 ############### STUDENT LEVEL #############
 
 # SUBSCRIBE SELECTION : annee scolaire -> centre -> metier
+def _param_id(request, nom):
+    """Retourne l'identifiant s'il est un entier, sinon '' : un paramètre non
+    numérique (ex. '../../etc/passwd') ne doit pas atteindre le filtre SQL."""
+    valeur = request.GET.get(nom) or ''
+    return valeur if valeur.isdigit() else ''
+
+
 def subscribe_selection_view(request):
     annees = AnneeScolaire.objects.all()
     centres = CentreFormation.objects.all()
     if 'annee' in request.GET:
         # Choix explicite de l'utilisateur (y compris "revenir à ---Sélectionnez---") : respecté tel quel.
-        selected_annee_id = request.GET.get('annee') or ''
+        selected_annee_id = _param_id(request, 'annee')
     else:
         # Premier chargement de la page : présélectionner l'année scolaire la plus récente.
         derniere_annee = AnneeScolaire.objects.order_by('-date_creation').first()
         selected_annee_id = str(derniere_annee.id) if derniere_annee else ''
-    selected_centre_id = request.GET.get('centre') or ''
+    selected_centre_id = _param_id(request, 'centre')
 
     careers = []
     if selected_annee_id and selected_centre_id:

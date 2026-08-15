@@ -255,10 +255,17 @@ JAZZMIN_UI_TWEAKS = {
 
 }
 
-SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+X_FRAME_OPTIONS = 'SAMEORIGIN'  # SAMEORIGIN et non DENY : l'admin Django/jazzmin encadre ses propres pages.
+
+# HTTPS termine par le proxy amont : Django s'y fie via X-Forwarded-Proto.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# HSTS (findings V07) : force le navigateur a n'utiliser que HTTPS pendant 1 an.
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+# SECURE_SSL_REDIRECT reste False : la terminaison TLS est en amont (cf. CLAUDE.md).
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_AGE = 86400
@@ -269,7 +276,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 # HTTP pur, c'est attendu — utiliser un tunnel HTTPS local ou DEBUG-only override
 # si besoin de tester ce flux précis en clair.
 SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_SECURE = not DEBUG
