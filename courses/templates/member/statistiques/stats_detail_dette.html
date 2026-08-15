@@ -248,18 +248,18 @@
 
 {% comment %} ── MODAL PAIEMENT ──────────────────────────────────────────────── {% endcomment %}
 {% if dette.etat_dette != 'soldé' %}
-<div id="modalPaiement" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
-  <div class="bg-white w-full max-w-md mx-4" style="border-radius:14px; box-shadow:0 8px 40px rgba(0,0,0,.18);">
-    <div class="modal-header-custom py-3 px-4 flex justify-between items-center">
+<div id="modalPaiement" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45); overflow-y:auto; padding:2rem 0;">
+  <div class="bg-white w-full max-w-md mx-4" style="border-radius:14px; box-shadow:0 8px 40px rgba(0,0,0,.18); max-height:90vh; display:flex; flex-direction:column;">
+    <div class="modal-header-custom py-3 px-4 flex justify-between items-center" style="flex-shrink:0;">
       <h5 class="font-bold m-0" id="modalPaiementLabel">
         Enregistrer un paiement
       </h5>
       <button type="button" onclick="fermerModalPaiement()" class="text-white text-xl leading-none bg-transparent border-0" style="cursor:pointer;">&times;</button>
     </div>
 
-    <form method="post" id="formPaiement" enctype="multipart/form-data">
+    <form method="post" id="formPaiement" enctype="multipart/form-data" style="display:flex; flex-direction:column; min-height:0;">
       {% csrf_token %}
-      <div class="p-4">
+      <div class="p-4" style="overflow-y:auto;">
 
         {% comment %} Récap {% endcomment %}
         <div class="bg-gray-100 rounded-xl p-3 mb-4">
@@ -351,7 +351,7 @@
 
       </div>
 
-      <div class="flex justify-end gap-2 px-4 pb-4 pt-0">
+      <div class="flex justify-end gap-2 px-4 pb-4 pt-3" style="flex-shrink:0; border-top:1px solid #e5e7eb;">
         <button type="button" onclick="fermerModalPaiement()" class="px-4 py-2 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
           Annuler
         </button>
