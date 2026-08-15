@@ -87,7 +87,7 @@
         </label>
         {{ form.piece_jointe_derogation }}
       </div>
-      <script>
+      <script nonce="{{ csp_nonce }}">
         (function () {
           var montantCible = {{ montant_cible|floatformat:0 }};
           var input = document.getElementById('{{ form.montant_paiement.id_for_label }}');

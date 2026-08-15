@@ -66,7 +66,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # SecurityHeadersMiddleware avant le middleware CSP : en phase réponse
+    # (ordre inverse), il s'exécute donc APRÈS lui et peut ajuster l'en-tête CSP.
     'config.middleware.SecurityHeadersMiddleware',
+    'django.middleware.csp.ContentSecurityPolicyMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -82,6 +85,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.csp',
             ],
         },
     },
@@ -280,6 +284,21 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_SECURE = not DEBUG
+from django.utils.csp import CSP
+
+SECURE_CSP = {
+    "default-src": [CSP.SELF],
+    "script-src": [CSP.SELF, CSP.NONCE],
+    "style-src": [CSP.SELF, CSP.UNSAFE_INLINE],
+    "img-src": [CSP.SELF, "data:"],
+    "font-src": [CSP.SELF, "data:"],
+    "connect-src": [CSP.SELF],
+    "frame-ancestors": [CSP.SELF],
+    "base-uri": [CSP.SELF],
+    "form-action": [CSP.SELF],
+    "object-src": [CSP.NONE],
+}
+
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440
 FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440
 # E-mail : SMTP si renseigne dans .env, sinon affichage en console (dev)

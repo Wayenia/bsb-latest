@@ -38,7 +38,7 @@
             <div class="sm:w-52">
                 <select name="statut"
                         class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
-                        onchange="this.form.submit()">
+                        data-auto-submit>
                     <option value="">Tous les statuts</option>
                     <option value="en_cours" {% if filter.form.statut.value == 'en_cours' %}selected{% endif %}>En cours de traitement</option>
                     <option value="valide" {% if filter.form.statut.value == 'valide' %}selected{% endif %}>Validé</option>

@@ -227,7 +227,7 @@
 </div>
 {% endfor %}
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function openModal(id) {
     var el = document.getElementById(id);
     if (!el) return;

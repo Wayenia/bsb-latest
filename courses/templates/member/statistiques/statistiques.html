@@ -240,7 +240,7 @@
         {% if scope == "global" %}
         <div>
           <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Direction</label>
-          <select name="direction" class="form-select" onchange="this.form.submit()">
+          <select name="direction" class="form-select" data-auto-submit>
             <option value="">— Toutes —</option>
             {% for d in directions %}
               <option value="{{ d.id }}" {% if f_direction == d.id|stringformat:"s" %}selected{% endif %}>{{ d.nom_direction }}</option>
@@ -252,7 +252,7 @@
         {% if scope in "global direction" %}
         <div>
           <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Centre</label>
-          <select name="centre" class="form-select" onchange="this.form.submit()">
+          <select name="centre" class="form-select" data-auto-submit>
             <option value="">— Tous les centres —</option>
             {% for c in centres %}
               <option value="{{ c.id }}" {% if f_centre == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nom_centre }}</option>
@@ -675,7 +675,7 @@
 
 {% block extra_js %}
 <script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
-<script>
+<script nonce="{{ csp_nonce }}">
 // ── Data depuis Django ─────────────────────────────────────────────────────
 const evolLabels = {{ evol_labels_json|safe }};
 const evolData = {{ evol_data_json|safe }};

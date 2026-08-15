@@ -127,7 +127,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
   // Charger le badge
   fetch("{% url 'courses:notifications_count' %}")
     .then(r => r.json())

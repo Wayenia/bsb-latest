@@ -32,7 +32,7 @@
                    autocomplete="off">
         </div>
         <div class="sm:w-52">
-            <select name="statut" onchange="this.form.submit()"
+            <select name="statut" data-auto-submit
                     class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition">
                 <option value="">Tous les statuts</option>
                 <option value="proforma" {% if statut == 'proforma' %}selected{% endif %}>Proforma</option>

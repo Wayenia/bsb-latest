@@ -300,8 +300,8 @@
         </p>
     </form>
 </div>
-{% comment %} Juste avant le <script> principal {% endcomment %}
-<script>
+{% comment %} Juste avant le <script nonce="{{ csp_nonce }}"> principal {% endcomment %}
+<script nonce="{{ csp_nonce }}">
     const FRAIS_TYPE_OPTIONS = [
         {% for tf in type_frais_options %}
         { value: "{{ tf.pk }}", label: "{{ tf.libelle|escapejs }}" },
@@ -314,7 +314,7 @@
     ];
 </script>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function buildSelectOptions(optionsArray, emptyLabel) {
     let html = `<option value="">${emptyLabel}</option>`;
     optionsArray.forEach(o => {

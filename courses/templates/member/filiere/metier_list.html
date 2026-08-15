@@ -46,7 +46,7 @@
             <div class="sm:w-52">
                 <select name="titre_professionnel"
                         class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
-                        onchange="this.form.submit()">
+                        data-auto-submit>
                     <option value="">Tous les titres</option>
                     <option value="CQP" {% if filter.form.titre_professionnel.value == 'CQP' %}selected{% endif %}>CQP — Cert. de Qualification Pro.</option>
                     <option value="BQP" {% if filter.form.titre_professionnel.value == 'BQP' %}selected{% endif %}>BQP — Brevet de Qualification Pro.</option>
@@ -59,7 +59,7 @@
             <div class="sm:w-44">
                 <select name="is_active"
                         class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
-                        onchange="this.form.submit()">
+                        data-auto-submit>
                     <option value="">Disponibilité</option>
                     <option value="true" {% if filter.form.is_active.value == 'true' %}selected{% endif %}>Actif</option>
                     <option value="false" {% if filter.form.is_active.value == 'false' %}selected{% endif %}>Inactif</option>
@@ -244,7 +244,7 @@
     {% endif %}
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
     function toggleModules(id) {
         const el = document.getElementById(id);
         const icon = document.getElementById('icon-' + id);

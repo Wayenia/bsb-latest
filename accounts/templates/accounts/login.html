@@ -95,7 +95,7 @@
         opacity: 0.8;
     }
 </style>
-<script>
+<script nonce="{{ csp_nonce }}">
   setTimeout(function () {
     document.querySelectorAll('.mb-6 [class*="rounded-lg"]').forEach(function(el) {
       el.parentElement.remove();

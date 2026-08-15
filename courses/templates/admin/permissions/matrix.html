@@ -63,7 +63,7 @@
     </form>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
   // Bascule visuelle du curseur du "switch" au clic (la case reste sr-only).
   document.querySelectorAll('input[name="cell"]').forEach(function (input) {
       input.addEventListener('change', function () {

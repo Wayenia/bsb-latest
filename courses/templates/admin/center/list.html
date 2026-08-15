@@ -197,7 +197,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
   setTimeout(() => {
     const msg = document.querySelector('.messages, [class*="messages"]');
     if (msg) msg.remove();

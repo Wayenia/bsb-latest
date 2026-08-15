@@ -184,7 +184,7 @@
 </div>
 {{ filter.form.recherche }}
 
-<script>
+<script nonce="{{ csp_nonce }}">
     document.querySelector('[name="recherche"]').addEventListener('input', function() {
         clearTimeout(this._timer);
         this._timer = setTimeout(() => this.form.submit(), 1000); // délai 500ms

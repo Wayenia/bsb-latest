@@ -211,7 +211,7 @@
 </div>
 
 {{ prestations_json|json_script:"prestations-data" }}
-<script>
+<script nonce="{{ csp_nonce }}">
 const prestationsData = JSON.parse(document.getElementById('prestations-data').textContent);
 const prestationPrix = {};
 prestationsData.forEach(p => { prestationPrix[p.id] = p.prix_unitaire; });

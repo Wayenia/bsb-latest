@@ -49,14 +49,14 @@
                         <div class="flex gap-2 justify-end flex-wrap">
                             {% if not actu.abonnes_notifies and perms.actualites.publier_actualite %}
                             <form method="post" action="{% url 'bsb_actualites:actualite_publier' actu.id %}"
-                                  onsubmit="return confirm('Publier cette actualité et prévenir tous les abonnés ?');">
+                                  data-confirm="Publier cette actualité et prévenir tous les abonnés ?">
                                 {% csrf_token %}
                                 <button type="submit" class="px-3 py-1.5 bg-bsb-primary text-white text-xs font-bold rounded">Publier &amp; notifier</button>
                             </form>
                             {% endif %}
                             <a href="{% url 'bsb_actualites:actualite_update' actu.id %}" class="px-3 py-1.5 bg-gray-100 text-gray-800 text-xs font-bold rounded">Modifier</a>
                             <form method="post" action="{% url 'bsb_actualites:actualite_delete' actu.id %}"
-                                  onsubmit="return confirm('Supprimer définitivement cette actualité ?');">
+                                  data-confirm="Supprimer définitivement cette actualité ?">
                                 {% csrf_token %}
                                 <button type="submit" class="px-3 py-1.5 bg-red-100 text-red-700 text-xs font-bold rounded">Supprimer</button>
                             </form>

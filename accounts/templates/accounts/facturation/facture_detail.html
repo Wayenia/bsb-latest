@@ -24,7 +24,7 @@
             </a>
             {% if facture.type_facture == 'proforma' %}
             <form method="post" action="{% url 'accounts:facture_valider' facture.id %}"
-                  onsubmit="return confirm('Valider cette facture proforma en facture définitive ? Un nouveau numéro sera attribué.');">
+                  data-confirm="Valider cette facture proforma en facture définitive ? Un nouveau numéro sera attribué.">
                 {% csrf_token %}
                 <button type="submit" class="px-4 py-2 bg-bsb-gold text-white text-sm font-bold rounded-lg hover:bg-yellow-600 transition">
                     Valider en définitive
@@ -181,7 +181,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 const resteAPayerFacture = {{ facture.reste_a_payer|floatformat:0 }};
 
 function ouvrirModalEncaissement(mode, ligneId, ligneReste, ligneLibelle) {

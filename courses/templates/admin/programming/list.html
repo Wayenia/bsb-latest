@@ -184,7 +184,7 @@
         {% endif %}
     </div>
 </div>
-<script>
+<script nonce="{{ csp_nonce }}">
     const searchInput = document.getElementById('id_formation');
     let timeout = null;
     searchInput.focus();

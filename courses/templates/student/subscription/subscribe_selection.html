@@ -16,7 +16,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
       <div>
         <label class="block text-sm font-bold text-gray-700 mb-1.5">Année de formation <span class="text-red-600">*</span></label>
-        <select name="annee" onchange="this.form.submit()"
+        <select name="annee" data-auto-submit
                 class="block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold">
           <option value="">---Sélectionnez une année---</option>
           {% for annee in annees %}
@@ -26,7 +26,7 @@
       </div>
       <div>
         <label class="block text-sm font-bold text-gray-700 mb-1.5">Centre de formation <span class="text-red-600">*</span></label>
-        <select name="centre" onchange="this.form.submit()"
+        <select name="centre" data-auto-submit
                 class="block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold">
           <option value="">---Sélectionnez un centre---</option>
           {% for centre in centres %}
@@ -78,7 +78,7 @@
 </div>
 
 {{ careers_data|json_script:"careers-data" }}
-<script>
+<script nonce="{{ csp_nonce }}">
   const careersData = JSON.parse(document.getElementById('careers-data').textContent);
   const metierSelect = document.getElementById('metier-select');
   const detailsPanel = document.getElementById('metier-details');

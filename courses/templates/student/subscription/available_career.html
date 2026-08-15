@@ -287,7 +287,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
   const searchInput = document.getElementById('id_formation');
   let timeout = null;
   searchInput.focus();
@@ -301,7 +301,7 @@
     }, 400);
   });
 </script>
-<script>
+<script nonce="{{ csp_nonce }}">
   setTimeout(function () {
     document.querySelectorAll('[class*="border-l-4"]').forEach(function (el) {
       el.remove();

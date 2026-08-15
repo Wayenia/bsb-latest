@@ -363,7 +363,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 const estPrimordiale = {{ tranche_cible.est_primordiale|yesno:"true,false" }};
 const montantCible = {{ montant_cible|floatformat:0 }};
 
