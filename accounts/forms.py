@@ -105,6 +105,15 @@ class PrestationQuickForm(BaseFacturationForm):
         self.fields['description'].required = False
 
 
+class PrestationForm(PrestationQuickForm):
+    class Meta(PrestationQuickForm.Meta):
+        fields = ['libelle', 'description', 'prix_unitaire', 'actif']
+        labels = {
+            **PrestationQuickForm.Meta.labels,
+            'actif': 'Prestation active',
+        }
+
+
 # ─── Facture ────────────────────────────────────────────────────────────────
 
 class FactureForm(BaseFacturationForm):
@@ -159,6 +168,17 @@ class PaiementPrestationForm(forms.Form):
 # numero_identifiant, user_type, permissions/groupes — ce ne sont pas des
 # "infos personnelles" mais des identifiants/droits gérés par l'administration.
 
+class TelWidget(forms.TextInput):
+    """Retire les espaces avant validation : le format international attendu
+    par phone_validator (ex. +22670000000) ne tolère aucun espace, mais le
+    plugin JS de saisie (intl-tel-input) en affiche/en tape parfois — et si ce
+    script ne se charge pas, la valeur brute avec espaces serait autrement
+    rejetée même quand l'utilisateur n'a pas touché ce champ."""
+    def value_from_datadict(self, data, files, name):
+        value = super().value_from_datadict(data, files, name)
+        return value.replace(' ', '') if value else value
+
+
 class ProfilForm(forms.ModelForm):
     class Meta:
         model = Utilisateur
@@ -177,7 +197,7 @@ class ProfilForm(forms.ModelForm):
             'prenom': forms.TextInput(attrs={'class': _BASE_CLASSES}),
             'sexe': forms.Select(attrs={'class': _BASE_CLASSES}),
             'date_naissance': forms.DateInput(attrs={'class': _BASE_CLASSES, 'type': 'date'}, format='%Y-%m-%d'),
-            'tel': forms.TextInput(attrs={'class': _BASE_CLASSES + ' phone-intl', 'placeholder': '70 00 00 00'}),
+            'tel': TelWidget(attrs={'class': _BASE_CLASSES + ' phone-intl', 'placeholder': '70 00 00 00'}),
             'adresse': forms.TextInput(attrs={'class': _BASE_CLASSES}),
             'email': forms.EmailInput(attrs={'class': _BASE_CLASSES}),
         }
@@ -185,6 +205,11 @@ class ProfilForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['date_naissance'].widget.attrs['max'] = max_date_naissance().isoformat()
+        # La plupart des comptes (RH, import en masse...) sont créés sans adresse,
+        # comme partout ailleurs dans le projet (voir courses/forms.py) : la rendre
+        # obligatoire ici bloquait la sauvegarde du profil pour ces comptes, même
+        # sans toucher au champ adresse.
+        self.fields['adresse'].required = False
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip()

@@ -280,11 +280,11 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
 
       {% if perms.accounts.gerer_facturation %}
-      <a href="{% url 'accounts:facture_create' %}"
+      <a href="{% url 'accounts:facture_proforma_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-red-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
           <h2 class="text-base font-bold text-gray-600 underline group-hover:text-gray-800 transition-colors">Facturation et Prestation</h2>
-          <p class="text-sm text-gray-400 mt-1">Créer une facture proforma ou définitive</p>
+          <p class="text-sm text-gray-400 mt-1">Gérer et modifier les factures proforma</p>
         </div>
       </a>
       {% endif %}

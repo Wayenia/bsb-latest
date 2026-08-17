@@ -9,6 +9,7 @@ urlpatterns = [
     path('logout', views.user_logout, name='logout'),
 
     # ── Profil (self-service, tous rôles) ──────────────────────────────────
+    path('mon-compte', views.mon_compte, name='mon_compte'),
     path('mon-profil', views.mon_profil, name='mon_profil'),
     path('mon-profil/mot-de-passe', views.changer_mot_de_passe, name='changer_mot_de_passe'),
 
@@ -18,12 +19,17 @@ urlpatterns = [
     path('facturation/prestation/nouvelle', views.prestation_quick_create, name='prestation_quick_create'),
     path('facturation/prestations', views.prestation_list, name='prestation_list'),
     path('facturation/prestations/nouvelle', views.prestation_create, name='prestation_create'),
+    path('facturation/prestations/<int:id>/modifier', views.prestation_update, name='prestation_update'),
+    path('facturation/prestations/<int:id>/supprimer', views.prestation_delete, name='prestation_delete'),
     path('facturation/prestations/import/modele', views.prestation_import_template, name='prestation_import_template'),
     path('facturation/prestations/import', views.prestation_import, name='prestation_import'),
     path('facturation/clients', views.client_list, name='client_list'),
     path('facturation/clients/import/modele', views.client_import_template, name='client_import_template'),
     path('facturation/clients/import', views.client_import, name='client_import'),
     path('facturation/nouvelle', views.facture_create, name='facture_create'),
+    path('facturation/proforma', views.facture_proforma_list, name='facture_proforma_list'),
+    path('facturation/proforma/<int:id>/modifier', views.facture_proforma_update, name='facture_proforma_update'),
+    path('facturation/proforma/<int:id>/supprimer', views.facture_proforma_delete, name='facture_proforma_delete'),
     path('facturation/<int:id>/pdf', views.facture_pdf, name='facture_pdf'),
     path('facturation/<int:id>/valider', views.facture_valider, name='facture_valider'),
     path('encaissement', views.facture_list, name='facture_list'),

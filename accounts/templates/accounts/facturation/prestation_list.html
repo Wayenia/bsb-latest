@@ -45,6 +45,7 @@
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Description</th>
                     <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Prix unitaire</th>
                     <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Statut</th>
+                    <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -59,6 +60,26 @@
                         {% else %}
                         <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-gray-100 text-gray-600">Inactive</span>
                         {% endif %}
+                    </td>
+                    <td class="px-6 py-3 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <a href="{% url 'accounts:prestation_update' p.id %}"
+                               title="Modifier"
+                               class="p-2 rounded-lg text-gray-600 bg-gray-50 hover:bg-gray-100 transition">
+                                {% include 'partials/icon_edit.html' %}
+                            </a>
+                            <form method="post" action="{% url 'accounts:prestation_delete' p.id %}"
+                                  class="inline"
+                                  onsubmit="return confirm('Supprimer la prestation « {{ p.libelle|escapejs }} » ? Cette action est irréversible.');">
+                                {% csrf_token %}
+                                <button type="submit" title="Supprimer"
+                                        class="p-2 rounded-lg text-red-600 bg-red-50 hover:bg-red-100 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9.5 4h5a1 1 0 011 1v2h-7V5a1 1 0 011-1z" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}

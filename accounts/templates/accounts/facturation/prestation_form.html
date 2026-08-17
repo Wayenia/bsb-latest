@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Nouvelle prestation | BSB{% endblock %}
+{% block title %}{% if editing %}Modifier la prestation{% else %}Nouvelle prestation{% endif %} | BSB{% endblock %}
 
 {% block content %}
 <div class="max-w-xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
@@ -7,7 +7,9 @@
 
     <div class="mb-8">
         <a href="{% url 'accounts:prestation_list' %}" class="text-sm text-gray-400 hover:text-gray-600">Prestations</a>
-        <h1 class="text-2xl font-black text-gray-900 mt-1">Nouvelle prestation</h1>
+        <h1 class="text-2xl font-black text-gray-900 mt-1">
+            {% if editing %}Modifier « {{ prestation.libelle }} »{% else %}Nouvelle prestation{% endif %}
+        </h1>
     </div>
 
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
@@ -37,6 +39,13 @@
                 {% if form.prix_unitaire.errors %}<p class="mt-1 text-sm text-red-600">{{ form.prix_unitaire.errors.0 }}</p>{% endif %}
             </div>
 
+            {% if editing %}
+            <div class="flex items-center gap-2">
+                {{ form.actif }}
+                <label class="text-sm font-bold text-gray-800">{{ form.actif.label }}</label>
+            </div>
+            {% endif %}
+
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
                 <a href="{% url 'accounts:prestation_list' %}"
                    class="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all">
@@ -44,7 +53,7 @@
                 </a>
                 <button type="submit"
                         class="px-6 py-2.5 bg-red-700 text-white text-sm font-bold rounded-lg hover:bg-red-800 transition-all shadow-sm">
-                    Créer la prestation
+                    {% if editing %}Enregistrer les modifications{% else %}Créer la prestation{% endif %}
                 </button>
             </div>
         </form>

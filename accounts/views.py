@@ -86,6 +86,18 @@ def user_logout(request):
 # ─── Profil (self-service, tous rôles) ─────────────────────────────────────
 
 @login_required
+def mon_compte(request):
+    from .models import Eleve
+
+    if request.user.user_type == 'eleve':
+        profil = get_object_or_404(Eleve, pk=request.user.pk)
+    else:
+        profil = request.user
+
+    return render(request, 'accounts/mon_compte.html', {'profil': profil})
+
+
+@login_required
 def mon_profil(request):
     from .models import Eleve
     from .forms import ProfilForm, ProfilEleveForm
@@ -102,7 +114,7 @@ def mon_profil(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Vos informations ont été mises à jour avec succès.")
-            return redirect('accounts:mon_profil')
+            return redirect('accounts:mon_compte')
         messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
     else:
         form = form_class(instance=instance)
@@ -125,7 +137,7 @@ def changer_mot_de_passe(request):
             # (le hash de session ne correspond plus au nouveau mot de passe).
             update_session_auth_hash(request, user)
             messages.success(request, "Votre mot de passe a été modifié avec succès.")
-            return redirect('accounts:mon_profil')
+            return redirect('accounts:mon_compte')
         messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
     else:
         form = PasswordChangeForm(request.user)
@@ -172,7 +184,7 @@ import base64
 import os
 
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, ProtectedError
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
@@ -186,7 +198,7 @@ from .models import (
     LigneFacture_prestation, Paiement_prestation, LignePaiement_prestation,
 )
 from .forms import (
-    ClientPrestationForm, PrestationQuickForm, FactureForm,
+    ClientPrestationForm, PrestationQuickForm, PrestationForm, FactureForm,
     LigneFactureFormSet, PaiementPrestationForm,
 )
 from .utils import montant_en_lettres
@@ -372,6 +384,47 @@ def prestation_create(request):
 
 
 @require_permission('accounts.gerer_facturation')
+def prestation_update(request, id):
+    prestation = get_object_or_404(Prestation_prestation, id=id)
+
+    if request.method == 'POST':
+        form = PrestationForm(request.POST, instance=prestation)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Prestation « {prestation.libelle} » modifiée avec succès.")
+            return redirect('accounts:prestation_list')
+        messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
+    else:
+        form = PrestationForm(instance=prestation)
+
+    return render(request, 'accounts/facturation/prestation_form.html', {
+        'form': form,
+        'prestation': prestation,
+        'editing': True,
+    })
+
+
+@require_permission('accounts.gerer_facturation')
+def prestation_delete(request, id):
+    prestation = get_object_or_404(Prestation_prestation, id=id)
+
+    if request.method != 'POST':
+        return redirect('accounts:prestation_list')
+
+    libelle = prestation.libelle
+    try:
+        prestation.delete()
+        messages.success(request, f"Prestation « {libelle} » supprimée.")
+    except ProtectedError:
+        messages.error(
+            request,
+            f"Impossible de supprimer « {libelle} » : elle est utilisée dans une ou plusieurs "
+            "factures. Vous pouvez la désactiver depuis le formulaire de modification."
+        )
+    return redirect('accounts:prestation_list')
+
+
+@require_permission('accounts.gerer_facturation')
 def prestation_import_template(request):
     from courses.bulk_import.views_helpers import render_import_template
     from .bulk_import_registry import SPEC_PRESTATION
@@ -499,6 +552,115 @@ def facture_create(request):
             for p in prestations
         ],
     })
+
+
+# ─── Liste des factures proforma (modifiables) ─────────────────────────────
+
+@require_permission('accounts.gerer_facturation')
+def facture_proforma_list(request):
+    factures = Facture_prestation.objects.select_related('client').filter(
+        type_facture='proforma'
+    ).order_by('-date_creation')
+
+    q = request.GET.get('q', '').strip()
+    if q:
+        factures = factures.filter(
+            Q(numero__icontains=q) |
+            Q(client__nom__icontains=q) |
+            Q(client__prenom__icontains=q) |
+            Q(client__raison_sociale__icontains=q)
+        )
+
+    paginator = Paginator(factures, 10)
+    page = request.GET.get('page')
+    factures = paginator.get_page(page)
+
+    return render(request, 'accounts/facturation/facture_proforma_list.html', {
+        'factures': factures,
+        'q': q,
+    })
+
+
+# ─── Modification d'une facture proforma ───────────────────────────────────
+
+@require_permission('accounts.gerer_facturation')
+def facture_proforma_update(request, id):
+    facture = get_object_or_404(Facture_prestation, id=id, type_facture='proforma')
+
+    if request.method == 'POST':
+        client_form = ClientPrestationForm(request.POST, instance=facture.client)
+        facture_form = FactureForm(request.POST, instance=facture)
+        formset = LigneFactureFormSet(request.POST, instance=facture)
+
+        lignes_valides = formset.is_valid() and any(
+            f.cleaned_data and not f.cleaned_data.get('DELETE')
+            for f in formset.forms if f.cleaned_data
+        )
+
+        if client_form.is_valid() and facture_form.is_valid() and lignes_valides:
+            client = client_form.save()
+
+            facture = facture_form.save(commit=False)
+            facture.client = client
+            facture.save()
+
+            formset.save()
+
+            facture.montant_total = sum(l.montant for l in facture.lignes.all())
+            facture.save(update_fields=['montant_total'])
+
+            messages.success(request, f"Facture {facture.numero} modifiée avec succès.")
+            return redirect('accounts:facture_proforma_list')
+
+        erreurs = []
+        for field, field_errors in client_form.errors.items():
+            label = client_form.fields[field].label if field in client_form.fields else field
+            erreurs.extend(f"{label} : {e}" for e in field_errors)
+        for field, field_errors in facture_form.errors.items():
+            label = facture_form.fields[field].label if field in facture_form.fields else field
+            erreurs.extend(f"{label} : {e}" for e in field_errors)
+        if not formset.is_valid():
+            erreurs.append("Une ou plusieurs lignes de prestation contiennent une erreur (prestation, quantité ou coût unitaire manquant/invalide).")
+        elif not lignes_valides:
+            erreurs.append("Ajoutez au moins une ligne de prestation.")
+
+        if erreurs:
+            messages.error(request, "Veuillez corriger : " + " ; ".join(erreurs))
+        else:
+            messages.error(request, "Une erreur est survenue lors de la modification de la facture. Veuillez réessayer.")
+    else:
+        client_form = ClientPrestationForm(instance=facture.client)
+        facture_form = FactureForm(instance=facture)
+        formset = LigneFactureFormSet(instance=facture)
+
+    prestations = Prestation_prestation.objects.filter(actif=True).order_by('libelle')
+    return render(request, 'accounts/facturation/facture_form.html', {
+        'client_form': client_form,
+        'facture_form': facture_form,
+        'formset': formset,
+        'prestations': prestations,
+        'prestations_json': [
+            {'id': p.id, 'libelle': p.libelle, 'prix_unitaire': str(p.prix_unitaire)}
+            for p in prestations
+        ],
+        'facture': facture,
+        'editing': True,
+    })
+
+
+# ─── Suppression d'une facture proforma ────────────────────────────────────
+
+@require_permission('accounts.gerer_facturation')
+def facture_proforma_delete(request, id):
+    facture = get_object_or_404(Facture_prestation, id=id, type_facture='proforma')
+
+    if request.method != 'POST':
+        return redirect('accounts:facture_proforma_list')
+
+    numero = facture.numero
+    facture.delete()
+    messages.success(request, f"Facture proforma {numero} supprimée.")
+    return redirect('accounts:facture_proforma_list')
 
 
 # ─── PDF de la facture ──────────────────────────────────────────────────────

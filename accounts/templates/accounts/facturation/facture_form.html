@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Facturation et Prestation | BSB{% endblock %}
+{% block title %}{% if editing %}Modifier facture proforma{% else %}Facturation et Prestation{% endif %} | BSB{% endblock %}
 
 {% block content %}
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -7,17 +7,28 @@
 
   <div class="mb-8 flex items-center justify-between">
     <div>
-      <h1 class="text-3xl font-black text-gray-900">Facturation et Prestation</h1>
-      <p class="mt-1 text-sm text-gray-500">Créer une nouvelle facture</p>
+      <h1 class="text-3xl font-black text-gray-900">
+        {% if editing %}Modifier la facture proforma{% else %}Facturation et Prestation{% endif %}
+      </h1>
+      <p class="mt-1 text-sm text-gray-500">
+        {% if editing %}{{ facture.numero }} — {{ facture.client }}{% else %}Créer une nouvelle facture{% endif %}
+      </p>
     </div>
-    <a href="{% url 'accounts:prestation_list' %}" class="text-sm font-bold text-red-700 hover:underline">
-      Gérer les prestations
-    </a>
+    <div class="flex items-center gap-4">
+      {% if editing %}
+      <a href="{% url 'accounts:facture_proforma_list' %}" class="text-sm font-bold text-red-700 hover:underline">
+        Retour à la liste
+      </a>
+      {% endif %}
+      <a href="{% url 'accounts:prestation_list' %}" class="text-sm font-bold text-red-700 hover:underline">
+        Gérer les prestations
+      </a>
+    </div>
   </div>
 
   <form method="post" id="facture-form" enctype="multipart/form-data">
     {% csrf_token %}
-    <input type="hidden" name="client_id" id="id_client_id" value="">
+    <input type="hidden" name="client_id" id="id_client_id" value="{% if facture %}{{ facture.client_id }}{% endif %}">
 
     {% if client_form.non_field_errors or facture_form.non_field_errors %}
     <div class="p-4 bg-red-50 border border-red-200 rounded-lg mb-6">
@@ -109,7 +120,8 @@
       {{ formset.management_form }}
       <div id="lignes-container" class="space-y-3">
         {% for form in formset.forms %}
-        <div class="ligne-row grid grid-cols-1 sm:grid-cols-[1fr_100px_140px_140px_40px] gap-3 items-end border-b border-gray-100 pb-3">
+        <div class="ligne-row grid grid-cols-1 sm:grid-cols-[1fr_100px_140px_140px_40px] gap-3 items-end border-b border-gray-100 pb-3"
+             data-has-pk="{% if form.instance.pk %}1{% else %}0{% endif %}">
           <div>
             {% if forloop.first %}<label class="block text-xs font-bold text-gray-500 uppercase mb-1">Prestation</label>{% endif %}
             {{ form.prestation }}
@@ -133,6 +145,7 @@
             </button>
           </div>
           {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+          <div class="hidden">{{ form.DELETE }}</div>
         </div>
         {% endfor %}
       </div>
@@ -166,6 +179,18 @@
     </div>
 
     {% comment %} Actions {% endcomment %}
+    {% if editing %}
+    <div class="flex items-center justify-end gap-3">
+      <a href="{% url 'accounts:facture_proforma_list' %}"
+         class="px-6 py-3 border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50 transition">
+        Annuler
+      </a>
+      <button type="submit"
+              class="px-6 py-3 bg-red-700 text-white text-sm font-bold rounded-lg hover:bg-red-800 transition">
+        Enregistrer les modifications
+      </button>
+    </div>
+    {% else %}
     <div class="flex items-center justify-end gap-3">
       <button type="submit" name="action" value="proforma"
               class="px-6 py-3 bg-gray-700 text-white text-sm font-bold rounded-lg hover:bg-gray-800 transition">
@@ -176,6 +201,7 @@
         Définitive
       </button>
     </div>
+    {% endif %}
   </form>
 </div>
 
@@ -265,12 +291,91 @@ function ajouterLigne() {
   attacherEcouteurs();
 }
 
+// Transforme un <select> de prestation en champ texte qui filtre les options
+// à la saisie tout en restant un vrai select pour la soumission du formulaire
+// (le select d'origine reste dans le DOM, masqué, et sa valeur est mise à
+// jour par le clic/la sélection dans la liste déroulante).
+function enhancerCombobox(select) {
+  if (select.dataset.comboEnhanced) return;
+  select.dataset.comboEnhanced = '1';
+  select.removeAttribute('required');
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'relative';
+  select.parentNode.insertBefore(wrapper, select);
+  wrapper.appendChild(select);
+  select.classList.add('hidden');
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.autocomplete = 'off';
+  input.placeholder = 'Rechercher une prestation...';
+  input.className = select.className.replace('hidden', '').trim();
+
+  const list = document.createElement('div');
+  list.className = 'combo-list absolute left-0 right-0 z-20 mt-1 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg hidden';
+
+  wrapper.appendChild(input);
+  wrapper.appendChild(list);
+
+  function libelleSelection() {
+    const opt = select.options[select.selectedIndex];
+    return opt && opt.value ? opt.text : '';
+  }
+  input.value = libelleSelection();
+
+  function renderList(filtre) {
+    const f = (filtre || '').trim().toLowerCase();
+    list.innerHTML = '';
+    const options = Array.from(select.options).filter(o => o.value !== '');
+    const matches = f ? options.filter(o => o.text.toLowerCase().includes(f)) : options;
+
+    if (!matches.length) {
+      const empty = document.createElement('div');
+      empty.className = 'px-3 py-2 text-sm text-gray-400';
+      empty.textContent = 'Aucun résultat';
+      list.appendChild(empty);
+      return;
+    }
+    matches.forEach(o => {
+      const item = document.createElement('div');
+      item.className = 'px-3 py-2 text-sm cursor-pointer hover:bg-red-50' + (o.value === select.value ? ' bg-red-50 font-semibold' : '');
+      item.textContent = o.text;
+      item.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        select.value = o.value;
+        input.value = o.text;
+        list.classList.add('hidden');
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      list.appendChild(item);
+    });
+  }
+
+  input.addEventListener('focus', function () {
+    renderList('');
+    list.classList.remove('hidden');
+  });
+  input.addEventListener('input', function () {
+    renderList(input.value);
+    list.classList.remove('hidden');
+  });
+  input.addEventListener('blur', function () {
+    setTimeout(function () {
+      list.classList.add('hidden');
+      input.value = libelleSelection();
+    }, 150);
+  });
+}
+
 function attacherEcouteurs() {
   document.querySelectorAll('.ligne-row').forEach(row => {
     const select = row.querySelector('select[name$="-prestation"]');
     const qte = row.querySelector('input[name$="-quantite"]');
     const prix = row.querySelector('input[name$="-prix_unitaire"]');
     const montantSpan = row.querySelector('.ligne-montant');
+
+    if (select) enhancerCombobox(select);
 
     function recalcLigne() {
       const q = parseFloat(qte.value) || 0;
@@ -301,6 +406,7 @@ function attacherEcouteurs() {
 function recalcTotal() {
   let total = 0;
   document.querySelectorAll('.ligne-row').forEach(row => {
+    if (row.classList.contains('hidden')) return;
     const qte = parseFloat(row.querySelector('input[name$="-quantite"]')?.value) || 0;
     const prix = parseFloat(row.querySelector('input[name$="-prix_unitaire"]')?.value) || 0;
     total += qte * prix;
@@ -308,14 +414,23 @@ function recalcTotal() {
   document.getElementById('grand-total').textContent = total.toLocaleString('fr-FR') + ' FCFA';
 }
 
-// La ligne est retirée du DOM (et non simplement grisée) : comme ce formulaire
-// ne sert qu'à la création, toutes les lignes sont "nouvelles" — les retirer
-// avant soumission suffit, pas besoin de les marquer DELETE côté serveur.
+// Une ligne déjà enregistrée en base (data-has-pk="1", cas de l'édition d'une
+// facture existante) doit rester dans le DOM pour que son champ id soit
+// soumis : on la masque et on coche son champ DELETE du formset. Une ligne
+// tout juste ajoutée (jamais enregistrée) peut être retirée du DOM sans rien
+// d'autre, comme en création.
 function supprimerLigne(bouton) {
   const row = bouton.closest('.ligne-row');
-  row.remove();
-  renumeroterLignes();
-  recalcTotal();
+  const deleteInput = row.querySelector('input[name$="-DELETE"]');
+  if (row.dataset.hasPk === '1' && deleteInput) {
+    deleteInput.checked = true;
+    row.classList.add('hidden');
+    recalcTotal();
+  } else {
+    row.remove();
+    renumeroterLignes();
+    recalcTotal();
+  }
 }
 
 function renumeroterLignes() {

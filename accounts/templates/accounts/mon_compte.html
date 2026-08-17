@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Mon profil | BSB{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto py-10 px-4 space-y-6">
+    {% include 'partials/messages.html' %}
+
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8">
+
+        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <div class="relative flex-shrink-0">
+                <div class="w-28 h-28 rounded-full flex items-center justify-center shadow-md
+                    {% if profil.sexe == 'f' %}bg-gradient-to-br from-rose-400 to-pink-600{% else %}bg-gradient-to-br from-blue-500 to-blue-700{% endif %}">
+                    <svg viewBox="0 0 100 100" class="w-16 h-16" fill="white" aria-hidden="true">
+                        {% if profil.sexe == 'f' %}
+                        <ellipse cx="50" cy="35" rx="23" ry="25" />
+                        <path d="M27,50 Q22,66 29,75 Q25,64 32,52 Z" />
+                        <path d="M73,50 Q78,66 71,75 Q75,64 68,52 Z" />
+                        {% else %}
+                        <circle cx="50" cy="35" r="22" />
+                        {% endif %}
+                        <path d="M15,98 Q15,62 50,62 Q85,62 85,98 Z" />
+                    </svg>
+                </div>
+                <a href="{% url 'accounts:mon_profil' %}"
+                   title="Modifier mes informations"
+                   class="absolute -bottom-1 -right-1 w-9 h-9 flex items-center justify-center bg-yellow-600 hover:bg-yellow-700 text-white rounded-full shadow-md border-2 border-white transition-colors">
+                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793z" />
+                        <path d="M11.379 5.793 3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                </a>
+            </div>
+
+            <div class="flex-1 text-center sm:text-left">
+                <h1 class="text-2xl font-black text-gray-900">{{ profil.nom }} {{ profil.prenom }}</h1>
+                <p class="text-sm text-gray-500 mt-1">{{ profil.get_user_type_display }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-8 pt-8 border-t border-gray-100">
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Nom d'utilisateur</p>
+                <p class="text-sm font-semibold text-gray-800">{{ profil.username }}</p>
+            </div>
+            {% if profil.matricule %}
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Matricule</p>
+                <p class="text-sm font-semibold text-gray-800">{{ profil.matricule }}</p>
+            </div>
+            {% endif %}
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Sexe</p>
+                <p class="text-sm font-semibold text-gray-800">{{ profil.get_sexe_display }}</p>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Date de naissance</p>
+                <p class="text-sm font-semibold text-gray-800">{{ profil.date_naissance|date:"d/m/Y"|default:"—" }}</p>
+            </div>
+            {% if profil.lieu_naissance %}
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Lieu de naissance</p>
+                <p class="text-sm font-semibold text-gray-800">{{ profil.lieu_naissance }}</p>
+            </div>
+            {% endif %}
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Téléphone</p>
+                <p class="text-sm font-semibold text-gray-800">{{ profil.tel|default:"—" }}</p>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Adresse email</p>
+                <p class="text-sm font-semibold text-gray-800">{{ profil.email }}</p>
+            </div>
+            <div class="sm:col-span-2">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Adresse</p>
+                <p class="text-sm font-semibold text-gray-800">{{ profil.adresse|default:"—" }}</p>
+            </div>
+        </div>
+
+        <div class="pt-8 mt-8 border-t border-gray-100">
+            <a href="{% url 'accounts:changer_mot_de_passe' %}" class="text-sm font-semibold text-yellow-700 hover:text-yellow-800 transition-colors">
+                Changer mon mot de passe →
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

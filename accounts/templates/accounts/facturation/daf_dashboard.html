@@ -18,7 +18,7 @@
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     {% if perms.accounts.gerer_facturation %}
-    <a href="{% url 'accounts:facture_create' %}"
+    <a href="{% url 'accounts:facture_proforma_list' %}"
        class="group bg-white p-10 rounded-xl border border-gray-200 shadow-sm text-center hover:shadow-md transition-all">
       <div class="w-16 h-16 bg-red-700 text-white rounded-full flex items-center justify-center mx-auto mb-4">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,7 +27,7 @@
         </svg>
       </div>
       <h2 class="text-lg font-bold text-gray-900">Facturation et Prestation</h2>
-      <p class="text-gray-500 text-sm mt-1">Créer une facture proforma ou définitive</p>
+      <p class="text-gray-500 text-sm mt-1">Gérer et modifier les factures proforma</p>
     </a>
     {% endif %}
 

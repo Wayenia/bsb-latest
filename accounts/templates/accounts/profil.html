@@ -5,7 +5,8 @@
     {% include 'partials/messages.html' %}
 
     <div>
-        <h1 class="text-3xl font-black text-gray-900">Mon profil</h1>
+        <a href="{% url 'accounts:mon_compte' %}" class="text-sm text-gray-400 hover:text-gray-600">Mon profil</a>
+        <h1 class="text-3xl font-black text-gray-900 mt-1">Modifier mes informations</h1>
         <p class="mt-1 text-sm text-gray-500">
             Modifiez vos informations personnelles. Le nom d'utilisateur, le rôle
             et les permissions ne sont pas modifiables ici — contactez un
