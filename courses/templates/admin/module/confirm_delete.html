@@ -24,8 +24,10 @@
             <div class="bg-gray-50 rounded-lg p-6 space-y-3">
                 <div class="flex items-start">
                     <div>
-                        <p class="text-xs text-gray-500 uppercase font-semibold">Métier</p>
-                        <p class="text-lg font-bold text-gray-900">{{ object.filiere.nom_filiere }} </p>
+                        <p class="text-xs text-gray-500 uppercase font-semibold">Métier(s)</p>
+                        <p class="text-lg font-bold text-gray-900">
+                            {% for f in object.filieres.all %}{{ f.nom_filiere }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+                        </p>
                     </div>
                 </div>
                 
@@ -63,7 +65,7 @@
             {% comment %} Question {% endcomment %}
             <div class="mt-8">
                 <p class="text-center text-lg font-semibold text-gray-900">
-                    Êtes-vous sûr de vouloir supprimer ce module pour le métier {{object.filiere.nom_filiere}} ?
+                    Êtes-vous sûr de vouloir supprimer ce module{% if object.filieres.all %} pour le métier {% for f in object.filieres.all %}{{ f.nom_filiere }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %} ?
                 </p>
             </div>
         </div>

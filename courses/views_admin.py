@@ -444,15 +444,15 @@ def fees_delete(request, id):
 # COURSE CRUD
 @require_permission('courses.gerer_modules')
 def course_list(request):
-    course = Cours.objects.select_related('module', 'module__filiere').all().order_by('-date_creation')
+    course = Cours.objects.select_related('module').prefetch_related('module__filieres').order_by('-date_creation')
 
     q = request.GET.get('q', '').strip()
     if q:
         course = course.filter(
             Q(libelle_cours__icontains=q) |
             Q(module__nom_module__icontains=q) |
-            Q(module__filiere__nom_filiere__icontains=q)
-        )
+            Q(module__filieres__nom_filiere__icontains=q)
+        ).distinct()
 
     paginator = Paginator(course, 10)
     page = request.GET.get('page')

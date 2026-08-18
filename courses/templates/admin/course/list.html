@@ -76,9 +76,13 @@
                         </td>
                         <td>{{ cours.module.nom_module }}</td>
                         <td>
+                            {% for f in cours.module.filieres.all %}
                             <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
-                                {{ cours.module.filiere.nom_filiere }}
+                                {{ f.nom_filiere }}
                             </span>
+                            {% empty %}
+                            <span class="text-gray-400 text-xs italic">—</span>
+                            {% endfor %}
                         </td>
                         <td>{{ cours.volume_h_cours }}h</td>
                         <td>{{ cours.date_creation|date:"d/m/Y" }}</td>
