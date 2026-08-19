@@ -54,6 +54,13 @@
                         <div class="flex items-start space-x-4 step-nav opacity-40" id="nav-4">
                             <div class="flex-shrink-0 w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">4</div>
                             <div>
+                                <h4 class="font-bold text-gray-800">Situation particulière</h4>
+                                <p class="text-sm text-gray-500">Handicap éventuel</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4 step-nav opacity-40" id="nav-5">
+                            <div class="flex-shrink-0 w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">5</div>
+                            <div>
                                 <h4 class="font-bold text-gray-800">Mot de passe</h4>
                                 <p class="text-sm text-gray-500">Fournissez un mot de passe robuste.</p>
                             </div>
@@ -88,7 +95,7 @@
                         </div>
                         {% endif %}
 
-                        <form method="POST" action="{% url 'accounts:register' %}" id="registrationForm" class="space-y-8">
+                        <form method="POST" action="{% url 'accounts:register' %}" id="registrationForm" class="space-y-8" enctype="multipart/form-data">
                             {% csrf_token %}
 
                             <div class="step" data-step="1">
@@ -168,33 +175,24 @@
                                         <label class="text-sm font-bold text-gray-700">Prénom de la mère <span class="text-red-700">*</span></label>
                                         <input type="text" name="prenom_mere" required value="{{ form_data.prenom_mere|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
                                     </div>
-                                    <div class="space-y-2 col-span-full hidden" id="nip-wrap">
-                                        <label class="text-sm font-bold text-gray-700">NIP (Numéro d'Identification Personnel) <span class="text-red-700">*</span></label>
-                                        <input type="text" name="nip" id="id_nip" maxlength="17" pattern="\d{17}" title="17 chiffres" value="{{ form_data.nip|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" placeholder="17 chiffres, obligatoire à partir de 18 ans avec un numéro burkinabè (+226)">
-                                    </div>
-                                    <div class="col-span-full hidden" id="document-wrap">
+                                    <div class="col-span-full">
                                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             <div class="space-y-2">
                                                 <label class="text-sm font-bold text-gray-700">Type de document <span class="text-red-700">*</span></label>
-                                                <select name="type_document" id="id_type_document" data-doc-field class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                                <select name="type_document" id="id_type_document" required class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
                                                     <option value="">Sélectionnez…</option>
-                                                    <option value="acte_naissance" {% if form_data.type_document == 'acte_naissance' %}selected{% endif %}>Acte de naissance</option>
-                                                    <option value="cni" {% if form_data.type_document == 'cni' %}selected{% endif %}>Carte d'identité</option>
-                                                    <option value="permis" {% if form_data.type_document == 'permis' %}selected{% endif %}>Permis de conduire</option>
-                                                    <option value="passeport" {% if form_data.type_document == 'passeport' %}selected{% endif %}>Passeport</option>
-                                                    <option value="carte_militaire" {% if form_data.type_document == 'carte_militaire' %}selected{% endif %}>Carte militaire</option>
-                                                    <option value="carte_consulaire" {% if form_data.type_document == 'carte_consulaire' %}selected{% endif %}>Carte consulaire</option>
-                                                    <option value="autre" {% if form_data.type_document == 'autre' %}selected{% endif %}>Autre</option>
+                                                    <option value="extrait_naissance" {% if form_data.type_document == 'extrait_naissance' %}selected{% endif %}>Extrait de naissance</option>
+                                                    <option value="jugement_supletif" {% if form_data.type_document == 'jugement_supletif' %}selected{% endif %}>Jugement supplétif</option>
                                                 </select>
                                             </div>
                                             <div class="space-y-2">
                                                 <label class="text-sm font-bold text-gray-700">Numéro du document <span class="text-red-700">*</span></label>
-                                                <input type="text" name="numero_document" id="id_numero_document" data-doc-field value="{{ form_data.numero_document|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                                <input type="text" name="numero_document" id="id_numero_document" required value="{{ form_data.numero_document|default:'' }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
                                             </div>
                                             <div class="space-y-2">
                                                 <label class="text-sm font-bold text-gray-700">Date d'établissement <span class="text-red-700">*</span></label>
                                                 {% now "Y-m-d" as today_iso %}
-                                                <input type="date" name="date_etablissement_document" id="id_date_etablissement_document" data-doc-field value="{{ form_data.date_etablissement_document|default:'' }}" max="{{ today_iso }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                                <input type="date" name="date_etablissement_document" id="id_date_etablissement_document" required value="{{ form_data.date_etablissement_document|default:'' }}" max="{{ today_iso }}" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
                                             </div>
                                         </div>
                                     </div>
@@ -203,7 +201,37 @@
 
                             <div class="step hidden" data-step="4">
                                 <h3 class="text-2xl font-bold text-gray-800 border-b-2 border-yellow-500 pb-3 mb-6">
-                                    Étape 4 : Mot de passe</h3>
+                                    Étape 4 : Situation particulière</h3>
+                                <div class="space-y-6">
+                                    <label class="inline-flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" name="a_handicap" id="id_a_handicap" value="true" class="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500">
+                                        <span class="text-sm font-bold text-gray-700">Je suis en situation de handicap</span>
+                                    </label>
+
+                                    <div id="handicap-wrap" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div class="space-y-2">
+                                            <label class="text-sm font-bold text-gray-700">Type de handicap <span class="text-red-700">*</span></label>
+                                            <select name="type_handicap" id="id_type_handicap" data-handicap-field class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                                <option value="">Sélectionnez…</option>
+                                                <option value="moteur" {% if form_data.type_handicap == 'moteur' %}selected{% endif %}>Handicap moteur</option>
+                                                <option value="sensoriel_visuel" {% if form_data.type_handicap == 'sensoriel_visuel' %}selected{% endif %}>Handicap sensoriel — Visuel</option>
+                                                <option value="sensoriel_auditif" {% if form_data.type_handicap == 'sensoriel_auditif' %}selected{% endif %}>Handicap sensoriel — Auditif</option>
+                                                <option value="maladie_epilepsie" {% if form_data.type_handicap == 'maladie_epilepsie' %}selected{% endif %}>Maladie invalidante — Épilepsie</option>
+                                                <option value="maladie_asthme" {% if form_data.type_handicap == 'maladie_asthme' %}selected{% endif %}>Maladie invalidante — Asthme</option>
+                                                <option value="autre" {% if form_data.type_handicap == 'autre' %}selected{% endif %}>Autres maladies</option>
+                                            </select>
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label class="text-sm font-bold text-gray-700">Pièce jointe (Attestation/Certificat d'indigence) <span class="text-red-700">*</span></label>
+                                            <input type="file" name="piece_jointe_handicap" id="id_piece_jointe_handicap" data-handicap-field accept="application/pdf" class="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step hidden" data-step="5">
+                                <h3 class="text-2xl font-bold text-gray-800 border-b-2 border-yellow-500 pb-3 mb-6">
+                                    Étape 5 : Mot de passe</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div class="space-y-2">
                                         <label class="text-sm font-bold text-gray-700">Mot de passe <span class="text-red-700">*</span></label>
@@ -247,7 +275,7 @@
 </div>
 <script nonce="{{ csp_nonce }}">
     let currentStep = 1;
-    const totalSteps = 4;
+    const totalSteps = 5;
 
     function showStep(step) {
         document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
@@ -290,18 +318,11 @@
                 errorMsg.className = 'field-error text-red-600 text-[10px] font-bold mt-1 uppercase';
                 errorMsg.innerText = 'Ce champ est obligatoire';
                 input.parentNode.appendChild(errorMsg);
-            } else if (input.id === 'id_nip' && !/^\d{17}$/.test(input.value.trim())) {
-                isValid = false;
-                input.classList.add('border-red-500');
-                const errorMsg = document.createElement('p');
-                errorMsg.className = 'field-error text-red-600 text-[10px] font-bold mt-1 uppercase';
-                errorMsg.innerText = 'Le NIP doit contenir exactement 17 chiffres';
-                input.parentNode.appendChild(errorMsg);
             }
         });
 
-        // Specific check for Step 4 (Password matching)
-        if (currentStep === 4) {
+        // Specific check for Step 5 (Password matching)
+        if (currentStep === 5) {
             const pass = document.getElementById('id_password').value;
             const confirm = document.getElementById('id_password_confirm').value;
             if (pass && confirm && pass !== confirm) {
@@ -335,51 +356,18 @@
         return validateCurrentStep();
     };
 
-    // Le NIP n'est demandé que pour un majeur avec un indicatif téléphonique
-    // burkinabè (+226) ; sinon (mineur, ou indicatif étranger) c'est un
-    // document d'identité (type + numéro + date d'établissement) qui sert
-    // de base à l'identifiant.
-    function indicatifBurkina() {
-        var telInput = document.getElementById('id_tel');
-        // Pas encore initialisé (plugin en cours de chargement) -> on suppose
-        // l'indicatif par défaut +226 (initialCountry: 'bf').
-        if (!telInput || !telInput.iti) { return true; }
-        var pays = telInput.iti.getSelectedCountryData();
-        return !!pays && pays.dialCode === '226';
+    // Le type de handicap et la pièce jointe ne sont affichés/obligatoires
+    // que si la case "en situation de handicap" est cochée.
+    function updateHandicapFields() {
+        var checkbox = document.getElementById('id_a_handicap');
+        var wrap = document.getElementById('handicap-wrap');
+        var champs = wrap.querySelectorAll('[data-handicap-field]');
+
+        wrap.classList.toggle('hidden', !checkbox.checked);
+        champs.forEach(function (el) { el.required = checkbox.checked; });
     }
-
-    function updateIdentityFields() {
-        var dateInput = document.getElementById('id_date_naissance');
-        var nipWrap = document.getElementById('nip-wrap');
-        var nipInput = document.getElementById('id_nip');
-        var docWrap = document.getElementById('document-wrap');
-        var docInputs = docWrap.querySelectorAll('[data-doc-field]');
-
-        if (!dateInput.value) {
-            nipWrap.classList.add('hidden');
-            nipInput.required = false;
-            docWrap.classList.add('hidden');
-            docInputs.forEach(function (el) { el.required = false; });
-            return;
-        }
-
-        var naissance = new Date(dateInput.value);
-        var today = new Date();
-        var age = today.getFullYear() - naissance.getFullYear();
-        var pasEncoreAnniversaire = (today.getMonth() < naissance.getMonth()) ||
-            (today.getMonth() === naissance.getMonth() && today.getDate() < naissance.getDate());
-        if (pasEncoreAnniversaire) { age--; }
-
-        var utiliseNip = age >= 18 && indicatifBurkina();
-
-        nipWrap.classList.toggle('hidden', !utiliseNip);
-        nipInput.required = utiliseNip;
-        docWrap.classList.toggle('hidden', utiliseNip);
-        docInputs.forEach(function (el) { el.required = !utiliseNip; });
-    }
-    document.getElementById('id_date_naissance').addEventListener('change', updateIdentityFields);
-    document.getElementById('id_tel').addEventListener('countrychange', updateIdentityFields);
-    updateIdentityFields();
+    document.getElementById('id_a_handicap').addEventListener('change', updateHandicapFields);
+    updateHandicapFields();
 
     showStep(1);
 </script>

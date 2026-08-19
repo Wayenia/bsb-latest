@@ -528,10 +528,26 @@ class Inscription(models.Model):
     motif_rejet=models.TextField(blank=True,null=True)
 
     # Personne à prévenir en cas de besoin
-    personne_contact_nom = models.CharField(max_length=100, blank=True, null=True, verbose_name="Nom de la personne à prévenir")
-    personne_contact_prenom = models.CharField(max_length=100, blank=True, null=True, verbose_name="Prénom de la personne à prévenir")
-    personne_contact_fonction = models.CharField(max_length=100, blank=True, null=True, verbose_name="Fonction de la personne à prévenir")
-    personne_contact_tel = models.CharField(max_length=100, blank=True, null=True, verbose_name="Contact de la personne à prévenir", validators=[phone_validator])
+    TYPE_PERSONNE_CONTACT_CHOICES = [
+        ("parent", "Parent"),
+        ("organisation", "Organisation/Parrain"),
+        ("les_deux", "Parent et Organisation/Parrain"),
+    ]
+    type_personne_contact = models.CharField(
+        max_length=20, choices=TYPE_PERSONNE_CONTACT_CHOICES, blank=True, null=True,
+        verbose_name="Type de personne à prévenir"
+    )
+    # Parent
+    personne_contact_nom = models.CharField(max_length=100, blank=True, null=True, verbose_name="Nom du parent")
+    personne_contact_prenom = models.CharField(max_length=100, blank=True, null=True, verbose_name="Prénom du parent")
+    personne_contact_fonction = models.CharField(max_length=100, blank=True, null=True, verbose_name="Fonction du contact")
+    personne_contact_tel = models.CharField(max_length=100, blank=True, null=True, verbose_name="Contact du parent", validators=[phone_validator])
+    personne_contact_email = models.EmailField(blank=True, null=True, verbose_name="Email du parent")
+    # Organisation / parrain
+    organisation_nom = models.CharField(max_length=150, blank=True, null=True, verbose_name="Nom de l'organisation/parrain")
+    organisation_adresse = models.CharField(max_length=225, blank=True, null=True, verbose_name="Adresse de l'organisation/parrain")
+    organisation_tel = models.CharField(max_length=100, blank=True, null=True, verbose_name="Téléphone de l'organisation/parrain", validators=[phone_validator])
+    organisation_email = models.EmailField(blank=True, null=True, verbose_name="Email de l'organisation/parrain")
 
     # Réinscription après rejet : pointe vers l'inscription rejetée à laquelle celle-ci fait suite
     id_inscription_rejeter = models.ForeignKey(

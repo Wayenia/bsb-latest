@@ -111,48 +111,113 @@
         </div>
 
         <h3 class="text-xl font-light text-slate-800 mb-2"> Informations de la personne à contacter</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-        {% comment %} Nom de la personne a prévénir en cas de besoin {% endcomment %}
-        <div class="w-full">
+
+        {% comment %} Type de personne à contacter {% endcomment %}
+        <div class="w-full mb-8">
           <div class="mb-2">
-            <label for="{{form.nom_personne.id_for_label}}" class="text-base font-medium text-slate-800 block">
-              {{form.nom_personne.label}}
+            <label for="{{ form.type_personne_contact.id_for_label }}" class="text-base font-medium text-slate-800 block">
+              {{ form.type_personne_contact.label }}
               <span class="text-red-600 ml-1">*</span>
             </label>
           </div>
+          {{ form.type_personne_contact }}
+          {% if form.type_personne_contact.errors %}
+            <p class="text-xs text-red-600 mt-1">{{ form.type_personne_contact.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+
+        {% comment %} Bloc Parent {% endcomment %}
+        <div id="contact-parent-wrap" class="hidden mb-8">
+          <h4 class="text-sm font-bold text-slate-500 uppercase mb-4">Parent</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+            <div class="w-full">
+              <div class="mb-2">
+                <label for="{{form.nom_personne.id_for_label}}" class="text-base font-medium text-slate-800 block">
+                  {{form.nom_personne.label}}
+                  <span class="text-red-600 ml-1">*</span>
+                </label>
+              </div>
               {{form.nom_personne}}
-        </div>
-        {% comment %} Prenom de la personne à prevenir en cas de besoin {% endcomment %}
-         <div class="w-full">
-          <div class="mb-2">
-            <label for="{{form.prenom_personne.id_for_label}}" class="text-base font-medium text-slate-800 block">
-              {{form.prenom_personne.label}}
-              <span class="text-red-600 ml-1">*</span>
-            </label>
-          </div>
+              {% if form.nom_personne.errors %}<p class="text-xs text-red-600 mt-1">{{ form.nom_personne.errors|join:", " }}</p>{% endif %}
+            </div>
+            <div class="w-full">
+              <div class="mb-2">
+                <label for="{{form.prenom_personne.id_for_label}}" class="text-base font-medium text-slate-800 block">
+                  {{form.prenom_personne.label}}
+                  <span class="text-red-600 ml-1">*</span>
+                </label>
+              </div>
               {{form.prenom_personne}}
-        </div>
-        {% comment %} Fonction de la personne à prévenir en cas de besoin {% endcomment %}
-         <div class="w-full">
-          <div class="mb-2">
-            <label for="{{form.fonction.id_for_label}}" class="text-base font-medium text-slate-800 block">
-              {{form.fonction.label}}
-              <span class="text-red-600 ml-1">*</span>
-            </label>
-          </div>
+              {% if form.prenom_personne.errors %}<p class="text-xs text-red-600 mt-1">{{ form.prenom_personne.errors|join:", " }}</p>{% endif %}
+            </div>
+            <div class="w-full">
+              <div class="mb-2">
+                <label for="{{form.fonction.id_for_label}}" class="text-base font-medium text-slate-800 block">
+                  {{form.fonction.label}}
+                  <span class="text-red-600 ml-1">*</span>
+                </label>
+              </div>
               {{form.fonction}}
-        </div>
-        {% comment %} Contact de la personne à prévenir en cas de besoin {% endcomment %}
-         <div class="w-full">
-          <div class="mb-2">
-            <label for="{{form.contact.id_for_label}}" class="text-base font-medium text-slate-800 block">
-              {{form.contact.label}}
-              <span class="text-red-600 ml-1">*</span>
-            </label>
-          </div>
+              {% if form.fonction.errors %}<p class="text-xs text-red-600 mt-1">{{ form.fonction.errors|join:", " }}</p>{% endif %}
+            </div>
+            <div class="w-full">
+              <div class="mb-2">
+                <label for="{{form.contact.id_for_label}}" class="text-base font-medium text-slate-800 block">
+                  {{form.contact.label}}
+                  <span class="text-red-600 ml-1">*</span>
+                </label>
+              </div>
               {{form.contact}}
+              {% if form.contact.errors %}<p class="text-xs text-red-600 mt-1">{{ form.contact.errors|join:", " }}</p>{% endif %}
+            </div>
+            <div class="w-full">
+              <div class="mb-2">
+                <label for="{{form.email_personne.id_for_label}}" class="text-base font-medium text-slate-800 block">{{form.email_personne.label}}</label>
+              </div>
+              {{form.email_personne}}
+            </div>
+          </div>
         </div>
+
+        {% comment %} Bloc Organisation / parrain {% endcomment %}
+        <div id="contact-organisation-wrap" class="hidden mb-8">
+          <h4 class="text-sm font-bold text-slate-500 uppercase mb-4">Organisation / Parrain</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+            <div class="w-full">
+              <div class="mb-2">
+                <label for="{{form.organisation_nom.id_for_label}}" class="text-base font-medium text-slate-800 block">
+                  {{form.organisation_nom.label}}
+                  <span class="text-red-600 ml-1">*</span>
+                </label>
+              </div>
+              {{form.organisation_nom}}
+              {% if form.organisation_nom.errors %}<p class="text-xs text-red-600 mt-1">{{ form.organisation_nom.errors|join:", " }}</p>{% endif %}
+            </div>
+            <div class="w-full">
+              <div class="mb-2">
+                <label for="{{form.organisation_adresse.id_for_label}}" class="text-base font-medium text-slate-800 block">{{form.organisation_adresse.label}}</label>
+              </div>
+              {{form.organisation_adresse}}
+            </div>
+            <div class="w-full">
+              <div class="mb-2">
+                <label for="{{form.organisation_tel.id_for_label}}" class="text-base font-medium text-slate-800 block">
+                  {{form.organisation_tel.label}}
+                  <span class="text-red-600 ml-1">*</span>
+                </label>
+              </div>
+              {{form.organisation_tel}}
+              {% if form.organisation_tel.errors %}<p class="text-xs text-red-600 mt-1">{{ form.organisation_tel.errors|join:", " }}</p>{% endif %}
+            </div>
+            <div class="w-full">
+              <div class="mb-2">
+                <label for="{{form.organisation_email.id_for_label}}" class="text-base font-medium text-slate-800 block">{{form.organisation_email.label}}</label>
+              </div>
+              {{form.organisation_email}}
+            </div>
+          </div>
         </div>
+
         {% comment %} Boutons de navigation {% endcomment %}
         <div class="flex justify-between mt-10 pt-6 border-t border-slate-200">
           
@@ -179,4 +244,24 @@
     <span class="h-0.5 w-3" style="background-color: #009640;"></span>
   </div>
 </div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var select = document.getElementById('id_type_personne_contact');
+  var parentWrap = document.getElementById('contact-parent-wrap');
+  var orgWrap = document.getElementById('contact-organisation-wrap');
+
+  function toggle() {
+    var val = select.value;
+    var afficheParent = val === 'parent' || val === 'les_deux';
+    var afficheOrg = val === 'organisation' || val === 'les_deux';
+
+    parentWrap.classList.toggle('hidden', !afficheParent);
+    orgWrap.classList.toggle('hidden', !afficheOrg);
+  }
+
+  select.addEventListener('change', toggle);
+  toggle();
+})();
+</script>
 {% endblock %}

@@ -182,10 +182,20 @@
       {% endif %}
 
       {% if perms.accounts.gerer_facturation %}
+      <a href="{% url 'accounts:prestation_list' %}"
+         class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-red-200 transition-all duration-200 p-6 flex items-start gap-4">
+        <div class="flex-1">
+          <h2 class="text-base font-bold text-gray-600 underline group-hover:text-gray-800 transition-colors">Prestation</h2>
+          <p class="text-sm text-gray-400 mt-1">Gérer le catalogue des prestations</p>
+        </div>
+      </a>
+      {% endif %}
+
+      {% if perms.accounts.gerer_facturation %}
       <a href="{% url 'accounts:facture_proforma_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-red-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
-          <h2 class="text-base font-bold text-gray-600 underline group-hover:text-gray-800 transition-colors">Facturation et Prestation</h2>
+          <h2 class="text-base font-bold text-gray-600 underline group-hover:text-gray-800 transition-colors">Facture proforma</h2>
           <p class="text-sm text-gray-400 mt-1">Gérer et modifier les factures proforma</p>
         </div>
       </a>
@@ -195,18 +205,8 @@
       <a href="{% url 'accounts:facture_list' %}"
          class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-yellow-200 transition-all duration-200 p-6 flex items-start gap-4">
         <div class="flex-1">
-          <h2 class="text-base font-bold text-gray-600 underline group-hover:text-gray-800 transition-colors">Encaissement/Prestation</h2>
+          <h2 class="text-base font-bold text-gray-600 underline group-hover:text-gray-800 transition-colors">Facture définitive/Encaissement</h2>
           <p class="text-sm text-gray-400 mt-1">Consulter les factures et encaisser les paiements</p>
-        </div>
-      </a>
-      {% endif %}
-
-      {% if perms.accounts.gerer_facturation %}
-      <a href="{% url 'accounts:prestation_list' %}"
-         class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-red-200 transition-all duration-200 p-6 flex items-start gap-4">
-        <div class="flex-1">
-          <h2 class="text-base font-bold text-gray-600 underline group-hover:text-gray-800 transition-colors">Prestations</h2>
-          <p class="text-sm text-gray-400 mt-1">Gérer le catalogue des prestations</p>
         </div>
       </a>
       {% endif %}

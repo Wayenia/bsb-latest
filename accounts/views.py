@@ -10,7 +10,9 @@ from apis.serializers import UserRegisterSerializer
 # REGISTER
 def user_register(request):
     if request.method == 'POST':
-        serializer = UserRegisterSerializer(data=request.POST)
+        data = request.POST.copy()
+        data.update(request.FILES)
+        serializer = UserRegisterSerializer(data=data)
 
         if serializer.is_valid():
             try:

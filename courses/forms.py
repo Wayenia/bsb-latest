@@ -105,8 +105,25 @@ class PersonalInfoForm(forms.Form):
         })    
     )
 
+    TYPE_PERSONNE_CONTACT_CHOICES = [
+        ('', 'Sélectionnez…'),
+        ('parent', 'Parent'),
+        ('organisation', 'Organisation/Parrain'),
+        ('les_deux', 'Parent et Organisation/Parrain'),
+    ]
+    type_personne_contact = forms.ChoiceField(
+        label='Type de personne à contacter',
+        choices=TYPE_PERSONNE_CONTACT_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500',
+            'id': 'id_type_personne_contact',
+        })
+    )
+
+    # ── Parent ────────────────────────────────────────────────────────────
     nom_personne = forms.CharField(
-        label='Nom de la Personne',
+        label='Nom du parent',
         max_length=100,
         required=False,
         widget=forms.TextInput(attrs={
@@ -114,9 +131,8 @@ class PersonalInfoForm(forms.Form):
             'placeholder':'Ex: SAWADOGO'
         })
     )
-
     prenom_personne=forms.CharField(
-        label='Prénom de la personne',
+        label='Prénom du parent',
         max_length=100,
         required=False,
         widget=forms.TextInput(attrs={
@@ -125,22 +141,62 @@ class PersonalInfoForm(forms.Form):
         })
     )
     fonction=forms.CharField(
-        label='Fonction de la Personne',
+        label='Fonction du contact',
         max_length=100,
         required=False,
         widget=forms.TextInput(attrs={
             'class':'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500',
-            'placeholder':'EX: Informaticien'
+            'placeholder':'EX: Père, Tuteur...'
         })
     )
-
     contact=forms.CharField(
-        label='Contact de la Personne',
+        label='Contact du parent',
         max_length=100,
-        required=True,
+        required=False,
         widget=forms.TextInput(attrs={
             'class':'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 phone-intl',
             'placeholder':'65 08 57 40'
+        })
+    )
+    email_personne = forms.EmailField(
+        label='Email du parent',
+        required=False,
+        widget=forms.EmailInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500',
+            'placeholder': 'exemple@email.com'
+        })
+    )
+
+    # ── Organisation / parrain ───────────────────────────────────────────
+    organisation_nom = forms.CharField(
+        label="Nom de l'organisation/parrain",
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500',
+        })
+    )
+    organisation_adresse = forms.CharField(
+        label="Adresse de l'organisation/parrain",
+        max_length=225,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500',
+        })
+    )
+    organisation_tel = forms.CharField(
+        label="Téléphone de l'organisation/parrain",
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 phone-intl',
+        })
+    )
+    organisation_email = forms.EmailField(
+        label="Email de l'organisation/parrain",
+        required=False,
+        widget=forms.EmailInput(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500',
         })
     )
 
@@ -153,6 +209,24 @@ class PersonalInfoForm(forms.Form):
         if naissance and naissance > max_date_naissance():
             raise forms.ValidationError("La date de naissance ne peut pas être dans l'année en cours.")
         return naissance
+
+    def clean(self):
+        cleaned_data = super().clean()
+        type_contact = cleaned_data.get('type_personne_contact')
+
+        if type_contact in ('parent', 'les_deux'):
+            for champ, label in [('nom_personne', 'Nom du parent'), ('prenom_personne', 'Prénom du parent'),
+                                  ('fonction', 'Fonction du contact'), ('contact', 'Contact du parent')]:
+                if not cleaned_data.get(champ):
+                    self.add_error(champ, f"{label} est obligatoire.")
+
+        if type_contact in ('organisation', 'les_deux'):
+            for champ, label in [('organisation_nom', "Nom de l'organisation/parrain"),
+                                  ('organisation_tel', "Téléphone de l'organisation/parrain")]:
+                if not cleaned_data.get(champ):
+                    self.add_error(champ, f"{label} est obligatoire.")
+
+        return cleaned_data
 
 
 # SUBSCRIPTION

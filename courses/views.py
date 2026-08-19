@@ -230,6 +230,7 @@ def personal_info_view(request, career_id):
     initial = {
         'nom': eleve.nom,
         'prenom': eleve.prenom,
+        'sexe': (eleve.sexe or '').upper(),
         'email': eleve.email,
         'tel': eleve.tel or '',
         'date_naissance': eleve.date_naissance or '',
@@ -237,10 +238,16 @@ def personal_info_view(request, career_id):
     }
     if rejected_inscription:
         initial.update({
+            'type_personne_contact': rejected_inscription.type_personne_contact or '',
             'nom_personne': rejected_inscription.personne_contact_nom or '',
             'prenom_personne': rejected_inscription.personne_contact_prenom or '',
             'fonction': rejected_inscription.personne_contact_fonction or '',
             'contact': rejected_inscription.personne_contact_tel or '',
+            'email_personne': rejected_inscription.personne_contact_email or '',
+            'organisation_nom': rejected_inscription.organisation_nom or '',
+            'organisation_adresse': rejected_inscription.organisation_adresse or '',
+            'organisation_tel': rejected_inscription.organisation_tel or '',
+            'organisation_email': rejected_inscription.organisation_email or '',
         })
 
     form = PersonalInfoForm(request.POST or None, initial=initial)
@@ -264,10 +271,16 @@ def personal_info_view(request, career_id):
             'tel': eleve.tel,
             'date_naissance': str(eleve.date_naissance or ''),
             'lieu_naissance': eleve.lieu_naissance,
+            'type_personne_contact': form.cleaned_data.get('type_personne_contact', ''),
             'nom_personne': form.cleaned_data.get('nom_personne', ''),
             'prenom_personne': form.cleaned_data.get('prenom_personne', ''),
             'fonction': form.cleaned_data.get('fonction', ''),
             'contact': form.cleaned_data.get('contact', ''),
+            'email_personne': form.cleaned_data.get('email_personne', ''),
+            'organisation_nom': form.cleaned_data.get('organisation_nom', ''),
+            'organisation_adresse': form.cleaned_data.get('organisation_adresse', ''),
+            'organisation_tel': form.cleaned_data.get('organisation_tel', ''),
+            'organisation_email': form.cleaned_data.get('organisation_email', ''),
         }
         return redirect('courses:documents')
 
@@ -331,10 +344,16 @@ def recap_view(request):
             formation=career,
             statut='en_cours',
             annee_scolaire=career.annee_prog,  # ← récupérée depuis la formation
+            type_personne_contact=student_data.get('type_personne_contact', ''),
             personne_contact_nom=student_data.get('nom_personne', ''),
             personne_contact_prenom=student_data.get('prenom_personne', ''),
             personne_contact_fonction=student_data.get('fonction', ''),
             personne_contact_tel=student_data.get('contact', ''),
+            personne_contact_email=student_data.get('email_personne', ''),
+            organisation_nom=student_data.get('organisation_nom', ''),
+            organisation_adresse=student_data.get('organisation_adresse', ''),
+            organisation_tel=student_data.get('organisation_tel', ''),
+            organisation_email=student_data.get('organisation_email', ''),
             id_inscription_rejeter=rejected_inscription,
         )
         for libelle,fic in uploaded_files.items():
@@ -688,10 +707,15 @@ def telecharger_attestation(request, id):
     directeur_nom = f"{directeur_centre.prenom} {directeur_centre.nom}" if directeur_centre else "Le Directeur du centre"
     if directeur_centre and directeur_centre.sexe == 'f':
         directeur_civilite = "Mme"
-    elif directeur_centre and directeur_centre.sexe == 'm':
-        directeur_civilite = "M."
+        directeur_titre = "Directrice"
+        directeur_titre_article = "La Directrice"
     else:
-        directeur_civilite = ""
+        # Par défaut (sexe masculin, ou poste vacant/genre inconnu) : formes
+        # masculines, cohérent avec le "Le Directeur du centre" générique
+        # utilisé plus haut quand le poste est vacant.
+        directeur_civilite = "M." if directeur_centre else ""
+        directeur_titre = "Directeur"
+        directeur_titre_article = "Le Directeur"
     ville = centre.province.chef_lieu if centre.province_id else centre.nom_centre
 
     html_string = render_to_string('student/subscription/attestation_pdf.html', {
@@ -702,6 +726,8 @@ def telecharger_attestation(request, id):
         'filiere': inscription.formation.filiere,
         'directeur_nom': directeur_nom,
         'directeur_civilite': directeur_civilite,
+        'directeur_titre': directeur_titre,
+        'directeur_titre_article': directeur_titre_article,
         'ville': ville,
         'header_left': header_left,
         'header_right': header_right,
@@ -847,18 +873,21 @@ def download_quittance(request,id):
     qr_img.save(qr_buffer, format='PNG')
     qr_buffer.seek(0)
 
+    # Position calculée à partir de la fin du texte (et non plus une valeur
+    # fixe) pour que le QR code ne chevauche jamais les lignes ci-dessus,
+    # même si certaines ont débordé sur plusieurs lignes.
     qr_size = 3*cm
     qr_x = (width - qr_size) / 2  # centré horizontalement
-    qr_y = 1.8*cm
+    qr_y = max(y - 0.3*cm - qr_size, 0.9*cm)
     p.drawImage(ImageReader(qr_buffer), x=qr_x, y=qr_y, width=qr_size, height=qr_size)
     p.setFont("Helvetica-Oblique", 7)
     p.setFillColor(colors.grey)
-    p.drawCentredString(width/2, 1.6*cm, "Scannez pour vérifier")
+    p.drawCentredString(width/2, qr_y - 0.25*cm, "Scannez pour vérifier")
 
     #  PIED DE PAGE — à droite, en petit, pour ne pas chevaucher le QR code centré
     p.setFont("Helvetica-Oblique", 6)
     p.setFillColor(colors.grey)
-    p.drawRightString(width - 1.5*cm, 0.6*cm, f"BSB — généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
+    p.drawRightString(width - 1.5*cm, max(qr_y - 0.65*cm, 0.3*cm), f"BSB — généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
     p.showPage()
     p.save()
     buffer.seek(0)
@@ -2632,7 +2661,6 @@ def stats_download_quittance_view(request, paiement_id):
     p.setDash(3, 3); p.line(1.5*cm, y, width-1.5*cm, y); p.setDash(); y -= 0.5*cm
 
     y = ligne("Apprenant :", f"{eleve.nom} {eleve.prenom}", y)
-    y = ligne("Identifiant :", eleve.numero_identifiant or "—", y)
     y = ligne("Matricule :", eleve.matricule or "—", y)
     y = ligne("Centre :", str(inscription.formation.centre), y)
     y = ligne("Métier :", str(inscription.formation.filiere), y)
@@ -2655,7 +2683,11 @@ def stats_download_quittance_view(request, paiement_id):
     y = ligne("Reste à payer :", f"{dette.reste_a_payer():,.0f} FCFA", y)
     y = ligne("État de la dette :", dette.get_etat_dette_display(), y)
 
-    # QR Code
+    # QR Code — identifiant élève volontairement absent de la quittance (et du
+    # QR) : ce document circule hors de la plateforme et n'a pas à exposer cet
+    # identifiant. Position calculée à partir de la fin du texte (et non plus
+    # une valeur fixe) pour ne jamais chevaucher les lignes ci-dessus, même si
+    # certaines ont débordé sur plusieurs lignes.
     qr_data = (
         f"Quittance : {paiement.numero_quittance}\n"
         f"Date : {paiement.date_paiement.strftime('%d/%m/%Y à %H:%M')}\n"
@@ -2674,14 +2706,15 @@ def stats_download_quittance_view(request, paiement_id):
     qr_buffer.seek(0)
 
     qr_size = 3*cm
-    p.drawImage(ImageReader(qr_buffer), x=(width-qr_size)/2, y=1.8*cm,
+    qr_y = max(y - 0.3*cm - qr_size, 0.9*cm)
+    p.drawImage(ImageReader(qr_buffer), x=(width-qr_size)/2, y=qr_y,
                 width=qr_size, height=qr_size)
     p.setFont("Helvetica-Oblique", 7)
     p.setFillColor(colors.grey)
-    p.drawCentredString(width/2, 1.6*cm, "Scannez pour vérifier")
+    p.drawCentredString(width/2, qr_y - 0.25*cm, "Scannez pour vérifier")
     # Pied de page à droite, en petit, pour ne pas chevaucher le QR code centré
     p.setFont("Helvetica-Oblique", 6)
-    p.drawRightString(width - 1.5*cm, 0.6*cm,
+    p.drawRightString(width - 1.5*cm, max(qr_y - 0.65*cm, 0.3*cm),
                        f"BSB — généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
     p.showPage()
     p.save()

@@ -1,8 +1,17 @@
-import re
-from datetime import date
-
 from rest_framework import serializers
 from accounts.models import Utilisateur, Eleve
+
+
+def _valider_pdf(fichier):
+    """Meme convention que le reste de l'app : extension ET signature
+    binaire verifiees, pour empecher un fichier renomme en .pdf (vecteur XSS
+    stocke contre le personnel qui ouvre ces documents)."""
+    if not fichier.name.lower().endswith('.pdf'):
+        raise serializers.ValidationError("Le fichier doit être un PDF (.pdf).")
+    entete = fichier.read(5)
+    fichier.seek(0)
+    if entete != b'%PDF-':
+        raise serializers.ValidationError("Le fichier n'est pas un PDF valide.")
 
 
 # REGISTER
@@ -17,46 +26,38 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     prenom_pere = serializers.CharField(required=True, allow_blank=False)
     nom_mere = serializers.CharField(required=True, allow_blank=False)
     prenom_mere = serializers.CharField(required=True, allow_blank=False)
-    nip = serializers.CharField(required=False, allow_blank=True, max_length=20)
-    type_document = serializers.ChoiceField(choices=Eleve.TYPE_DOCUMENT_CHOICES, required=False, allow_blank=True)
-    numero_document = serializers.CharField(required=False, allow_blank=True)
-    date_etablissement_document = serializers.DateField(required=False, allow_null=True)
+    type_document = serializers.ChoiceField(choices=Eleve.TYPE_DOCUMENT_CHOICES, required=True)
+    numero_document = serializers.CharField(required=True, allow_blank=False)
+    date_etablissement_document = serializers.DateField(required=True)
+
+    a_handicap = serializers.BooleanField(required=False, default=False)
+    type_handicap = serializers.ChoiceField(choices=Eleve.TYPE_HANDICAP_CHOICES, required=False, allow_blank=True)
+    piece_jointe_handicap = serializers.FileField(required=False, allow_null=True)
 
     class Meta:
         model = Utilisateur
         fields = [
             'username', 'email', 'nom', 'prenom', 'password', 'password_confirm',
             'adresse', 'tel', 'sexe', 'date_naissance', 'lieu_naissance',
-            'nom_pere', 'prenom_pere', 'nom_mere', 'prenom_mere', 'nip',
+            'nom_pere', 'prenom_pere', 'nom_mere', 'prenom_mere',
             'type_document', 'numero_document', 'date_etablissement_document',
+            'a_handicap', 'type_handicap', 'piece_jointe_handicap',
         ]
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({"password": "Les mots de passe ne correspondent pas."})
 
-        naissance = attrs.get('date_naissance')
-        tel = attrs.get('tel') or ''
-        if naissance:
-            today = date.today()
-            age = today.year - naissance.year - ((today.month, today.day) < (naissance.month, naissance.day))
-            utilise_nip = age >= 18 and tel.startswith('+226')
-            if utilise_nip:
-                nip = attrs.get('nip', '').strip()
-                if not nip:
-                    raise serializers.ValidationError({"nip": "Le NIP est obligatoire à partir de 18 ans avec un numéro burkinabè (+226)."})
-                if not re.fullmatch(r'\d{17}', nip):
-                    raise serializers.ValidationError({"nip": "Le NIP doit contenir exactement 17 chiffres."})
-            else:
-                champs_requis = [
-                    ('type_document', "Le type de document"),
-                    ('numero_document', "Le numéro du document"),
-                    ('date_etablissement_document', "La date d'établissement du document"),
-                ]
-                for field, label in champs_requis:
-                    valeur = attrs.get(field)
-                    if not valeur or (isinstance(valeur, str) and not valeur.strip()):
-                        raise serializers.ValidationError({field: f"{label} est obligatoire."})
+        if attrs.get('a_handicap'):
+            if not attrs.get('type_handicap'):
+                raise serializers.ValidationError({"type_handicap": "Le type de handicap est obligatoire."})
+            piece = attrs.get('piece_jointe_handicap')
+            if not piece:
+                raise serializers.ValidationError({"piece_jointe_handicap": "La pièce jointe est obligatoire."})
+            _valider_pdf(piece)
+        else:
+            attrs['type_handicap'] = None
+            attrs['piece_jointe_handicap'] = None
 
         return attrs
 

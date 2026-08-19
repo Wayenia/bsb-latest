@@ -232,9 +232,35 @@ class ProfilForm(forms.ModelForm):
 class ProfilEleveForm(ProfilForm):
     class Meta(ProfilForm.Meta):
         model = Eleve
-        fields = ProfilForm.Meta.fields + ['lieu_naissance']
-        labels = {**ProfilForm.Meta.labels, 'lieu_naissance': 'Lieu de naissance'}
+        fields = ProfilForm.Meta.fields + [
+            'lieu_naissance', 'type_document', 'numero_document', 'date_etablissement_document',
+        ]
+        labels = {
+            **ProfilForm.Meta.labels,
+            'lieu_naissance': 'Lieu de naissance',
+            'type_document': "Type de document d'identité",
+            'numero_document': 'Numéro du document',
+            'date_etablissement_document': "Date d'établissement du document",
+        }
         widgets = {
             **ProfilForm.Meta.widgets,
             'lieu_naissance': forms.TextInput(attrs={'class': _BASE_CLASSES}),
+            'type_document': forms.Select(attrs={'class': _BASE_CLASSES}),
+            'numero_document': forms.TextInput(attrs={'class': _BASE_CLASSES}),
+            'date_etablissement_document': forms.DateInput(attrs={'class': _BASE_CLASSES, 'type': 'date'}, format='%Y-%m-%d'),
         }
+
+    # Ces champs composent l'identifiant unique de l'apprenant
+    # (numero_identifiant, voir Eleve.generate_identifiant) : les modifier
+    # après coup romprait cet identifiant, donc ils restent visibles mais
+    # non modifiables (grisés) sur le formulaire de profil.
+    CHAMPS_IDENTIFIANT = (
+        'date_naissance', 'lieu_naissance',
+        'type_document', 'numero_document', 'date_etablissement_document',
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for nom in self.CHAMPS_IDENTIFIANT:
+            self.fields[nom].disabled = True
+            self.fields[nom].widget.attrs['class'] = self.fields[nom].widget.attrs.get('class', '') + ' bg-gray-100 cursor-not-allowed'

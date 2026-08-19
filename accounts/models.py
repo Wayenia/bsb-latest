@@ -106,13 +106,17 @@ class Utilisateur(AbstractUser):
 
 class Eleve(Utilisateur):
     TYPE_DOCUMENT_CHOICES = [
-        ("acte_naissance", "Acte de naissance"),
-        ("cni", "Carte d'identité"),
-        ("permis", "Permis de conduire"),
-        ("passeport", "Passeport"),
-        ("carte_militaire", "Carte militaire"),
-        ("carte_consulaire", "Carte consulaire"),
-        ("autre", "Autre"),
+        ("extrait_naissance", "Extrait de naissance"),
+        ("jugement_supletif", "Jugement supplétif"),
+    ]
+
+    TYPE_HANDICAP_CHOICES = [
+        ("moteur", "Handicap moteur"),
+        ("sensoriel_visuel", "Handicap sensoriel — Visuel"),
+        ("sensoriel_auditif", "Handicap sensoriel — Auditif"),
+        ("maladie_epilepsie", "Maladie invalidante — Épilepsie"),
+        ("maladie_asthme", "Maladie invalidante — Asthme"),
+        ("autre", "Autres maladies"),
     ]
 
     lieu_naissance = models.CharField(max_length=225, verbose_name="Lieu de naissance")
@@ -124,20 +128,28 @@ class Eleve(Utilisateur):
     nip = models.CharField(
         max_length=20, blank=True, null=True,
         verbose_name="NIP (Numéro d'Identification Personnel)",
-        help_text="Obligatoire à partir de 18 ans, pour un numéro de téléphone burkinabè (+226)."
+        help_text="Champ historique, non utilisé pour les nouvelles inscriptions."
     )
     type_document = models.CharField(
         max_length=20, choices=TYPE_DOCUMENT_CHOICES, blank=True, null=True,
         verbose_name="Type de document d'identité",
-        help_text="Requis si mineur, ou majeur avec un indicatif téléphonique autre que +226."
     )
     numero_document = models.CharField(max_length=100, blank=True, null=True, verbose_name="Numéro du document")
     date_etablissement_document = models.DateField(blank=True, null=True, verbose_name="Date d'établissement du document")
 
+    a_handicap = models.BooleanField(default=False, verbose_name="En situation de handicap")
+    type_handicap = models.CharField(
+        max_length=30, choices=TYPE_HANDICAP_CHOICES, blank=True, null=True,
+        verbose_name="Type de handicap",
+    )
+    piece_jointe_handicap = models.FileField(
+        upload_to='eleves/handicap/', blank=True, null=True,
+        verbose_name="Pièce jointe (Attestation/Certificat d'indigence)",
+    )
+
     numero_identifiant = models.CharField(
-        # 200 : le NIP (17 chiffres) tient largement, mais la concaténation
-        # utilisée hors NIP (numéro de document + type + dates + lieu de
-        # naissance) peut dépasser 50 caractères avec des lieux longs.
+        # 200 : la concatenation (numero de document + type + dates + lieu de
+        # naissance) peut depasser 50 caracteres avec des lieux longs.
         max_length=200,
         unique=True,
         blank=True,
@@ -156,30 +168,10 @@ class Eleve(Utilisateur):
         verbose_name="Niveau scolaire"
     )
 
-    def a_18_ans_ou_plus(self):
-        if not self.date_naissance:
-            return False
-        aujourdhui = timezone.now().date()
-        age = aujourdhui.year - self.date_naissance.year - (
-            (aujourdhui.month, aujourdhui.day) < (self.date_naissance.month, self.date_naissance.day)
-        )
-        return age >= 18
-
-    def utilise_nip(self):
-        """Le NIP ne fait office d'identifiant que pour un majeur avec un
-        numéro de téléphone burkinabè (+226) — un mineur, ou un majeur avec
-        un indicatif étranger, s'identifie par un document (voir
-        generate_identifiant)."""
-        return self.a_18_ans_ou_plus() and bool(self.tel) and self.tel.startswith('+226')
-
     def generate_identifiant(self):
-        """L'identifiant de l'apprenant est le NIP (majeur, +226), ou une
-        concaténation déterministe de son document d'identité + dates + lieu
-        de naissance dans tous les autres cas (mineur, ou indicatif
-        étranger)."""
-        if self.utilise_nip() and self.nip:
-            return self.nip
-
+        """L'identifiant de l'apprenant est une concaténation déterministe de
+        son document d'identité (numéro + type + date d'établissement) et de
+        sa date/lieu de naissance."""
         parties = [
             self.numero_document, self.type_document,
             self.date_etablissement_document.strftime('%Y%m%d') if self.date_etablissement_document else '',
