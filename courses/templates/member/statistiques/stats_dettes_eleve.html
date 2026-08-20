@@ -124,7 +124,7 @@
         </div>
         {% if item.total_reste > 0 and perms.courses.encaisser_paiement %}
         <button type="button" class="btn-detail" style="background:linear-gradient(135deg,#059669,#10b981);"
-                onclick="event.stopPropagation(); ouvrirModalSolder({url:'{% url 'courses:stats_encaisser_solde_inscription' item.inscription.id %}', cible:'Toute l\'inscription — {{ item.inscription.formation.filiere.nom_filiere|escapejs }}', montant:{{ item.total_reste|floatformat:0 }}});">
+                onclick="event.stopPropagation(); ouvrirModalSolder({url:'{% url 'courses:stats_encaisser_solde_inscription' item.inscription.id %}', cible:'Toute l\'inscription — {{ item.inscription.formation.filiere.nom_filiere|escapejs }}', maxMontant:{{ item.total_reste|floatformat:0 }}, primordiale:{{ item.primordiale_bloquante_reste|floatformat:0 }}});">
           Solder l'inscription
         </button>
         {% endif %}
@@ -206,7 +206,7 @@
               </button>
               {% else %}
               <button type="button" class="btn-detail" style="background:linear-gradient(135deg,#059669,#10b981);"
-                      onclick="ouvrirModalSolder({url:'{% url 'courses:stats_encaisser_solde_dette' dette.id %}', cible:'{{ dette.frais_formation.type_frais|escapejs }}', montant:{{ dette.reste|floatformat:0 }}});">
+                      onclick="ouvrirModalSolder({url:'{% url 'courses:stats_encaisser_solde_dette' dette.id %}', cible:'{{ dette.frais_formation.type_frais|escapejs }}', maxMontant:{{ dette.reste|floatformat:0 }}, primordiale:{% if dette.tranche_cible_primordiale %}{{ dette.montant_a_payer|floatformat:0 }}{% else %}0{% endif %}});">
                 Solder ce frais
               </button>
               {% endif %}
@@ -281,7 +281,7 @@
       <button type="button" onclick="fermerModalSolder()" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
     </div>
     <p id="modal-solder-cible" style="font-size:.85rem;color:#6b7280;margin-bottom:1rem;"></p>
-    <form method="post" id="form-solder" action="">
+    <form method="post" id="form-solder" action="" enctype="multipart/form-data">
       {% csrf_token %}
       <div style="display:flex;gap:.9rem;margin-bottom:.9rem;flex-wrap:wrap;">
         <div style="flex:1;min-width:150px;">
@@ -297,10 +297,22 @@
           </div>
         </div>
       </div>
-      <div style="margin-bottom:.9rem;">
+      <div style="margin-bottom:.3rem;">
         <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Montant à encaisser (FCFA)</label>
-        <input type="text" id="modal-solder-montant" readonly disabled
-               style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;background:#f3f4f6;color:#374151;font-weight:700;">
+        <input type="number" name="montant_paiement" id="modal-solder-montant" min="1" step="1" required
+               style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;">
+      </div>
+      <p id="modal-solder-max" style="font-size:.76rem;color:#9ca3af;margin-bottom:.9rem;"></p>
+      <div id="modal-solder-derogation-wrap" style="margin-bottom:1.1rem;display:none;">
+        <p style="font-size:.75rem;color:#dc2626;font-weight:600;margin-bottom:.4rem;">
+            Montant inférieur au montant dû de la tranche primordiale : motif et pièce jointe obligatoires.
+        </p>
+        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Motif de la dérogation</label>
+        <textarea name="motif_derogation" id="modal-solder-motif-derogation" rows="2"
+                  style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;margin-bottom:.5rem;"></textarea>
+        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Pièce jointe justificative</label>
+        <input type="file" name="piece_jointe_derogation" id="modal-solder-piece-jointe-derogation"
+               style="width:100%;padding:.6rem;border:2px dashed #f0b429;background:#fffbeb;border-radius:8px;font-size:.85rem;">
       </div>
       <div style="margin-bottom:1.1rem;">
         <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Mode de paiement</label>
@@ -369,14 +381,49 @@ document.getElementById('modal-paiement-tranche').addEventListener('click', func
   if (e.target === this) fermerModalPaiement();
 });
 
+let modalSolderMax = 0;
+let modalSolderPrimordiale = 0;
+
 function ouvrirModalSolder(opts) {
   document.getElementById('form-solder').action = opts.url;
   document.getElementById('modal-solder-cible').textContent = opts.cible;
-  document.getElementById('modal-solder-montant').value = Number(opts.montant).toLocaleString('fr-FR') + ' FCFA';
+  modalSolderMax = opts.maxMontant;
+  modalSolderPrimordiale = opts.primordiale || 0;
+
+  const input = document.getElementById('modal-solder-montant');
+  input.value = opts.maxMontant;
+  input.max = opts.maxMontant;
+
+  document.getElementById('modal-solder-max').textContent =
+    'Maximum : ' + Number(opts.maxMontant).toLocaleString('fr-FR') + ' FCFA';
+
+  document.getElementById('modal-solder-derogation-wrap').style.display = 'none';
+  document.getElementById('modal-solder-motif-derogation').value = '';
+  document.getElementById('modal-solder-piece-jointe-derogation').value = '';
+
   const modal = document.getElementById('modal-solder');
   modal.classList.remove('hidden');
   modal.classList.add('flex');
 }
+
+document.getElementById('modal-solder-montant').addEventListener('input', function () {
+  const val = parseFloat(this.value);
+  const sousPaiementPrimordiale = modalSolderPrimordiale > 0 && val > 0 && val < modalSolderPrimordiale;
+  document.getElementById('modal-solder-derogation-wrap').style.display = sousPaiementPrimordiale ? 'block' : 'none';
+});
+
+document.getElementById('form-solder').addEventListener('submit', function (e) {
+  const val = parseFloat(document.getElementById('modal-solder-montant').value);
+  if (!(val > 0)) {
+    e.preventDefault();
+    alert('Le montant doit être supérieur à 0.');
+    return;
+  }
+  if (val > modalSolderMax) {
+    e.preventDefault();
+    alert('Le montant saisi dépasse le reste dû (' + Number(modalSolderMax).toLocaleString('fr-FR') + ' FCFA maximum).');
+  }
+});
 
 function fermerModalSolder() {
   const modal = document.getElementById('modal-solder');

@@ -596,7 +596,7 @@ class Inscription(models.Model):
         """
         for dette in self.dettes.select_related('frais_formation__type_frais').prefetch_related(
             'frais_formation__type_frais__tranches', 'paiements'
-        ):
+        ).order_by('id'):
             primordiale = dette.tranche_primordiale()
             if primordiale and dette.reste_pour_tranche(primordiale) > 0:
                 return dette, primordiale
