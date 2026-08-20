@@ -7,6 +7,7 @@ from django.contrib.auth import logout
 from django.core.paginator import Paginator
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Sum
+from django.db import transaction
 import qrcode
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -2413,6 +2414,8 @@ def stats_dettes_eleve_view(request, eleve_id):
             insc_reste += max(reste, 0)
             total_restant_global += max(reste, 0)
 
+            tranche_cible = dette.tranche_a_payer()
+
             dettes_data.append({
                 'id': dette.id,
                 'frais_formation': dette.frais_formation,
@@ -2424,7 +2427,13 @@ def stats_dettes_eleve_view(request, eleve_id):
                 'tranches': dette.tranches_detail(),
                 'bloquee': dette.bloquee_par_autre_dette(),
                 'montant_a_payer': dette.montant_a_payer(),
+                'tranche_cible_primordiale': bool(tranche_cible and tranche_cible.est_primordiale),
             })
+
+        dette_bloquante, tranche_bloquante = insc.dette_et_tranche_bloquantes()
+        primordiale_bloquante_reste = (
+            dette_bloquante.reste_pour_tranche(tranche_bloquante) if dette_bloquante else 0
+        )
 
         inscriptions_dettes.append({
             'inscription': insc,
@@ -2432,6 +2441,7 @@ def stats_dettes_eleve_view(request, eleve_id):
             'total_du': insc_du,
             'total_paye': insc_paye,
             'total_reste': insc_reste,
+            'primordiale_bloquante_reste': primordiale_bloquante_reste,
         })
 
     return render(request, 'member/statistiques/stats_dettes_eleve.html', {
@@ -2441,26 +2451,43 @@ def stats_dettes_eleve_view(request, eleve_id):
     })
 
 
-def _encaisser_solde_dette(dette, user, mode_paiement='espece'):
-    """Solde entièrement une dette (un type de frais) : un versement par
-    tranche restant due (primordiale d'abord), ou un versement unique si le
-    type de frais n'a pas de tranches. Retourne (nombre de paiements créés,
-    montant total encaissé)."""
+class _DerogationRequise(Exception):
+    """Levée en cours de cascade multi-dettes quand une tranche primordiale
+    serait sous-payée sans motif/pièce jointe fournis — permet d'annuler
+    (rollback) les paiements déjà enregistrés dans la même transaction."""
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
+
+def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogation=None, piece_jointe_derogation=None):
+    """
+    Encaisse `montant` sur cette dette : tranche primordiale d'abord (ou
+    versement unique si le type de frais n'a pas de tranches), puis le reste
+    sur les tranches suivantes dans l'ordre. Si `montant` est insuffisant
+    pour couvrir entièrement la tranche primordiale non soldée, tout le
+    montant lui est affecté en sous-paiement dérogatoire (motif et pièce
+    jointe supposés déjà validés par l'appelant). Retourne (nombre de
+    paiements créés, montant réellement encaissé, montant non utilisé).
+    """
     tranche_num = dette.paiements.count()
-    total_encaisse = 0
+    restant = montant
     nb_paiements = 0
+    encaisse = 0
 
     tranches = list(dette.frais_formation.type_frais.tranches.all())
     if not tranches:
         reste = dette.reste_a_payer()
-        if reste > 0:
+        prise = min(restant, reste)
+        if prise > 0:
             tranche_num += 1
             Paiement.objects.create(
-                dette=dette, montant_paiement=reste, mode_paiement=mode_paiement,
+                dette=dette, montant_paiement=prise, mode_paiement=mode_paiement,
                 tranche=tranche_num, tranche_frais=None,
                 date_paiement=timezone.now(), cree_par=user,
             )
-            total_encaisse += reste
+            restant -= prise
+            encaisse += prise
             nb_paiements += 1
     else:
         primordiale = next((t for t in tranches if t.est_primordiale), None)
@@ -2468,26 +2495,44 @@ def _encaisser_solde_dette(dette, user, mode_paiement='espece'):
             t for t in sorted(tranches, key=lambda t: t.ordre) if not primordiale or t.id != primordiale.id
         ]
         for t in ordre:
+            if restant <= 0:
+                break
             reste_t = dette.reste_pour_tranche(t)
-            if reste_t > 0:
+            if reste_t <= 0:
+                continue
+            if t.est_primordiale and restant < reste_t:
                 tranche_num += 1
                 Paiement.objects.create(
-                    dette=dette, montant_paiement=reste_t, mode_paiement=mode_paiement,
+                    dette=dette, montant_paiement=restant, mode_paiement=mode_paiement,
                     tranche=tranche_num, tranche_frais=t,
                     date_paiement=timezone.now(), cree_par=user,
+                    motif_derogation=motif_derogation,
+                    piece_jointe_derogation=piece_jointe_derogation,
                 )
-                total_encaisse += reste_t
+                encaisse += restant
                 nb_paiements += 1
+                restant = 0
+                break
+            prise = min(restant, reste_t)
+            tranche_num += 1
+            Paiement.objects.create(
+                dette=dette, montant_paiement=prise, mode_paiement=mode_paiement,
+                tranche=tranche_num, tranche_frais=t,
+                date_paiement=timezone.now(), cree_par=user,
+            )
+            encaisse += prise
+            nb_paiements += 1
+            restant -= prise
 
     if dette.reste_a_payer() <= 0:
         dette.etat_dette = 'soldé'
         dette.save()
 
-    return nb_paiements, total_encaisse
+    return nb_paiements, encaisse, restant
 
 
 # ─────────────────────────────────────────────
-# ENCAISSER LE RESTE D'UN TYPE DE FRAIS (une dette)
+# ENCAISSER UN MONTANT SUR UN TYPE DE FRAIS (une dette)
 # ─────────────────────────────────────────────
 @login_required
 def stats_encaisser_solde_dette_view(request, dette_id):
@@ -2505,6 +2550,8 @@ def stats_encaisser_solde_dette_view(request, dette_id):
     if not (request.user.is_superuser or request.user.has_perm('courses.encaisser_paiement')):
         raise PermissionDenied("Vous n'avez pas la permission d'encaisser un paiement.")
 
+    redirect_url = f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}"
+
     dette_bloquante, tranche_bloquante = dette.inscription.dette_et_tranche_bloquantes()
     if dette_bloquante and dette_bloquante.id != dette.id:
         messages.error(
@@ -2512,24 +2559,51 @@ def stats_encaisser_solde_dette_view(request, dette_id):
             f"Il faut d'abord régler entièrement la tranche « {tranche_bloquante.libelle} » "
             f"de « {dette_bloquante.frais_formation.type_frais} »."
         )
-        return redirect(f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}")
+        return redirect(redirect_url)
 
     mode = request.POST.get('mode_paiement', 'espece')
-    nb, total = _encaisser_solde_dette(dette, request.user, mode)
+    montant_str = request.POST.get('montant_paiement', '').strip()
+    try:
+        montant = float(montant_str)
+    except (ValueError, TypeError):
+        messages.error(request, "Montant invalide.")
+        return redirect(redirect_url)
 
-    if nb == 0:
-        messages.info(request, "Cette dette est déjà entièrement soldée.")
-    else:
-        messages.success(
-            request,
-            f"Solde de « {dette.frais_formation.type_frais} » encaissé : "
-            f"{total:,.0f} FCFA en {nb} versement{'s' if nb > 1 else ''}."
-        )
-    return redirect(f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}")
+    if montant <= 0:
+        messages.error(request, "Le montant doit être supérieur à 0.")
+        return redirect(redirect_url)
+
+    reste_dette = dette.reste_a_payer()
+    if montant > reste_dette:
+        messages.error(request, f"Le montant saisi ({montant:,.0f} FCFA) dépasse le reste dû ({reste_dette:,.0f} FCFA).")
+        return redirect(redirect_url)
+
+    tranche_cible = dette.tranche_a_payer()
+    motif_derogation = None
+    piece_jointe_derogation = None
+    if tranche_cible and tranche_cible.est_primordiale and montant < dette.reste_pour_tranche(tranche_cible):
+        motif_derogation = request.POST.get('motif_derogation', '').strip()
+        piece_jointe_derogation = request.FILES.get('piece_jointe_derogation')
+        if not motif_derogation or not piece_jointe_derogation:
+            messages.error(
+                request,
+                "Un motif et une pièce jointe justificative sont obligatoires pour valider un "
+                "règlement inférieur au montant dû de la tranche primordiale."
+            )
+            return redirect(redirect_url)
+
+    nb, total, _ = _encaisser_montant_dette(dette, montant, mode, request.user, motif_derogation, piece_jointe_derogation)
+
+    messages.success(
+        request,
+        f"Paiement de « {dette.frais_formation.type_frais} » encaissé : "
+        f"{total:,.0f} FCFA en {nb} versement{'s' if nb > 1 else ''}."
+    )
+    return redirect(redirect_url)
 
 
 # ─────────────────────────────────────────────
-# ENCAISSER LE RESTE DE TOUS LES TYPES DE FRAIS D'UNE INSCRIPTION
+# ENCAISSER UN MONTANT SUR L'ENSEMBLE DES TYPES DE FRAIS D'UNE INSCRIPTION
 # ─────────────────────────────────────────────
 @login_required
 def stats_encaisser_solde_inscription_view(request, inscription_id):
@@ -2547,32 +2621,74 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
     if not (request.user.is_superuser or request.user.has_perm('courses.encaisser_paiement')):
         raise PermissionDenied("Vous n'avez pas la permission d'encaisser un paiement.")
 
-    mode = request.POST.get('mode_paiement', 'espece')
+    redirect_url = f"{reverse('courses:stats_dettes_eleve', args=[inscription.eleve_id])}?inscription={inscription.id}"
 
-    # La dette bloquante (tranche primordiale d'un autre type de frais non
-    # réglée) est soldée en premier, pour respecter le même ordre que
-    # l'encaissement tranche par tranche.
-    dettes = list(inscription.dettes.all())
+    mode = request.POST.get('mode_paiement', 'espece')
+    montant_str = request.POST.get('montant_paiement', '').strip()
+    try:
+        montant = float(montant_str)
+    except (ValueError, TypeError):
+        messages.error(request, "Montant invalide.")
+        return redirect(redirect_url)
+
+    if montant <= 0:
+        messages.error(request, "Le montant doit être supérieur à 0.")
+        return redirect(redirect_url)
+
+    dettes = list(inscription.dettes.order_by('id'))
+    reste_total = sum(max(d.reste_a_payer(), 0) for d in dettes)
+    if montant > reste_total:
+        messages.error(request, f"Le montant saisi ({montant:,.0f} FCFA) dépasse le reste dû total ({reste_total:,.0f} FCFA).")
+        return redirect(redirect_url)
+
+    # La dette bloquante (tranche primordiale non réglée) est traitée en
+    # premier, pour respecter le même ordre que l'encaissement tranche par
+    # tranche ; le reste du montant cascade ensuite sur les tranches et
+    # types de frais suivants.
     dette_bloquante, _ = inscription.dette_et_tranche_bloquantes()
     if dette_bloquante:
         dettes.sort(key=lambda d: 0 if d.id == dette_bloquante.id else 1)
 
-    nb_total = 0
-    montant_total = 0
-    for dette in dettes:
-        nb, total = _encaisser_solde_dette(dette, request.user, mode)
-        nb_total += nb
-        montant_total += total
+    motif_derogation = request.POST.get('motif_derogation', '').strip() or None
+    piece_jointe_derogation = request.FILES.get('piece_jointe_derogation')
+
+    try:
+        with transaction.atomic():
+            restant = montant
+            nb_total = 0
+            montant_total = 0
+            for dette in dettes:
+                if restant <= 0:
+                    break
+                if dette.reste_a_payer() <= 0:
+                    continue
+
+                tranche_cible = dette.tranche_a_payer()
+                motif, piece = None, None
+                if tranche_cible and tranche_cible.est_primordiale and restant < dette.reste_pour_tranche(tranche_cible):
+                    if not motif_derogation or not piece_jointe_derogation:
+                        raise _DerogationRequise(
+                            "Un motif et une pièce jointe justificative sont obligatoires pour valider un "
+                            f"règlement inférieur au montant dû de la tranche primordiale de « {dette.frais_formation.type_frais} »."
+                        )
+                    motif, piece = motif_derogation, piece_jointe_derogation
+
+                nb, total, restant = _encaisser_montant_dette(dette, restant, mode, request.user, motif, piece)
+                nb_total += nb
+                montant_total += total
+    except _DerogationRequise as exc:
+        messages.error(request, exc.message)
+        return redirect(redirect_url)
 
     if nb_total == 0:
-        messages.info(request, "Toutes les dettes de cette inscription sont déjà soldées.")
+        messages.info(request, "Aucun paiement n'a pu être enregistré.")
     else:
         messages.success(
             request,
-            f"Solde de l'inscription encaissé : {montant_total:,.0f} FCFA en "
+            f"Paiement de l'inscription encaissé : {montant_total:,.0f} FCFA en "
             f"{nb_total} versement{'s' if nb_total > 1 else ''}."
         )
-    return redirect(f"{reverse('courses:stats_dettes_eleve', args=[inscription.eleve_id])}?inscription={inscription.id}")
+    return redirect(redirect_url)
 
 
 # ─────────────────────────────────────────────
