@@ -66,8 +66,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # SecurityHeadersMiddleware avant le middleware CSP : en phase réponse
-    # (ordre inverse), il s'exécute donc APRÈS lui et peut ajuster l'en-tête CSP.
     'config.middleware.SecurityHeadersMiddleware',
     'django.middleware.csp.ContentSecurityPolicyMiddleware',
 ]
@@ -95,18 +93,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # Database
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': env('POSTGRES_DB'),
-#         'USER': env('POSTGRES_USER'),
-#         'PASSWORD': env('POSTGRES_PASSWORD'),
-#         'HOST': env('POSTGRES_HOST'),
-#         'PORT': env('POSTGRES_PORT'),
-#     }
-    
-# }
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -187,8 +173,7 @@ MESSAGE_TAGS = {
 
 
 
-# -------------- JAZZMIN ---------------
-
+# JAZZMIN 
 JAZZMIN_SETTINGS = {
     # Main branding
     "site_title": "BURKINA SUUDU BAWDE",
@@ -299,8 +284,8 @@ SECURE_CSP = {
     "object-src": [CSP.NONE],
 }
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440
-FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440
+DATA_UPLOAD_MAX_MEMORY_SIZE = 30*1024*1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 30*1024*1024
 # E-mail : SMTP si renseigne dans .env, sinon affichage en console (dev)
 EMAIL_HOST = env('EMAIL_HOST', default='')
 if EMAIL_HOST:
