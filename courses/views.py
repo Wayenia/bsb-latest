@@ -168,9 +168,14 @@ def documents_view(request):
         # extension ET signature binaire (%PDF-) verifiees, pour empecher un
         # fichier .html/.svg renomme en .pdf (vecteur XSS stocke contre le
         # personnel qui ouvre ces documents via "Visualiser").
+        # Taille max 5 Mo par fichier, alignee sur client_max_body_size (5m) de nginx.
+        MAX_TAILLE_DOCUMENT = 5 * 1024 * 1024
         for doc in required_doc:
             if doc.libelle_piece in request.FILES:
                 requested_file = request.FILES[doc.libelle_piece]
+                if requested_file.size > MAX_TAILLE_DOCUMENT:
+                    errors.append(f'« {doc.libelle_piece} » dépasse la taille maximale de 5 Mo.')
+                    continue
                 if not requested_file.name.lower().endswith('.pdf'):
                     errors.append(f'« {doc.libelle_piece} » doit être un fichier PDF (.pdf).')
                     continue

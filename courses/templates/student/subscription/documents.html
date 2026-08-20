@@ -81,14 +81,17 @@
                 type="file"
                 name="{{ doc.libelle_piece }}"
                 id="{{ doc.libelle_piece }}"
+                accept=".pdf,application/pdf"
+                data-max-size-mo="5"
                 {% if doc.est_requis %}required{% endif %}
                 class="block w-full text-sm text-slate-600 cursor-pointer file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-yellow-600 file:text-white hover:file:bg-yellow-700 file:cursor-pointer file:transition-colors"
               >
             </div>
 
             <div class="flex items-center gap-4 mt-2">
-              <span class="text-xs text-slate-400">PDF 10 Mo max</span>
+              <span class="text-xs text-slate-400">PDF, 5 Mo max par fichier</span>
             </div>
+            <p class="text-xs text-bsb-red mt-1 hidden" id="err-{{ doc.libelle_piece }}"></p>
           </div>
           {% endfor %}
         </div>
@@ -132,4 +135,23 @@
     <span class="h-0.5 w-3" style="background-color: #009640;"></span>
   </div>
 </div>
+
+<script nonce="{{ csp_nonce }}">
+document.querySelectorAll('input[type="file"][data-max-size-mo]').forEach(function (input) {
+  var maxBytes = parseFloat(input.dataset.maxSizeMo) * 1024 * 1024;
+  var errEl = document.getElementById('err-' + input.id);
+  input.addEventListener('change', function () {
+    var file = input.files[0];
+    if (file && file.size > maxBytes) {
+      if (errEl) {
+        errEl.textContent = 'Ce fichier dépasse la taille maximale de ' + input.dataset.maxSizeMo + ' Mo.';
+        errEl.classList.remove('hidden');
+      }
+      input.value = '';
+    } else if (errEl) {
+      errEl.classList.add('hidden');
+    }
+  });
+});
+</script>
 {% endblock %}
