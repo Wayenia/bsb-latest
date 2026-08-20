@@ -19,6 +19,13 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
 
+    # Declare explicitement (sans validateur d'unicite automatique) : la
+    # contrainte unique porte uniquement sur les adresses reellement saisies,
+    # verifiee a la main dans validate() — sinon deux comptes laissant ce
+    # champ vide se bloqueraient l'un l'autre (chaine vide != NULL en base,
+    # mais deux chaines vides sont identiques pour la contrainte unique).
+    email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
+
     lieu_naissance = serializers.CharField(required=True, allow_blank=False)
     adresse = serializers.CharField(required=False, allow_blank=True)
 
@@ -47,6 +54,14 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({"password": "Les mots de passe ne correspondent pas."})
+
+        email = (attrs.get('email') or '').strip()
+        if email:
+            if Utilisateur.objects.filter(email=email).exists():
+                raise serializers.ValidationError({"email": "Cette adresse email est déjà utilisée."})
+            attrs['email'] = email
+        else:
+            attrs['email'] = None
 
         if attrs.get('a_handicap'):
             if not attrs.get('type_handicap'):

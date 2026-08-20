@@ -11,7 +11,7 @@ class FormationFilter(django_filters.FilterSet):
         empty_label="---Tous les centres---",
         widget=Select(attrs={
             'class': 'block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold',
-            'onchange': 'this.form.submit()'
+            'data-autosubmit': 'true'
         })
     )
 
@@ -43,7 +43,7 @@ class FiliereFilter(django_filters.FilterSet):
         empty_label="---Tous les titres---",
         widget=Select(attrs={
             'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold',
-            'onchange': 'this.form.submit()'
+            'data-autosubmit': 'true'
         })
     )
 
@@ -66,7 +66,7 @@ class SubscriptionFilter(django_filters.FilterSet):
         empty_label="---Centre---",
         widget=Select(attrs={
             'class': 'block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold',
-            'onchange': 'this.form.submit()'
+            'data-autosubmit': 'true'
         })
     )
     statut = django_filters.ChoiceFilter(
@@ -74,7 +74,7 @@ class SubscriptionFilter(django_filters.FilterSet):
         empty_label="---Tous les statuts---",
         widget=Select(attrs={
             'class': 'block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold',
-            'onchange': 'this.form.submit()'
+            'data-autosubmit': 'true'
         })
     )
 

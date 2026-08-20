@@ -39,7 +39,7 @@ class Utilisateur(AbstractUser):
     prenom = models.CharField(max_length=225, verbose_name="Prénom")
     user_type = models.CharField(max_length=20, choices=USER_TYPE, default="eleve", verbose_name="Type d'utilisateur")
     matricule = models.CharField(max_length=150, verbose_name="Matricule", unique=True, null=True, blank=True)
-    email = models.EmailField(verbose_name="Adresse email",unique=True,default="ah@gmail.com")
+    email = models.EmailField(verbose_name="Adresse email", unique=True, blank=True, null=True)
     adresse = models.CharField(max_length=225, verbose_name="Adresse")
     tel = models.CharField(max_length=25, verbose_name="Telephone",null=True,blank=True, validators=[phone_validator])
     sexe = models.CharField(max_length=2, choices=SEXE_CHOICE, default="m", verbose_name="Sexe")

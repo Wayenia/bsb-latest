@@ -20,7 +20,8 @@ from .forms import FiliereForm
 from .filters import CentreFormationFilter, FiliereFilter
 from .permissions import require_permission, require_role
 from django.core.exceptions import PermissionDenied
-from accounts.models import Eleve
+from accounts.models import Eleve, Utilisateur
+from django.urls import reverse
 from django.utils import timezone
 from django.http import HttpResponse
 from django.template.loader import render_to_string
@@ -257,7 +258,14 @@ def personal_info_view(request, career_id):
         eleve.nom = form.cleaned_data['nom']
         eleve.prenom = form.cleaned_data['prenom']
         eleve.sexe = form.cleaned_data['sexe'].lower()  # 'M' → 'm'
-        eleve.email = form.cleaned_data['email']
+        email = (form.cleaned_data.get('email') or '').strip()
+        if email:
+            if Utilisateur.objects.filter(email=email).exclude(pk=eleve.pk).exists():
+                messages.error(request, "Cette adresse email est déjà utilisée par un autre compte.")
+                return render(request, 'student/subscription/personal_info.html', {'form': form, 'career_id': career_id})
+            eleve.email = email
+        else:
+            eleve.email = None
         eleve.tel = form.cleaned_data.get('tel', '')
         eleve.date_naissance = form.cleaned_data.get('date_naissance')
         eleve.lieu_naissance = form.cleaned_data.get('lieu_naissance', '')
@@ -829,8 +837,9 @@ def download_quittance(request,id):
     p.setDash()
     y -= 0.5*cm
     # ── DETAILS PAIEMENT ───────────────────────────────────
+    tranche_label = paiement.tranche_frais.libelle if paiement.tranche_frais else f"Tranche {paiement.tranche}"
     y = ligne("Type de frais :", str(dette.frais_formation.type_frais.libelle), y)
-    y = ligne("Tranche :", f"Tranche {paiement.tranche}", y)
+    y = ligne("Tranche :", tranche_label, y)
     y = ligne("Mode de paiement :", paiement.get_mode_paiement_display(), y)
     p.setFont("Helvetica-Bold", 12)
     p.drawString(1.5*cm, y, "Montant payé :")
@@ -856,7 +865,7 @@ def download_quittance(request,id):
         f"Métier : {inscription.formation.filiere}\n"
         f"Année de formation : {inscription.annee_scolaire}\n"
         f"Type de frais : {dette.frais_formation.type_frais.libelle}\n"
-        f"Tranche : {paiement.tranche}\n"
+        f"Tranche : {tranche_label}\n"
         f"Mode de paiement : {paiement.get_mode_paiement_display()}\n"
         f"Montant payé : {paiement.montant_paiement:,.0f} FCFA\n"
         f"Total dû : {dette.montant_total:,.0f} FCFA\n"
@@ -2388,6 +2397,7 @@ def stats_dettes_eleve_view(request, eleve_id):
         dettes_data = []
         insc_du = 0
         insc_paye = 0
+        insc_reste = 0
 
         for dette in insc.dettes.all():
             paye = dette.montant_paye()
@@ -2395,6 +2405,7 @@ def stats_dettes_eleve_view(request, eleve_id):
             taux = (paye / dette.montant_total * 100) if dette.montant_total > 0 else 0
             insc_du += dette.montant_total
             insc_paye += paye
+            insc_reste += max(reste, 0)
             total_restant_global += max(reste, 0)
 
             dettes_data.append({
@@ -2415,6 +2426,7 @@ def stats_dettes_eleve_view(request, eleve_id):
             'dettes': dettes_data,
             'total_du': insc_du,
             'total_paye': insc_paye,
+            'total_reste': insc_reste,
         })
 
     return render(request, 'member/statistiques/stats_dettes_eleve.html', {
@@ -2422,6 +2434,140 @@ def stats_dettes_eleve_view(request, eleve_id):
         'inscriptions_dettes': inscriptions_dettes,
         'total_restant': total_restant_global,
     })
+
+
+def _encaisser_solde_dette(dette, user, mode_paiement='espece'):
+    """Solde entièrement une dette (un type de frais) : un versement par
+    tranche restant due (primordiale d'abord), ou un versement unique si le
+    type de frais n'a pas de tranches. Retourne (nombre de paiements créés,
+    montant total encaissé)."""
+    tranche_num = dette.paiements.count()
+    total_encaisse = 0
+    nb_paiements = 0
+
+    tranches = list(dette.frais_formation.type_frais.tranches.all())
+    if not tranches:
+        reste = dette.reste_a_payer()
+        if reste > 0:
+            tranche_num += 1
+            Paiement.objects.create(
+                dette=dette, montant_paiement=reste, mode_paiement=mode_paiement,
+                tranche=tranche_num, tranche_frais=None,
+                date_paiement=timezone.now(), cree_par=user,
+            )
+            total_encaisse += reste
+            nb_paiements += 1
+    else:
+        primordiale = next((t for t in tranches if t.est_primordiale), None)
+        ordre = ([primordiale] if primordiale else []) + [
+            t for t in sorted(tranches, key=lambda t: t.ordre) if not primordiale or t.id != primordiale.id
+        ]
+        for t in ordre:
+            reste_t = dette.reste_pour_tranche(t)
+            if reste_t > 0:
+                tranche_num += 1
+                Paiement.objects.create(
+                    dette=dette, montant_paiement=reste_t, mode_paiement=mode_paiement,
+                    tranche=tranche_num, tranche_frais=t,
+                    date_paiement=timezone.now(), cree_par=user,
+                )
+                total_encaisse += reste_t
+                nb_paiements += 1
+
+    if dette.reste_a_payer() <= 0:
+        dette.etat_dette = 'soldé'
+        dette.save()
+
+    return nb_paiements, total_encaisse
+
+
+# ─────────────────────────────────────────────
+# ENCAISSER LE RESTE D'UN TYPE DE FRAIS (une dette)
+# ─────────────────────────────────────────────
+@login_required
+def stats_encaisser_solde_dette_view(request, dette_id):
+    dette = get_object_or_404(
+        Dette.objects.select_related('inscription__eleve', 'frais_formation__type_frais'),
+        id=dette_id
+    )
+
+    if not _can_access_dette_finances(request.user, dette):
+        raise PermissionDenied("Vous n'avez pas accès aux informations financières de cette dette.")
+
+    if request.method != 'POST':
+        return redirect('courses:stats_dettes_eleve', eleve_id=dette.inscription.eleve_id)
+
+    if not (request.user.is_superuser or request.user.has_perm('courses.encaisser_paiement')):
+        raise PermissionDenied("Vous n'avez pas la permission d'encaisser un paiement.")
+
+    dette_bloquante, tranche_bloquante = dette.inscription.dette_et_tranche_bloquantes()
+    if dette_bloquante and dette_bloquante.id != dette.id:
+        messages.error(
+            request,
+            f"Il faut d'abord régler entièrement la tranche « {tranche_bloquante.libelle} » "
+            f"de « {dette_bloquante.frais_formation.type_frais} »."
+        )
+        return redirect(f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}")
+
+    mode = request.POST.get('mode_paiement', 'espece')
+    nb, total = _encaisser_solde_dette(dette, request.user, mode)
+
+    if nb == 0:
+        messages.info(request, "Cette dette est déjà entièrement soldée.")
+    else:
+        messages.success(
+            request,
+            f"Solde de « {dette.frais_formation.type_frais} » encaissé : "
+            f"{total:,.0f} FCFA en {nb} versement{'s' if nb > 1 else ''}."
+        )
+    return redirect(f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}")
+
+
+# ─────────────────────────────────────────────
+# ENCAISSER LE RESTE DE TOUS LES TYPES DE FRAIS D'UNE INSCRIPTION
+# ─────────────────────────────────────────────
+@login_required
+def stats_encaisser_solde_inscription_view(request, inscription_id):
+    inscription = get_object_or_404(
+        Inscription.objects.select_related('eleve').prefetch_related('dettes__frais_formation__type_frais'),
+        id=inscription_id
+    )
+
+    if not _can_access_eleve_finances(request.user, inscription.eleve):
+        raise PermissionDenied("Vous n'avez pas accès aux informations financières de cet apprenant.")
+
+    if request.method != 'POST':
+        return redirect('courses:stats_dettes_eleve', eleve_id=inscription.eleve_id)
+
+    if not (request.user.is_superuser or request.user.has_perm('courses.encaisser_paiement')):
+        raise PermissionDenied("Vous n'avez pas la permission d'encaisser un paiement.")
+
+    mode = request.POST.get('mode_paiement', 'espece')
+
+    # La dette bloquante (tranche primordiale d'un autre type de frais non
+    # réglée) est soldée en premier, pour respecter le même ordre que
+    # l'encaissement tranche par tranche.
+    dettes = list(inscription.dettes.all())
+    dette_bloquante, _ = inscription.dette_et_tranche_bloquantes()
+    if dette_bloquante:
+        dettes.sort(key=lambda d: 0 if d.id == dette_bloquante.id else 1)
+
+    nb_total = 0
+    montant_total = 0
+    for dette in dettes:
+        nb, total = _encaisser_solde_dette(dette, request.user, mode)
+        nb_total += nb
+        montant_total += total
+
+    if nb_total == 0:
+        messages.info(request, "Toutes les dettes de cette inscription sont déjà soldées.")
+    else:
+        messages.success(
+            request,
+            f"Solde de l'inscription encaissé : {montant_total:,.0f} FCFA en "
+            f"{nb_total} versement{'s' if nb_total > 1 else ''}."
+        )
+    return redirect(f"{reverse('courses:stats_dettes_eleve', args=[inscription.eleve_id])}?inscription={inscription.id}")
 
 
 # ─────────────────────────────────────────────
@@ -2460,7 +2606,7 @@ def stats_detail_dette_view(request, dette_id):
             return redirect('courses:stats_detail_dette', dette_id=dette_id)
 
         montant_str = request.POST.get('montant_paiement', '').strip()
-        mode = request.POST.get('mode_paiement', 'mobile')
+        mode = request.POST.get('mode_paiement', 'espece')
 
         try:
             montant = float(montant_str)
@@ -2668,8 +2814,9 @@ def stats_download_quittance_view(request, paiement_id):
     y -= 0.3*cm
     p.setDash(3, 3); p.line(1.5*cm, y, width-1.5*cm, y); p.setDash(); y -= 0.5*cm
 
+    tranche_label = paiement.tranche_frais.libelle if paiement.tranche_frais else f"Tranche {paiement.tranche}"
     y = ligne("Type de frais :", str(dette.frais_formation.type_frais.libelle), y)
-    y = ligne("Tranche :", f"Tranche {paiement.tranche}", y)
+    y = ligne("Tranche :", tranche_label, y)
     y = ligne("Mode de paiement :", paiement.get_mode_paiement_display(), y)
 
     p.setFont("Helvetica-Bold", 12)
@@ -3160,7 +3307,7 @@ def formateur_export(request, formation_id, format):
     # ── CSV ──────────────────────────────────────────────────────────────────
     if format == 'csv':
         response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-        response['Content-Disposition'] = f'attachment; filename="etudiants_{label}.csv"'
+        response['Content-Disposition'] = f'attachment; filename="apprenants_{label}.csv"'
         writer = csv.DictWriter(response, fieldnames=headers)
         writer.writeheader()
         writer.writerows(rows)
@@ -3177,10 +3324,10 @@ def formateur_export(request, formation_id, format):
 
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.title = "Étudiants"
+        ws.title = "Apprenants"
 
         # En-tête titre
-        titre = f"Liste des étudiants — {formation.filiere.nom_filiere} — {formation.centre.nom_centre}"
+        titre = f"Liste des apprenants — {formation.filiere.nom_filiere} — {formation.centre.nom_centre}"
         ws.merge_cells('A1:L1')
         ws['A1'] = titre
         ws['A1'].font = Font(bold=True, size=13)
@@ -3236,7 +3383,7 @@ def formateur_export(request, formation_id, format):
             buffer,
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        response['Content-Disposition'] = f'attachment; filename="etudiants_{label}.xlsx"'
+        response['Content-Disposition'] = f'attachment; filename="apprenants_{label}.xlsx"'
         return response
 
     # ── PDF ──────────────────────────────────────────────────────────────────
@@ -3289,7 +3436,7 @@ def formateur_export(request, formation_id, format):
             fontSize=9, spaceAfter=12, alignment=1, textColor=rl_colors.grey
         )
         elements.append(Paragraph(
-            f"Liste des étudiants — {formation.filiere.nom_filiere}", title_style
+            f"Liste des apprenants — {formation.filiere.nom_filiere}", title_style
         ))
         elements.append(Paragraph(
             f"Centre : {formation.centre.nom_centre} | Filtre : {statut_filter or 'Tous'} | Total : {len(rows)}",
@@ -3299,7 +3446,7 @@ def formateur_export(request, formation_id, format):
 
         data = [headers] + [list(r.values()) for r in rows]
         if not rows:
-            elements.append(Paragraph("Aucun étudiant trouvé.", styles['Normal']))
+            elements.append(Paragraph("Aucun apprenant trouvé.", styles['Normal']))
         col_count = len(headers)
         page_w = landscape(A4)[0] - 3*cm
         col_w = page_w / col_count
@@ -3356,7 +3503,7 @@ def formateur_export(request, formation_id, format):
         doc.build(elements, onFirstPage=_watermark_page_fe, onLaterPages=_watermark_page_fe)
         buffer.seek(0)
         response = HttpResponse(buffer, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="etudiants_{label}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="apprenants_{label}.pdf"'
         return response
 
     return redirect('courses:formateur_etudiants', formation_id=formation_id)

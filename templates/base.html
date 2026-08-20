@@ -310,6 +310,15 @@
     })();
     </script>
 
+    <script nonce="{{ csp_nonce }}">
+    document.addEventListener('change', function (e) {
+        var el = e.target;
+        if (el && el.matches && el.matches('[data-autosubmit="true"]') && el.form) {
+            el.form.submit();
+        }
+    });
+    </script>
+
 {% endblock body %}
 </body>
 </html>

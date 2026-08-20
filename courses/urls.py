@@ -82,6 +82,16 @@ urlpatterns = [
          views.stats_detail_dette_view,
          name='stats_detail_dette'),
  
+    # ── Encaisser le solde d'un type de frais (une dette) ─────────────────────
+    path('statistiques/paiement/dette/<int:dette_id>/solder',
+         views.stats_encaisser_solde_dette_view,
+         name='stats_encaisser_solde_dette'),
+
+    # ── Encaisser le solde de tous les types de frais d'une inscription ───────
+    path('statistiques/paiement/inscription/<int:inscription_id>/solder',
+         views.stats_encaisser_solde_inscription_view,
+         name='stats_encaisser_solde_inscription'),
+
     # ── Quittance d'une tranche (liste des paiements) ─────────────────────────
     path('statistiques/paiement/dette/<int:dette_id>/tranche/<int:tranche>/',
          views.stats_quittance_tranche_view,

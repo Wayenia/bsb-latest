@@ -9,7 +9,7 @@ class CentreFormationFilter(django_filters.FilterSet):
         empty_label="---Tous les centres---",
         widget=Select(attrs={
             'class': 'block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold',
-            'onchange': 'this.form.submit()'
+            'data-autosubmit': 'true'
         })
     )
 

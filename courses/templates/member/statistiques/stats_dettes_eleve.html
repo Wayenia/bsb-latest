@@ -122,7 +122,12 @@
           <div style="font-weight:700;font-size:.95rem;">{{ item.total_paye|floatformat:0|intcomma }} / {{ item.total_du|floatformat:0|intcomma }} FCFA</div>
           <div style="font-size:.75rem;opacity:.75;">payé / dû</div>
         </div>
-        
+        {% if item.total_reste > 0 and perms.courses.encaisser_paiement %}
+        <button type="button" class="btn-detail" style="background:linear-gradient(135deg,#059669,#10b981);"
+                onclick="event.stopPropagation(); ouvrirModalSolder({url:'{% url 'courses:stats_encaisser_solde_inscription' item.inscription.id %}', cible:'Toute l\'inscription — {{ item.inscription.formation.filiere.nom_filiere|escapejs }}', montant:{{ item.total_reste|floatformat:0 }}});">
+          Solder l'inscription
+        </button>
+        {% endif %}
       </div>
     </div>
 
@@ -192,7 +197,20 @@
           </div>
           {% endif %}
 
-          <div style="text-align:right;margin-top:.5rem;">
+          <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:.5rem;">
+            {% if dette.etat_dette != 'soldé' and perms.courses.encaisser_paiement %}
+              {% if dette.bloquee %}
+              <button type="button" class="btn-detail" style="background:#e5e7eb;color:#9ca3af;cursor:not-allowed;"
+                      disabled title="Réglez d'abord la tranche primordiale bloquante d'un autre type de frais">
+                Solder ce frais
+              </button>
+              {% else %}
+              <button type="button" class="btn-detail" style="background:linear-gradient(135deg,#059669,#10b981);"
+                      onclick="ouvrirModalSolder({url:'{% url 'courses:stats_encaisser_solde_dette' dette.id %}', cible:'{{ dette.frais_formation.type_frais|escapejs }}', montant:{{ dette.reste|floatformat:0 }}});">
+                Solder ce frais
+              </button>
+              {% endif %}
+            {% endif %}
             <a href="{% url 'courses:stats_detail_dette' dette.id %}" class="btn-detail">
                Détail
             </a>
@@ -255,6 +273,51 @@
   </div>
 </div>
 
+{% comment %} MODAL SOLDER (réutilisé pour "Solder ce frais" et "Solder l'inscription") {% endcomment %}
+<div id="modal-solder" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h2 style="font-weight:800;font-size:1.1rem;color:#374151;margin:0;">Encaisser le solde</h2>
+      <button type="button" onclick="fermerModalSolder()" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
+    </div>
+    <p id="modal-solder-cible" style="font-size:.85rem;color:#6b7280;margin-bottom:1rem;"></p>
+    <form method="post" id="form-solder" action="">
+      {% csrf_token %}
+      <div style="display:flex;gap:.9rem;margin-bottom:.9rem;flex-wrap:wrap;">
+        <div style="flex:1;min-width:150px;">
+          <label style="display:block;font-size:.78rem;font-weight:600;color:#374151;margin-bottom:.25rem;">Apprenant</label>
+          <div style="padding:.5rem .65rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;background:#f9fafb;color:#374151;">
+            {{ eleve.nom }} {{ eleve.prenom }}<br><span style="color:#9ca3af;font-size:.76rem;">{{ eleve.username }}</span>
+          </div>
+        </div>
+        <div style="flex:1;min-width:150px;">
+          <label style="display:block;font-size:.78rem;font-weight:600;color:#374151;margin-bottom:.25rem;">Encaissé par</label>
+          <div style="padding:.5rem .65rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;background:#f9fafb;color:#374151;">
+            {{ request.user.get_full_name|default:request.user.username }}<br><span style="color:#9ca3af;font-size:.76rem;">{{ request.user.username }}</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:.9rem;">
+        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Montant à encaisser (FCFA)</label>
+        <input type="text" id="modal-solder-montant" readonly disabled
+               style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;background:#f3f4f6;color:#374151;font-weight:700;">
+      </div>
+      <div style="margin-bottom:1.1rem;">
+        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Mode de paiement</label>
+        <select name="mode_paiement" style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;">
+          <option value="espece" selected>Espèce</option>
+          <option value="mobile">Mobile Money</option>
+          <option value="chèque">Chèque</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:.6rem;">
+        <button type="button" onclick="fermerModalSolder()" style="flex:1;padding:.6rem;border-radius:8px;border:2px solid #e2e8f0;background:#fff;color:#374151;font-weight:600;font-size:.85rem;cursor:pointer;">Annuler</button>
+        <button type="submit" style="flex:2;padding:.6rem;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;">Valider le paiement</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script nonce="{{ csp_nonce }}">
 function toggleInsc(header) {
   const body = header.nextElementSibling;
@@ -304,6 +367,25 @@ function fermerModalPaiement() {
 
 document.getElementById('modal-paiement-tranche').addEventListener('click', function(e) {
   if (e.target === this) fermerModalPaiement();
+});
+
+function ouvrirModalSolder(opts) {
+  document.getElementById('form-solder').action = opts.url;
+  document.getElementById('modal-solder-cible').textContent = opts.cible;
+  document.getElementById('modal-solder-montant').value = Number(opts.montant).toLocaleString('fr-FR') + ' FCFA';
+  const modal = document.getElementById('modal-solder');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function fermerModalSolder() {
+  const modal = document.getElementById('modal-solder');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+document.getElementById('modal-solder').addEventListener('click', function(e) {
+  if (e.target === this) fermerModalSolder();
 });
 </script>
 {% endblock %}

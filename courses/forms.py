@@ -73,6 +73,7 @@ class PersonalInfoForm(forms.Form):
     )
     email = forms.EmailField(
         label='Adresse email',
+        required=False,
         widget=forms.EmailInput(attrs={
             'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500',
             'placeholder': 'monmail@email.com'
@@ -972,7 +973,9 @@ class AgentForm(forms.ModelForm):
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip()
         if not email:
-            raise forms.ValidationError("L'adresse email est obligatoire.")
+            # Optionnel : None (et non '') pour ne pas entrer en collision avec
+            # d'autres comptes sans email sous la contrainte unique de la BD.
+            return None
         qs = Utilisateur.objects.filter(email=email)
         if self.instance and self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
@@ -1215,7 +1218,9 @@ class EleveForm(forms.ModelForm):
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip()
         if not email:
-            raise forms.ValidationError("L'adresse email est obligatoire.")
+            # Optionnel : None (et non '') pour ne pas entrer en collision avec
+            # d'autres comptes sans email sous la contrainte unique de la BD.
+            return None
         qs = Utilisateur.objects.filter(email=email)
         if self.instance and self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)

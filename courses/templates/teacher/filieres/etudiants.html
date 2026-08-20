@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
-{% block title %}Étudiants — {{ formation.filiere.nom_filiere }} | BSB{% endblock %}
+{% block title %}Apprenants — {{ formation.filiere.nom_filiere }} | BSB{% endblock %}
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
     {% include 'partials/messages.html' %}
@@ -97,7 +97,7 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">N°</th>
-                        <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Étudiant</th>
+                        <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Apprenant</th>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Identifiant</th>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Contact</th>
                         <th class="px-4 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Statut dossier</th>
@@ -203,7 +203,7 @@
         {% else %}
         <div class="text-center py-16">
             
-            <p class="text-gray-500 font-medium">Aucun étudiant trouvé avec ces critères.</p>
+            <p class="text-gray-500 font-medium">Aucun apprenant trouvé avec ces critères.</p>
             {% if q or statut_filter %}
             <a href="{% url 'courses:formateur_etudiants' formation.id %}"
                class="mt-3 inline-flex items-center text-sm text-yellow-600 hover:underline">
