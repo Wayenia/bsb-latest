@@ -109,7 +109,7 @@
 
                         {% comment %} Contact {% endcomment %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            <div>{{ agent.email }}</div>
+                            <div>{{ agent.email|default:"—" }}</div>
                             <div class="text-xs text-gray-400">{{ agent.tel|default:"—" }}</div>
                         </td>
 

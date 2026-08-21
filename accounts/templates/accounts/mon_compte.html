@@ -68,7 +68,7 @@
             </div>
             <div>
                 <p class="text-xs font-bold text-gray-400 uppercase mb-1">Adresse email</p>
-                <p class="text-sm font-semibold text-gray-800">{{ profil.email }}</p>
+                <p class="text-sm font-semibold text-gray-800">{{ profil.email|default:"—" }}</p>
             </div>
             <div class="sm:col-span-2">
                 <p class="text-xs font-bold text-gray-400 uppercase mb-1">Adresse</p>

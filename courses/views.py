@@ -165,25 +165,16 @@ def documents_view(request):
             if doc.est_requis and doc.libelle_piece not in request.FILES:
                 errors.append(f'Le document « {doc.libelle_piece} » est obligatoire.')
 
-        # Seuls des PDF sont acceptés pour les documents envoyés par l'élève :
-        # extension ET signature binaire (%PDF-) verifiees, pour empecher un
-        # fichier .html/.svg renomme en .pdf (vecteur XSS stocke contre le
-        # personnel qui ouvre ces documents via "Visualiser").
-        # Taille max 5 Mo par fichier, alignee sur client_max_body_size (5m) de nginx.
-        MAX_TAILLE_DOCUMENT = 5 * 1024 * 1024
+        # Seuls JPEG/JPG/PNG/PDF sont acceptés pour les documents envoyés par
+        # l'élève : extension ET signature binaire verifiees, pour empecher un
+        # fichier .html/.svg renomme (vecteur XSS stocke contre le personnel
+        # qui ouvre ces documents via "Visualiser"). Taille max 5 Mo par
+        # fichier, alignee sur client_max_body_size (5m) de nginx.
         for doc in required_doc:
             if doc.libelle_piece in request.FILES:
-                requested_file = request.FILES[doc.libelle_piece]
-                if requested_file.size > MAX_TAILLE_DOCUMENT:
-                    errors.append(f'« {doc.libelle_piece} » dépasse la taille maximale de 5 Mo.')
-                    continue
-                if not requested_file.name.lower().endswith('.pdf'):
-                    errors.append(f'« {doc.libelle_piece} » doit être un fichier PDF (.pdf).')
-                    continue
-                header = requested_file.read(5)
-                requested_file.seek(0)
-                if header != b'%PDF-':
-                    errors.append(f'« {doc.libelle_piece} » n\'est pas un fichier PDF valide.')
+                err = _valider_fichier_upload(request.FILES[doc.libelle_piece])
+                if err:
+                    errors.append(err)
 
         if errors:
             for err in errors:
@@ -449,8 +440,8 @@ def effectuer_paiment(request, id):
     if dette_bloquante and dette_bloquante.id != dette.id:
         messages.error(
             request,
-            f"Vous devez d'abord régler entièrement la tranche « {tranche_bloquante.libelle} » "
-            f"de « {dette_bloquante.frais_formation.type_frais} » avant de pouvoir payer ceci."
+            f"Vous devez d'abord régler entièrement {_libelle_blocage(dette_bloquante, tranche_bloquante)} "
+            "avant de pouvoir payer ceci."
         )
         return redirect('courses:liste_dettes', id=dette.inscription.id)
 
@@ -483,9 +474,22 @@ def effectuer_paiment(request, id):
                     'form': form, 'dette': dette, 'tranche_cible': tranche_cible, 'montant_cible': montant_cible,
                 })
 
+            # Un frais de dossier se règle en une seule fois, intégralement : ni
+            # paiement partiel, ni notion de tranche/dérogation applicable.
+            est_frais_dossier = dette.frais_formation.type_frais.est_frais_de_dossier
+            if est_frais_dossier and paiement.montant_paiement < montant_cible:
+                messages.error(
+                    request,
+                    f"Le frais de dossier « {dette.frais_formation.type_frais} » doit être réglé intégralement "
+                    f"en un seul versement (montant dû : {montant_cible:,.0f} FCFA)."
+                )
+                return render(request, 'student/paiement/form.html', {
+                    'form': form, 'dette': dette, 'tranche_cible': tranche_cible, 'montant_cible': montant_cible,
+                })
+
             # Sous-paiement d'une tranche primordiale par un caissier/staff : motif +
             # pièce jointe obligatoires avant de pouvoir valider le paiement.
-            if not is_self and tranche_cible and tranche_cible.est_primordiale and paiement.montant_paiement < montant_cible:
+            if not is_self and not est_frais_dossier and tranche_cible and tranche_cible.est_primordiale and paiement.montant_paiement < montant_cible:
                 motif = request.POST.get('motif_derogation', '').strip()
                 piece_jointe = request.FILES.get('piece_jointe_derogation')
                 if not motif or not piece_jointe:
@@ -494,6 +498,12 @@ def effectuer_paiment(request, id):
                         "Un motif et une pièce jointe justificative sont obligatoires pour valider un "
                         "règlement inférieur au montant dû de la tranche primordiale."
                     )
+                    return render(request, 'student/paiement/form.html', {
+                        'form': form, 'dette': dette, 'tranche_cible': tranche_cible, 'montant_cible': montant_cible,
+                    })
+                err = _valider_fichier_upload(piece_jointe)
+                if err:
+                    messages.error(request, err)
                     return render(request, 'student/paiement/form.html', {
                         'form': form, 'dette': dette, 'tranche_cible': tranche_cible, 'montant_cible': montant_cible,
                     })
@@ -1818,6 +1828,52 @@ def _can_access_eleve_finances(user, eleve):
     return Inscription.objects.filter(eleve=eleve, formation__centre_id__in=centre_ids).exists()
 
 
+TAILLE_MAX_UPLOAD = 5 * 1024 * 1024  # 5 Mo, aligne sur client_max_body_size de nginx
+
+def _valider_fichier_upload(fichier):
+    """Valide un fichier envoye par un utilisateur (piece jointe justificative,
+    document requis...) : extension ET signature binaire verifiees (empeche
+    un fichier renomme, ex. .html en .pdf), taille max 5 Mo. Formats
+    acceptes : PDF, JPEG, JPG, PNG. Retourne un message d'erreur (str) si
+    invalide, None si le fichier est valide."""
+    if fichier.size > TAILLE_MAX_UPLOAD:
+        return f"« {fichier.name} » dépasse la taille maximale de 5 Mo."
+
+    nom = fichier.name.lower()
+    entete = fichier.read(8)
+    fichier.seek(0)
+
+    if nom.endswith('.pdf'):
+        if entete[:5] != b'%PDF-':
+            return f"« {fichier.name} » n'est pas un fichier PDF valide."
+    elif nom.endswith('.jpg') or nom.endswith('.jpeg'):
+        if entete[:3] != b'\xff\xd8\xff':
+            return f"« {fichier.name} » n'est pas une image JPEG valide."
+    elif nom.endswith('.png'):
+        if entete[:8] != b'\x89PNG\r\n\x1a\n':
+            return f"« {fichier.name} » n'est pas une image PNG valide."
+    else:
+        return f"« {fichier.name} » : formats acceptés — JPEG, JPG, PNG, PDF uniquement."
+
+    return None
+
+
+def _libelle_blocage(dette_bloquante, tranche_bloquante):
+    """Fragment de phrase décrivant ce qui bloque le paiement — une tranche
+    précise, ou le frais entier quand la dette bloquante (ex. frais de
+    dossier) n'a pas de tranches."""
+    if tranche_bloquante:
+        return f"la tranche « {tranche_bloquante.libelle} » de « {dette_bloquante.frais_formation.type_frais} »"
+    return f"le frais « {dette_bloquante.frais_formation.type_frais} »"
+
+
+def _reste_blocage(dette_bloquante, tranche_bloquante):
+    """Montant restant à régler sur la dette/tranche bloquante."""
+    if tranche_bloquante:
+        return dette_bloquante.reste_pour_tranche(tranche_bloquante)
+    return dette_bloquante.reste_a_payer()
+
+
 def _can_access_dette_finances(user, dette):
     """Même contrôle que _can_access_eleve_finances, mais scopé à UNE dette précise."""
     if user.is_superuser:
@@ -2404,6 +2460,7 @@ def stats_dettes_eleve_view(request, eleve_id):
         insc_du = 0
         insc_paye = 0
         insc_reste = 0
+        dossier_impaye = False
 
         for dette in insc.dettes.all():
             paye = dette.montant_paye()
@@ -2415,6 +2472,8 @@ def stats_dettes_eleve_view(request, eleve_id):
             total_restant_global += max(reste, 0)
 
             tranche_cible = dette.tranche_a_payer()
+            if dette.frais_formation.type_frais.est_frais_de_dossier and reste > 0:
+                dossier_impaye = True
 
             dettes_data.append({
                 'id': dette.id,
@@ -2428,11 +2487,12 @@ def stats_dettes_eleve_view(request, eleve_id):
                 'bloquee': dette.bloquee_par_autre_dette(),
                 'montant_a_payer': dette.montant_a_payer(),
                 'tranche_cible_primordiale': bool(tranche_cible and tranche_cible.est_primordiale),
+                'est_frais_dossier': dette.frais_formation.type_frais.est_frais_de_dossier,
             })
 
         dette_bloquante, tranche_bloquante = insc.dette_et_tranche_bloquantes()
         primordiale_bloquante_reste = (
-            dette_bloquante.reste_pour_tranche(tranche_bloquante) if dette_bloquante else 0
+            _reste_blocage(dette_bloquante, tranche_bloquante) if dette_bloquante else 0
         )
 
         inscriptions_dettes.append({
@@ -2441,6 +2501,7 @@ def stats_dettes_eleve_view(request, eleve_id):
             'total_du': insc_du,
             'total_paye': insc_paye,
             'total_reste': insc_reste,
+            'dossier_impaye': dossier_impaye,
             'primordiale_bloquante_reste': primordiale_bloquante_reste,
         })
 
@@ -2451,10 +2512,12 @@ def stats_dettes_eleve_view(request, eleve_id):
     })
 
 
-class _DerogationRequise(Exception):
-    """Levée en cours de cascade multi-dettes quand une tranche primordiale
-    serait sous-payée sans motif/pièce jointe fournis — permet d'annuler
-    (rollback) les paiements déjà enregistrés dans la même transaction."""
+class _CascadeInterrompue(Exception):
+    """Levée en cours de cascade multi-dettes quand un versement ne peut pas
+    être appliqué tel quel (tranche primordiale sous-payée sans motif/pièce
+    jointe fournis, ou frais de dossier réglé partiellement) — permet
+    d'annuler (rollback) les paiements déjà enregistrés dans la même
+    transaction."""
     def __init__(self, message):
         self.message = message
         super().__init__(message)
@@ -2556,8 +2619,7 @@ def stats_encaisser_solde_dette_view(request, dette_id):
     if dette_bloquante and dette_bloquante.id != dette.id:
         messages.error(
             request,
-            f"Il faut d'abord régler entièrement la tranche « {tranche_bloquante.libelle} » "
-            f"de « {dette_bloquante.frais_formation.type_frais} »."
+            f"Il faut d'abord régler entièrement {_libelle_blocage(dette_bloquante, tranche_bloquante)}."
         )
         return redirect(redirect_url)
 
@@ -2578,10 +2640,21 @@ def stats_encaisser_solde_dette_view(request, dette_id):
         messages.error(request, f"Le montant saisi ({montant:,.0f} FCFA) dépasse le reste dû ({reste_dette:,.0f} FCFA).")
         return redirect(redirect_url)
 
+    # Un frais de dossier se règle en une seule fois, intégralement : ni
+    # paiement partiel, ni notion de tranche/dérogation applicable.
+    est_frais_dossier = dette.frais_formation.type_frais.est_frais_de_dossier
+    if est_frais_dossier and montant < reste_dette:
+        messages.error(
+            request,
+            f"Le frais de dossier « {dette.frais_formation.type_frais} » doit être réglé intégralement "
+            f"en un seul versement (montant dû : {reste_dette:,.0f} FCFA)."
+        )
+        return redirect(redirect_url)
+
     tranche_cible = dette.tranche_a_payer()
     motif_derogation = None
     piece_jointe_derogation = None
-    if tranche_cible and tranche_cible.est_primordiale and montant < dette.reste_pour_tranche(tranche_cible):
+    if not est_frais_dossier and tranche_cible and tranche_cible.est_primordiale and montant < dette.reste_pour_tranche(tranche_cible):
         motif_derogation = request.POST.get('motif_derogation', '').strip()
         piece_jointe_derogation = request.FILES.get('piece_jointe_derogation')
         if not motif_derogation or not piece_jointe_derogation:
@@ -2590,6 +2663,10 @@ def stats_encaisser_solde_dette_view(request, dette_id):
                 "Un motif et une pièce jointe justificative sont obligatoires pour valider un "
                 "règlement inférieur au montant dû de la tranche primordiale."
             )
+            return redirect(redirect_url)
+        err = _valider_fichier_upload(piece_jointe_derogation)
+        if err:
+            messages.error(request, err)
             return redirect(redirect_url)
 
     nb, total, _ = _encaisser_montant_dette(dette, montant, mode, request.user, motif_derogation, piece_jointe_derogation)
@@ -2623,6 +2700,22 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
 
     redirect_url = f"{reverse('courses:stats_dettes_eleve', args=[inscription.eleve_id])}?inscription={inscription.id}"
 
+    # Le frais de dossier se règle intégralement via son propre bouton
+    # « Solder ce frais » — « Solder l'inscription » ne devient utilisable
+    # qu'une fois ce frais soldé (cf. bouton grisé côté template).
+    dette_dossier_impayee = next(
+        (d for d in inscription.dettes.all()
+         if d.frais_formation.type_frais.est_frais_de_dossier and d.reste_a_payer() > 0),
+        None
+    )
+    if dette_dossier_impayee:
+        messages.error(
+            request,
+            f"Réglez d'abord entièrement le frais de dossier « {dette_dossier_impayee.frais_formation.type_frais} » "
+            "(bouton « Solder ce frais ») avant de pouvoir solder l'inscription."
+        )
+        return redirect(redirect_url)
+
     mode = request.POST.get('mode_paiement', 'espece')
     montant_str = request.POST.get('montant_paiement', '').strip()
     try:
@@ -2651,6 +2744,11 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
 
     motif_derogation = request.POST.get('motif_derogation', '').strip() or None
     piece_jointe_derogation = request.FILES.get('piece_jointe_derogation')
+    if piece_jointe_derogation:
+        err = _valider_fichier_upload(piece_jointe_derogation)
+        if err:
+            messages.error(request, err)
+            return redirect(redirect_url)
 
     try:
         with transaction.atomic():
@@ -2660,14 +2758,30 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
             for dette in dettes:
                 if restant <= 0:
                     break
-                if dette.reste_a_payer() <= 0:
+                reste_dette = dette.reste_a_payer()
+                if reste_dette <= 0:
+                    continue
+
+                # Un frais de dossier se règle en une seule fois, intégralement :
+                # ni paiement partiel, ni dérogation applicable. Tant qu'il n'est
+                # pas soldé, aucune autre dette n'est de toute façon atteinte ici
+                # (elle est bloquante — cf. dette_et_tranche_bloquantes).
+                if dette.frais_formation.type_frais.est_frais_de_dossier:
+                    if restant < reste_dette:
+                        raise _CascadeInterrompue(
+                            f"Le frais de dossier « {dette.frais_formation.type_frais} » doit être réglé "
+                            f"intégralement en un seul versement (montant dû : {reste_dette:,.0f} FCFA)."
+                        )
+                    nb, total, restant = _encaisser_montant_dette(dette, restant, mode, request.user)
+                    nb_total += nb
+                    montant_total += total
                     continue
 
                 tranche_cible = dette.tranche_a_payer()
                 motif, piece = None, None
                 if tranche_cible and tranche_cible.est_primordiale and restant < dette.reste_pour_tranche(tranche_cible):
                     if not motif_derogation or not piece_jointe_derogation:
-                        raise _DerogationRequise(
+                        raise _CascadeInterrompue(
                             "Un motif et une pièce jointe justificative sont obligatoires pour valider un "
                             f"règlement inférieur au montant dû de la tranche primordiale de « {dette.frais_formation.type_frais} »."
                         )
@@ -2676,7 +2790,7 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
                 nb, total, restant = _encaisser_montant_dette(dette, restant, mode, request.user, motif, piece)
                 nb_total += nb
                 montant_total += total
-    except _DerogationRequise as exc:
+    except _CascadeInterrompue as exc:
         messages.error(request, exc.message)
         return redirect(redirect_url)
 
@@ -2721,8 +2835,7 @@ def stats_detail_dette_view(request, dette_id):
         if dette_bloquante and dette_bloquante.id != dette.id:
             messages.error(
                 request,
-                f"Il faut d'abord régler entièrement la tranche « {tranche_bloquante.libelle} » "
-                f"de « {dette_bloquante.frais_formation.type_frais} »."
+                f"Il faut d'abord régler entièrement {_libelle_blocage(dette_bloquante, tranche_bloquante)}."
             )
             return redirect('courses:stats_detail_dette', dette_id=dette_id)
 
@@ -2746,10 +2859,21 @@ def stats_detail_dette_view(request, dette_id):
             messages.error(request, f"Le montant saisi ({montant:,.0f} FCFA) dépasse le montant dû ({montant_cible:,.0f} FCFA).")
             return redirect('courses:stats_detail_dette', dette_id=dette_id)
 
+        # Un frais de dossier se règle en une seule fois, intégralement : ni
+        # paiement partiel, ni notion de tranche/dérogation applicable.
+        est_frais_dossier = dette.frais_formation.type_frais.est_frais_de_dossier
+        if est_frais_dossier and montant < montant_cible:
+            messages.error(
+                request,
+                f"Le frais de dossier « {dette.frais_formation.type_frais} » doit être réglé intégralement "
+                f"en un seul versement (montant dû : {montant_cible:,.0f} FCFA)."
+            )
+            return redirect('courses:stats_detail_dette', dette_id=dette_id)
+
         # Sous-paiement d'une tranche primordiale : motif + pièce jointe obligatoires.
         motif_derogation = None
         piece_jointe_derogation = None
-        if tranche_cible and tranche_cible.est_primordiale and montant < montant_cible:
+        if not est_frais_dossier and tranche_cible and tranche_cible.est_primordiale and montant < montant_cible:
             motif_derogation = request.POST.get('motif_derogation', '').strip()
             piece_jointe_derogation = request.FILES.get('piece_jointe_derogation')
             if not motif_derogation or not piece_jointe_derogation:
@@ -2758,6 +2882,10 @@ def stats_detail_dette_view(request, dette_id):
                     "Un motif et une pièce jointe justificative sont obligatoires pour valider un "
                     "règlement inférieur au montant dû de la tranche primordiale."
                 )
+                return redirect('courses:stats_detail_dette', dette_id=dette_id)
+            err = _valider_fichier_upload(piece_jointe_derogation)
+            if err:
+                messages.error(request, err)
                 return redirect('courses:stats_detail_dette', dette_id=dette_id)
 
         tranche_num = dette.paiements.count() + 1

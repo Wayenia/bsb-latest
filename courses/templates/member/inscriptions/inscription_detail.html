@@ -31,8 +31,8 @@
             <span class="text-base font-medium text-slate-800">{{ detail.formation.filiere.nom_filiere }}</span>
           </div>
           <div>
-            <span class="text-xs text-slate-400 block mb-1">Anne scoliare</span>
-            <span class="text-base font-medium text-slate-800">{{ detail.annee_scolaire }} mois</span>
+            <span class="text-xs text-slate-400 block mb-1">Année de formation</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.annee_scolaire|default:"—" }}</span>
           </div>
           <div>
             <span class="text-xs text-slate-400 block mb-1">Titre professionnel</span>
@@ -69,11 +69,11 @@
           </div>
           <div>
             <span class="text-xs text-slate-400 block mb-1">Sexe</span>
-            <span class="text-base font-medium text-slate-800">{{detail.eleve.sexe }}</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.eleve.get_sexe_display }}</span>
           </div>
           <div>
             <span class="text-xs text-slate-400 block mb-1">Email</span>
-            <span class="text-base font-medium text-slate-800">{{ detail.eleve.email }}</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.eleve.email|default:"—" }}</span>
           </div>
           {% if detail.eleve.tel %}
           <div>
@@ -95,7 +95,35 @@
           {% endif %}
         </div>
       </div>
-      
+
+      {% comment %} line {% endcomment %}
+      <div class="w-full h-px bg-slate-100 my-8"></div>
+
+      {% comment %} handicap {% endcomment %}
+      <div class="mb-10">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-lg font-light text-slate-800 uppercase">Situation de handicap</h3>
+        </div>
+        {% if detail.eleve.a_handicap %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-12">
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Type de handicap</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.eleve.get_type_handicap_display }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Pièce jointe</span>
+            {% if detail.eleve.piece_jointe_handicap %}
+            <a href="{{ detail.eleve.piece_jointe_handicap.url }}" target="_blank" class="text-base font-medium text-bsb-green hover:underline">Visualiser</a>
+            {% else %}
+            <span class="text-base font-medium text-slate-800">—</span>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <p class="text-sm text-slate-400 py-2">Aucun handicap déclaré.</p>
+        {% endif %}
+      </div>
+
       {% comment %} line {% endcomment %}
       <div class="w-full h-px bg-slate-100 my-8"></div>
 

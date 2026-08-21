@@ -300,6 +300,7 @@ class PaiementForm(BaseModelForm):#
              'montant_paiement': forms.NumberInput(attrs={'placeholder': '50000', 'min': '0', 'step': '1000'}),
             'mode_paiement':forms.Select(attrs={'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'}),
             'motif_derogation': forms.Textarea(attrs={'rows': 2, 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'}),
+            'piece_jointe_derogation': forms.ClearableFileInput(attrs={'accept': '.pdf,.jpg,.jpeg,.png'}),
          }
 
     def __init__(self, *args, **kwargs):
@@ -1283,12 +1284,15 @@ class AnneeScolaireForm(forms.ModelForm):
 class TypeFraisForm(forms.ModelForm):
     class Meta:
         model = TypeFrais
-        fields = ['libelle']
+        fields = ['libelle', 'est_frais_de_dossier']
         widgets = {
             'libelle': forms.TextInput(attrs={
                 'class': 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400',
                 'placeholder': 'Ex : Frais de scolarité, Frais d\'inscription...',
-            })
+            }),
+            'est_frais_de_dossier': forms.CheckboxInput(attrs={
+                'class': 'w-5 h-5 rounded text-indigo-600',
+            }),
         }
 
     def clean_libelle(self):

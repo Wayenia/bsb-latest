@@ -81,7 +81,7 @@
                 type="file"
                 name="{{ doc.libelle_piece }}"
                 id="{{ doc.libelle_piece }}"
-                accept=".pdf,application/pdf"
+                accept=".pdf,.jpg,.jpeg,.png"
                 data-max-size-mo="5"
                 {% if doc.est_requis %}required{% endif %}
                 class="block w-full text-sm text-slate-600 cursor-pointer file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-yellow-600 file:text-white hover:file:bg-yellow-700 file:cursor-pointer file:transition-colors"
@@ -89,7 +89,7 @@
             </div>
 
             <div class="flex items-center gap-4 mt-2">
-              <span class="text-xs text-slate-400">PDF, 5 Mo max par fichier</span>
+              <span class="text-xs text-slate-400">JPEG, JPG, PNG ou PDF — 5 Mo max par fichier</span>
             </div>
             <p class="text-xs text-bsb-red mt-1 hidden" id="err-{{ doc.libelle_piece }}"></p>
           </div>

@@ -129,7 +129,7 @@
                             {{ item.eleve.numero_identifiant|default:"—" }}
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-600">
-                            <div>{{ item.eleve.email }}</div>
+                            <div>{{ item.eleve.email|default:"—" }}</div>
                             <div class="text-xs text-gray-400">{{ item.eleve.tel|default:"—" }}</div>
                         </td>
                         <td class="px-4 py-3 text-center">

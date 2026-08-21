@@ -93,7 +93,7 @@
           <div style="margin-top:.3rem;">
             <span class="eleve-meta">{{ eleve.numero_identifiant|default:"—" }}</span>
             <span class="eleve-meta">{{ eleve.tel|default:"—" }}</span>
-            <span class="eleve-meta">{{ eleve.email }}</span>
+            <span class="eleve-meta">{{ eleve.email|default:"—" }}</span>
           </div>
         </div>
       </div>
@@ -123,10 +123,18 @@
           <div style="font-size:.75rem;opacity:.75;">payé / dû</div>
         </div>
         {% if item.total_reste > 0 and perms.courses.encaisser_paiement %}
-        <button type="button" class="btn-detail" style="background:linear-gradient(135deg,#059669,#10b981);"
-                onclick="event.stopPropagation(); ouvrirModalSolder({url:'{% url 'courses:stats_encaisser_solde_inscription' item.inscription.id %}', cible:'Toute l\'inscription — {{ item.inscription.formation.filiere.nom_filiere|escapejs }}', maxMontant:{{ item.total_reste|floatformat:0 }}, primordiale:{{ item.primordiale_bloquante_reste|floatformat:0 }}});">
-          Solder l'inscription
-        </button>
+          {% if item.dossier_impaye %}
+          <button type="button" class="btn-detail" style="background:#e5e7eb;color:#9ca3af;cursor:not-allowed;"
+                  onclick="event.stopPropagation();"
+                  disabled title="Réglez d'abord entièrement le frais de dossier (bouton « Solder ce frais ») avant de pouvoir solder l'inscription">
+            Solder l'inscription
+          </button>
+          {% else %}
+          <button type="button" class="btn-detail" style="background:linear-gradient(135deg,#059669,#10b981);"
+                  onclick="event.stopPropagation(); ouvrirModalSolder({url:'{% url 'courses:stats_encaisser_solde_inscription' item.inscription.id %}', cible:'Toute l\'inscription — {{ item.inscription.formation.filiere.nom_filiere|escapejs }}', maxMontant:{{ item.total_reste|floatformat:0 }}, primordiale:{{ item.primordiale_bloquante_reste|floatformat:0 }}});">
+            Solder l'inscription
+          </button>
+          {% endif %}
         {% endif %}
       </div>
     </div>
@@ -249,9 +257,9 @@
       <div style="margin-bottom:1.1rem;">
         <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Mode de paiement</label>
         <select name="mode_paiement" style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;">
+          <option value="espece" selected>Espèce</option>
           <option value="mobile">Mobile Money</option>
           <option value="chèque">Chèque</option>
-          <option value="espece">Espèce</option>
         </select>
       </div>
       <div id="modal-derogation-wrap" style="margin-bottom:1.1rem;display:none;">
@@ -262,8 +270,9 @@
         <textarea name="motif_derogation" id="modal-motif-derogation" rows="2"
                   style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;margin-bottom:.5rem;"></textarea>
         <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Pièce jointe justificative</label>
-        <input type="file" name="piece_jointe_derogation" id="modal-piece-jointe-derogation"
+        <input type="file" name="piece_jointe_derogation" id="modal-piece-jointe-derogation" accept=".pdf,.jpg,.jpeg,.png"
                style="width:100%;padding:.6rem;border:2px dashed #f0b429;background:#fffbeb;border-radius:8px;font-size:.85rem;">
+        <p style="font-size:.72rem;color:#9ca3af;margin-top:.3rem;">JPEG, JPG, PNG ou PDF — 5 Mo max</p>
       </div>
       <div style="display:flex;gap:.6rem;">
         <button type="button" onclick="fermerModalPaiement()" style="flex:1;padding:.6rem;border-radius:8px;border:2px solid #e2e8f0;background:#fff;color:#374151;font-weight:600;font-size:.85rem;cursor:pointer;">Annuler</button>
@@ -311,8 +320,9 @@
         <textarea name="motif_derogation" id="modal-solder-motif-derogation" rows="2"
                   style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;margin-bottom:.5rem;"></textarea>
         <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Pièce jointe justificative</label>
-        <input type="file" name="piece_jointe_derogation" id="modal-solder-piece-jointe-derogation"
+        <input type="file" name="piece_jointe_derogation" id="modal-solder-piece-jointe-derogation" accept=".pdf,.jpg,.jpeg,.png"
                style="width:100%;padding:.6rem;border:2px dashed #f0b429;background:#fffbeb;border-radius:8px;font-size:.85rem;">
+        <p style="font-size:.72rem;color:#9ca3af;margin-top:.3rem;">JPEG, JPG, PNG ou PDF — 5 Mo max</p>
       </div>
       <div style="margin-bottom:1.1rem;">
         <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Mode de paiement</label>

@@ -5,7 +5,7 @@ import string
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, FileExtensionValidator
 
 # Format international (E.164) : + suivi de l'indicatif pays puis du numéro
 # local. La validation précise du nombre de chiffres selon le pays est faite
@@ -19,7 +19,7 @@ phone_validator = RegexValidator(
 class Utilisateur(AbstractUser):
     SEXE_CHOICE = [
         ("m", "Masculin"),
-        ("f", "Feminin")
+        ("f", "Féminin")
     ]
     USER_TYPE = [
         ("eleve", "Eleve"),
@@ -145,6 +145,7 @@ class Eleve(Utilisateur):
     piece_jointe_handicap = models.FileField(
         upload_to='eleves/handicap/', blank=True, null=True,
         verbose_name="Pièce jointe (Attestation/Certificat d'indigence)",
+        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
     )
 
     numero_identifiant = models.CharField(
@@ -562,7 +563,8 @@ class Paiement_prestation(models.Model):
 
     mode_paiement=models.CharField(
         max_length=20,
-        choices=MODE_PAIEMENT
+        choices=MODE_PAIEMENT,
+        default="espece"
     )
 
     reference=models.CharField(

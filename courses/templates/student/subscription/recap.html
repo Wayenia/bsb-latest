@@ -82,7 +82,7 @@
           </div>
           <div>
             <span class="text-xs text-slate-400 block mb-1">Email</span>
-            <span class="text-base font-medium text-slate-800">{{ student.email }}</span>
+            <span class="text-base font-medium text-slate-800">{{ student.email|default:"—" }}</span>
           </div>
           {% if student.tel %}
           <div>

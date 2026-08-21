@@ -453,6 +453,11 @@ class EffectifReel(models.Model):
 #Type de frais
 class TypeFrais(models.Model):
     libelle=models.CharField(max_length=100,verbose_name="Type de frais")
+    est_frais_de_dossier = models.BooleanField(
+        default=False,
+        verbose_name="Frais de dossier",
+        help_text="Ce type de frais doit être réglé en priorité, avant tout autre type de frais de l'inscription."
+    )
 
     def __str__(self):
         return self.libelle
@@ -590,13 +595,32 @@ class Inscription(models.Model):
 
     def dette_et_tranche_bloquantes(self):
         """
-        Retourne (dette, tranche_frais) de la tranche primordiale non soldée qui
-        doit être réglée avant toute autre tranche ou tout autre type de frais
-        de cette inscription — ou (None, None) si aucune ne bloque.
+        Retourne (dette, tranche_frais) de la dette/tranche qui doit être
+        réglée en priorité avant toute autre dette de cette inscription — ou
+        (None, None) si aucune ne bloque.
+
+        Ordre de priorité :
+        1. Le(s) type(s) de frais marqué(s) « frais de dossier »
+           (TypeFrais.est_frais_de_dossier) : ils doivent être intégralement
+           soldés avant tout le reste, quel que soit l'ordre des dettes ou
+           l'existence d'une tranche primordiale ailleurs dans l'inscription.
+           `tranche_frais` vaut alors la prochaine tranche à régler pour
+           cette dette (logique de tranches inchangée), ou None si ce type
+           de frais n'a pas de tranches (réglé en un seul versement).
+        2. À défaut, la tranche primordiale non soldée de la première dette
+           (par id) qui en a une — comportement historique inchangé.
         """
-        for dette in self.dettes.select_related('frais_formation__type_frais').prefetch_related(
-            'frais_formation__type_frais__tranches', 'paiements'
-        ).order_by('id'):
+        dettes = list(
+            self.dettes.select_related('frais_formation__type_frais').prefetch_related(
+                'frais_formation__type_frais__tranches', 'paiements'
+            ).order_by('id')
+        )
+
+        for dette in dettes:
+            if dette.frais_formation.type_frais.est_frais_de_dossier and dette.reste_a_payer() > 0:
+                return dette, dette.tranche_a_payer()
+
+        for dette in dettes:
             primordiale = dette.tranche_primordiale()
             if primordiale and dette.reste_pour_tranche(primordiale) > 0:
                 return dette, primordiale
@@ -743,7 +767,7 @@ class DocumentEleve(models.Model):
     piece_requise=models.ForeignKey(PieceJointeInscription,on_delete=models.SET_NULL, null=True, blank=True,verbose_name="Documents requis")
     piece = models.FileField(
         upload_to='eleves/pieces', blank=True, null=True, verbose_name="Fichier",
-        validators=[FileExtensionValidator(['pdf'])],
+        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
     )
     date_depot = models.DateTimeField(blank=True,null=True, verbose_name="Date de depot")
 
@@ -766,7 +790,7 @@ class Paiement(models.Model):
     dette=models.ForeignKey(Dette,on_delete=models.CASCADE,verbose_name="Dettes",related_name='paiements',null=True)
     montant_paiement = models.FloatField(verbose_name="Montant")
     date_paiement = models.DateTimeField(default=timezone.now ,verbose_name="Date de Paiement")
-    mode_paiement = models.CharField(max_length=30, choices=PAYMENT_MODE, default="mobile", verbose_name="Mode de paiement")
+    mode_paiement = models.CharField(max_length=30, choices=PAYMENT_MODE, default="espece", verbose_name="Mode de paiement")
     tranche = models.IntegerField(verbose_name="Tranche de paiement")
     tranche_frais = models.ForeignKey(
         TrancheFrais, on_delete=models.SET_NULL, null=True, blank=True,
@@ -782,7 +806,8 @@ class Paiement(models.Model):
     )
     piece_jointe_derogation = models.FileField(
         upload_to='paiements/derogations/', blank=True, null=True,
-        verbose_name="Pièce jointe justificative de la dérogation"
+        verbose_name="Pièce jointe justificative de la dérogation",
+        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
     )
     effectue_par = models.ForeignKey(
     'accounts.Utilisateur',

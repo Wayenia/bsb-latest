@@ -62,7 +62,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ e.numero_identifiant|default:"—" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            <div>{{ e.email }}</div>
+                            <div>{{ e.email|default:"—" }}</div>
                             <div class="text-xs text-gray-400">{{ e.tel|default:"—" }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right">

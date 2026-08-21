@@ -62,7 +62,7 @@
         <div class="font-bold text-lg mb-1" style="color:#374151;">{{ eleve.nom }} {{ eleve.prenom }}</div>
         <div class="text-gray-500 text-sm mb-1">{{ eleve.numero_identifiant|default:"—" }}</div>
         <div class="text-gray-500 text-sm mb-1">{{ eleve.tel|default:"—" }}</div>
-        <div class="text-gray-500 text-sm">{{ eleve.email }}</div>
+        <div class="text-gray-500 text-sm">{{ eleve.email|default:"—" }}</div>
       </div>
     </div>
     <div class="w-full md:flex-1">
@@ -322,9 +322,9 @@
             Mode de paiement <span class="text-red-600">*</span>
           </label>
           <select name="mode_paiement" class="form-control-custom" required>
+            <option value="espece" selected> Espèce</option>
             <option value="mobile"> Mobile Money</option>
             <option value="chèque"> Chèque</option>
-            <option value="espece"> Espèce</option>
           </select>
         </div>
 
@@ -338,8 +338,9 @@
           <textarea name="motif_derogation" id="motifDerogation" class="form-control-custom mb-2" rows="2"></textarea>
           <label class="block font-semibold text-sm text-gray-500 mb-1">Pièce jointe justificative <span class="text-red-600">*</span></label>
           <div style="border:2px dashed #f0b429; background:#fffbeb; border-radius:10px; padding:.75rem;">
-            <input type="file" name="piece_jointe_derogation" id="pieceJointeDerogation" style="border:0; background:transparent; width:100%;">
+            <input type="file" name="piece_jointe_derogation" id="pieceJointeDerogation" accept=".pdf,.jpg,.jpeg,.png" style="border:0; background:transparent; width:100%;">
           </div>
+          <p class="text-xs text-gray-400 mt-1">JPEG, JPG, PNG ou PDF — 5 Mo max</p>
         </div>
 
         {% comment %} Enregistré par (info) {% endcomment %}

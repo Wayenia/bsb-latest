@@ -2,16 +2,31 @@ from rest_framework import serializers
 from accounts.models import Utilisateur, Eleve
 
 
-def _valider_pdf(fichier):
+TAILLE_MAX_UPLOAD = 5 * 1024 * 1024  # 5 Mo, aligne sur client_max_body_size de nginx
+
+def _valider_fichier_upload(fichier):
     """Meme convention que le reste de l'app : extension ET signature
-    binaire verifiees, pour empecher un fichier renomme en .pdf (vecteur XSS
-    stocke contre le personnel qui ouvre ces documents)."""
-    if not fichier.name.lower().endswith('.pdf'):
-        raise serializers.ValidationError("Le fichier doit être un PDF (.pdf).")
-    entete = fichier.read(5)
+    binaire verifiees (empeche un fichier renomme, ex. .html en .pdf —
+    vecteur XSS stocke contre le personnel qui ouvre ces documents), taille
+    max 5 Mo. Formats acceptes : PDF, JPEG, JPG, PNG."""
+    if fichier.size > TAILLE_MAX_UPLOAD:
+        raise serializers.ValidationError("Le fichier dépasse la taille maximale de 5 Mo.")
+
+    nom = fichier.name.lower()
+    entete = fichier.read(8)
     fichier.seek(0)
-    if entete != b'%PDF-':
-        raise serializers.ValidationError("Le fichier n'est pas un PDF valide.")
+
+    if nom.endswith('.pdf'):
+        if entete[:5] != b'%PDF-':
+            raise serializers.ValidationError("Le fichier n'est pas un PDF valide.")
+    elif nom.endswith('.jpg') or nom.endswith('.jpeg'):
+        if entete[:3] != b'\xff\xd8\xff':
+            raise serializers.ValidationError("Le fichier n'est pas une image JPEG valide.")
+    elif nom.endswith('.png'):
+        if entete[:8] != b'\x89PNG\r\n\x1a\n':
+            raise serializers.ValidationError("Le fichier n'est pas une image PNG valide.")
+    else:
+        raise serializers.ValidationError("Formats acceptés : JPEG, JPG, PNG, PDF uniquement.")
 
 
 # REGISTER
@@ -69,7 +84,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             piece = attrs.get('piece_jointe_handicap')
             if not piece:
                 raise serializers.ValidationError({"piece_jointe_handicap": "La pièce jointe est obligatoire."})
-            _valider_pdf(piece)
+            _valider_fichier_upload(piece)
         else:
             attrs['type_handicap'] = None
             attrs['piece_jointe_handicap'] = None

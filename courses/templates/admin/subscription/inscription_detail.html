@@ -73,7 +73,7 @@
           </div>
           <div>
             <span class="text-xs text-slate-400 block mb-1">Email</span>
-            <span class="text-base font-medium text-slate-800">{{ detail.eleve.email }}</span>
+            <span class="text-base font-medium text-slate-800">{{ detail.eleve.email|default:"—" }}</span>
           </div>
           {% if detail.eleve.tel %}
           <div>
