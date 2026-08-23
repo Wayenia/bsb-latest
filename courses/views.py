@@ -233,6 +233,7 @@ def personal_info_view(request, career_id):
         'tel': eleve.tel or '',
         'date_naissance': eleve.date_naissance or '',
         'lieu_naissance': eleve.lieu_naissance or '',
+        'niveau_scolaire': eleve.niveau_scolaire or '',
     }
     if rejected_inscription:
         initial.update({
@@ -266,6 +267,7 @@ def personal_info_view(request, career_id):
         eleve.tel = form.cleaned_data.get('tel', '')
         eleve.date_naissance = form.cleaned_data.get('date_naissance')
         eleve.lieu_naissance = form.cleaned_data.get('lieu_naissance', '')
+        eleve.niveau_scolaire = form.cleaned_data.get('niveau_scolaire', '')
         eleve.save()
 
         request.session['student_data'] = {
@@ -276,6 +278,7 @@ def personal_info_view(request, career_id):
             'tel': eleve.tel,
             'date_naissance': str(eleve.date_naissance or ''),
             'lieu_naissance': eleve.lieu_naissance,
+            'niveau_scolaire': eleve.get_niveau_scolaire_display(),
             'type_personne_contact': form.cleaned_data.get('type_personne_contact', ''),
             'nom_personne': form.cleaned_data.get('nom_personne', ''),
             'prenom_personne': form.cleaned_data.get('prenom_personne', ''),
@@ -2097,7 +2100,7 @@ def export_csv(request):
     writer = csv.writer(response, delimiter=";")
 
     if export_type == "inscriptions":
-        writer.writerow(["N°", "Apprenant", "Identifiant", "Sexe", "Téléphone", "Email", "Métier", "Centre", "Direction", "Année", "Statut", "Date inscription"])
+        writer.writerow(["N°", "Apprenant", "Matricule", "Sexe", "Téléphone", "Email", "Métier", "Centre", "Direction", "Année", "Statut", "Date inscription"])
         for i, insc in enumerate(
             inscriptions_qs.select_related(
                 "eleve", "formation__filiere", "formation__centre__direction", "annee_scolaire"
@@ -2106,7 +2109,7 @@ def export_csv(request):
             writer.writerow([
                 i,
                 f"{insc.eleve.nom} {insc.eleve.prenom}" if insc.eleve else "—",
-                insc.eleve.numero_identifiant if insc.eleve else "—",
+                (insc.eleve.matricule or "—") if insc.eleve else "—",
                 insc.eleve.get_sexe_display() if insc.eleve else "—",
                 insc.eleve.tel if insc.eleve else "—",
                 insc.eleve.email if insc.eleve else "—",
@@ -2184,7 +2187,7 @@ def export_excel(request):
 
     if export_type == "inscriptions":
         ws.title = "Inscriptions"
-        headers = ["N°","Apprenant","Identifiant","Sexe","Téléphone","Email","Métier","Centre","Direction","Année","Statut","Date"]
+        headers = ["N°","Apprenant","Matricule","Sexe","Téléphone","Email","Métier","Centre","Direction","Année","Statut","Date"]
         ws.append(headers)
         style_header(ws[1])
         for i, insc in enumerate(
@@ -2195,7 +2198,7 @@ def export_excel(request):
             ws.append([
                 i,
                 f"{insc.eleve.nom} {insc.eleve.prenom}" if insc.eleve else "—",
-                insc.eleve.numero_identifiant if insc.eleve else "—",
+                (insc.eleve.matricule or "—") if insc.eleve else "—",
                 insc.eleve.get_sexe_display() if insc.eleve else "—",
                 insc.eleve.tel if insc.eleve else "—",
                 insc.eleve.email if insc.eleve else "—",
@@ -2329,7 +2332,7 @@ def export_pdf(request):
         story.append(Paragraph("Rapport des Inscriptions — BSB", title_style))
         story.append(Paragraph(f"Généré le {now}  |  {inscriptions_qs.count()} inscription(s)", sub_style))
 
-        data = [["N°", "Apprenant", "Identifiant", "Métier", "Centre", "Année", "Statut", "Date"]]
+        data = [["N°", "Apprenant", "Matricule", "Métier", "Centre", "Année", "Statut", "Date"]]
         for i, insc in enumerate(
             inscriptions_qs.select_related(
                 "eleve","formation__filiere","formation__centre","annee_scolaire"
@@ -2338,7 +2341,7 @@ def export_pdf(request):
             data.append([
                 str(i),
                 cell(f"{insc.eleve.nom} {insc.eleve.prenom}") if insc.eleve else "—",
-                cell(insc.eleve.numero_identifiant) if insc.eleve and insc.eleve.numero_identifiant else "—",
+                cell(insc.eleve.matricule) if insc.eleve and insc.eleve.matricule else "—",
                 cell(insc.formation.filiere.nom_filiere) if insc.formation and insc.formation.filiere else "—",
                 cell(insc.formation.centre.nom_centre) if insc.formation and insc.formation.centre else "—",
                 insc.annee_scolaire.libelle_anne if insc.annee_scolaire else "—",
@@ -3531,12 +3534,12 @@ def formateur_export(request, formation_id, format):
         )
         rows.append({
             'N°': i,
-            'Identifiant': insc.eleve.numero_identifiant or '—',
+            'Matricule': insc.eleve.matricule or '—',
             'Nom': insc.eleve.nom,
             'Prénom': insc.eleve.prenom,
             'Sexe': insc.eleve.get_sexe_display() if hasattr(insc.eleve, 'get_sexe_display') else insc.eleve.sexe,
             'Téléphone': insc.eleve.tel or '—',
-            'Email': insc.eleve.email,
+            'Email': insc.eleve.email or '—',
             'Statut inscription': insc.get_statut_display(),
             'Total dû (FCFA)': total_du,
             'Total payé (FCFA)': total_paye,
@@ -3549,7 +3552,7 @@ def formateur_export(request, formation_id, format):
     # En-têtes fixes (mêmes noms de colonnes que les données), écrites
     # inconditionnellement — même logique que les exports de statistiques.
     headers = [
-        'N°', 'Identifiant', 'Nom', 'Prénom', 'Sexe', 'Téléphone', 'Email',
+        'N°', 'Matricule', 'Nom', 'Prénom', 'Sexe', 'Téléphone', 'Email',
         'Statut inscription', 'Total dû (FCFA)', 'Total payé (FCFA)', 'Reste (FCFA)', 'A payé',
     ]
 

@@ -97,9 +97,15 @@
           </div>
           {% endif %}
           {% if student.lieu_naissance %}
-          <div class="md:col-span-2 lg:col-span-3">
+          <div>
             <span class="text-xs text-slate-400 block mb-1">Lieu de naissance</span>
             <span class="text-base font-medium text-slate-800">{{ student.lieu_naissance }}</span>
+          </div>
+          {% endif %}
+          {% if student.niveau_scolaire %}
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Niveau scolaire</span>
+            <span class="text-base font-medium text-slate-800">{{ student.niveau_scolaire }}</span>
           </div>
           {% endif %}
         </div>

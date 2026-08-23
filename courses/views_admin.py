@@ -3,9 +3,14 @@ from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.http import HttpResponse
+from django.conf import settings
 import qrcode
+import csv
+import io
+import os
 from django.db.models import Q, Sum, Count
-from accounts.models import Utilisateur, Formateur, MembreAdministration
+from accounts.models import Utilisateur, Formateur, MembreAdministration, HistoriqueConnexion
 from .forms import AgentForm
 from courses.models import TypeFrais, TrancheFrais
 from courses.forms import TypeFraisForm, TrancheFraisFormSet
@@ -24,7 +29,7 @@ from .forms import (
 from accounts.models import Eleve,Formateur
 from .admin_filters import FormationFilter,FiliereFilter,SubscriptionFilter
 from django.db.models import Sum
-from .views import _get_scope
+from .views import _get_scope, _pdf_header_lines, _draw_pdf_watermark
 
 
 def _filiere_modules_map():
@@ -590,6 +595,9 @@ def subscription_create(request):
 @require_permission('courses.valider_inscription')
 def subscription_update(request, id):
     subscription = get_object_or_404(Inscription, id=id)
+    if subscription.statut not in ('en_cours', 'rejete'):
+        messages.error(request, "Cette inscription est validée : elle ne peut plus être modifiée.")
+        return redirect('bsb_admin:subscription_list')
     if request.method == 'POST':
         form = InscriptionForm(request.POST, instance=subscription)
         if form.is_valid():
@@ -603,6 +611,9 @@ def subscription_update(request, id):
 @require_permission('courses.valider_inscription')
 def subscription_delete(request, id):
     subscription = get_object_or_404(Inscription, id=id)
+    if subscription.statut not in ('en_cours', 'rejete'):
+        messages.error(request, "Cette inscription est validée : elle ne peut plus être supprimée.")
+        return redirect('bsb_admin:subscription_list')
     if request.method == 'POST':
         subscription.delete()
         messages.success(request, 'Inscription supprimée avec succès!')
@@ -791,6 +802,229 @@ def payment_delete(request, id):
         messages.success(request, 'Paiement supprimé avec succès!')
         return redirect('bsb_admin:payment_list')
     return render(request, 'admin/payment/confirm_delete.html', {'object': payment})
+
+
+# ─────────────────────────────────────────────
+# HISTORIQUE DES CONNEXIONS
+# ─────────────────────────────────────────────
+def _historique_connexion_filtered(request):
+    centres_qs, _, scope = _get_scope(request.user)
+    qs = HistoriqueConnexion.objects.select_related('utilisateur', 'centre').order_by('-date_evenement')
+    if scope != "global":
+        # Les evenements sans centre (eleves, comptes sans role de centre)
+        # restent visibles : seuls ceux d'un AUTRE centre sont exclus.
+        qs = qs.filter(Q(centre__in=centres_qs) | Q(centre__isnull=True))
+
+    centre_id = request.GET.get('centre', '').strip()
+    if centre_id:
+        qs = qs.filter(centre_id=centre_id)
+
+    date_debut = request.GET.get('date_debut', '').strip()
+    if date_debut:
+        qs = qs.filter(date_evenement__date__gte=date_debut)
+
+    date_fin = request.GET.get('date_fin', '').strip()
+    if date_fin:
+        qs = qs.filter(date_evenement__date__lte=date_fin)
+
+    q = request.GET.get('q', '').strip()
+    if q:
+        qs = qs.filter(Q(username__icontains=q) | Q(nom_complet__icontains=q))
+
+    type_utilisateur = request.GET.get('type_utilisateur', '').strip()
+    if type_utilisateur == 'apprenant':
+        qs = qs.filter(est_apprenant=True)
+    elif type_utilisateur == 'autre':
+        qs = qs.filter(est_apprenant=False)
+
+    return qs, centres_qs
+
+
+@require_permission('accounts.voir_historique_connexion')
+def historique_connexion_list(request):
+    qs, centres_qs = _historique_connexion_filtered(request)
+    paginator = Paginator(qs, 10)
+    page = request.GET.get('page')
+    return render(request, 'admin/historique_connexion/list.html', {
+        'historique': paginator.get_page(page),
+        'centres': centres_qs.order_by('nom_centre'),
+        'centre_selectionne': request.GET.get('centre', ''),
+        'date_debut': request.GET.get('date_debut', ''),
+        'date_fin': request.GET.get('date_fin', ''),
+        'type_utilisateur': request.GET.get('type_utilisateur', ''),
+        'q': request.GET.get('q', ''),
+    })
+
+
+def _historique_connexion_resume_filtres(request, centres_qs):
+    """Phrase récapitulant les filtres actifs — reprise telle quelle dans
+    chaque fichier exporté, pour que le contenu du fichier reste traçable
+    même une fois détaché de l'écran qui l'a généré."""
+    parties = []
+    centre_id = request.GET.get('centre', '').strip()
+    if centre_id:
+        centre = centres_qs.filter(pk=centre_id).first()
+        parties.append(f"Centre : {centre.nom_centre if centre else centre_id}")
+    date_debut = request.GET.get('date_debut', '').strip()
+    date_fin = request.GET.get('date_fin', '').strip()
+    if date_debut or date_fin:
+        parties.append(f"Période : du {date_debut or '…'} au {date_fin or '…'}")
+    q = request.GET.get('q', '').strip()
+    if q:
+        parties.append(f"Recherche : « {q} »")
+    type_utilisateur = request.GET.get('type_utilisateur', '').strip()
+    if type_utilisateur == 'apprenant':
+        parties.append("Type : Apprenant")
+    elif type_utilisateur == 'autre':
+        parties.append("Type : Autre")
+    return " | ".join(parties) if parties else "Aucun filtre appliqué"
+
+
+@require_permission('accounts.voir_historique_connexion')
+def historique_connexion_export(request, format):
+    qs, centres_qs = _historique_connexion_filtered(request)
+    resume_filtres = _historique_connexion_resume_filtres(request, centres_qs)
+    rows = [{
+        'Date connexion/déconnexion': h.date_evenement.strftime('%d/%m/%Y %H:%M'),
+        'Utilisateur': h.nom_complet or h.username,
+        "Nom d'utilisateur": h.username,
+        'Type': 'Apprenant' if h.est_apprenant else 'Autre',
+        'Événement': h.get_type_evenement_display(),
+        'Centre': h.centre.nom_centre if h.centre else '—',
+        'Adresse IP': h.adresse_ip or '—',
+    } for h in qs]
+
+    headers = ['Date connexion/déconnexion', 'Utilisateur', "Nom d'utilisateur", 'Type', 'Événement', 'Centre', 'Adresse IP']
+
+    if format == 'csv':
+        response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+        response['Content-Disposition'] = 'attachment; filename="historique_connexions.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["Historique des connexions — BSB"])
+        writer.writerow([f"Généré le {timezone.now().strftime('%d/%m/%Y %H:%M')}"])
+        writer.writerow([f"Filtres : {resume_filtres}"])
+        writer.writerow([f"{len(rows)} événement(s)"])
+        writer.writerow([])
+        dict_writer = csv.DictWriter(response, fieldnames=headers)
+        dict_writer.writeheader()
+        dict_writer.writerows(rows)
+        return response
+
+    elif format == 'xlsx':
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment
+        from openpyxl.cell.cell import MergedCell
+        from openpyxl.utils import get_column_letter
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Historique connexions"
+
+        ws.append(["Historique des connexions — BSB"])
+        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
+        ws['A1'].font = Font(bold=True, size=13)
+        ws['A1'].alignment = Alignment(horizontal='center')
+
+        ws.append([f"Généré le {timezone.now().strftime('%d/%m/%Y %H:%M')}  —  Filtres : {resume_filtres}  —  {len(rows)} événement(s)"])
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=len(headers))
+        ws['A2'].font = Font(italic=True, size=9, color="6B7280")
+        ws['A2'].alignment = Alignment(horizontal='center')
+
+        ws.append([])
+        ws.append(headers)
+        header_row = ws.max_row
+        header_fill = PatternFill("solid", fgColor="C0392B")
+        for cell_ in ws[header_row]:
+            cell_.font = Font(bold=True, color="FFFFFF")
+            cell_.fill = header_fill
+            cell_.alignment = Alignment(horizontal='center')
+        for row in rows:
+            ws.append(list(row.values()))
+        for col in ws.columns:
+            first_valid_cell = next((c for c in col if not isinstance(c, MergedCell)), None)
+            if first_valid_cell:
+                ws.column_dimensions[get_column_letter(first_valid_cell.column)].width = 24
+
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        response = HttpResponse(
+            buffer,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="historique_connexions.xlsx"'
+        return response
+
+    elif format == 'pdf':
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib import colors as rl_colors
+        from reportlab.lib.units import cm
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, pagesize=landscape(A4),
+            leftMargin=1.5*cm, rightMargin=1.5*cm, topMargin=1.5*cm, bottomMargin=1.5*cm
+        )
+        styles = getSampleStyleSheet()
+        elements = []
+
+        # En-tête officiel (ministère/BSB + logo), identique aux autres exports PDF.
+        favicon_path = os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
+        header_line_style = ParagraphStyle(
+            'header_line', parent=styles['Normal'], fontSize=6, leading=8,
+            alignment=1, fontName='Helvetica-Bold',
+        )
+        header_left, header_right = _pdf_header_lines()
+        header_table = Table(
+            [[
+                Paragraph('<br/>'.join(header_left), header_line_style),
+                Image(favicon_path, width=1.6*cm, height=1.6*cm),
+                Paragraph('<br/>'.join(header_right), header_line_style),
+            ]],
+            colWidths=[12*cm, 3*cm, 12*cm],
+        )
+        header_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        elements.append(header_table)
+        elements.append(Spacer(1, 12))
+
+        title_style = ParagraphStyle('title', parent=styles['Heading1'], fontSize=14, spaceAfter=6, alignment=1)
+        sub_style = ParagraphStyle('sub', parent=styles['Normal'], fontSize=9, spaceAfter=12, alignment=1, textColor=rl_colors.grey)
+        elements.append(Paragraph("Historique des connexions — BSB", title_style))
+        elements.append(Paragraph(
+            f"Généré le {timezone.now().strftime('%d/%m/%Y %H:%M')} | Filtres : {resume_filtres} | {len(rows)} événement(s)",
+            sub_style
+        ))
+
+        data = [headers] + [list(row.values()) for row in rows[:1000]]
+        t = Table(data, repeatRows=1)
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), rl_colors.HexColor("#C0392B")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), rl_colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 0.5, rl_colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [rl_colors.white, rl_colors.HexColor('#F9FAFB')]),
+        ]))
+        elements.append(t)
+
+        def _watermark_page(canvas_obj, doc_obj):
+            _draw_pdf_watermark(canvas_obj, doc_obj.pagesize[0], doc_obj.pagesize[1], favicon_path)
+
+        doc.build(elements, onFirstPage=_watermark_page, onLaterPages=_watermark_page)
+        buffer.seek(0)
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="historique_connexions.pdf"'
+        return response
+
+    return redirect('bsb_admin:historique_connexion_list')
+
 
 #CRUD PROGRAMMING
 
@@ -1116,6 +1350,7 @@ MATRIX_PERMISSIONS = [
     ('gerer_agents', "Gérer les comptes utilisateurs", 'accounts'),
     ('gerer_eleves', "Gérer les comptes apprenants", 'accounts'),
     ('gerer_permissions', "Gérer les permissions", 'accounts'),
+    ('voir_historique_connexion', "Voir l'historique des connexions", 'accounts'),
     ('voir_inscriptions', "Voir les candidatures", 'courses'),
     ('valider_inscription', "Valider une candidature", 'courses'),
     ('rejeter_inscription', "Rejeter une candidature", 'courses'),

@@ -58,7 +58,7 @@
             d.className = 'h-2.5 rounded-full transition-all duration-300 ' +
                 (i === current ? 'w-6 bg-bsb-primary' : 'w-2.5 bg-gray-300');
             d.setAttribute('aria-label', 'Aller à la formation ' + (i + 1));
-            d.addEventListener('click', () => goTo(i));
+            d.addEventListener('click', () => { goTo(i); restartAutoplay(); });
             dotsContainer.appendChild(d);
         }
     }
@@ -81,8 +81,8 @@
         nextBtn.classList.toggle('opacity-40', current === maxIndex());
     }
 
-    prevBtn.addEventListener('click', () => goTo(current - 1));
-    nextBtn.addEventListener('click', () => goTo(current + 1));
+    prevBtn.addEventListener('click', () => { goTo(current - 1); restartAutoplay(); });
+    nextBtn.addEventListener('click', () => { goTo(current + 1); restartAutoplay(); });
 
     // Touch / swipe
     let startX = 0;
@@ -90,14 +90,40 @@
     track.addEventListener('touchend', e => {
         const diff = startX - e.changedTouches[0].clientX;
         if (Math.abs(diff) > 50) goTo(diff > 0 ? current + 1 : current - 1);
+        restartAutoplay();
     });
+
+    // Défilement automatique : avance seule toutes les 4s et boucle à la fin ;
+    // l'utilisateur garde la main (flèches, points, swipe) — chaque interaction
+    // relance simplement le minuteur au lieu de le bloquer définitivement.
+    const AUTOPLAY_DELAY = 4000;
+    let autoplayTimer = null;
+
+    function stopAutoplay() {
+        if (autoplayTimer) { clearInterval(autoplayTimer); autoplayTimer = null; }
+    }
+
+    function startAutoplay() {
+        stopAutoplay();
+        if (maxIndex() === 0) return; // rien à faire défiler
+        autoplayTimer = setInterval(() => {
+            goTo(current >= maxIndex() ? 0 : current + 1);
+        }, AUTOPLAY_DELAY);
+    }
+
+    function restartAutoplay() { startAutoplay(); }
+
+    const wrapper = document.getElementById('carousel-wrapper');
+    wrapper.addEventListener('mouseenter', stopAutoplay);
+    wrapper.addEventListener('mouseleave', startAutoplay);
 
     // Init & resize
     function init() {
         buildDots();
         goTo(0);
+        startAutoplay();
     }
 
     init();
-    window.addEventListener('resize', () => { buildDots(); goTo(Math.min(current, maxIndex())); });
+    window.addEventListener('resize', () => { buildDots(); goTo(Math.min(current, maxIndex())); restartAutoplay(); });
 })();

@@ -107,6 +107,7 @@
                                     <tr class="hover:bg-gray-50 transition-colors">
                                         <td class="pl-16 pr-6 py-3.5 whitespace-nowrap text-sm font-bold text-gray-900">
                                             {{ insc.eleve.nom }} {{ insc.eleve.prenom }}
+                                            <div class="text-xs font-normal text-gray-400">{{ insc.eleve.matricule|default:"—" }}</div>
                                         </td>
                                         <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900">
                                             {{ insc.formation.filiere }}
@@ -250,6 +251,7 @@
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                             {{ insc.eleve.nom }} {{ insc.eleve.prenom }}
+                            <div class="text-xs font-normal text-gray-400">{{ insc.eleve.matricule|default:"—" }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ insc.formation.filiere }}
@@ -357,7 +359,7 @@
                     {{ insc.eleve.nom }} {{ insc.eleve.prenom }}
                 </h2>
                 <p class="text-sm text-gray-500 mt-0.5">
-                    {{ insc.formation.centre }} · {{ insc.formation.filiere }} · {{ insc.annee_scolaire|default:"—" }}
+                    {{ insc.eleve.matricule|default:"—" }} · {{ insc.formation.centre }} · {{ insc.formation.filiere }} · {{ insc.annee_scolaire|default:"—" }}
                 </p>
             </div>
             <button onclick="closeModal('insc-{{ insc.id }}')"

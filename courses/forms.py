@@ -103,7 +103,24 @@ class PersonalInfoForm(forms.Form):
         widget=forms.TextInput(attrs={
             'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500',
             'placeholder': 'Ex: Ouagadougou'
-        })    
+        })
+    )
+
+    NIVEAU_SCOLAIRE_CHOICES = [
+        ('', 'Sélectionnez…'),
+        ('cp1', 'CP1'), ('cp2', 'CP2'), ('ce1', 'CE1'), ('ce2', 'CE2'),
+        ('cm1', 'CM1'), ('cm2', 'CM2'),
+        ('6e', '6ème'), ('5e', '5ème'), ('4e', '4ème'), ('3e', '3ème'),
+        ('2nde', '2nde'), ('1ere', '1ère'), ('terminale', 'Terminale'),
+        ('licence', 'Licence'),
+    ]
+    niveau_scolaire = forms.ChoiceField(
+        label='Niveau scolaire',
+        choices=NIVEAU_SCOLAIRE_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
+        })
     )
 
     TYPE_PERSONNE_CONTACT_CHOICES = [

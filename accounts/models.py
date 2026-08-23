@@ -119,6 +119,23 @@ class Eleve(Utilisateur):
         ("autre", "Autres maladies"),
     ]
 
+    NIVEAU_SCOLAIRE_CHOICES = [
+        ("cp1", "CP1"),
+        ("cp2", "CP2"),
+        ("ce1", "CE1"),
+        ("ce2", "CE2"),
+        ("cm1", "CM1"),
+        ("cm2", "CM2"),
+        ("6e", "6ème"),
+        ("5e", "5ème"),
+        ("4e", "4ème"),
+        ("3e", "3ème"),
+        ("2nde", "2nde"),
+        ("1ere", "1ère"),
+        ("terminale", "Terminale"),
+        ("licence", "Licence"),
+    ]
+
     lieu_naissance = models.CharField(max_length=225, verbose_name="Lieu de naissance")
 
     nom_pere = models.CharField(max_length=150, verbose_name="Nom du père")
@@ -166,6 +183,7 @@ class Eleve(Utilisateur):
     )
     niveau_scolaire = models.CharField(
         max_length=150, blank=True, null=True,
+        choices=NIVEAU_SCOLAIRE_CHOICES,
         verbose_name="Niveau scolaire"
     )
 
@@ -626,3 +644,42 @@ class LignePaiement_prestation(models.Model):
         max_digits=12,
         decimal_places=2
     )
+
+
+class HistoriqueConnexion(models.Model):
+    """Journal des connexions/déconnexions — un enregistrement par événement,
+    créé par les signaux Django user_logged_in/user_logged_out (voir
+    accounts/signals.py)."""
+
+    TYPE_EVENEMENT_CHOICES = [
+        ("connexion", "Connexion"),
+        ("deconnexion", "Déconnexion"),
+    ]
+
+    utilisateur = models.ForeignKey(
+        Utilisateur, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="historique_connexions", verbose_name="Utilisateur"
+    )
+    # Conservés tels quels au moment de l'événement : le journal reste lisible
+    # même si le compte est ensuite supprimé (utilisateur devient alors NULL).
+    username = models.CharField(max_length=150, blank=True, verbose_name="Nom d'utilisateur")
+    nom_complet = models.CharField(max_length=250, blank=True, verbose_name="Nom complet")
+    est_apprenant = models.BooleanField(default=False, verbose_name="Apprenant")
+    type_evenement = models.CharField(max_length=20, choices=TYPE_EVENEMENT_CHOICES, verbose_name="Événement")
+    date_evenement = models.DateTimeField(default=timezone.now, verbose_name="Date et heure")
+    centre = models.ForeignKey(
+        'courses.CentreFormation', on_delete=models.SET_NULL, null=True, blank=True,
+        verbose_name="Centre"
+    )
+    adresse_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name="Adresse IP")
+
+    class Meta:
+        verbose_name = "Historique de connexion"
+        verbose_name_plural = "Historique des connexions"
+        ordering = ["-date_evenement"]
+        permissions = [
+            ("voir_historique_connexion", "Voir l'historique des connexions"),
+        ]
+
+    def __str__(self):
+        return f"{self.username} — {self.get_type_evenement_display()} — {self.date_evenement:%d/%m/%Y %H:%M}"

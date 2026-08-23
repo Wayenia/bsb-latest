@@ -108,6 +108,17 @@
             </div>
             {{ form.lieu_naissance }}
           </div>
+
+          {% comment %} Niveau scolaire {% endcomment %}
+          <div class="md:col-span-2 w-full mb-6">
+            <div class="mb-2">
+              <label for="{{ form.niveau_scolaire.id_for_label }}" class="text-base font-medium text-slate-800 block">
+                {{ form.niveau_scolaire.label }}
+                <span class="text-red-600 ml-1">*</span>
+              </label>
+            </div>
+            {{ form.niveau_scolaire }}
+          </div>
         </div>
 
         <h3 class="text-xl font-light text-slate-800 mb-2"> Informations de la personne à contacter</h3>

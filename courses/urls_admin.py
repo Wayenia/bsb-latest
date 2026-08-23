@@ -75,6 +75,10 @@ urlpatterns = [
     path('payments/<int:id>/delete', views_admin.payment_delete, name='payment_delete'),
     path('payment/list-paiement',views_admin.payment_list,name='payment_list'),
 
+    # HISTORIQUE DES CONNEXIONS
+    path('historique-connexions', views_admin.historique_connexion_list, name='historique_connexion_list'),
+    path('historique-connexions/export/<str:format>', views_admin.historique_connexion_export, name='historique_connexion_export'),
+
     #PROGRAMMING
     path('programmings',views_admin.programming_list,name='programming_list'),
     path('programmings/create',views_admin.programming_create,name='program_create'),

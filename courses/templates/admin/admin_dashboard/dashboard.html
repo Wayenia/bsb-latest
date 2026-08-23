@@ -235,7 +235,7 @@
     {% comment %} ══════════════════════════════════════════════════════════════════════
          SECTION 5 — Ressources humaines (pleine largeur, mise en avant)
     ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
-    {% if perms.accounts.gerer_agents or perms.accounts.gerer_eleves or perms.accounts.gerer_permissions %}
+    {% if perms.accounts.gerer_agents or perms.accounts.gerer_eleves or perms.accounts.gerer_permissions or perms.accounts.voir_historique_connexion %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Ressources humaines</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {% if perms.accounts.gerer_agents %}
@@ -267,6 +267,16 @@
           <p class="text-sm text-gray-400 mt-1">Gérer la matrice des permissions par rôle</p>
         </div>
 
+      </a>
+      {% endif %}
+
+      {% if perms.accounts.voir_historique_connexion %}
+      <a href="{% url 'bsb_admin:historique_connexion_list' %}"
+         class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-200 p-6 flex items-start gap-4">
+        <div class="flex-1">
+          <h2 class="text-base font-bold text-gray-600 underline group-hover:text-gray-800 transition-colors">Historique des connexions</h2>
+          <p class="text-sm text-gray-400 mt-1">Consulter et exporter le journal des connexions/déconnexions</p>
+        </div>
       </a>
       {% endif %}
     </div>
