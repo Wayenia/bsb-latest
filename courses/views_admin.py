@@ -1359,7 +1359,7 @@ MATRIX_PERMISSIONS = [
     ('rechercher_tous_centres', "Rechercher un apprenant dans tous les centres (paiements)", 'courses'),
     ('telecharger_pieces', "Télécharger les pièces jointes des candidats", 'courses'),
     ('voir_statistiques', "Voir les statistiques", 'courses'),
-    ('gerer_statistiques_reelles', "Gérer les statistiques réelles (saisie manuelle)", 'courses'),
+    ('gerer_statistiques_reelles', "Gérer le bilan des effectifs formés (saisie manuelle)", 'courses'),
     ('exporter_donnees', "Exporter des données (CSV/Excel/PDF)", 'courses'),
     ('gerer_facturation', "Créer/gérer les factures de prestation", 'accounts'),
     ('valider_facture_prestation', "Valider une facture proforma en définitive", 'accounts'),

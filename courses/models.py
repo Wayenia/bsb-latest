@@ -397,9 +397,12 @@ class EffectifReel(models.Model):
     effectif_femmes_admis = models.PositiveIntegerField(default=0, verbose_name="Effectif femmes admises")
 
     # Statistiques réelles — "RÉPARTITION DES APPRENANTS VIVANT AVEC UN
-    # HANDICAP PAR MÉTIER ET PAR SEXE" : comme pour présents/admis, l'app ne
-    # connaît pas cette information (non déclarée à l'inscription) — saisie
-    # manuelle DSI, par site/formation, agrégée par métier à l'export.
+    # HANDICAP PAR MÉTIER ET PAR SEXE" : saisie/corrigée manuellement par le
+    # DSI, par site/formation, agrégée par métier à l'export — le modèle
+    # Excel les pré-suggère à partir du handicap déclaré à l'inscription
+    # (Eleve.a_handicap/type_handicap) tant qu'aucun EffectifReel n'existe
+    # encore pour cette formation (cf. courses/views_stats_reel.py), mais le
+    # DSI reste seul responsable de la valeur finale.
     effectif_hommes_handicap_moteur = models.PositiveIntegerField(default=0, verbose_name="Handicap moteur — hommes")
     effectif_femmes_handicap_moteur = models.PositiveIntegerField(default=0, verbose_name="Handicap moteur — femmes")
     effectif_hommes_handicap_visuel = models.PositiveIntegerField(default=0, verbose_name="Handicap sensoriel (visuel) — hommes")
@@ -877,5 +880,5 @@ class PermissionsPlateforme(models.Model):
             ("voir_statistiques", "Voir les statistiques"),
             ("exporter_donnees", "Exporter des données (CSV/Excel/PDF)"),
             ("rechercher_tous_centres", "Rechercher un apprenant dans tous les centres (paiements)"),
-            ("gerer_statistiques_reelles", "Saisir et consulter les statistiques réelles (effectifs formés, listes nominatives)"),
+            ("gerer_statistiques_reelles", "Saisir et consulter le bilan des effectifs formés (listes nominatives)"),
         ]

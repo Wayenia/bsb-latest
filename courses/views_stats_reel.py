@@ -71,8 +71,11 @@ _EFFECTIFS_COLUMNS = [
     ColumnSpec("Effectif admis femmes", "effectif_femmes_admis", required=True, kind="int"),
     # Répartition des apprenants vivant avec un handicap, par métier et par
     # sexe — 6 catégories (moteur / sensoriel visuel / sensoriel auditif /
-    # épilepsie / asthme / autres maladies), saisie manuelle DSI (non connue
-    # de l'app, comme présents/admis ci-dessus).
+    # épilepsie / asthme / autres maladies). Pré-suggérée à partir du handicap
+    # déclaré à l'inscription (Eleve.a_handicap/type_handicap) quand aucun
+    # EffectifReel n'existe encore ; le DSI reste libre de corriger avant de
+    # televerser — contrairement à présents/admis (examen de certification),
+    # totalement inconnus de l'app.
     ColumnSpec("Handicap moteur — hommes", "effectif_hommes_handicap_moteur", required=False, kind="int",
                 help_text="Apprenants en situation de handicap moteur."),
     ColumnSpec("Handicap moteur — femmes", "effectif_femmes_handicap_moteur", required=False, kind="int"),
@@ -157,6 +160,19 @@ _HANDICAP_CATEGORIES = [
     ('effectif_hommes_asthme', 'effectif_femmes_asthme'),
     ('effectif_hommes_autres_maladies', 'effectif_femmes_autres_maladies'),
 ]
+
+# Correspondance entre Eleve.type_handicap (déclaré à l'inscription) et les
+# champs EffectifReel homologues, pour pré-remplir la feuille "Effectifs" du
+# modèle Excel — le DSI reste libre de corriger avant de televerser, sa
+# saisie prévaut ensuite sur cette valeur suggérée (cf. bloc `if existants`).
+_TYPE_HANDICAP_VERS_CHAMPS = {
+    'moteur': ('effectif_hommes_handicap_moteur', 'effectif_femmes_handicap_moteur'),
+    'sensoriel_visuel': ('effectif_hommes_handicap_visuel', 'effectif_femmes_handicap_visuel'),
+    'sensoriel_auditif': ('effectif_hommes_handicap_auditif', 'effectif_femmes_handicap_auditif'),
+    'maladie_epilepsie': ('effectif_hommes_epilepsie', 'effectif_femmes_epilepsie'),
+    'maladie_asthme': ('effectif_hommes_asthme', 'effectif_femmes_asthme'),
+    'autre': ('effectif_hommes_autres_maladies', 'effectif_femmes_autres_maladies'),
+}
 
 
 def _build_handicap_columns(sums):
@@ -411,9 +427,19 @@ def stats_reel_formation_template(request, formation_id):
     else:
         h = inscriptions.filter(eleve__sexe='m').count()
         f = inscriptions.filter(eleve__sexe='f').count()
-        # Seuls les inscrits sont pré-calculés (ce que l'app sait) — tout le
-        # reste (présents/admis/handicap) est à saisir manuellement, à 0 par défaut.
+        # Seuls les inscrits sont pré-calculés avec certitude (ce que l'app
+        # sait) — présents/admis restent à 0 (examen de certification,
+        # inconnu de l'app). Le handicap est pré-rempli à partir de ce que
+        # l'apprenant a déclaré à l'inscription, à titre de suggestion : le
+        # DSI reste libre de le corriger avant de televerser le fichier.
         valeurs_suggerees = {'effectif_hommes': h, 'effectif_femmes': f}
+        for type_code, (champ_h, champ_f) in _TYPE_HANDICAP_VERS_CHAMPS.items():
+            valeurs_suggerees[champ_h] = inscriptions.filter(
+                eleve__sexe='m', eleve__a_handicap=True, eleve__type_handicap=type_code
+            ).count()
+            valeurs_suggerees[champ_f] = inscriptions.filter(
+                eleve__sexe='f', eleve__a_handicap=True, eleve__type_handicap=type_code
+            ).count()
         ws2.append([""] + [valeurs_suggerees.get(col.field_name, 0) for col in _EFFECTIFS_COLUMNS[1:]])
 
     # ── Feuille 3 : Instructions ───────────────────────────────────────────
@@ -427,6 +453,12 @@ def stats_reel_formation_template(request, formation_id):
     ws3.append([
         "—", f"Année de formation : {annee.libelle_anne}", "—",
         "Ce fichier ne couvre que cette année de formation — les élèves d'une autre année ne sont pas inclus."
+    ])
+    ws3.append([
+        "—", "Colonnes Handicap (feuille Effectifs)", "—",
+        "Pré-suggérées à partir du handicap déclaré par les apprenants à l'inscription. "
+        "À vérifier et corriger si besoin avant de televerser (cette valeur n'est pré-remplie que "
+        "la première fois, tant qu'aucun effectif n'a encore été enregistré pour cette formation)."
     ])
     ws3.append([NOMINATIF_SHEET, "(colonnes N° à Tuteur/parent)", "Non", "Déjà connu de l'application — pré-rempli, ne pas modifier."])
     for col in _NOMINATIF_COLUMNS[1:]:
