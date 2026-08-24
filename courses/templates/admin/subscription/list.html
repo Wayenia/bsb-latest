@@ -115,7 +115,10 @@
                                 <tbody class="bg-white divide-y divide-gray-100">
                                     {% for s in subscriptions %}
                                     <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="pl-16 pr-6 py-3.5 whitespace-nowrap text-sm font-bold text-gray-900">{{ s.eleve.nom }} {{ s.eleve.prenom }}</td>
+                                        <td class="pl-16 pr-6 py-3.5 whitespace-nowrap text-sm font-bold text-gray-900">
+                                            {{ s.eleve.nom }} {{ s.eleve.prenom }}
+                                            <div class="text-xs font-normal text-gray-400">{{ s.eleve.matricule|default:"—" }}</div>
+                                        </td>
                                         <td class="px-6 py-3.5 whitespace-nowrap text-sm font-medium text-gray-900">{{ s.formation }}</td>
                                         <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900">{{ s.date_inscription }}</td>
                                         <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900">{{ s.annee_scolaire }}</td>

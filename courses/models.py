@@ -334,7 +334,7 @@ class CentreEtFiliere(models.Model):
     date_creation = models.DateTimeField(auto_now_add=True, null=True, verbose_name="Date de création")
 
     def __str__(self):
-        return f"Centre: {self.centre}, Filiere: {self.filiere}"
+        return f"Centre: {self.centre}, Métier: {self.filiere}"
 
     def save(self, *args, **kwargs):
         if self.duree_jours and self.date_lancement:
