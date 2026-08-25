@@ -2,49 +2,95 @@
 {% block title %}Abonnés newsletter | BSB{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto py-10 px-4 md:px-6 space-y-6">
+<div class="max-w-5xl mx-auto py-10 px-4 md:px-6 space-y-8">
     {% include 'partials/messages.html' %}
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-black text-gray-900">Abonnés à la newsletter</h1>
-            <p class="mt-2 text-sm text-gray-600">{{ total_actifs }} abonnement(s) actif(s)</p>
+            <a href="{% url 'bsb_actualites:actualite_list' %}" class="inline-flex items-center gap-1.5 text-sm font-bold text-bsb-muted hover:text-bsb-primary transition-colors mb-3">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                Retour aux actualités
+            </a>
+            <h1 class="text-3xl font-black text-bsb-ink">Abonnés à la newsletter</h1>
+            <div class="bsb-rule mt-3"></div>
         </div>
-        <a href="{% url 'bsb_actualites:actualite_list' %}" class="px-5 py-3 bg-white border border-gray-300 font-bold rounded-lg">Retour aux actualités</a>
     </div>
 
-    <form method="get" class="bg-white px-4 py-4 border border-gray-200 rounded-lg flex flex-col sm:flex-row gap-3">
-        <input type="text" name="q" value="{{ q }}" placeholder="Rechercher une adresse..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
-        <button type="submit" class="px-6 py-2 bg-gray-800 text-white font-bold rounded-lg">Rechercher</button>
+    <div class="grid grid-cols-2 gap-4 max-w-md">
+        <div class="bg-white rounded-2xl overflow-hidden shadow-md">
+            <div class="h-1.5 bsb-gradient"></div>
+            <div class="p-5 flex items-center gap-4">
+                <div class="bsb-info-icon w-12 h-12 flex-shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                </div>
+                <div>
+                    <p class="text-2xl font-black text-bsb-ink leading-none">{{ total_actifs }}</p>
+                    <p class="text-xs font-bold text-bsb-muted uppercase tracking-wide mt-1">Actifs</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl overflow-hidden shadow-md">
+            <div class="h-1.5 bg-gray-300"></div>
+            <div class="p-5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                </div>
+                <div>
+                    <p class="text-2xl font-black text-bsb-ink leading-none">{{ total_desabonnes }}</p>
+                    <p class="text-xs font-bold text-bsb-muted uppercase tracking-wide mt-1">Désabonnés</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="get" class="bg-white px-4 py-4 border border-gray-200 rounded-2xl flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+            <svg class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+            <input type="text" name="q" value="{{ q }}" placeholder="Rechercher une adresse..."
+                   class="w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-bsb-primary focus:border-bsb-primary">
+        </div>
+        <button type="submit" class="px-6 py-2.5 bg-bsb-ink text-white font-bold rounded-full hover:bg-black transition-colors">Rechercher</button>
     </form>
 
-    <div class="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+    <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 text-left">
                 <tr>
-                    <th class="px-4 py-3 font-bold">Adresse</th>
-                    <th class="px-4 py-3 font-bold">État</th>
-                    <th class="px-4 py-3 font-bold">Inscription</th>
+                    <th class="px-5 py-3 font-bold text-bsb-ink">Adresse</th>
+                    <th class="px-5 py-3 font-bold text-bsb-ink">État</th>
+                    <th class="px-5 py-3 font-bold text-bsb-ink">Inscription</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 {% for abonne in abonnes %}
-                <tr>
-                    <td class="px-4 py-3 text-gray-900">{{ abonne.email }}</td>
-                    <td class="px-4 py-3">
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-5 py-3 text-bsb-ink font-medium">{{ abonne.email }}</td>
+                    <td class="px-5 py-3">
                         {% if abonne.actif %}
                         <span class="px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-bold">Actif</span>
                         {% else %}
                         <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">Désabonné</span>
                         {% endif %}
                     </td>
-                    <td class="px-4 py-3 text-gray-600">{{ abonne.date_inscription|date:"d/m/Y" }}</td>
+                    <td class="px-5 py-3 text-bsb-muted">{{ abonne.date_inscription|date:"d/m/Y" }}</td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="3" class="px-4 py-10 text-center text-gray-500">Aucun abonné.</td></tr>
+                <tr><td colspan="3" class="px-5 py-12 text-center text-bsb-muted">Aucun abonné pour l'instant.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    {% if abonnes.has_other_pages %}
+    <div class="flex justify-center items-center gap-2">
+        {% if abonnes.has_previous %}
+        <a href="?page={{ abonnes.previous_page_number }}&q={{ q }}" class="px-4 py-2 border-2 border-gray-200 rounded-full font-bold text-sm hover:border-bsb-primary hover:text-bsb-primary transition-colors">← Précédent</a>
+        {% endif %}
+        <span class="px-4 py-2 text-sm font-bold text-bsb-muted">Page {{ abonnes.number }} / {{ abonnes.paginator.num_pages }}</span>
+        {% if abonnes.has_next %}
+        <a href="?page={{ abonnes.next_page_number }}&q={{ q }}" class="px-4 py-2 border-2 border-gray-200 rounded-full font-bold text-sm hover:border-bsb-primary hover:text-bsb-primary transition-colors">Suivant →</a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

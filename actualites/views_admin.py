@@ -14,12 +14,25 @@ from .notifications import notifier_abonnes
 
 @require_permission('actualites.gerer_actualites')
 def actualite_list(request):
-    actualites = Actualite.objects.select_related('auteur')
+    toutes = Actualite.objects.select_related('auteur')
     q = request.GET.get('q', '').strip()
+    statut = request.GET.get('statut', '').strip()
+
+    actualites = toutes
     if q:
         actualites = actualites.filter(Q(titre__icontains=q) | Q(chapeau__icontains=q))
-    actualites = Paginator(actualites, 10).get_page(request.GET.get('page'))
-    return render(request, 'admin/actualite/list.html', {'actualites': actualites, 'q': q})
+    if statut in ('publiee', 'brouillon'):
+        actualites = actualites.filter(statut=statut)
+
+    actualites = Paginator(actualites, 9).get_page(request.GET.get('page'))
+    return render(request, 'admin/actualite/list.html', {
+        'actualites': actualites,
+        'q': q,
+        'statut': statut,
+        'total_publiees': toutes.filter(statut='publiee').count(),
+        'total_brouillons': toutes.filter(statut='brouillon').count(),
+        'total_abonnes_actifs': AbonneNewsletter.objects.filter(actif=True).count(),
+    })
 
 
 @require_permission('actualites.gerer_actualites')
@@ -96,6 +109,10 @@ def abonne_list(request):
     if q:
         abonnes = abonnes.filter(email__icontains=q)
     total_actifs = AbonneNewsletter.objects.filter(actif=True).count()
+    total_desabonnes = AbonneNewsletter.objects.filter(actif=False).count()
     abonnes = Paginator(abonnes, 25).get_page(request.GET.get('page'))
-    return render(request, 'admin/actualite/abonnes.html',
-                  {'abonnes': abonnes, 'q': q, 'total_actifs': total_actifs})
+    return render(request, 'admin/actualite/abonnes.html', {
+        'abonnes': abonnes, 'q': q,
+        'total_actifs': total_actifs,
+        'total_desabonnes': total_desabonnes,
+    })

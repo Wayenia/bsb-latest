@@ -25,6 +25,11 @@ class Actualite(models.Model):
                                null=True, blank=True, related_name="actualites", verbose_name="Auteur")
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default="brouillon", verbose_name="Statut")
     date_publication = models.DateTimeField(null=True, blank=True, verbose_name="Date de publication")
+    # Facultatif : passee cette date, l'actualite disparait de la liste et de la
+    # page publiques sans aucune action manuelle (cf. _publiees() et est_visible
+    # ci-dessous, evalues a chaque requete - pas de tache planifiee necessaire).
+    # Le statut en base reste "publiee" : c'est un historique, pas une suppression.
+    date_fin_publication = models.DateTimeField(null=True, blank=True, verbose_name="Fin de publication")
     # Empêche un second envoi si l'actualité est modifiée puis republiée.
     abonnes_notifies = models.BooleanField(default=False, verbose_name="Abonnés déjà notifiés")
     date_creation = models.DateTimeField(auto_now_add=True)
@@ -58,8 +63,16 @@ class Actualite(models.Model):
 
     @property
     def est_visible(self):
-        """Publiée et dont la date de publication est atteinte."""
-        return self.statut == "publiee" and self.date_publication and self.date_publication <= timezone.now()
+        """Publiée, date de publication atteinte, et pas (encore) expirée."""
+        maintenant = timezone.now()
+        if self.statut != "publiee" or not self.date_publication or self.date_publication > maintenant:
+            return False
+        return not (self.date_fin_publication and self.date_fin_publication <= maintenant)
+
+    @property
+    def est_expiree(self):
+        """Publiée mais dont la fin de publication est passee (masquee du public)."""
+        return bool(self.date_fin_publication and self.date_fin_publication <= timezone.now())
 
 
 class AbonneNewsletter(models.Model):

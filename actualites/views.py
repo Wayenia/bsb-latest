@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -10,7 +11,9 @@ from .models import AbonneNewsletter, Actualite
 
 
 def _publiees():
-    return Actualite.objects.filter(statut="publiee", date_publication__lte=timezone.now())
+    maintenant = timezone.now()
+    return Actualite.objects.filter(statut="publiee", date_publication__lte=maintenant).filter(
+        Q(date_fin_publication__isnull=True) | Q(date_fin_publication__gt=maintenant))
 
 
 def liste(request):

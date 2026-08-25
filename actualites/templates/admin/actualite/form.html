@@ -2,27 +2,204 @@
 {% block title %}{{ action }} une actualité | BSB{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto py-10 px-4 md:px-6">
+<div class="max-w-6xl mx-auto py-10 px-4 md:px-6">
     {% include 'partials/messages.html' %}
 
-    <h1 class="text-3xl font-black text-gray-900 mb-2">{{ action }} une actualité</h1>
-    <p class="text-sm text-gray-600 mb-8">Les abonnés sont prévenus par e-mail au moment de la publication.</p>
+    <div class="mb-8">
+        <a href="{% url 'bsb_actualites:actualite_list' %}" class="inline-flex items-center gap-1.5 text-sm font-bold text-bsb-muted hover:text-bsb-primary transition-colors mb-4">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            Retour aux actualités
+        </a>
+        <h1 class="text-3xl font-black text-bsb-ink">{{ action }} une actualité</h1>
+        <div class="bsb-rule mt-3"></div>
+    </div>
 
-    <form method="post" enctype="multipart/form-data" class="bg-white border border-gray-200 rounded-lg p-6 space-y-5">
+    <form method="post" enctype="multipart/form-data" id="form-actualite">
         {% csrf_token %}
-        {% for field in form %}
-        <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-bold text-gray-900 mb-2">{{ field.label }}</label>
-            {{ field }}
-            {% if field.help_text %}<p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>{% endif %}
-            {% for erreur in field.errors %}<p class="mt-1 text-xs text-red-600">{{ erreur }}</p>{% endfor %}
-        </div>
-        {% endfor %}
+        <div class="grid lg:grid-cols-3 gap-8 items-start">
 
-        <div class="flex gap-3 pt-4 border-t border-gray-100">
-            <button type="submit" class="px-6 py-3 bg-bsb-primary text-white font-bold rounded-lg hover:bg-bsb-dark">Enregistrer</button>
-            <a href="{% url 'bsb_actualites:actualite_list' %}" class="px-6 py-3 bg-gray-100 text-gray-800 font-bold rounded-lg">Annuler</a>
+            {# Colonne principale : contenu redactionnel #}
+            <div class="lg:col-span-2 bg-white border border-gray-200 rounded-2xl shadow-md p-6 md:p-8 space-y-6">
+                <div>
+                    <label for="{{ form.titre.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">
+                        Titre <span class="text-bsb-primary">*</span>
+                    </label>
+                    {{ form.titre }}
+                    {% for erreur in form.titre.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ erreur }}</p>{% endfor %}
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="{{ form.chapeau.id_for_label }}" class="block text-sm font-bold text-bsb-ink">
+                            Chapeau <span class="text-bsb-primary">*</span>
+                        </label>
+                        <span id="compteur-chapeau" class="text-xs font-semibold text-bsb-muted">{{ form.chapeau.value|default:""|length }}/300</span>
+                    </div>
+                    {{ form.chapeau }}
+                    <p class="mt-1.5 text-xs text-bsb-muted">Résumé affiché dans la liste publique et dans l'e-mail envoyé aux abonnés.</p>
+                    {% for erreur in form.chapeau.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ erreur }}</p>{% endfor %}
+                </div>
+
+                <div>
+                    <label for="{{ form.contenu.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">
+                        Contenu <span class="text-bsb-primary">*</span>
+                    </label>
+                    {{ form.contenu }}
+                    {% for erreur in form.contenu.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ erreur }}</p>{% endfor %}
+                </div>
+
+                <div>
+                    <label for="{{ form.image.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">Image</label>
+                    <div class="flex items-center gap-4">
+                        <div id="apercu-image-cadre" class="w-20 h-20 rounded-xl bg-bsb-cream flex-shrink-0 overflow-hidden flex items-center justify-center border border-gray-200">
+                            {% if actualite.image %}
+                            <img id="apercu-image" src="{{ actualite.image.url }}" alt="" class="w-full h-full object-cover">
+                            {% else %}
+                            <img id="apercu-image" alt="" class="w-full h-full object-cover hidden">
+                            <svg id="apercu-image-icone" class="w-8 h-8 text-bsb-yellow" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 4h16v16H4V4z"/></svg>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">{{ form.image }}</div>
+                    </div>
+                    <p class="mt-1.5 text-xs text-bsb-muted">Facultative — une actualité sans image affiche un bandeau de couleur BSB. JPEG, PNG ou WebP, 5 Mo maximum.</p>
+                    {% for erreur in form.image.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ erreur }}</p>{% endfor %}
+                </div>
+
+                <div class="grid sm:grid-cols-2 gap-5">
+                    <div>
+                        <label for="{{ form.date_publication.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">Date de publication</label>
+                        {{ form.date_publication }}
+                        <p class="mt-1.5 text-xs text-bsb-muted">Laissez vide : si vous choisissez « Publiée », la date sera l'instant de l'enregistrement.</p>
+                        {% for erreur in form.date_publication.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ erreur }}</p>{% endfor %}
+                    </div>
+                    <div>
+                        <label for="{{ form.date_fin_publication.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">Fin de publication</label>
+                        {{ form.date_fin_publication }}
+                        <p class="mt-1.5 text-xs text-bsb-muted">Facultatif. Passé ce moment, la plateforme la retire automatiquement de la liste publique — rien à refaire manuellement.</p>
+                        {% for erreur in form.date_fin_publication.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ erreur }}</p>{% endfor %}
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4 border-t border-gray-100">
+                    <button type="submit" class="bsb-btn bsb-btn-primary">Enregistrer</button>
+                    <a href="{% url 'bsb_actualites:actualite_list' %}" class="inline-flex items-center px-7 py-3 bg-gray-100 text-gray-800 font-bold rounded-full hover:bg-gray-200 transition-colors">Annuler</a>
+                </div>
+            </div>
+
+            {# Colonne laterale : statut, apercu live, conseils #}
+            <div class="space-y-6 lg:sticky lg:top-6">
+
+                <div class="bg-white border border-gray-200 rounded-2xl shadow-md p-6">
+                    <h3 class="text-sm font-bold text-bsb-ink uppercase tracking-wide mb-4">Statut</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        {% for radio in form.statut %}
+                        <div>
+                            {{ radio.tag }}
+                            <label for="{{ radio.id_for_label }}"
+                                   class="flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-xl border-2 border-gray-200 text-gray-500 font-bold text-sm cursor-pointer transition-colors peer-checked:border-bsb-primary peer-checked:bg-bsb-primary peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-bsb-primary/40">
+                                {% if 'publi' in radio.choice_label|lower %}
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                {% else %}
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                {% endif %}
+                                {{ radio.choice_label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-4 text-xs text-bsb-muted leading-relaxed">
+                        Choisir « Publiée » ici rend la page visible publiquement. L'e-mail aux abonnés part uniquement
+                        via le bouton <strong class="text-bsb-ink">« Publier &amp; notifier »</strong> depuis la liste.
+                    </p>
+                </div>
+
+                <div class="bg-bsb-cream border border-bsb-yellow/40 rounded-2xl p-5 flex gap-3">
+                    <svg class="w-6 h-6 text-bsb-dark flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <p class="text-xs text-bsb-dark leading-relaxed">
+                        <strong>Programmation automatique.</strong> Une « Date de publication » dans le futur retarde
+                        l'apparition, une « Fin de publication » la retire ensuite — sans rien relancer, la plateforme
+                        vérifie l'horaire à chaque visite.
+                    </p>
+                </div>
+
+                <div class="bg-white border border-gray-200 rounded-2xl shadow-md overflow-hidden">
+                    <div class="h-1.5 bsb-gradient"></div>
+                    <div class="p-5">
+                        <h3 class="text-sm font-bold text-bsb-ink uppercase tracking-wide mb-3">Aperçu de la carte</h3>
+                        <div class="rounded-xl border border-gray-100 overflow-hidden">
+                            <div id="apercu-bandeau" class="h-20 bsb-gradient flex items-center justify-center overflow-hidden">
+                                {% if actualite.image %}
+                                <img id="apercu-bandeau-image" src="{{ actualite.image.url }}" alt="" class="w-full h-full object-cover">
+                                {% else %}
+                                <img id="apercu-bandeau-image" alt="" class="w-full h-full object-cover hidden">
+                                {% endif %}
+                            </div>
+                            <div class="p-4">
+                                <p id="apercu-titre" class="font-extrabold text-bsb-ink text-sm leading-snug mb-1">{{ actualite.titre|default:"Le titre s'affichera ici" }}</p>
+                                <p id="apercu-chapeau" class="text-xs text-bsb-muted leading-relaxed line-clamp-3">{{ actualite.chapeau|default:"Le chapeau s'affichera ici au fil de la saisie." }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <details class="group bg-white rounded-2xl shadow-md open:shadow-xl transition-shadow">
+                    <summary class="flex items-center gap-3 p-5 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                        <span class="bsb-gradient w-9 h-9 rounded-lg flex items-center justify-center text-white flex-shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </span>
+                        <h3 class="flex-1 font-extrabold text-bsb-ink text-sm">Conseils de rédaction</h3>
+                        <svg class="w-4 h-4 text-bsb-primary flex-shrink-0 transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="px-5 pb-5 pt-1 border-t border-gray-100">
+                        <ul class="space-y-2.5 text-xs text-bsb-muted leading-relaxed">
+                            <li class="flex gap-2"><span class="text-bsb-primary font-bold">•</span>Un titre court et concret se lit mieux dans la liste et dans la boîte mail.</li>
+                            <li class="flex gap-2"><span class="text-bsb-primary font-bold">•</span>Le chapeau est ce que les abonnés lisent en premier : allez à l'essentiel.</li>
+                            <li class="flex gap-2"><span class="text-bsb-primary font-bold">•</span>Une image au format paysage (16:9) évite le recadrage sur la liste publique.</li>
+                            <li class="flex gap-2"><span class="text-bsb-primary font-bold">•</span>Enregistrez d'abord en Brouillon pour vous relire avant de publier.</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
         </div>
     </form>
 </div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+    var chapeauInput = document.getElementById('{{ form.chapeau.id_for_label }}');
+    var titreInput = document.getElementById('{{ form.titre.id_for_label }}');
+    var imageInput = document.getElementById('{{ form.image.id_for_label }}');
+    var compteur = document.getElementById('compteur-chapeau');
+    var apercuTitre = document.getElementById('apercu-titre');
+    var apercuChapeau = document.getElementById('apercu-chapeau');
+    var apercuImage = document.getElementById('apercu-image');
+    var apercuImageIcone = document.getElementById('apercu-image-icone');
+    var apercuBandeauImage = document.getElementById('apercu-bandeau-image');
+
+    if (chapeauInput) {
+        chapeauInput.addEventListener('input', function () {
+            if (compteur) compteur.textContent = chapeauInput.value.length + '/300';
+            if (apercuChapeau) apercuChapeau.textContent = chapeauInput.value || 'Le chapeau s\'affichera ici au fil de la saisie.';
+        });
+    }
+    if (titreInput) {
+        titreInput.addEventListener('input', function () {
+            if (apercuTitre) apercuTitre.textContent = titreInput.value || 'Le titre s\'affichera ici';
+        });
+    }
+    if (imageInput) {
+        imageInput.addEventListener('change', function () {
+            var fichier = imageInput.files && imageInput.files[0];
+            if (!fichier) return;
+            var lecteur = new FileReader();
+            lecteur.onload = function (evt) {
+                if (apercuImage) { apercuImage.src = evt.target.result; apercuImage.classList.remove('hidden'); }
+                if (apercuImageIcone) apercuImageIcone.classList.add('hidden');
+                if (apercuBandeauImage) { apercuBandeauImage.src = evt.target.result; apercuBandeauImage.classList.remove('hidden'); }
+            };
+            lecteur.readAsDataURL(fichier);
+        });
+    }
+})();
+</script>
 {% endblock %}
