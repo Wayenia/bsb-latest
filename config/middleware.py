@@ -1,5 +1,55 @@
-import re
+import logging
+
+from django.shortcuts import render
 from django.utils.deprecation import MiddlewareMixin
+
+from accounts import ratelimit
+
+logger = logging.getLogger('django.security')
+
+# Chemin de connexion surveille. `startswith` et non egalite : la route est
+# declaree sans slash final (/accounts/login) mais CommonMiddleware peut
+# rediriger depuis la variante avec slash.
+# /admin/login a disparu de la liste : l'admin Django a ete retire du projet.
+CHEMINS_CONNEXION = ('/accounts/login',)
+
+
+class LimitationConnexionMiddleware(MiddlewareMixin):
+    """Refuse les tentatives de connexion au-dela des seuils anti-force brute.
+
+    Le comptage se fait dans `accounts.signals.on_user_login_failed` (branche
+    sur le signal `user_login_failed`) ; ce middleware ne fait que *bloquer* en
+    amont, avant que la vue ne verifie le mot de passe. Sans lui, un compte
+    verrouille continuerait a etre teste : le compteur monterait, mais chaque
+    tentative resterait evaluee.
+    """
+
+    def process_request(self, request):
+        if request.method != 'POST':
+            return None
+        if not request.path.startswith(CHEMINS_CONNEXION):
+            return None
+
+        # Ne jamais toucher a request.POST sur un envoi multipart : cela
+        # consommerait le flux avant les gestionnaires d'upload de Django. Les
+        # formulaires de connexion sont urlencodes, jamais multipart.
+        username = ''
+        if not request.content_type.startswith('multipart/'):
+            username = request.POST.get('username', '')
+
+        motif = ratelimit.motif_verrou(request, username)
+        if motif is None:
+            return None
+
+        logger.warning(
+            'Connexion bloquee (verrou %s) pour "%s" depuis %s sur %s',
+            motif, username[:150], ratelimit.adresse_client(request), request.path)
+        reponse = render(request, '429.html', {
+            'motif': motif,
+            'minutes': ratelimit.DUREE_VERROU // 60,
+        }, status=429)
+        reponse['Retry-After'] = str(ratelimit.DUREE_VERROU)
+        return reponse
 
 
 class SecurityHeadersMiddleware(MiddlewareMixin):
@@ -13,22 +63,16 @@ class SecurityHeadersMiddleware(MiddlewareMixin):
         if 'X-Powered-By' in response:
             del response['X-Powered-By']
 
-        # CSP : le middleware natif de Django pose une politique stricte
-        # (script-src 'self' 'nonce-...', sans 'unsafe-inline') — c'est celle que
-        # voit un visiteur anonyme, donc le scanner (finding V05).
-        # Le back-office authentifié utilise encore des gestionnaires inline
-        # (modale de paiement, exports) : pour eux on assouplit script-src à
-        # 'unsafe-inline', sans risque de régression. Ces pages sont derrière
-        # authentification et permissions, hors surface d'attaque publique.
-        # Le nonce doit disparaître quand on met 'unsafe-inline' : si les deux
-        # coexistent, le navigateur ignore 'unsafe-inline' et les gestionnaires
-        # inline restent bloqués.
-        if getattr(request, 'user', None) and request.user.is_authenticated:
-            csp = response.get('Content-Security-Policy')
-            if csp:
-                response['Content-Security-Policy'] = re.sub(
-                    r"script-src 'self'[^;]*",
-                    "script-src 'self' 'unsafe-inline'", csp)
+        # La CSP n'est plus reecrite ici.
+        # Ce middleware assouplissait auparavant script-src en 'unsafe-inline'
+        # pour tout utilisateur authentifie, parce que le back-office reposait
+        # sur des attributs onclick=/onsubmit=. Consequence : les pages qui
+        # portent les donnees sensibles (dossiers, paiements, factures) etaient
+        # les SEULES sans protection CSP contre le XSS, et le scan Acunetix ne
+        # pouvait pas le voir puisqu'il travaillait sans profil authentifie.
+        # Les 59 gestionnaires inline ont ete convertis en ecouteurs delegues
+        # (attributs data-*), la politique stricte du middleware natif Django
+        # — script-src 'self' 'nonce-...' — s'applique donc partout.
 
         # Isolation cross-origin (findings V14/V15 du scan) : empêche qu'une page
         # tierce charge ou intègre nos ressources et nos fenêtres.
@@ -42,7 +86,7 @@ class SecurityHeadersMiddleware(MiddlewareMixin):
             'geolocation=(), microphone=(), camera=(), payment=(), usb=()')
 
         # Pages authentifiées : jamais mises en cache par le navigateur.
-        if request.path.startswith(('/admin', '/accounts', '/bsb')):
+        if request.path.startswith(('/accounts', '/bsb')):
             response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
             response['Pragma'] = 'no-cache'
             response['Expires'] = '0'

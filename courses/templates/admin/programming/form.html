@@ -219,7 +219,7 @@
                         {% endif %}
                     </div>
                     <div class="sm:col-span-2 flex justify-end">
-                        <button type="button" onclick="supprimerLigne(this, 'frais')"
+                        <button type="button" data-action="supprimer-ligne" data-ligne-type="frais"
                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all">
                              Supprimer
                         </button>
@@ -266,7 +266,7 @@
                         <label class="text-sm font-medium text-gray-700">Obligatoire</label>
                     </div>
                     <div class="flex justify-end items-center">
-                        <button type="button" onclick="supprimerLigne(this, 'piece')"
+                        <button type="button" data-action="supprimer-ligne" data-ligne-type="piece"
                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all">
                              Supprimer
                         </button>
@@ -345,7 +345,7 @@ const CONFIG = {
                            placeholder="Ex: 50000" min="0" step="1000">
                 </div>
                 <div class="sm:col-span-2 flex justify-end">
-                    <button type="button" onclick="supprimerLigne(this, 'frais')"
+                    <button type="button" data-action="supprimer-ligne" data-ligne-type="frais"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all">
                          Supprimer
                     </button>
@@ -380,7 +380,7 @@ const CONFIG = {
                     <label for="id_piece-${idx}-est_requis" class="text-sm font-medium text-gray-700">Obligatoire</label>
                 </div>
                 <div class="flex justify-end items-center">
-                    <button type="button" onclick="supprimerLigne(this, 'piece')"
+                    <button type="button" data-action="supprimer-ligne" data-ligne-type="piece"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all">
                          Supprimer
                     </button>
@@ -479,5 +479,17 @@ function renumeroterLignes(type) {
 
 document.getElementById('btn-add-frais').addEventListener('click', () => ajouterLigne('frais'));
 document.getElementById('btn-add-piece').addEventListener('click', () => ajouterLigne('piece'));
+
+// Délégation d'événements : les attributs onclick= inline sont bloqués
+// par la CSP (script-src 'self' 'nonce-...'), aucun code inline sans nonce
+// n'étant exécuté. Les arguments passent par des attributs data-*.
+var ACTIONS = {
+  'supprimer-ligne': function (el) { supprimerLigne(el, el.dataset.ligneType); }
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var el = e.target.closest('[data-action]');
+  if (el && ACTIONS[el.dataset.action]) ACTIONS[el.dataset.action](el);
+});
 </script>
 {% endblock %}

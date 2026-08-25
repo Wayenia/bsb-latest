@@ -28,7 +28,13 @@ media/
 # Logs applicatifs
 *.log
 security.log
+logs/
 .claude/
 CLAUDE.md
 .shot
 zzresources/
+
+# Sauvegardes de base de donnees : contiennent les donnees personnelles des
+# apprenants et les hachages de mots de passe. Jamais dans Git.
+backups/
+*.dump

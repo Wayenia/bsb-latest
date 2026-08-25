@@ -4,6 +4,14 @@
 
 /* Custom styles */
 @layer components {
+  /* Motif de fond de la page « À propos ». Defini ici plutot que dans un
+     attribut style= : sous la CSP (style-src sans 'unsafe-inline'), un attribut
+     style est bloque, faute de pouvoir porter un nonce. Le chemin est ecrit en
+     dur car STATIC_URL vaut '/static/' et ne varie pas selon l'environnement. */
+  .motif-fond {
+    background-image: url('/static/images/pattern.png');
+  }
+
   .btn-primary {
     @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg;
   }

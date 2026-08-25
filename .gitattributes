@@ -1,0 +1,31 @@
+# Fins de ligne.
+#
+# Les scripts et fichiers de configuration ci-dessous sont executes dans des
+# conteneurs Linux. Ils DOIVENT garder des fins de ligne LF, quelle que soit la
+# configuration `core.autocrlf` du poste de travail.
+#
+# Sans cette regle, un poste Windows avec core.autocrlf=true recoit des fichiers
+# en CRLF a chaque checkout. Le shebang devient alors `#!/bin/bash\r` et le
+# noyau cherche un interpreteur litteralement nomme "/bin/bash\r" : le conteneur
+# s'arrete sur « exec ./entrypoint.sh: no such file or directory », message
+# trompeur puisque le fichier est bien present.
+
+*.sh            text eol=lf
+entrypoint.sh   text eol=lf
+Dockerfile      text eol=lf
+*.conf          text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+
+# Fichiers binaires : jamais de conversion.
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.pdf           binary
+*.woff          binary
+*.woff2         binary
+*.ttf           binary
+*.dump          binary
+*.xlsx          binary

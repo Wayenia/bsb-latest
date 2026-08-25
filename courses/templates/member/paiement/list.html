@@ -133,7 +133,7 @@
                                         <td class="px-6 py-3.5 whitespace-nowrap text-right">
                                             <div class="flex items-center justify-end gap-2">
                                                 <button
-                                                    onclick="openModal('insc-{{ insc.id }}')"
+                                                    data-modal-ouvrir="insc-{{ insc.id }}"
                                                     class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-all">
                                                     Détails
                                                 </button>
@@ -282,7 +282,7 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center gap-2">
                                 <button
-                                    onclick="openModal('insc-{{ insc.id }}')"
+                                    data-modal-ouvrir="insc-{{ insc.id }}"
                                     class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-all">
                                     Détails
                                 </button>
@@ -349,8 +349,7 @@
 {% comment %} ===== MODALS ===== {% endcomment %}
 {% for insc in inscriptions %}
 <div id="insc-{{ insc.id }}"
-     class="fixed inset-0 z-50 hidden items-center flex justify-center p-4"
-     style="background: rgba(0,0,0,0.5);">
+     class="fixed inset-0 z-50 hidden items-center flex justify-center p-4 bg-[rgba(0,0,0,0.5)]">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden">
 
         <div class="px-6 py-4 border-b border-gray-200 flex items-start justify-between">
@@ -362,7 +361,7 @@
                     {{ insc.eleve.matricule|default:"—" }} · {{ insc.formation.centre }} · {{ insc.formation.filiere }} · {{ insc.annee_scolaire|default:"—" }}
                 </p>
             </div>
-            <button onclick="closeModal('insc-{{ insc.id }}')"
+            <button data-modal-fermer="insc-{{ insc.id }}"
                     class="text-gray-400 hover:text-gray-700 text-xl font-bold ml-4">Fermer</button>
         </div>
 
@@ -394,7 +393,7 @@
                             <button class="px-3 py-1 bg-gray-200 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed" disabled>Soldée</button>
                             {% elif t.payable %}
                             <button class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors"
-                                    onclick="ouvrirModalPaiement('{{ dette.id }}', '{{ t.tranche.libelle|escapejs }}', {{ t.reste|floatformat:0 }}, {{ t.tranche.est_primordiale|yesno:'true,false' }})">Encaisser</button>
+                                    data-paiement-dette="{{ dette.id }}" data-paiement-libelle="{{ t.tranche.libelle }}" data-paiement-reste="{{ t.reste|floatformat:0 }}" data-paiement-primordiale="{{ t.tranche.est_primordiale|yesno:'true,false' }}">Encaisser</button>
                             {% else %}
                             <button class="px-3 py-1 bg-gray-200 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed"
                                     disabled title="Réglez d'abord la tranche primordiale en cours">Encaisser</button>
@@ -410,7 +409,7 @@
                                 disabled title="Réglez d'abord la tranche primordiale bloquante d'un autre type de frais">Encaisser</button>
                         {% else %}
                         <button class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors"
-                                onclick="ouvrirModalPaiement('{{ dette.id }}', '{{ dette.frais_formation.type_frais|escapejs }}', {{ dette.montant_a_payer|floatformat:0 }}, false)">Encaisser</button>
+                                data-paiement-dette="{{ dette.id }}" data-paiement-libelle="{{ dette.frais_formation.type_frais }}" data-paiement-reste="{{ dette.montant_a_payer|floatformat:0 }}" data-paiement-primordiale="false">Encaisser</button>
                         {% endif %}
                     </div>
                     {% endif %}
@@ -470,11 +469,11 @@
 {% endfor %}
 
 {% comment %} MODAL PAIEMENT (réutilisé pour toutes les tranches / tous les types de frais) {% endcomment %}
-<div id="modal-paiement-tranche" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
+<div id="modal-paiement-tranche" class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(0,0,0,0.45)]">
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <h2 style="font-weight:800;font-size:1.1rem;color:#374151;margin:0;">Enregistrer un paiement</h2>
-      <button type="button" onclick="fermerModalPaiement()" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
+    <div class="flex justify-between items-center mb-[1rem]">
+      <h2 class="font-[800] text-[1.1rem] text-[#374151] m-[0]">Enregistrer un paiement</h2>
+      <button type="button" data-paiement-fermer class="border-0 bg-transparent text-[1.4rem] leading-[1] text-[#9ca3af] cursor-pointer">&times;</button>
     </div>
     <p id="modal-paiement-cible" class="text-sm text-gray-500 mb-4"></p>
     <form method="post" id="form-paiement-tranche" action="" enctype="multipart/form-data">
@@ -507,7 +506,7 @@
         <p class="text-xs text-gray-400 mt-1">JPEG, JPG, PNG ou PDF — 5 Mo max</p>
       </div>
       <div class="flex gap-2">
-        <button type="button" onclick="fermerModalPaiement()"
+        <button type="button" data-paiement-fermer
                 class="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-semibold hover:bg-gray-50">Annuler</button>
         <button type="submit"
                 class="flex-[2] py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold">Confirmer</button>
@@ -571,6 +570,24 @@ function fermerModalPaiement() {
 
 document.getElementById('modal-paiement-tranche').addEventListener('click', function(e) {
   if (e.target === this) fermerModalPaiement();
+});
+
+// Délégation : remplace les attributs onclick= inline, bloqués par la CSP
+// (script-src 'self' 'nonce-...' — aucun code inline sans nonce n'est exécuté).
+// Les arguments passent par des attributs data-*.
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var ouvrir = e.target.closest('[data-paiement-dette]');
+  if (ouvrir) {
+    ouvrirModalPaiement(
+      ouvrir.dataset.paiementDette,
+      ouvrir.dataset.paiementLibelle,
+      Number(ouvrir.dataset.paiementReste),
+      ouvrir.dataset.paiementPrimordiale === 'true'
+    );
+    return;
+  }
+  if (e.target.closest('[data-paiement-fermer]')) fermerModalPaiement();
 });
 </script>
 

@@ -93,20 +93,24 @@
                         <td class="px-6 py-4 whitespace-nowrap text-right">
                             <button type="button"
                                     class="text-sm font-semibold text-gray-600 hover:text-gray-900 hover:underline"
-                                    onclick="ouvrirDetailPaiement({
-                                        apprenant: '{{ pmt.dette.inscription.eleve.nom|default:''|escapejs }} {{ pmt.dette.inscription.eleve.prenom|default:''|escapejs }} ({{ pmt.dette.inscription.eleve.matricule|default:'—'|escapejs }})',
-                                        typeFrais: '{{ pmt.dette.frais_formation.type_frais|default:'—'|escapejs }}',
-                                        tranche: '{{ pmt.tranche_frais.libelle|default:'Tranche unique'|escapejs }}',
-                                        montant: '{{ pmt.montant_paiement|floatformat:0|intcomma }} FCFA',
-                                        mode: '{{ pmt.mode_paiement|default:'—'|escapejs }}',
-                                        date: '{{ pmt.date_paiement|date:'d/m/Y H:i' }}',
-                                        creePar: '{{ pmt.cree_par|default:'—'|escapejs }}',
-                                        quittance: '{{ pmt.numero_quittance|default:'—'|escapejs }}',
-                                        annule: {{ pmt.annule|yesno:'true,false' }},
-                                        motifAnnulation: '{{ pmt.motif_annulation|default:''|escapejs }}',
-                                        annulePar: '{{ pmt.annule_par|default:'—'|escapejs }}',
-                                        dateAnnulation: '{% if pmt.date_annulation %}{{ pmt.date_annulation|date:'d/m/Y H:i' }}{% endif %}'
-                                    })">
+                                    {% comment %} Valeurs passées en data-* et non dans un onclick=
+                                       inline : la CSP du site est « script-src 'self' 'nonce-...' »,
+                                       un gestionnaire écrit dans un attribut serait bloqué par le
+                                       navigateur. L'échappement HTML par défaut de Django remplace
+                                       ici |escapejs, qui ne vaut que pour du code JavaScript. {% endcomment %}
+                                    data-action="detail-paiement"
+                                    data-detail-apprenant="{{ pmt.dette.inscription.eleve.nom|default:'' }} {{ pmt.dette.inscription.eleve.prenom|default:'' }} ({{ pmt.dette.inscription.eleve.matricule|default:'—' }})"
+                                    data-detail-type-frais="{{ pmt.dette.frais_formation.type_frais|default:'—' }}"
+                                    data-detail-tranche="{{ pmt.tranche_frais.libelle|default:'Tranche unique' }}"
+                                    data-detail-montant="{{ pmt.montant_paiement|floatformat:0|intcomma }} FCFA"
+                                    data-detail-mode="{{ pmt.mode_paiement|default:'—' }}"
+                                    data-detail-date="{{ pmt.date_paiement|date:'d/m/Y H:i' }}"
+                                    data-detail-cree-par="{{ pmt.cree_par|default:'—' }}"
+                                    data-detail-quittance="{{ pmt.numero_quittance|default:'—' }}"
+                                    data-detail-annule="{{ pmt.annule|yesno:'true,false' }}"
+                                    data-detail-motif="{{ pmt.motif_annulation|default:'' }}"
+                                    data-detail-annule-par="{{ pmt.annule_par|default:'—' }}"
+                                    data-detail-date-annulation="{% if pmt.date_annulation %}{{ pmt.date_annulation|date:'d/m/Y H:i' }}{% endif %}">
                                 Détail
                             </button>
                         </td>
@@ -159,19 +163,19 @@
 </div>
 
 {% comment %} MODAL DÉTAIL D'UN PAIEMENT {% endcomment %}
-<div id="modalDetailPaiement" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
+<div id="modalDetailPaiement" class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(0,0,0,0.45)]">
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <h2 style="font-weight:800;font-size:1.1rem;color:#374151;margin:0;">Détail du paiement</h2>
-      <button type="button" onclick="fermerDetailPaiement()" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
+    <div class="flex justify-between items-center mb-[1rem]">
+      <h2 class="font-[800] text-[1.1rem] text-[#374151] m-[0]">Détail du paiement</h2>
+      <button type="button" data-action="fermer-detail-paiement" class="border-0 bg-transparent text-[1.4rem] leading-[1] text-[#9ca3af] cursor-pointer">&times;</button>
     </div>
-    <dl id="detailPaiementCorps" style="font-size:.85rem;color:#374151;"></dl>
-    <div id="detailPaiementAnnulationWrap" class="hidden mt-3 pt-3" style="border-top:1px dashed #e5e7eb;">
+    <dl id="detailPaiementCorps" class="text-[.85rem] text-[#374151]"></dl>
+    <div id="detailPaiementAnnulationWrap" class="hidden mt-3 pt-3 border-t border-t-[1px] border-[#e5e7eb]">
       <p class="text-xs font-bold text-red-700 uppercase mb-2">Annulation</p>
-      <dl id="detailPaiementAnnulationCorps" style="font-size:.85rem;color:#374151;"></dl>
+      <dl id="detailPaiementAnnulationCorps" class="text-[.85rem] text-[#374151]"></dl>
     </div>
     <div class="flex justify-end mt-4">
-      <button type="button" onclick="fermerDetailPaiement()" class="px-4 py-2 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+      <button type="button" data-action="fermer-detail-paiement" class="px-4 py-2 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
         Fermer
       </button>
     </div>
@@ -180,9 +184,9 @@
 
 <script nonce="{{ csp_nonce }}">
 function ligneDetail(label, valeur) {
-  return '<div style="display:flex;justify-content:space-between;gap:1rem;padding:.3rem 0;border-bottom:1px solid #f3f4f6;">'
-       + '<dt style="color:#9ca3af;">' + label + '</dt>'
-       + '<dt style="font-weight:600;text-align:right;">' + valeur + '</dt>'
+  return '<div class="flex justify-between gap-[1rem] p-[.3rem_0] border-b border-b-[1px] border-[#f3f4f6]">'
+       + '<dt class="text-[#9ca3af]">' + label + '</dt>'
+       + '<dt class="font-[600] text-right">' + valeur + '</dt>'
        + '</div>';
 }
 
@@ -223,6 +227,32 @@ function fermerDetailPaiement() {
 
 document.getElementById('modalDetailPaiement').addEventListener('click', function (e) {
   if (e.target === this) fermerDetailPaiement();
+});
+
+// Délégation d'événements : les attributs onclick= inline sont bloqués par la
+// CSP (script-src 'self' 'nonce-...'). Les valeurs passent par des data-*.
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var el = e.target.closest('[data-action]');
+  if (!el) return;
+  if (el.dataset.action === 'fermer-detail-paiement') {
+    fermerDetailPaiement();
+  } else if (el.dataset.action === 'detail-paiement') {
+    ouvrirDetailPaiement({
+      apprenant:       el.dataset.detailApprenant,
+      typeFrais:       el.dataset.detailTypeFrais,
+      tranche:         el.dataset.detailTranche,
+      montant:         el.dataset.detailMontant,
+      mode:            el.dataset.detailMode,
+      date:            el.dataset.detailDate,
+      creePar:         el.dataset.detailCreePar,
+      quittance:       el.dataset.detailQuittance,
+      annule:          el.dataset.detailAnnule === 'true',
+      motifAnnulation: el.dataset.detailMotif,
+      annulePar:       el.dataset.detailAnnulePar,
+      dateAnnulation:  el.dataset.detailDateAnnulation
+    });
+  }
 });
 </script>
 {% endblock %}

@@ -9,7 +9,7 @@
     {% comment %} Custom CSS {% endcomment %}
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
 
-    <style>
+    <style nonce="{{ csp_nonce }}">
         :root {
             --bsb-primary: #374151;
             --bsb-secondary: #059669;
@@ -135,21 +135,24 @@
 
         {% comment %} Messages Django globaux {% endcomment %}
         {% if messages %}
-        <div style="position:fixed;top:80px;right:20px;z-index:9999;min-width:300px;max-width:420px;">
+        <div class="fixed top-[80px] right-[20px] z-[9999] min-w-[300px] max-w-[420px]">
             {% for message in messages %}
-            <div data-automsg style="
-                display:flex;align-items:flex-start;gap:.75rem;
-                background:#fff;border-radius:12px;padding:1rem 1.25rem;
-                margin-bottom:.75rem;
-                box-shadow:0 4px 24px rgba(0,0,0,.13);
-                border-left:4px solid {% if message.tags == 'success' %}#059669{% elif message.tags == 'error' %}#dc2626{% elif message.tags == 'warning' %}#d97706{% else %}#6b7280{% endif %};
-                animation:slideIn .3s ease;">
-                
-                <div style="flex:1;">
-                    <div style="font-weight:600;font-size:.92rem;color:#111;">{{ message }}</div>
+            {% comment %} Tout en classes : la CSP n'accepte plus 'unsafe-inline' pour style-src,
+               un attribut style= serait donc bloqué. `animate-[slideIn_.3s_ease]` réutilise le
+               @keyframes slideIn declare dans le bloc de styles ci-dessus, lequel porte un nonce.
+               Chaque couleur de liseré est écrite en entier dans sa branche : le scanner JIT de
+               Tailwind cherche des noms de classe littéraux dans les fichiers, il ne saurait pas
+               reconstruire « border-l-[ » + une valeur interpolée. {% endcomment %}
+            <div data-automsg
+                 class="flex items-start gap-[.75rem] bg-[#fff] rounded-[12px] p-[1rem_1.25rem]
+                        mb-[.75rem] shadow-[0_4px_24px_rgba(0,0,0,.13)] animate-[slideIn_.3s_ease]
+                        border-l-4 {% if message.tags == 'success' %}border-l-[#059669]{% elif message.tags == 'error' %}border-l-[#dc2626]{% elif message.tags == 'warning' %}border-l-[#d97706]{% else %}border-l-[#6b7280]{% endif %}">
+
+                <div class="flex-[1]">
+                    <div class="font-[600] text-[.92rem] text-[#111]">{{ message }}</div>
                 </div>
                 <button data-action="dismiss"
-                        style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.1rem;padding:0;margin-left:.5rem;"></button>
+                        class="bg-transparent border-0 cursor-pointer text-[#9ca3af] text-[1.1rem] p-[0] ml-[.5rem]"></button>
             </div>
             {% endfor %}
         </div>
@@ -194,6 +197,47 @@
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
         }
+
+        // ── Délégation d'événements ────────────────────────────────────────
+        // Remplace les attributs onclick=/onsubmit= inline. La CSP du site est
+        // « script-src 'self' 'nonce-...' » : un gestionnaire écrit dans un
+        // attribut HTML est du code inline sans nonce, donc bloqué par le
+        // navigateur. Ces trois motifs (confirmation, ouverture et fermeture de
+        // modale) couvrent l'essentiel des cas de l'application ; les pages
+        // ayant une logique propre déclarent leur propre écouteur délégué.
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest) return;
+            const cible = event.target.closest(
+                '[data-confirmer], [data-modal-ouvrir], [data-modal-fermer]');
+            if (!cible) return;
+
+            if (cible.dataset.modalOuvrir) {
+                event.preventDefault();
+                openModal(cible.dataset.modalOuvrir);
+            } else if (cible.dataset.modalFermer) {
+                event.preventDefault();
+                closeModal(cible.dataset.modalFermer);
+            } else if (cible.dataset.confirmer && cible.tagName !== 'FORM') {
+                // Les <form> sont traités par l'écouteur 'submit' ci-dessous :
+                // un formulaire peut être envoyé au clavier, sans clic.
+                if (!window.confirm(cible.dataset.confirmer)) event.preventDefault();
+            }
+        });
+
+        document.addEventListener('submit', function (event) {
+            const message = event.target.dataset && event.target.dataset.confirmer;
+            if (message && !window.confirm(message)) event.preventDefault();
+        });
+
+        // ── Largeurs calculées (barres de progression) ─────────────────────
+        // Une largeur en pourcentage venant de la base ne peut être ni une
+        // classe Tailwind (valeur variable) ni un attribut style= (bloqué par
+        // la CSP, un attribut ne pouvant pas porter de nonce). On la pose donc
+        // par le setter de propriété, que la CSP autorise — contrairement à
+        // setAttribute('style', …) et à style.cssText, eux bloqués.
+        document.querySelectorAll('[data-largeur]').forEach(function (el) {
+            el.style.width = el.dataset.largeur + '%';
+        });
     </script>
 
     {% block extra_js %}{% endblock %}

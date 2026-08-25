@@ -1350,6 +1350,7 @@ MATRIX_PERMISSIONS = [
     ('gerer_modules', "Gérer les modules et cours", 'courses'),
     ('gerer_frais', "Gérer les frais et types de frais", 'courses'),
     ('gerer_annees', "Gérer les années de formation", 'courses'),
+    ('gerer_equipe', "Gérer le Directeur Général et l'équipe (page « À propos »)", 'courses'),
     ('gerer_agents', "Gérer les comptes utilisateurs", 'accounts'),
     ('gerer_eleves', "Gérer les comptes apprenants", 'accounts'),
     ('gerer_permissions', "Gérer les permissions", 'accounts'),

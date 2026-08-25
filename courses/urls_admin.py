@@ -2,6 +2,7 @@ from django.urls import path
 
 from courses import views
 from . import views_admin
+from . import views_equipe
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -138,6 +139,16 @@ urlpatterns = [
     path("provinces/<int:pk>/supprimer/", views.province_delete,  name="province_delete"),
     path("provinces/import/modele/",      views.province_import_template, name="province_import_template"),
     path("provinces/import/",             views.province_import,  name="province_import"),
+
+    # Équipe (Directeur Général et membres) — remplace l'admin Django, retiré
+    # du projet. Alimente la page publique « À propos ».
+    path("equipe/",                          views_equipe.equipe_list,    name="equipe_list"),
+    path("equipe/dg/creer/",                 views_equipe.dg_create,      name="dg_create"),
+    path("equipe/dg/<int:pk>/modifier/",     views_equipe.dg_update,      name="dg_update"),
+    path("equipe/dg/<int:pk>/supprimer/",    views_equipe.dg_delete,      name="dg_delete"),
+    path("equipe/membre/creer/",             views_equipe.membre_create,  name="membre_create"),
+    path("equipe/membre/<int:pk>/modifier/", views_equipe.membre_update,  name="membre_update"),
+    path("equipe/membre/<int:pk>/supprimer/", views_equipe.membre_delete, name="membre_delete"),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

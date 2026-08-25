@@ -4,7 +4,7 @@
 {% block title %}Tableau de bord | BSB{% endblock %}
 
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce }}">
   :root {
     --rouge: #C0392B;
     --rouge-dark: #922B21;
@@ -239,7 +239,7 @@
 
         {% if scope == "global" %}
         <div>
-          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Direction</label>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Direction</label>
           <select name="direction" class="form-select" data-auto-submit>
             <option value="">— Toutes —</option>
             {% for d in directions %}
@@ -251,7 +251,7 @@
 
         {% if scope in "global direction" %}
         <div>
-          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Centre</label>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Centre</label>
           <select name="centre" class="form-select" data-auto-submit>
             <option value="">— Tous les centres —</option>
             {% for c in centres %}
@@ -262,7 +262,7 @@
         {% endif %}
 
         <div>
-          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Métier</label>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Métier</label>
           <select name="filiere" class="form-select">
             <option value="">— Tous les métiers —</option>
             {% for f in filieres %}
@@ -272,7 +272,7 @@
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Année de formation</label>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Année de formation</label>
           <select name="annee" class="form-select">
             <option value="">— Toutes —</option>
             {% for a in annees %}
@@ -282,7 +282,7 @@
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Statut inscription</label>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Statut inscription</label>
           <select name="statut" class="form-select">
             <option value="">— Tous —</option>
             <option value="en_cours" {% if f_statut == "en_cours" %}selected{% endif %}>En attente</option>
@@ -293,7 +293,7 @@
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Région</label>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Région</label>
           <select name="region" class="form-select">
             <option value="">— Toutes —</option>
             {% for r in regions %}
@@ -303,7 +303,7 @@
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Statut de paiement</label>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Statut de paiement</label>
           <select name="statut_paiement" class="form-select">
             <option value="">— Tous —</option>
             <option value="totalement" {% if f_statut_paiement == "totalement" %}selected{% endif %}>Totalement réglé</option>
@@ -313,7 +313,7 @@
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Genre</label>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Genre</label>
           <select name="genre" class="form-select">
             <option value="">— Tous —</option>
             {% for code, label in genres %}
@@ -323,12 +323,12 @@
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Du</label>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Du</label>
           <input type="date" name="date_debut" value="{{ f_date_debut|default:'' }}" class="form-control">
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Au</label>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Au</label>
           <input type="date" name="date_fin" value="{{ f_date_fin|default:'' }}" class="form-control">
         </div>
 
@@ -337,7 +337,7 @@
             Filtrer
           </button>
           <a href="{% url 'courses:statistiques' %}" class="btn-reset" title="Réinitialiser les filtres">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-[16px] h-[16px]" aria-hidden="true">
               <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clip-rule="evenodd" />
             </svg>
             Réinitialiser
@@ -349,31 +349,31 @@
 
     {% comment %} Exports {% endcomment %}
     <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-200">
-      <span class="text-sm font-semibold" style="color:var(--gris);">
+      <span class="text-sm font-semibold text-[var(--gris)]">
         Exporter :
       </span>
       <div class="btn-export-group">
-        <span class="text-sm font-semibold" style="color:var(--gris);">Inscriptions :</span>
+        <span class="text-sm font-semibold text-[var(--gris)]">Inscriptions :</span>
         <a href="?{% if f_centre %}centre={{ f_centre }}&{% endif %}{% if f_filiere %}filiere={{ f_filiere }}&{% endif %}{% if f_annee %}annee={{ f_annee }}&{% endif %}type=inscriptions"
-           onclick="this.href=buildExportUrl('inscriptions','pdf')" class="btn-exp btn-exp-pdf">
+           data-action="exporter" data-export-type="inscriptions" data-export-format="pdf" class="btn-exp btn-exp-pdf">
           PDF
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('inscriptions','excel'); return false;" class="btn-exp btn-exp-excel">
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="excel" class="btn-exp btn-exp-excel">
           Excel
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('inscriptions','csv'); return false;" class="btn-exp btn-exp-csv">
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="csv" class="btn-exp btn-exp-csv">
           CSV
         </a>
       </div>
       <div class="btn-export-group">
-        <span class="text-sm font-semibold" style="color:var(--gris);">Recouvrement :</span>
-        <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','pdf'); return false;" class="btn-exp btn-exp-pdf">
+        <span class="text-sm font-semibold text-[var(--gris)]">Recouvrement :</span>
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="pdf" class="btn-exp btn-exp-pdf">
           PDF
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','excel'); return false;" class="btn-exp btn-exp-excel">
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="excel" class="btn-exp btn-exp-excel">
           Excel
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','csv'); return false;" class="btn-exp btn-exp-csv">
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="csv" class="btn-exp btn-exp-csv">
           CSV
         </a>
       </div>
@@ -386,9 +386,9 @@
     {% comment %} Apprenants {% endcomment %}
     <div class="kpi-card or">
       <div class="flex items-center gap-3">
-        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
         <div>
-          <div class="kpi-value" style="color:var(--or-dark);">{{ stats.total_eleves }}</div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.total_eleves }}</div>
           <div class="kpi-label">Apprenants inscrits</div>
         </div>
       </div>
@@ -397,9 +397,9 @@
     {% comment %} Validées {% endcomment %}
     <div class="kpi-card or">
       <div class="flex items-center gap-3">
-        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
         <div>
-          <div class="kpi-value" style="color:var(--or-dark);">{{ stats.inscriptions_validees }}</div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.inscriptions_validees }}</div>
           <div class="kpi-label">Inscriptions validées</div>
         </div>
       </div>
@@ -408,9 +408,9 @@
     {% comment %} En attente {% endcomment %}
     <div class="kpi-card or">
       <div class="flex items-center gap-3">
-        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
         <div>
-          <div class="kpi-value" style="color:var(--or-dark);">{{ stats.inscriptions_en_cours }}</div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.inscriptions_en_cours }}</div>
           <div class="kpi-label">En attente de traitement</div>
         </div>
       </div>
@@ -419,9 +419,9 @@
     {% comment %} Rejetées {% endcomment %}
     <div class="kpi-card or">
       <div class="flex items-center gap-3">
-        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
         <div>
-          <div class="kpi-value" style="color:var(--or-dark);">{{ stats.inscriptions_rejetees }}</div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.inscriptions_rejetees }}</div>
           <div class="kpi-label">Inscriptions rejetées</div>
         </div>
       </div>
@@ -430,9 +430,9 @@
     {% comment %} Encaissé {% endcomment %}
     <div class="kpi-card or">
       <div class="flex items-center gap-3">
-        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
         <div>
-          <div class="kpi-value small-kpi" style="color:var(--or-dark);" data-amount="{{ stats.total_encaisse }}">—</div>
+          <div class="kpi-value small-kpi text-[var(--or-dark)]" data-amount="{{ stats.total_encaisse }}">—</div>
           <div class="kpi-label">FCFA encaissés</div>
         </div>
       </div>
@@ -441,9 +441,9 @@
     {% comment %} Restant {% endcomment %}
     <div class="kpi-card or">
       <div class="flex items-center gap-3">
-        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
         <div>
-          <div class="kpi-value small-kpi" style="color:var(--or-dark);" data-amount="{{ stats.total_restant }}">—</div>
+          <div class="kpi-value small-kpi text-[var(--or-dark)]" data-amount="{{ stats.total_restant }}">—</div>
           <div class="kpi-label">FCFA restants à payer</div>
         </div>
       </div>
@@ -452,9 +452,9 @@
     {% comment %} Taux recouvrement {% endcomment %}
     <div class="kpi-card or">
       <div class="flex items-center gap-3">
-        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
         <div>
-          <div class="kpi-value" style="color:var(--or-dark);">{{ stats.taux_global }}%</div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.taux_global }}%</div>
           <div class="kpi-label">Taux de recouvrement</div>
         </div>
       </div>
@@ -463,9 +463,9 @@
     {% comment %} Centres {% endcomment %}
     <div class="kpi-card or">
       <div class="flex items-center gap-3">
-        <div class="kpi-icon" style="background:var(--or-soft);"></div>
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
         <div>
-          <div class="kpi-value" style="color:var(--or-dark);">{{ stats.total_centres }}</div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.total_centres }}</div>
           <div class="kpi-label">Centres{% if scope == "global" %} / {{ stats.total_directions }} directions{% endif %}</div>
         </div>
       </div>
@@ -480,24 +480,24 @@
     <div class="lg:col-span-4">
       <div class="section-card">
         <div class="section-title">
-          <span class="icon-dot" style="background:var(--rouge);"></span>
+          <span class="icon-dot bg-[var(--rouge)]"></span>
           Inscriptions par statut
         </div>
-        <div style="height:230px; position:relative;">
+        <div class="h-[230px] relative">
           <canvas id="chartStatut"></canvas>
         </div>
         {% comment %} Légende custom {% endcomment %}
         <div class="flex flex-wrap gap-3 justify-center mt-4">
           <span class="flex items-center gap-1 text-sm">
-            <span style="width:12px;height:12px;background:#16A34A;border-radius:3px;display:inline-block;"></span>
+            <span class="w-[12px] h-[12px] bg-[#16A34A] rounded-[3px] inline-block"></span>
             Validées <strong class="ml-1">{{ stats.inscriptions_validees }}</strong>
           </span>
           <span class="flex items-center gap-1 text-sm">
-            <span style="width:12px;height:12px;background:var(--or);border-radius:3px;display:inline-block;"></span>
+            <span class="w-[12px] h-[12px] bg-[var(--or)] rounded-[3px] inline-block"></span>
             En attente <strong class="ml-1">{{ stats.inscriptions_en_cours }}</strong>
           </span>
           <span class="flex items-center gap-1 text-sm">
-            <span style="width:12px;height:12px;background:var(--rouge);border-radius:3px;display:inline-block;"></span>
+            <span class="w-[12px] h-[12px] bg-[var(--rouge)] rounded-[3px] inline-block"></span>
             Rejetées <strong class="ml-1">{{ stats.inscriptions_rejetees }}</strong>
           </span>
         </div>
@@ -508,10 +508,10 @@
     <div class="lg:col-span-8">
       <div class="section-card">
         <div class="section-title">
-          <span class="icon-dot" style="background:var(--or);"></span>
+          <span class="icon-dot bg-[var(--or)]"></span>
           Top métiers par inscriptions
         </div>
-        <div style="height:230px; position:relative;">
+        <div class="h-[230px] relative">
           <canvas id="chartMetiers"></canvas>
         </div>
       </div>
@@ -523,10 +523,10 @@
     <div class="lg:col-span-7">
       <div class="section-card">
         <div class="section-title">
-          <span class="icon-dot" style="background:var(--rouge);"></span>
+          <span class="icon-dot bg-[var(--rouge)]"></span>
           Évolution mensuelle des inscriptions
         </div>
-        <div style="height:220px; position:relative;">
+        <div class="h-[220px] relative">
           <canvas id="chartEvol"></canvas>
         </div>
       </div>
@@ -536,10 +536,10 @@
     <div class="lg:col-span-5">
       <div class="section-card">
         <div class="section-title">
-          <span class="icon-dot" style="background:var(--or);"></span>
+          <span class="icon-dot bg-[var(--or)]"></span>
           Paiements par mode
         </div>
-        <div style="height:220px; position:relative;">
+        <div class="h-[220px] relative">
           <canvas id="chartModes"></canvas>
         </div>
       </div>
@@ -550,17 +550,17 @@
   <div class="section-card mb-6">
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
       <div class="section-title mb-0">
-        <span class="icon-dot" style="background:var(--rouge);"></span>
+        <span class="icon-dot bg-[var(--rouge)]"></span>
         Taux de recouvrement par centre
       </div>
       <div class="btn-export-group">
-        <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','pdf'); return false;" class="btn-exp btn-exp-pdf">
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="pdf" class="btn-exp btn-exp-pdf">
           PDF
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','excel'); return false;" class="btn-exp btn-exp-excel">
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="excel" class="btn-exp btn-exp-excel">
           Excel
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','csv'); return false;" class="btn-exp btn-exp-csv">
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="csv" class="btn-exp btn-exp-csv">
           CSV
         </a>
       </div>
@@ -575,7 +575,7 @@
             <th class="text-right">Total dû</th>
             <th class="text-right">Encaissé</th>
             <th class="text-right">Restant</th>
-            <th style="min-width:160px;">Taux de recouvrement</th>
+            <th class="min-w-[160px]">Taux de recouvrement</th>
           </tr>
         </thead>
         <tbody>
@@ -585,16 +585,19 @@
             {% if scope in "global direction" %}<td class="text-gray-500 text-sm">{{ r.direction }}</td>{% endif %}
             <td class="text-right">{{ r.inscrits }}</td>
             <td class="text-right text-sm"><span class="fmt-amount">{{ r.total_du|floatformat:0 }}</span> F</td>
-            <td class="text-right text-sm font-semibold" style="color:#16A34A;"><span class="fmt-amount">{{ r.encaisse|floatformat:0 }}</span> F</td>
-            <td class="text-right text-sm" style="color:var(--rouge);"><span class="fmt-amount">{{ r.restant|floatformat:0 }}</span> F</td>
+            <td class="text-right text-sm font-semibold text-[#16A34A]"><span class="fmt-amount">{{ r.encaisse|floatformat:0 }}</span> F</td>
+            <td class="text-right text-sm text-[var(--rouge)]"><span class="fmt-amount">{{ r.restant|floatformat:0 }}</span> F</td>
             <td>
               <div class="prog-wrap">
                 <div class="prog-bar-outer">
-                  <div class="prog-bar-inner"
-                    style="width:{{ r.taux }}%; background:{% if r.taux >= 80 %}#16A34A{% elif r.taux >= 50 %}var(--or){% else %}var(--rouge){% endif %};">
+                  {% comment %} La couleur devient une classe conditionnelle ; la largeur, calculee,
+                     est posee par JavaScript depuis data-largeur (un attribut style= serait bloque
+                     par la CSP, et aucune classe ne peut porter une valeur variable). {% endcomment %}
+                  <div class="prog-bar-inner {% if r.taux >= 80 %}bg-[#16A34A]{% elif r.taux >= 50 %}bg-[var(--or)]{% else %}bg-[var(--rouge)]{% endif %}"
+                    data-largeur="{{ r.taux|floatformat:2 }}">
                   </div>
                 </div>
-                <span class="text-sm font-bold" style="min-width:36px; text-align:right;">{{ r.taux }}%</span>
+                <span class="text-sm font-bold min-w-[36px] text-right">{{ r.taux }}%</span>
               </div>
             </td>
           </tr>
@@ -631,17 +634,17 @@
   <div class="section-card mb-6">
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
       <div class="section-title mb-0">
-        <span class="icon-dot" style="background:var(--or);"></span>
+        <span class="icon-dot bg-[var(--or)]"></span>
         Historique des inscriptions
       </div>
       <div class="btn-export-group">
-        <a href="#" onclick="window.location.href=buildExportUrl('inscriptions','pdf'); return false;" class="btn-exp btn-exp-pdf">
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="pdf" class="btn-exp btn-exp-pdf">
           PDF
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('inscriptions','excel'); return false;" class="btn-exp btn-exp-excel">
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="excel" class="btn-exp btn-exp-excel">
           Excel
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('inscriptions','csv'); return false;" class="btn-exp btn-exp-csv">
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="csv" class="btn-exp btn-exp-csv">
           CSV
         </a>
       </div>
@@ -666,7 +669,7 @@
             <td class="text-gray-500 text-sm">{{ forloop.counter }}</td>
             <td>
               <div class="font-semibold text-sm">{{ insc.eleve.nom }} {{ insc.eleve.prenom }}</div>
-              <div class="text-gray-500" style="font-size:.72rem;">{{ insc.eleve.numero_identifiant }}</div>
+              <div class="text-gray-500 text-[.72rem]">{{ insc.eleve.numero_identifiant }}</div>
             </td>
             <td class="text-sm">{{ insc.formation.filiere.nom_filiere }}</td>
             <td class="text-sm">{{ insc.formation.centre.nom_centre }}</td>
@@ -719,14 +722,28 @@
 
 {% block extra_js %}
 <script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+
+{% comment %} Donnees des graphiques.
+   `json_script` serialise dans une balise <script type="application/json"> en
+   echappant <, > et & : un nom de metier contenant « </script> » ne peut plus
+   fermer le bloc. C'est ce que ne faisait pas json.dumps rendu avec |safe. {% endcomment %}
+{{ evol_labels|json_script:"data-evol-labels" }}
+{{ evol_data|json_script:"data-evol-valeurs" }}
+{{ mode_labels|json_script:"data-mode-labels" }}
+{{ mode_data|json_script:"data-mode-valeurs" }}
+{{ top_filieres_noms|json_script:"data-metiers-labels" }}
+{{ top_filieres_count|json_script:"data-metiers-valeurs" }}
+
 <script nonce="{{ csp_nonce }}">
 // ── Data depuis Django ─────────────────────────────────────────────────────
-const evolLabels = {{ evol_labels_json|safe }};
-const evolData = {{ evol_data_json|safe }};
-const modeLabels = {{ mode_labels_json|safe }};
-const modeData = {{ mode_data_json|safe }};
-const metiersLabels = {{ top_filieres_json|safe }};
-const metiersData = {{ top_filieres_count_json|safe }};
+const lireDonnees = (id) => JSON.parse(document.getElementById(id).textContent);
+
+const evolLabels = lireDonnees('data-evol-labels');
+const evolData = lireDonnees('data-evol-valeurs');
+const modeLabels = lireDonnees('data-mode-labels');
+const modeData = lireDonnees('data-mode-valeurs');
+const metiersLabels = lireDonnees('data-metiers-labels');
+const metiersData = lireDonnees('data-metiers-valeurs');
 
 const ROUGE = '#C0392B';
 const OR = '#D4A017';
@@ -851,5 +868,16 @@ function buildExportUrl(dataType, format) {
   };
   return baseMap[format] + '?' + params.toString();
 }
+
+// Délégation : les attributs onclick= inline sont bloqués par la CSP
+// (script-src 'self' 'nonce-...'). Les liens portent href="#" ou une URL de
+// repli ; buildExportUrl() recalcule la destination avec les filtres courants.
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var el = e.target.closest('[data-action="exporter"]');
+  if (!el) return;
+  e.preventDefault();
+  window.location.href = buildExportUrl(el.dataset.exportType, el.dataset.exportFormat);
+});
 </script>
 {% endblock %}

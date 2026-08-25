@@ -1,3 +1,5 @@
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 from accounts.models import Utilisateur, Eleve
 
@@ -69,6 +71,24 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({"password": "Les mots de passe ne correspondent pas."})
+
+        # AUTH_PASSWORD_VALIDATORS est declare dans les settings mais Django ne
+        # l'applique QUE si validate_password() est appele. Les formulaires
+        # d'admin et de changement de mot de passe le font ; ce serializer, qui
+        # est le point d'inscription public, ne le faisait pas : un compte
+        # pouvait etre cree avec le mot de passe « 1 ».
+        # L'instance non sauvegardee sert au validateur de similarite, qui
+        # compare le mot de passe au nom d'utilisateur, au nom et a l'e-mail.
+        utilisateur_temoin = Eleve(
+            username=attrs.get('username') or '',
+            email=(attrs.get('email') or ''),
+            nom=attrs.get('nom') or '',
+            prenom=attrs.get('prenom') or '',
+        )
+        try:
+            validate_password(attrs['password'], user=utilisateur_temoin)
+        except DjangoValidationError as erreur:
+            raise serializers.ValidationError({"password": list(erreur.messages)})
 
         email = (attrs.get('email') or '').strip()
         if email:

@@ -22,8 +22,14 @@ def notifier_abonnes(actualite, request=None):
     def absolu(chemin):
         if request is not None:
             return request.build_absolute_uri(chemin)
-        hote = (settings.ALLOWED_HOSTS or ["localhost"])[0]
-        return f"http://{hote}{chemin}"
+        # Hors requete HTTP (commande `notifier_actualites`) : SITE_URL est la
+        # seule source fiable du schema. L'ancien repli forgeait un lien en
+        # « http:// » vers un site servi exclusivement en HTTPS.
+        base = (settings.SITE_URL or "").rstrip("/")
+        if not base:
+            hote = (settings.ALLOWED_HOSTS or ["localhost"])[0]
+            base = f"https://{hote}"
+        return f"{base}{chemin}"
 
     lien_actu = absolu(actualite.get_absolute_url())
     abonnes = list(AbonneNewsletter.objects.filter(actif=True))

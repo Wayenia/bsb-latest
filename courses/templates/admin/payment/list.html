@@ -89,7 +89,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <button
-                                onclick="openModal('insc-{{ insc.id }}')"
+                                data-modal-ouvrir="insc-{{ insc.id }}"
                                 class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-all">
                                  Détails
                             </button>
@@ -147,8 +147,7 @@
 {% comment %} ===== MODALS ===== {% endcomment %}
 {% for insc in inscriptions %}
 <div id="insc-{{ insc.id }}"
-     class="fixed inset-0 z-50 hidden items-center flex justify-center p-4"
-     style="background: rgba(0,0,0,0.5);">
+     class="fixed inset-0 z-50 hidden items-center flex justify-center p-4 bg-[rgba(0,0,0,0.5)]">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden">
 
         <div class="px-6 py-4 border-b border-gray-200 flex items-start justify-between">
@@ -160,7 +159,7 @@
                     {{ insc.formation.centre }} · {{ insc.formation.filiere }} · {{ insc.annee_scolaire|default:"—" }}
                 </p>
             </div>
-            <button onclick="closeModal('insc-{{ insc.id }}')"
+            <button data-modal-fermer="insc-{{ insc.id }}"
                     class="text-gray-400 hover:text-gray-700 text-xl font-bold ml-4"></button>
         </div>
 

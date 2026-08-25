@@ -7,7 +7,7 @@
 
 
   <div class="bg-white border border-slate-200 rounded-sm mb-8">
-    <div class="h-1 w-full" style="background-color: #ECAB0F;"></div>
+    <div class="h-1 w-full bg-[#ECAB0F]"></div>
     
     <div class="p-6">
       <div class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
@@ -37,7 +37,7 @@
       <div class="mt-5 pt-4 border-t border-slate-100">
         <a href="{{ career.filiere.communique.url }}" target="_blank"
            class="inline-flex items-center text-[25px] text-red-600">
-          <span class="mr-2 text-[25px]" style="color: #E30613;"></span>
+          <span class="mr-2 text-[25px] text-[#E30613]"></span>
           Relisez le communiqué officiel
         </a>
       </div>
@@ -112,15 +112,11 @@
         {% comment %} Boutons de navigation {% endcomment %}
         <div class="flex justify-between mt-10 pt-6 border-t border-slate-200">
           <a href="{% url 'courses:personal_info' career.id %}"
-             class="px-5 py-2.5 text-white text-sm font-medium
-                    rounded-sm hover:opacity-90 transition-all"
-             style="background-color: #6b7280;">
+             class="px-5 py-2.5 text-white text-sm font-medium rounded-sm hover:opacity-90 transition-all bg-[#6b7280]">
             ← Précédent
           </a>
           <button type="submit"
-                  class="px-6 py-2.5 text-white text-sm font-medium rounded-sm
-                         transition-all hover:opacity-90 flex items-center gap-2"
-                  style="background-color: #CA8A04;">
+                  class="px-6 py-2.5 text-white text-sm font-medium rounded-sm transition-all hover:opacity-90 flex items-center gap-2 bg-[#CA8A04]">
             <span>Suivant</span>
             <span class="text-xs opacity-70">→</span>
           </button>
@@ -131,9 +127,9 @@
 
   {% comment %} Footer with subtle BSB colors {% endcomment %}
   <div class="mt-8 flex justify-center space-x-3">
-    <span class="h-0.5 w-3" style="background-color: #ECAB0F;"></span>
-    <span class="h-0.5 w-3" style="background-color: #E30613;"></span>
-    <span class="h-0.5 w-3" style="background-color: #009640;"></span>
+    <span class="h-0.5 w-3 bg-[#ECAB0F]"></span>
+    <span class="h-0.5 w-3 bg-[#E30613]"></span>
+    <span class="h-0.5 w-3 bg-[#009640]"></span>
   </div>
 </div>
 

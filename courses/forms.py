@@ -1,10 +1,11 @@
 from datetime import date
 
 from django import forms
+from django.contrib.auth.password_validation import validate_password
 from .models import (
     TITRE_PROFESSIONNEL_CHOICE, Direction_reg, Filiere, CentreFormation, Module,
     Frais, Cours, Inscription, Paiement, CentreEtFiliere,PieceJointeInscription,TypeFrais,
-    AnneeScolaire, TrancheFrais, Region
+    AnneeScolaire, TrancheFrais, Region, DG, Membre
 )
 from django.forms import inlineformset_factory
 
@@ -805,6 +806,16 @@ class AgentForm(forms.ModelForm):
         })
     )
 
+    def clean_password(self):
+        """Applique AUTH_PASSWORD_VALIDATORS. Django ne les declenche pas tout
+        seul : sans cet appel, un agent — y compris un role privilegie — pouvait
+        etre cree avec un mot de passe trivial. Champ optionnel : vide signifie
+        « ne pas modifier », il n'y a alors rien a valider."""
+        password = self.cleaned_data.get('password')
+        if password:
+            validate_password(password, user=self.instance)
+        return password
+
     # ── Champs Formateur ──────────────────────────────────────────────────────
     centre_formateur = forms.ModelChoiceField(
         queryset=CentreFormation.objects.all(),
@@ -1170,6 +1181,13 @@ class EleveForm(forms.ModelForm):
         })
     )
 
+    def clean_password(self):
+        """Applique AUTH_PASSWORD_VALIDATORS (cf. AgentForm.clean_password)."""
+        password = self.cleaned_data.get('password')
+        if password:
+            validate_password(password, user=self.instance)
+        return password
+
     class Meta:
         model = Eleve
         fields = [
@@ -1392,3 +1410,65 @@ TrancheFraisFormSet = inlineformset_factory(
     extra=1,
     can_delete=True,
 )
+
+# ─── ÉQUIPE (Directeur Général et membres de l'administration) ────────────────
+# Ces deux modèles alimentent la page publique « À propos ». Ils n'étaient
+# éditables que via l'admin Django ; ces formulaires alimentent le back-office
+# /bsb/equipe/ qui l'a remplacé.
+
+_CLASSES_CHAMP = (
+    'w-full px-4 py-3 border border-gray-300 rounded-lg '
+    'focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all'
+)
+
+TAILLE_MAX_PHOTO = 3 * 1024 * 1024  # 3 Mo
+
+
+def _valider_photo(photo):
+    """Taille et signature binaire. L'extension est déjà contrôlée par le
+    FileExtensionValidator du modèle ; on vérifie ici que le contenu correspond
+    réellement à une image, pour qu'un fichier simplement renommé ne passe pas."""
+    if not photo or not hasattr(photo, 'read'):
+        return photo
+    if photo.size > TAILLE_MAX_PHOTO:
+        raise forms.ValidationError("L'image ne doit pas dépasser 3 Mo.")
+    entete = photo.read(12)
+    photo.seek(0)
+    signatures = (
+        b'\xff\xd8\xff',            # JPEG
+        b'\x89PNG\r\n\x1a\n',       # PNG
+    )
+    if not any(entete.startswith(s) for s in signatures) and not (
+            entete[:4] == b'RIFF' and entete[8:12] == b'WEBP'):
+        raise forms.ValidationError("Le fichier n'est pas une image JPEG, PNG ou WEBP valide.")
+    return photo
+
+
+class DGForm(forms.ModelForm):
+    class Meta:
+        model = DG
+        fields = ['full_name', 'photo', 'position', 'message', 'commitment', 'is_active']
+        widgets = {
+            'full_name': forms.TextInput(attrs={'class': _CLASSES_CHAMP}),
+            'position': forms.TextInput(attrs={'class': _CLASSES_CHAMP}),
+            'message': forms.Textarea(attrs={'class': _CLASSES_CHAMP, 'rows': 5}),
+            'commitment': forms.Textarea(attrs={'class': _CLASSES_CHAMP, 'rows': 3}),
+        }
+
+    def clean_photo(self):
+        return _valider_photo(self.cleaned_data.get('photo'))
+
+
+class MembreEquipeForm(forms.ModelForm):
+    class Meta:
+        model = Membre
+        fields = ['full_name', 'photo', 'position', 'description', 'order', 'is_active']
+        widgets = {
+            'full_name': forms.TextInput(attrs={'class': _CLASSES_CHAMP}),
+            'position': forms.TextInput(attrs={'class': _CLASSES_CHAMP}),
+            'description': forms.Textarea(attrs={'class': _CLASSES_CHAMP, 'rows': 4}),
+            'order': forms.NumberInput(attrs={'class': _CLASSES_CHAMP, 'min': 0}),
+        }
+
+    def clean_photo(self):
+        return _valider_photo(self.cleaned_data.get('photo'))

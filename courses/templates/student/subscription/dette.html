@@ -128,7 +128,7 @@
                 {% with tranches=dette.tranches_detail %}
                 {% if tranches %}
                 <div class="border-t border-gray-100">
-                    <button type="button" onclick="toggleTranches(this)"
+                    <button type="button" data-basculer
                             class="w-full flex items-center justify-between px-6 py-3 text-xs font-bold text-gray-500 uppercase hover:bg-gray-50 transition-colors">
                         <span>Tranches ({{ tranches|length }})</span>
                         <span class="chevron-tranche transition-transform">▾</span>
@@ -192,6 +192,14 @@
     const chevron = btn.querySelector('.chevron-tranche');
     chevron.style.transform = panel.classList.contains('hidden') ? '' : 'rotate(180deg)';
   }
+
+  // Délégation : les attributs onclick= inline sont bloqués par la CSP
+  // (script-src 'self' 'nonce-...'), l'argument passe par un attribut data-*.
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest) return;
+    var b = e.target.closest('[data-basculer]');
+    if (b) toggleTranches(b);
+  });
 </script>
 
 {% endblock %}

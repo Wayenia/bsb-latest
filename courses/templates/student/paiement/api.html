@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Paiement Mobile</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <style>
+  <style nonce="{{ csp_nonce }}">
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -220,15 +220,15 @@
   <div id="stateForm">
     <p class="section-label">Réseau mobile</p>
     <div class="network-grid">
-      <div class="net-btn" data-network="Orange Money" onclick="selectNetwork(this)">
+      <div class="net-btn" data-network="Orange Money" data-action="choisir-reseau">
         <span class="net-logo"></span>
         <span class="net-name">Orange Money</span>
       </div>
-      <div class="net-btn" data-network="Moov Money" onclick="selectNetwork(this)">
+      <div class="net-btn" data-network="Moov Money" data-action="choisir-reseau">
         <span class="net-logo"></span>
         <span class="net-name">Moov Money</span>
       </div>
-      <div class="net-btn" data-network="Coris Money" onclick="selectNetwork(this)">
+      <div class="net-btn" data-network="Coris Money" data-action="choisir-reseau">
         <span class="net-logo"></span>
         <span class="net-name">Coris Money</span>
       </div>
@@ -244,7 +244,7 @@
       <p class="amount-value"><span class="amount-currency">XOF </span>5 000</p>
     </div>
 
-    <button class="pay-btn disabled" id="payBtn" onclick="pay()">
+    <button class="pay-btn disabled" id="payBtn" data-action="payer">
       Sélectionne un réseau
     </button>
   </div>
@@ -282,7 +282,7 @@
         </div>
       </div>
     </div>
-    <button class="reset-btn" onclick="reset()">Nouveau paiement</button>
+    <button class="reset-btn" data-action="reinitialiser">Nouveau paiement</button>
   </div>
 </div>
 
@@ -328,6 +328,20 @@
   }
 
   setState('form');
+
+// Délégation d'événements : les attributs onclick= inline sont bloqués
+// par la CSP (script-src 'self' 'nonce-...'), aucun code inline sans nonce
+// n'étant exécuté. Les arguments passent par des attributs data-*.
+var ACTIONS = {
+  'choisir-reseau': function (el) { selectNetwork(el); },
+  'payer': function () { pay(); },
+  'reinitialiser': function () { reset(); }
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var el = e.target.closest('[data-action]');
+  if (el && ACTIONS[el.dataset.action]) ACTIONS[el.dataset.action](el);
+});
 </script>
 </body>
 </html>

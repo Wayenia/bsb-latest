@@ -96,7 +96,7 @@
             <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-red-50 to-yellow-50 border-b border-gray-100">
                 <div class="flex items-center gap-4">
                     <button type="button"
-                            onclick="toggleModules('m{{ field.pk }}')"
+                            data-basculer="m{{ field.pk }}"
                             class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-300 transition-all shadow-sm"
                             title="Afficher / Masquer les modules">
                         <svg id="icon-m{{ field.pk }}" class="w-4 h-4 transition-transform" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -267,5 +267,13 @@
     setTimeout(() => {
         document.querySelectorAll('.messages, [class*="messages"]').forEach(m => m.remove());
     }, 5000);
+
+  // Délégation : les attributs onclick= inline sont bloqués par la CSP
+  // (script-src 'self' 'nonce-...'), l'argument passe par un attribut data-*.
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest) return;
+    var b = e.target.closest('[data-basculer]');
+    if (b) toggleModules(b.dataset.basculer);
+  });
 </script>
 {% endblock %}
