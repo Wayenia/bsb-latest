@@ -27,10 +27,11 @@ RUN chmod +x /app/entrypoint.sh
 
 # Execution sans privileges : par defaut un conteneur tourne en root, si bien
 # qu'une execution de code arbitraire dans l'application ecrirait en root dans
-# le projet monte depuis l'hote. `media` et `staticfiles` sont montes en volume
-# et doivent appartenir a l'utilisateur applicatif pour rester inscriptibles.
+# le projet monte depuis l'hote. `media`, `staticfiles` et `logs` sont montes
+# en volume et doivent appartenir a l'utilisateur applicatif pour rester
+# inscriptibles.
 RUN useradd --create-home --uid 10001 appuser \
-    && mkdir -p /app/media /app/staticfiles \
+    && mkdir -p /app/media /app/staticfiles /app/logs \
     && chown -R appuser:appuser /app
 
 USER appuser

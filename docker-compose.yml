@@ -7,6 +7,7 @@ services:
       - .:/app
       - ./staticfiles:/app/staticfiles
       - ./media:/app/media
+      - suudu_security_logs:/app/logs
     command: ["./entrypoint.sh"]
     env_file:
       - .env
@@ -133,6 +134,7 @@ volumes:
   suudu_postgres_data:
   suudu_pgadmin_data:
   suudu_redis_data:
+  suudu_security_logs:
   
 networks:
   suudu_net:

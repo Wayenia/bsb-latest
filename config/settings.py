@@ -320,6 +320,8 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
 ]
 
+(BASE_DIR / 'logs').mkdir(parents=True, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -329,7 +331,13 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'security.log'),
+            # /app est monte en bind depuis l'hote (docker-compose.yml) : ses
+            # permissions dependent de l'utilisateur du serveur de prod et ne
+            # sont pas garanties inscriptibles par l'utilisateur non-root du
+            # conteneur (appuser, uid 10001). /app/logs est monte a part, sur
+            # un volume Docker nomme initialise avec les permissions de
+            # l'image, donc toujours inscriptible quel que soit l'hote.
+            'filename': os.path.join(BASE_DIR, 'logs', 'security.log'),
         },
     },
     'loggers': {

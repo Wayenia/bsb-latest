@@ -28,6 +28,7 @@ media/
 # Logs applicatifs
 *.log
 security.log
+logs/
 .claude/
 CLAUDE.md
 .shot
