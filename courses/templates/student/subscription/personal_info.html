@@ -232,15 +232,16 @@
         {% comment %} Boutons de navigation {% endcomment %}
         <div class="flex justify-between mt-10 pt-6 border-t border-slate-200">
           
-          <a href="javascript:history.back()"
-             class="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-medium
-                    rounded-sm hover:bg-slate-50 hover:border-slate-300 transition-all">
-            ← Retour
+          <a href="{% url 'courses:subscribe_selection' %}"
+             class="px-5 py-2.5 text-white text-sm font-medium
+                    rounded-sm hover:opacity-90 transition-all"
+             style="background-color: #6b7280;">
+            ← Précédent
           </a>
           <button type="submit"
                   class="px-6 py-2.5 text-white text-sm font-medium rounded-sm
                          transition-all hover:opacity-90 flex items-center gap-2"
-                  style="background-color: #009640;">
+                  style="background-color: #CA8A04;">
             <span>Suivant</span>
             <span class="text-xs opacity-70">→</span>
           </button>
