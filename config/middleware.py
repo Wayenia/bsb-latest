@@ -85,10 +85,15 @@ class SecurityHeadersMiddleware(MiddlewareMixin):
             'Permissions-Policy',
             'geolocation=(), microphone=(), camera=(), payment=(), usb=()')
 
-        # Pages authentifiées : jamais mises en cache par le navigateur.
-        if request.path.startswith(('/accounts', '/bsb')):
-            response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-            response['Pragma'] = 'no-cache'
-            response['Expires'] = '0'
+        # Aucune page servie par Django n'est mise en cache. /static/ et
+        # /media/ ne passent pas par ce middleware (nginx.conf les sert
+        # directement avec leur propre Cache-Control) : restreindre cette
+        # regle a une liste de prefixes "sensibles" a maintenir a la main
+        # avait fini par en oublier - paiement, dette, inscription, stats -
+        # des lors qu'ils sont montes a la racine par courses.urls plutot que
+        # sous /accounts ou /bsb (cf. config/urls.py).
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
 
         return response
