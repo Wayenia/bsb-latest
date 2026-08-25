@@ -56,14 +56,33 @@ def _param_id(request, nom):
 def subscribe_selection_view(request):
     annees = AnneeScolaire.objects.all()
     centres = CentreFormation.objects.all()
+
+    # Retour sur cette page (bouton "Précédent" depuis Informations
+    # personnelles) sans paramètre GET explicite : on retrouve année/centre/
+    # métier depuis la formation déjà choisie (mémorisée en session dès
+    # l'entrée dans personal_info_view) plutôt que de tout vider.
+    session_career = None
+    if 'annee' not in request.GET and 'centre' not in request.GET:
+        session_career_id = request.session.get('career_id')
+        if session_career_id:
+            session_career = CentreEtFiliere.objects.filter(id=session_career_id).select_related('filiere').first()
+
     if 'annee' in request.GET:
         # Choix explicite de l'utilisateur (y compris "revenir à ---Sélectionnez---") : respecté tel quel.
         selected_annee_id = _param_id(request, 'annee')
+    elif session_career:
+        selected_annee_id = str(session_career.annee_prog_id or '')
     else:
         # Premier chargement de la page : présélectionner l'année scolaire la plus récente.
         derniere_annee = AnneeScolaire.objects.order_by('-date_creation').first()
         selected_annee_id = str(derniere_annee.id) if derniere_annee else ''
-    selected_centre_id = _param_id(request, 'centre')
+
+    if session_career and 'centre' not in request.GET:
+        selected_centre_id = str(session_career.centre_id or '')
+    else:
+        selected_centre_id = _param_id(request, 'centre')
+
+    selected_career_id = str(session_career.id) if session_career else ''
 
     careers = []
     if selected_annee_id and selected_centre_id:
@@ -99,6 +118,7 @@ def subscribe_selection_view(request):
         'centres': centres,
         'selected_annee_id': selected_annee_id,
         'selected_centre_id': selected_centre_id,
+        'selected_career_id': selected_career_id,
         'careers': careers,
         'careers_data': careers_data,
     }
@@ -249,6 +269,27 @@ def personal_info_view(request, career_id):
             'organisation_adresse': rejected_inscription.organisation_adresse or '',
             'organisation_tel': rejected_inscription.organisation_tel or '',
             'organisation_email': rejected_inscription.organisation_email or '',
+        })
+
+    # Retour sur cette page après une première soumission dans le même
+    # parcours (bouton "Précédent" depuis Documents, ou "Modifier mes
+    # informations" depuis le Récapitulatif) : on réaffiche ce que l'élève
+    # avait saisi pour la personne à contacter plutôt que de le vider, ces
+    # champs n'existant pas sur le modèle Eleve (donc jamais restaurés par
+    # les valeurs ci-dessus).
+    student_data = request.session.get('student_data')
+    if student_data:
+        initial.update({
+            'type_personne_contact': student_data.get('type_personne_contact', ''),
+            'nom_personne': student_data.get('nom_personne', ''),
+            'prenom_personne': student_data.get('prenom_personne', ''),
+            'fonction': student_data.get('fonction', ''),
+            'contact': student_data.get('contact', ''),
+            'email_personne': student_data.get('email_personne', ''),
+            'organisation_nom': student_data.get('organisation_nom', ''),
+            'organisation_adresse': student_data.get('organisation_adresse', ''),
+            'organisation_tel': student_data.get('organisation_tel', ''),
+            'organisation_email': student_data.get('organisation_email', ''),
         })
 
     form = PersonalInfoForm(request.POST or None, initial=initial)

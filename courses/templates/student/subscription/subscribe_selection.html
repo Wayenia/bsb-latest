@@ -44,7 +44,7 @@
               class="block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold">
         <option value="">---Sélectionnez un métier---</option>
         {% for career in careers %}
-        <option value="{{ career.id }}">{{ career.filiere.nom_filiere }}</option>
+        <option value="{{ career.id }}" {% if selected_career_id == career.id|stringformat:"s" %}selected{% endif %}>{{ career.filiere.nom_filiere }}</option>
         {% endfor %}
       </select>
       {% else %}
@@ -84,42 +84,49 @@
   const detailsPanel = document.getElementById('metier-details');
   const nextBtn = document.getElementById('next-btn');
 
+  function updateDetails() {
+    const career = careersData.find(c => String(c.id) === metierSelect.value);
+    if (!career) {
+      detailsPanel.classList.add('hidden');
+      nextBtn.classList.add('pointer-events-none', 'opacity-50');
+      nextBtn.href = '#';
+      return;
+    }
+    document.getElementById('detail-duree').textContent = career.duree || '—';
+    document.getElementById('detail-niveau').textContent = career.niveau_diplome || '—';
+    document.getElementById('detail-titre').textContent = career.titre_professionnel || '—';
+    document.getElementById('detail-frais').textContent = career.total_frais ? (career.total_frais.toLocaleString('en-US') + ' FCFA') : '—';
+
+    const dateLimiteWrap = document.getElementById('detail-date-limite-wrap');
+    if (career.date_limite) {
+      document.getElementById('detail-date-limite').textContent = career.date_limite;
+      dateLimiteWrap.classList.remove('hidden');
+    } else {
+      dateLimiteWrap.classList.add('hidden');
+    }
+
+    const communiqueWrap = document.getElementById('detail-communique-wrap');
+    if (career.communique_url) {
+      document.getElementById('detail-communique').href = career.communique_url;
+      communiqueWrap.classList.remove('hidden');
+    } else {
+      communiqueWrap.classList.add('hidden');
+    }
+
+    detailsPanel.classList.remove('hidden');
+
+    const baseUrl = nextBtn.getAttribute('data-base-url');
+    nextBtn.href = baseUrl.replace('/0/', '/' + career.id + '/');
+    nextBtn.classList.remove('pointer-events-none', 'opacity-50');
+  }
+
   if (metierSelect) {
-    metierSelect.addEventListener('change', function () {
-      const career = careersData.find(c => String(c.id) === this.value);
-      if (!career) {
-        detailsPanel.classList.add('hidden');
-        nextBtn.classList.add('pointer-events-none', 'opacity-50');
-        nextBtn.href = '#';
-        return;
-      }
-      document.getElementById('detail-duree').textContent = career.duree || '—';
-      document.getElementById('detail-niveau').textContent = career.niveau_diplome || '—';
-      document.getElementById('detail-titre').textContent = career.titre_professionnel || '—';
-      document.getElementById('detail-frais').textContent = career.total_frais ? (career.total_frais.toLocaleString('en-US') + ' FCFA') : '—';
-
-      const dateLimiteWrap = document.getElementById('detail-date-limite-wrap');
-      if (career.date_limite) {
-        document.getElementById('detail-date-limite').textContent = career.date_limite;
-        dateLimiteWrap.classList.remove('hidden');
-      } else {
-        dateLimiteWrap.classList.add('hidden');
-      }
-
-      const communiqueWrap = document.getElementById('detail-communique-wrap');
-      if (career.communique_url) {
-        document.getElementById('detail-communique').href = career.communique_url;
-        communiqueWrap.classList.remove('hidden');
-      } else {
-        communiqueWrap.classList.add('hidden');
-      }
-
-      detailsPanel.classList.remove('hidden');
-
-      const baseUrl = nextBtn.getAttribute('data-base-url');
-      nextBtn.href = baseUrl.replace('/0/', '/' + career.id + '/');
-      nextBtn.classList.remove('pointer-events-none', 'opacity-50');
-    });
+    metierSelect.addEventListener('change', updateDetails);
+    // Métier déjà choisi (retour depuis "Précédent") : ré-afficher le
+    // détail et réactiver "Suivant" sans attendre une action de l'élève.
+    if (metierSelect.value) {
+      updateDetails();
+    }
   }
 </script>
 {% endblock %}
