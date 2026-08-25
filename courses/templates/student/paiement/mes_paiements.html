@@ -59,7 +59,11 @@
                                mode paie: {{p.mode_paiement}}
                                tranche : {{p.tranche}}
                                
+                            {% if not p.annule %}
                             <a href="{% url 'courses:reportlab' p.id %}" class="text-gray-500">Télécharger la quittance</a>
+                            {% else %}
+                            <span class="text-gray-300 cursor-not-allowed" title="Ce versement a été annulé, sa quittance n'est plus disponible">Télécharger la quittance</span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

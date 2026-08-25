@@ -629,6 +629,10 @@ def telecharger_quittance(request, id):
          messages.error(request, "Action non autorisée.")
          return redirect('courses:mes_paiements')
 
+    if paiement.annule:
+        messages.error(request, "Ce versement a été annulé, sa quittance n'est plus disponible au téléchargement.")
+        return redirect('courses:mes_paiements')
+
     centre = paiement.dette.inscription.formation.centre
     header_left, header_right = _pdf_header_lines(centre)
     html_string = render_to_string('student/paiement/quittance_pdf.html', {
@@ -779,6 +783,11 @@ def download_quittance(request,id):
         id=id,
         dette__inscription__eleve=request.user.eleve
     )
+
+    if paiement.annule:
+        messages.error(request, "Ce versement a été annulé, sa quittance n'est plus disponible au téléchargement.")
+        return redirect('courses:mes_paiements')
+
     dette=paiement.dette
     inscription=paiement.dette.inscription
     eleve=inscription.eleve
@@ -3221,12 +3230,14 @@ def stats_quittance_tranche_view(request, dette_id, tranche):
         raise PermissionDenied("Vous n'avez pas accès aux informations financières de cette dette.")
 
     paiements = dette.paiements.filter(tranche=tranche).order_by('date_paiement')
+    est_apprenant = getattr(request.user, 'pk', None) == getattr(dette.inscription.eleve, 'pk', None)
 
     return render(request, 'member/statistiques/stats_quittance_tranche.html', {
         'dette': dette,
         'eleve': dette.inscription.eleve,
         'tranche': tranche,
         'paiements': paiements,
+        'est_apprenant': est_apprenant,
     })
 
 
@@ -3251,6 +3262,14 @@ def stats_download_quittance_view(request, paiement_id):
 
     if not _can_access_dette_finances(request.user, dette):
         raise PermissionDenied("Vous n'avez pas accès à cette quittance.")
+
+    # L'apprenant ne doit jamais pouvoir télécharger la quittance d'un
+    # versement annulé (seul le personnel peut la réimprimer, tamponnée
+    # "ANNULÉE", à des fins d'audit — cf. plus bas).
+    est_apprenant = getattr(request.user, 'pk', None) == getattr(eleve, 'pk', None)
+    if paiement.annule and est_apprenant:
+        messages.error(request, "Ce versement a été annulé, sa quittance n'est plus disponible au téléchargement.")
+        return redirect('courses:mes_paiements')
 
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=A5)
