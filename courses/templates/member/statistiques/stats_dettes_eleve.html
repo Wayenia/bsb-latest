@@ -108,7 +108,7 @@
   {% for item in inscriptions_dettes %}
   <div style="margin-bottom:1.25rem;">
 
-    <div class="insc-header open" onclick="toggleInsc(this)">
+    <div class="insc-header open" data-action="basculer-inscription">
       <div>
         <div style="font-weight:700;font-size:1rem;">
           {{ item.inscription.formation.filiere.nom_filiere }}
@@ -125,13 +125,17 @@
         {% if item.total_reste > 0 and perms.courses.encaisser_paiement %}
           {% if item.dossier_impaye %}
           <button type="button" class="btn-detail" style="background:#e5e7eb;color:#9ca3af;cursor:not-allowed;"
-                  onclick="event.stopPropagation();"
+                  data-action="aucune"
                   disabled title="Réglez d'abord entièrement le frais de dossier (bouton « Solder ce frais ») avant de pouvoir solder l'inscription">
             Solder l'inscription
           </button>
           {% else %}
           <button type="button" class="btn-detail" style="background:linear-gradient(135deg,#059669,#10b981);"
-                  onclick="event.stopPropagation(); ouvrirModalSolder({url:'{% url 'courses:stats_encaisser_solde_inscription' item.inscription.id %}', cible:'Toute l\'inscription — {{ item.inscription.formation.filiere.nom_filiere|escapejs }}', maxMontant:{{ item.total_reste|floatformat:0 }}, primordiale:{{ item.primordiale_bloquante_reste|floatformat:0 }}});">
+                  data-action="solder"
+                  data-solder-url="{% url 'courses:stats_encaisser_solde_inscription' item.inscription.id %}"
+                  data-solder-cible="Toute l'inscription — {{ item.inscription.formation.filiere.nom_filiere }}"
+                  data-solder-max="{{ item.total_reste|floatformat:0 }}"
+                  data-solder-primordiale="{{ item.primordiale_bloquante_reste|floatformat:0 }}">
             Solder l'inscription
           </button>
           {% endif %}
@@ -167,7 +171,7 @@
           <div style="text-align:right;font-size:.75rem;color:#9ca3af;margin-bottom:.75rem;">{{ dette.taux|floatformat:1 }}% réglé</div>
 
           {% if dette.tranches %}
-          <div class="tranches-toggle" onclick="toggleTranches(this)">
+          <div class="tranches-toggle" data-action="basculer-tranches">
             <span style="font-size:.72rem;color:#9ca3af;font-weight:700;text-transform:uppercase;">Tranches ({{ dette.tranches|length }})</span>
             <span class="chevron">▾</span>
           </div>
@@ -185,7 +189,7 @@
               {% if t.soldee %}
                 <button class="btn-payer-tranche" disabled title="Tranche déjà soldée">Soldée</button>
               {% elif t.payable %}
-                <button class="btn-payer-tranche" onclick="ouvrirModalPaiement('{{ dette.id }}', '{{ t.tranche.libelle|escapejs }}', {{ t.reste|floatformat:0 }}, {{ t.tranche.est_primordiale|yesno:'true,false' }})">Encaisser</button>
+                <button class="btn-payer-tranche" data-action="encaisser" data-paiement-dette="{{ dette.id }}" data-paiement-libelle="{{ t.tranche.libelle }}" data-paiement-reste="{{ t.reste|floatformat:0 }}" data-paiement-primordiale="{{ t.tranche.est_primordiale|yesno:'true,false' }}">Encaisser</button>
               {% else %}
                 <button class="btn-payer-tranche" disabled title="Réglez d'abord la tranche primordiale en cours avant celle-ci">Encaisser</button>
               {% endif %}
@@ -200,7 +204,7 @@
             {% elif dette.bloquee %}
               <button class="btn-payer-tranche" disabled title="Réglez d'abord la tranche primordiale bloquante d'un autre type de frais">Encaisser</button>
             {% else %}
-              <button class="btn-payer-tranche" onclick="ouvrirModalPaiement('{{ dette.id }}', '{{ dette.frais_formation.type_frais.libelle|escapejs }}', {{ dette.montant_a_payer|floatformat:0 }}, false)">Encaisser</button>
+              <button class="btn-payer-tranche" data-action="encaisser" data-paiement-dette="{{ dette.id }}" data-paiement-libelle="{{ dette.frais_formation.type_frais.libelle }}" data-paiement-reste="{{ dette.montant_a_payer|floatformat:0 }}" data-paiement-primordiale="false">Encaisser</button>
             {% endif %}
           </div>
           {% endif %}
@@ -214,7 +218,7 @@
               </button>
               {% else %}
               <button type="button" class="btn-detail" style="background:linear-gradient(135deg,#059669,#10b981);"
-                      onclick="ouvrirModalSolder({url:'{% url 'courses:stats_encaisser_solde_dette' dette.id %}', cible:'{{ dette.frais_formation.type_frais|escapejs }}', maxMontant:{{ dette.reste|floatformat:0 }}, primordiale:{% if dette.tranche_cible_primordiale %}{{ dette.montant_a_payer|floatformat:0 }}{% else %}0{% endif %}});">
+                      data-action="solder" data-solder-url="{% url 'courses:stats_encaisser_solde_dette' dette.id %}" data-solder-cible="{{ dette.frais_formation.type_frais }}" data-solder-max="{{ dette.reste|floatformat:0 }}" data-solder-primordiale="{% if dette.tranche_cible_primordiale %}{{ dette.montant_a_payer|floatformat:0 }}{% else %}0{% endif %}">
                 Solder ce frais
               </button>
               {% endif %}
@@ -244,7 +248,7 @@
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
       <h2 style="font-weight:800;font-size:1.1rem;color:#374151;margin:0;">Enregistrer un paiement</h2>
-      <button type="button" onclick="fermerModalPaiement()" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
+      <button type="button" data-action="fermer-paiement" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
     </div>
     <p id="modal-paiement-cible" style="font-size:.85rem;color:#6b7280;margin-bottom:1rem;"></p>
     <form method="post" id="form-paiement-tranche" action="" enctype="multipart/form-data">
@@ -275,7 +279,7 @@
         <p style="font-size:.72rem;color:#9ca3af;margin-top:.3rem;">JPEG, JPG, PNG ou PDF — 5 Mo max</p>
       </div>
       <div style="display:flex;gap:.6rem;">
-        <button type="button" onclick="fermerModalPaiement()" style="flex:1;padding:.6rem;border-radius:8px;border:2px solid #e2e8f0;background:#fff;color:#374151;font-weight:600;font-size:.85rem;cursor:pointer;">Annuler</button>
+        <button type="button" data-action="fermer-paiement" style="flex:1;padding:.6rem;border-radius:8px;border:2px solid #e2e8f0;background:#fff;color:#374151;font-weight:600;font-size:.85rem;cursor:pointer;">Annuler</button>
         <button type="submit" style="flex:2;padding:.6rem;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;">Confirmer</button>
       </div>
     </form>
@@ -287,7 +291,7 @@
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
       <h2 style="font-weight:800;font-size:1.1rem;color:#374151;margin:0;">Encaisser le solde</h2>
-      <button type="button" onclick="fermerModalSolder()" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
+      <button type="button" data-action="fermer-solder" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
     </div>
     <p id="modal-solder-cible" style="font-size:.85rem;color:#6b7280;margin-bottom:1rem;"></p>
     <form method="post" id="form-solder" action="" enctype="multipart/form-data">
@@ -333,7 +337,7 @@
         </select>
       </div>
       <div style="display:flex;gap:.6rem;">
-        <button type="button" onclick="fermerModalSolder()" style="flex:1;padding:.6rem;border-radius:8px;border:2px solid #e2e8f0;background:#fff;color:#374151;font-weight:600;font-size:.85rem;cursor:pointer;">Annuler</button>
+        <button type="button" data-action="fermer-solder" style="flex:1;padding:.6rem;border-radius:8px;border:2px solid #e2e8f0;background:#fff;color:#374151;font-weight:600;font-size:.85rem;cursor:pointer;">Annuler</button>
         <button type="submit" style="flex:2;padding:.6rem;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;">Valider le paiement</button>
       </div>
     </form>
@@ -443,6 +447,49 @@ function fermerModalSolder() {
 
 document.getElementById('modal-solder').addEventListener('click', function(e) {
   if (e.target === this) fermerModalSolder();
+});
+
+// Délégation d'événements : les attributs onclick= inline sont bloqués par la
+// CSP (script-src 'self' 'nonce-...'). `closest` remonte jusqu'au premier
+// ancêtre porteur de data-action, ce qui reproduit le stopPropagation() qui
+// empêchait un clic sur un bouton d'ouvrir/fermer l'accordéon qui le contient :
+// le noeud interne « gagne », l'en-tête d'inscription n'est jamais atteint.
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var el = e.target.closest('[data-action]');
+  if (!el) return;
+  switch (el.dataset.action) {
+    case 'aucune':
+      break;
+    case 'basculer-inscription':
+      toggleInsc(el);
+      break;
+    case 'basculer-tranches':
+      toggleTranches(el);
+      break;
+    case 'encaisser':
+      ouvrirModalPaiement(
+        el.dataset.paiementDette,
+        el.dataset.paiementLibelle,
+        Number(el.dataset.paiementReste),
+        el.dataset.paiementPrimordiale === 'true'
+      );
+      break;
+    case 'solder':
+      ouvrirModalSolder({
+        url: el.dataset.solderUrl,
+        cible: el.dataset.solderCible,
+        maxMontant: Number(el.dataset.solderMax),
+        primordiale: Number(el.dataset.solderPrimordiale)
+      });
+      break;
+    case 'fermer-paiement':
+      fermerModalPaiement();
+      break;
+    case 'fermer-solder':
+      fermerModalSolder();
+      break;
+  }
 });
 </script>
 {% endblock %}

@@ -345,25 +345,25 @@
       <div class="btn-export-group">
         <span class="text-sm font-semibold" style="color:var(--gris);">Inscriptions :</span>
         <a href="?{% if f_centre %}centre={{ f_centre }}&{% endif %}{% if f_filiere %}filiere={{ f_filiere }}&{% endif %}{% if f_annee %}annee={{ f_annee }}&{% endif %}type=inscriptions"
-           onclick="this.href=buildExportUrl('inscriptions','pdf')" class="btn-exp btn-exp-pdf">
+           data-action="exporter" data-export-type="inscriptions" data-export-format="pdf" class="btn-exp btn-exp-pdf">
           PDF
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('inscriptions','excel'); return false;" class="btn-exp btn-exp-excel">
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="excel" class="btn-exp btn-exp-excel">
           Excel
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('inscriptions','csv'); return false;" class="btn-exp btn-exp-csv">
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="csv" class="btn-exp btn-exp-csv">
           CSV
         </a>
       </div>
       <div class="btn-export-group">
         <span class="text-sm font-semibold" style="color:var(--gris);">Recouvrement :</span>
-        <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','pdf'); return false;" class="btn-exp btn-exp-pdf">
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="pdf" class="btn-exp btn-exp-pdf">
           PDF
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','excel'); return false;" class="btn-exp btn-exp-excel">
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="excel" class="btn-exp btn-exp-excel">
           Excel
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','csv'); return false;" class="btn-exp btn-exp-csv">
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="csv" class="btn-exp btn-exp-csv">
           CSV
         </a>
       </div>
@@ -544,13 +544,13 @@
         Taux de recouvrement par centre
       </div>
       <div class="btn-export-group">
-        <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','pdf'); return false;" class="btn-exp btn-exp-pdf">
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="pdf" class="btn-exp btn-exp-pdf">
           PDF
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','excel'); return false;" class="btn-exp btn-exp-excel">
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="excel" class="btn-exp btn-exp-excel">
           Excel
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('recouvrement','csv'); return false;" class="btn-exp btn-exp-csv">
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="csv" class="btn-exp btn-exp-csv">
           CSV
         </a>
       </div>
@@ -608,13 +608,13 @@
         Dernières inscriptions
       </div>
       <div class="btn-export-group">
-        <a href="#" onclick="window.location.href=buildExportUrl('inscriptions','pdf'); return false;" class="btn-exp btn-exp-pdf">
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="pdf" class="btn-exp btn-exp-pdf">
           PDF
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('inscriptions','excel'); return false;" class="btn-exp btn-exp-excel">
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="excel" class="btn-exp btn-exp-excel">
           Excel
         </a>
-        <a href="#" onclick="window.location.href=buildExportUrl('inscriptions','csv'); return false;" class="btn-exp btn-exp-csv">
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="csv" class="btn-exp btn-exp-csv">
           CSV
         </a>
       </div>
@@ -675,14 +675,28 @@
 
 {% block extra_js %}
 <script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+
+{% comment %} Donnees des graphiques.
+   `json_script` serialise dans une balise <script type="application/json"> en
+   echappant <, > et & : un nom de metier contenant « </script> » ne peut plus
+   fermer le bloc. C'est ce que ne faisait pas json.dumps rendu avec |safe. {% endcomment %}
+{{ evol_labels|json_script:"data-evol-labels" }}
+{{ evol_data|json_script:"data-evol-valeurs" }}
+{{ mode_labels|json_script:"data-mode-labels" }}
+{{ mode_data|json_script:"data-mode-valeurs" }}
+{{ top_filieres_noms|json_script:"data-metiers-labels" }}
+{{ top_filieres_count|json_script:"data-metiers-valeurs" }}
+
 <script nonce="{{ csp_nonce }}">
 // ── Data depuis Django ─────────────────────────────────────────────────────
-const evolLabels = {{ evol_labels_json|safe }};
-const evolData = {{ evol_data_json|safe }};
-const modeLabels = {{ mode_labels_json|safe }};
-const modeData = {{ mode_data_json|safe }};
-const metiersLabels = {{ top_filieres_json|safe }};
-const metiersData = {{ top_filieres_count_json|safe }};
+const lireDonnees = (id) => JSON.parse(document.getElementById(id).textContent);
+
+const evolLabels = lireDonnees('data-evol-labels');
+const evolData = lireDonnees('data-evol-valeurs');
+const modeLabels = lireDonnees('data-mode-labels');
+const modeData = lireDonnees('data-mode-valeurs');
+const metiersLabels = lireDonnees('data-metiers-labels');
+const metiersData = lireDonnees('data-metiers-valeurs');
 
 const ROUGE = '#C0392B';
 const OR = '#D4A017';
@@ -807,5 +821,16 @@ function buildExportUrl(dataType, format) {
   };
   return baseMap[format] + '?' + params.toString();
 }
+
+// Délégation : les attributs onclick= inline sont bloqués par la CSP
+// (script-src 'self' 'nonce-...'). Les liens portent href="#" ou une URL de
+// repli ; buildExportUrl() recalcule la destination avec les filtres courants.
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var el = e.target.closest('[data-action="exporter"]');
+  if (!el) return;
+  e.preventDefault();
+  window.location.href = buildExportUrl(el.dataset.exportType, el.dataset.exportFormat);
+});
 </script>
 {% endblock %}

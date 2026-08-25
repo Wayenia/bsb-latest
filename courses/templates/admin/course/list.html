@@ -92,7 +92,7 @@
                                    class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">{% include 'partials/icon_edit.html' %} Modifier</a>
                                 <a href="{% url 'bsb_admin:course_delete' cours.pk %}"
                                    class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                                   onclick="return confirm('Supprimer ce cours ?')">{% include 'partials/icon_delete.html' %} Supprimer</a>
+                                   data-confirmer="Supprimer ce cours ?">{% include 'partials/icon_delete.html' %} Supprimer</a>
                             </div>
                         </td>
                     </tr>

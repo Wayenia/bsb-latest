@@ -194,6 +194,37 @@
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
         }
+
+        // ── Délégation d'événements ────────────────────────────────────────
+        // Remplace les attributs onclick=/onsubmit= inline. La CSP du site est
+        // « script-src 'self' 'nonce-...' » : un gestionnaire écrit dans un
+        // attribut HTML est du code inline sans nonce, donc bloqué par le
+        // navigateur. Ces trois motifs (confirmation, ouverture et fermeture de
+        // modale) couvrent l'essentiel des cas de l'application ; les pages
+        // ayant une logique propre déclarent leur propre écouteur délégué.
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest) return;
+            const cible = event.target.closest(
+                '[data-confirmer], [data-modal-ouvrir], [data-modal-fermer]');
+            if (!cible) return;
+
+            if (cible.dataset.modalOuvrir) {
+                event.preventDefault();
+                openModal(cible.dataset.modalOuvrir);
+            } else if (cible.dataset.modalFermer) {
+                event.preventDefault();
+                closeModal(cible.dataset.modalFermer);
+            } else if (cible.dataset.confirmer && cible.tagName !== 'FORM') {
+                // Les <form> sont traités par l'écouteur 'submit' ci-dessous :
+                // un formulaire peut être envoyé au clavier, sans clic.
+                if (!window.confirm(cible.dataset.confirmer)) event.preventDefault();
+            }
+        });
+
+        document.addEventListener('submit', function (event) {
+            const message = event.target.dataset && event.target.dataset.confirmer;
+            if (message && !window.confirm(message)) event.preventDefault();
+        });
     </script>
 
     {% block extra_js %}{% endblock %}

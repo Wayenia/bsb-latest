@@ -126,6 +126,11 @@ class Membre(models.Model):
         verbose_name = "Membre de l'administration"
         verbose_name_plural = "Membres de l'administration"
         ordering = ['order', 'created_at']
+        permissions = [
+            # Couvre DG et Membre : ces deux modeles alimentent la meme page
+            # publique « A propos » et n'ont pas de gestion separee.
+            ("gerer_equipe", "Gérer le Directeur Général et l'équipe"),
+        ]
 
     def __str__(self):
         return f"{self.full_name} - {self.position}"
@@ -167,7 +172,8 @@ class Filiere(TimeStampModel):
     is_active = models.BooleanField(default=True)
     curricula = models.FileField(
         upload_to='curricula_filieres/', null=True, blank=True,
-        verbose_name="Curricula (programme de formation)"
+        verbose_name="Curricula (programme de formation)",
+        validators=[FileExtensionValidator(['pdf'])],
     )
 
     
@@ -321,7 +327,8 @@ class CentreEtFiliere(models.Model):
     upload_to='communiques_filieres/',
     null=True,
     blank=True,
-    verbose_name="Communique de la formation"
+    verbose_name="Communique de la formation",
+    validators=[FileExtensionValidator(['pdf'])]
     )
     annee_prog=models.ForeignKey(AnneeScolaire,on_delete=models.SET_NULL,null=True,blank=True,verbose_name="Année de formation")
     date_lancement = models.DateTimeField(null=True, blank=True, verbose_name="Date de lancement", default=timezone.now)

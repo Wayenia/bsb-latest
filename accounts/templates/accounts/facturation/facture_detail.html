@@ -64,7 +64,7 @@
                         <td class="px-6 py-3 text-right">
                             {% if ligne.reste > 0 %}
                             <button type="button"
-                                    onclick="ouvrirModalEncaissement('ligne', {{ ligne.id }}, {{ ligne.reste|floatformat:0 }}, '{{ ligne.prestation.libelle|escapejs }}')"
+                                    data-action="encaisser-ligne" data-ligne-id="{{ ligne.id }}" data-ligne-reste="{{ ligne.reste|floatformat:0 }}" data-ligne-libelle="{{ ligne.prestation.libelle }}"
                                     class="px-3 py-1.5 text-xs font-bold text-white bg-bsb-gold hover:bg-yellow-600 rounded-lg transition">
                                 Encaisser
                             </button>
@@ -92,7 +92,7 @@
 
     {% if facture.type_facture == 'definitive' %}
     <div class="flex justify-end">
-        <button type="button" onclick="ouvrirModalEncaissement('total')"
+        <button type="button" data-action="encaisser-total"
                 class="px-6 py-3 bg-bsb-gold text-white text-sm font-bold rounded-lg shadow hover:bg-yellow-600 transition"
                 {% if facture.reste_a_payer <= 0 %}disabled{% endif %}>
             {% if facture.reste_a_payer <= 0 %}Facture soldée{% else %}Encaisser le montant total{% endif %}
@@ -142,7 +142,7 @@
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-bold text-gray-900">Encaisser un paiement</h2>
-      <button type="button" onclick="fermerModalEncaissement()" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+      <button type="button" data-action="fermer-encaissement" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
     </div>
 
     <form method="post" action="{% url 'accounts:prestation_encaisser' facture.id %}" id="form-encaissement">
@@ -172,7 +172,7 @@
       </div>
 
       <div class="flex gap-2 mt-6">
-        <button type="button" onclick="fermerModalEncaissement()"
+        <button type="button" data-action="fermer-encaissement"
                 class="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-semibold hover:bg-gray-50">Annuler</button>
         <button type="submit"
                 class="flex-[2] py-2 bg-bsb-gold hover:bg-yellow-600 text-white rounded-lg text-sm font-bold">Confirmer l'encaissement</button>
@@ -247,6 +247,23 @@ document.getElementById('form-encaissement')?.addEventListener('submit', functio
     history.replaceState(null, '', nouvelleUrl);
   }
 })();
+
+// Délégation d'événements : les attributs onclick= inline sont bloqués
+// par la CSP (script-src 'self' 'nonce-...'), aucun code inline sans nonce
+// n'étant exécuté. Les arguments passent par des attributs data-*.
+var ACTIONS = {
+  'encaisser-ligne': function (el) {
+    ouvrirModalEncaissement('ligne', Number(el.dataset.ligneId),
+                            Number(el.dataset.ligneReste), el.dataset.ligneLibelle);
+  },
+  'encaisser-total': function () { ouvrirModalEncaissement('total'); },
+  'fermer-encaissement': function () { fermerModalEncaissement(); }
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var el = e.target.closest('[data-action]');
+  if (el && ACTIONS[el.dataset.action]) ACTIONS[el.dataset.action](el);
+});
 </script>
 {% endif %}
 {% endblock %}

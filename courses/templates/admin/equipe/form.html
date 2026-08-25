@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }} | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-10">
+    {% include 'partials/messages.html' %}
+
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-bsb-primary px-6 py-5">
+            <h1 class="text-2xl font-bold text-white">{{ titre }}</h1>
+        </div>
+
+        {% comment %} enctype indispensable : les deux modèles portent une photo {% endcomment %}
+        <form method="post" enctype="multipart/form-data" class="p-8 space-y-5">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                {% for erreur in form.non_field_errors %}
+                <p class="text-sm text-red-700">{{ erreur }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                    {{ field.label }}{% if field.field.required %} <span class="text-red-600">*</span>{% endif %}
+                </label>
+
+                {% if field.name == 'photo' and objet and objet.photo %}
+                <div class="flex items-center gap-3 mb-2">
+                    <img src="{{ objet.photo.url }}" alt="{{ objet.full_name }}"
+                         class="w-16 h-16 rounded-full object-cover border border-gray-200">
+                    <span class="text-xs text-gray-500">
+                        Photo actuelle — laisser le champ vide pour la conserver.
+                    </span>
+                </div>
+                {% endif %}
+
+                {{ field }}
+
+                {% if field.help_text %}
+                <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                {% endif %}
+
+                {% for erreur in field.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ erreur }}</p>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <div class="flex gap-3 pt-4">
+                <a href="{% url 'bsb_admin:equipe_list' %}"
+                   class="flex-1 py-3 text-center border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition">
+                    Annuler
+                </a>
+                <button type="submit"
+                        class="flex-[2] py-3 bg-bsb-primary text-white font-bold rounded-lg hover:bg-gray-700 transition">
+                    {{ action }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

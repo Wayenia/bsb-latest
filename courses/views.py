@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.html import format_html
 from django.utils.decorators import method_decorator
 from django.contrib.auth import logout
 from django.core.paginator import Paginator
@@ -533,6 +534,12 @@ def effectuer_paiment(request, id):
     })
 
 #Afficher tous les paiemnents de l'élève conneecté en fait c'est mieux on a pas beoin des dettes on affiche tout
+# require_role('eleve') et pas seulement login_required : la vue lit
+# request.user.eleve, qui leve AttributeError sur un visiteur anonyme et
+# Eleve.DoesNotExist sur un agent — dans les deux cas une erreur 500 au lieu
+# d'un refus propre. Les donnees restaient filtrees par eleve (aucune fuite),
+# mais l'absence de garde produisait des 500 exploitables en deni de service.
+@require_role('eleve')
 def liste_paiement(request):
     paiements=Paiement.objects.filter(dette__inscription__eleve=request.user.eleve).select_related('dette','dette__inscription','dette__inscription__eleve').order_by('-date_paiement')
     paginator=Paginator(paiements,10)
@@ -612,6 +619,7 @@ def _draw_pdf_watermark(p, width, height, favicon_path=None):
 # ─────────────────────────────────────────────
 # ELEVE — Télécharger la quittance PDF
 # ─────────────────────────────────────────────
+@require_role('eleve')
 def telecharger_quittance(request, id):
     
     paiement = get_object_or_404(
@@ -767,6 +775,7 @@ def telecharger_attestation(request, id):
     return response
 
 
+@require_role('eleve')
 def download_quittance(request,id):
     paiement = get_object_or_404(
         Paiement.objects.select_related(
@@ -2071,13 +2080,16 @@ def statistiques_view(request):
         "f_genre":      genre,
         "f_date_debut": date_debut,
         "f_date_fin":   date_fin,
-        # JSON pour charts
-        "evol_labels_json": json.dumps(evol_labels),
-        "evol_data_json":   json.dumps(evol_data),
-        "mode_labels_json": json.dumps(mode_labels),
-        "mode_data_json":   json.dumps(mode_data),
-        "top_filieres_json": json.dumps([f["nom"] for f in top_filieres]),
-        "top_filieres_count_json": json.dumps([f["count"] for f in top_filieres]),
+        # Donnees des graphiques. Transmises brutes : le template les serialise
+        # avec le filtre `json_script`, qui echappe <, > et & — ce que
+        # json.dumps ne fait pas. Un nom de metier contenant « </script> »
+        # sortait autrement du bloc <script> (XSS stocke).
+        "evol_labels":       evol_labels,
+        "evol_data":         evol_data,
+        "mode_labels":       mode_labels,
+        "mode_data":         mode_data,
+        "top_filieres_noms":  [f["nom"] for f in top_filieres],
+        "top_filieres_count": [f["count"] for f in top_filieres],
     }
     return render(request, "member/statistiques/statistiques.html", context)
 
@@ -4041,28 +4053,40 @@ def page_notifications(request):
                 total=Sum("montant")
             )["total"] or 0
 
+            # format_html et non f-string : le message est rendu tel quel dans
+            # le template (balises <strong> volontaires), donc tout ce qui vient
+            # de la base doit etre echappe. `motif_rejet` en particulier est du
+            # texte libre saisi par un agent - sans echappement, c'est un XSS
+            # stocke de l'agent vers l'apprenant.
             if total_frais:
-                montant_75 = total_frais * 0.75
-                message = (
-                    f"✅ Félicitations ! Votre dossier d'inscription à la formation "
-                    f"<strong>{inscription.formation.filiere}</strong> a été <strong>validé</strong>. "
-                    f"Pour finaliser votre inscription, vous devez payer <strong>75% du montant de la formation</strong>, "
-                    f"soit <strong>{montant_75:,.0f} FCFA</strong>. "
-                    f"Rendez-vous dans la section <em>Mes inscriptions</em> pour procéder au paiement."
+                message = format_html(
+                    "✅ Félicitations ! Votre dossier d'inscription à la formation "
+                    "<strong>{}</strong> a été <strong>validé</strong>. "
+                    "Pour finaliser votre inscription, vous devez payer "
+                    "<strong>75% du montant de la formation</strong>, soit <strong>{} FCFA</strong>. "
+                    "Rendez-vous dans la section <em>Mes inscriptions</em> pour procéder au paiement.",
+                    inscription.formation.filiere,
+                    # Pre-formate : format_html convertit chaque argument en
+                    # chaine avant de l'inserer, une spec numerique ({:,.0f})
+                    # y echouerait.
+                    f"{total_frais * 0.75:,.0f}",
                 )
             else:
-                message = (
-                    f"✅ Félicitations ! Votre dossier d'inscription à la formation "
-                    f"<strong>{inscription.formation.filiere}</strong> a été <strong>validé</strong>. "
-                    f"Rendez-vous dans la section <em>Mes inscriptions</em> pour procéder au paiement (75% du montant dû)."
+                message = format_html(
+                    "✅ Félicitations ! Votre dossier d'inscription à la formation "
+                    "<strong>{}</strong> a été <strong>validé</strong>. "
+                    "Rendez-vous dans la section <em>Mes inscriptions</em> pour procéder "
+                    "au paiement (75% du montant dû).",
+                    inscription.formation.filiere,
                 )
 
         elif inscription.statut == "rejete":
-            motif = inscription.motif_rejet or "Aucun motif précisé."
-            message = (
-                f"❌ Votre dossier d'inscription à la formation "
-                f"<strong>{inscription.formation.filiere}</strong> a été <strong>rejeté</strong>. "
-                f"<br><strong>Motif :</strong> {motif}"
+            message = format_html(
+                "❌ Votre dossier d'inscription à la formation "
+                "<strong>{}</strong> a été <strong>rejeté</strong>. "
+                "<br><strong>Motif :</strong> {}",
+                inscription.formation.filiere,
+                inscription.motif_rejet or "Aucun motif précisé.",
             )
 
         notifications.append({

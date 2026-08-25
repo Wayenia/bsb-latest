@@ -20,11 +20,13 @@ if [ ! -f .env ]; then
         ALLOWED_HOSTS_VAL="${DOMAIN},${SERVER_IP},127.0.0.1,localhost"
         CORS_VAL="https://${DOMAIN},http://${DOMAIN},http://127.0.0.1,http://localhost,http://${SERVER_IP}"
         CSRF_VAL="https://${DOMAIN},http://${DOMAIN},http://127.0.0.1,http://localhost,http://${SERVER_IP}"
+        SITE_URL_VAL="https://${DOMAIN}"
         echo " Domaine détecté : ${DOMAIN}"
     else
         ALLOWED_HOSTS_VAL="${SERVER_IP},127.0.0.1,localhost"
         CORS_VAL="http://127.0.0.1,http://localhost,http://${SERVER_IP}"
         CSRF_VAL="http://127.0.0.1,http://localhost,http://${SERVER_IP}"
+        SITE_URL_VAL=""
         echo " Aucun DOMAIN fourni - génération avec IP/localhost uniquement (relancez avec DOMAIN=... si besoin)"
     fi
 
@@ -57,6 +59,26 @@ PGADMIN_PORT=8080
 REDIS_LOCATION_URL=redis://suudu_redis:6379/1
 CELERY_BROKER_URL=redis://suudu_redis:6379/0
 CELERY_RESULT_BACKEND=redis://suudu_redis:6379/0
+
+# --- URL publique ---
+# Utilisee pour les liens absolus des e-mails envoyes hors requete HTTP
+# (commande notifier_actualites). Laisser vide reconstruit https://<ALLOWED_HOSTS[0]>.
+SITE_URL=${SITE_URL_VAL}
+
+# --- E-mail (SMTP) ---
+# Tant que EMAIL_HOST est vide, Django ecrit les messages sur la sortie
+# standard (donc dans les logs du conteneur, adresses des abonnes comprises).
+# Renseigner ces variables pour activer l'envoi reel — voir README.
+# Google Workspace : EMAIL_HOST_USER doit correspondre a l'adresse du
+# DEFAULT_FROM_EMAIL, sinon Gmail reecrit l'en-tete From.
+EMAIL_HOST=
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+EMAIL_TIMEOUT=20
+DEFAULT_FROM_EMAIL=
+SERVER_EMAIL=
 EOF
 
     echo " .env généré avec valeurs sécurisées"

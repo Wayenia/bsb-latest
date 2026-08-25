@@ -22,7 +22,7 @@
     {% comment %}  CLOCHE NOTIFICATIONS {% endcomment %}
     <div class="relative mt-1" id="notif-wrapper">
       <button
-        onclick="toggleNotifPanel()"
+        data-basculer
         class="relative p-2 rounded-full hover:bg-slate-100 transition-colors focus:outline-none border border-slate-200 bg-white shadow-sm"
         title="Notifications"
       >
@@ -153,6 +153,14 @@
     if (wrapper && !wrapper.contains(e.target)) {
       document.getElementById('notif-panel').classList.add('hidden');
     }
+  });
+
+  // Délégation : les attributs onclick= inline sont bloqués par la CSP
+  // (script-src 'self' 'nonce-...'), l'argument passe par un attribut data-*.
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest) return;
+    var b = e.target.closest('[data-basculer]');
+    if (b) toggleNotifPanel();
   });
 </script>
 {% endblock %}

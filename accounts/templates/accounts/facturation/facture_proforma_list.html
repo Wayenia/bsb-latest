@@ -73,7 +73,7 @@
                                 </a>
                                 <form method="post" action="{% url 'accounts:facture_proforma_delete' facture.id %}"
                                       class="inline"
-                                      onsubmit="return confirm('Supprimer la facture proforma {{ facture.numero }} ? Cette action est irréversible.');">
+                                      data-confirmer="Supprimer la facture proforma {{ facture.numero }} ? Cette action est irréversible.">
                                     {% csrf_token %}
                                     <button type="submit" title="Supprimer"
                                             class="p-2 rounded-lg text-red-600 bg-red-50 hover:bg-red-100 transition">

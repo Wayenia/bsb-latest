@@ -201,9 +201,21 @@
     {% comment %} ══════════════════════════════════════════════════════════════════════
          SECTION 4 — Paramétrage
     ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
-    {% if perms.courses.gerer_frais or perms.courses.gerer_annees %}
+    {% if perms.courses.gerer_frais or perms.courses.gerer_annees or perms.courses.gerer_equipe %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Paramétrage</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+
+      {% if perms.courses.gerer_equipe %}
+      {% comment %} Équipe — remplace l'admin Django, retiré du projet {% endcomment %}
+      <a href="{% url 'bsb_admin:equipe_list' %}"
+         class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-200 p-6 flex items-start gap-4">
+        <div class="flex-1">
+          <h2 class="text-base font-bold text-gray-600 underline group-hover:text-gray-800 transition-colors">Équipe</h2>
+          <p class="text-sm text-gray-400 mt-1">Directeur Général et membres (page « À propos »)</p>
+        </div>
+
+      </a>
+      {% endif %}
 
       {% if perms.courses.gerer_frais %}
       {% comment %} Types de frais {% endcomment %}

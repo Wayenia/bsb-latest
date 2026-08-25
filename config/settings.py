@@ -33,8 +33,11 @@ if HOST_IP:
 
 # Application definition
 INSTALLED_APPS = [
-    'jazzmin',
-    'django.contrib.admin',
+    # 'jazzmin' et 'django.contrib.admin' ont ete retires : l'admin Django
+    # n'avait servi qu'au debogage, toute l'administration passe par /bsb/.
+    # Note : la table django_admin_log subsiste en base, orpheline et inerte ;
+    # elle peut etre supprimee manuellement (DROP TABLE django_admin_log) apres
+    # verification, aucun code du projet ne la lit.
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -68,6 +71,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'config.middleware.SecurityHeadersMiddleware',
     'django.middleware.csp.ContentSecurityPolicyMiddleware',
+    # En dernier volontairement : quand ce middleware court-circuite une requete
+    # (verrou anti-force brute), la reponse 429 remonte quand meme a travers
+    # TOUS les middlewares declares au-dessus et herite donc de la CSP et des
+    # en-tetes de securite. Place plus haut, la page de blocage sortirait sans.
+    'config.middleware.LimitationConnexionMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -103,6 +111,28 @@ DATABASES = {
         'PORT': env('POSTGRES_PORT'),
     }
 }
+
+# Cache Redis. Indispensable au verrou anti-force brute (accounts/ratelimit.py) :
+# le compteur doit etre partage par les trois workers gunicorn, sans quoi le
+# seuil serait de fait trois fois plus permissif. django-redis figurait deja
+# dans requirements.txt mais aucun CACHES n'etait declare : Django retombait
+# silencieusement sur LocMemCache, local a chaque processus.
+#
+# IGNORE_EXCEPTIONS : si Redis tombe, on prefere que le site reste debout plutot
+# que de renvoyer 500 sur chaque page. Le verrou s'ouvre alors (fail-open) ; les
+# erreurs sont journalisees pour que la panne ne passe pas inapercue, et le
+# service Redis n'expose aucun port hors du reseau Docker interne.
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': env('REDIS_LOCATION_URL', default='redis://suudu_redis:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'IGNORE_EXCEPTIONS': True,
+        },
+    }
+}
+DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = True
 
 
 # Password validation
@@ -171,82 +201,26 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
 }
 
+# Les messages transitent par la session, jamais par un cookie.
+# Le stockage par defaut (FallbackStorage) essaie CookieStorage en premier. Or
+# Django, quand il *efface* ce cookie, appelle response.delete_cookie(), qui ne
+# transmet ni httponly ni secure (cf. HttpResponseBase.delete_cookie : le drapeau
+# Secure n'est pose que pour les noms prefixes __Secure-/__Host-). D'ou les deux
+# alertes « Cookies Not Marked as HttpOnly / Secure » du scan Acunetix du
+# 24/08/2026 — sans risque reel puisque le cookie signale est vide et deja
+# expire, mais impossible a corriger a la source.
+# SessionStorage supprime purement et simplement ce cookie, ferme les deux
+# alertes, et garde le contenu des messages cote serveur.
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 
-# JAZZMIN 
-JAZZMIN_SETTINGS = {
-    # Main branding
-    "site_title": "BURKINA SUUDU BAWDE",
-    "site_header": "BURKINA SUUDU BAWDE",
-    "site_brand": "BURKINA SUUDU BAWDE",
-    "site_icon": "images/favicon.ico",
-    "welcome_sign": "BURKINA SUUDU BAWDE",
-    "copyright": "BURKINA SUUDU BAWDE",
-    "user_avatar": None,
-
-    # Search
-
-    # Top Menu
-    "usermenu_links": [
-        {"name": "Support", "url": "https://www.guess-solomnde.com", "new_window": True},
-    ],
-
-    # Sidebar
-    "show_sidebar": True,
-    "navigation_expanded": True,
-    "hide_apps": [],
-    "hide_models": [],
-    
-    "default_icon_parents": "fas fa-chevron-circle-right",
-    "default_icon_children": "fas fa-circle",
-    "related_modal_active": True,
-    "custom_css": "css/admin.css",
-    "custom_js": "js/admin.js",
-    "show_ui_builder": False,
-    
-}
-
-JAZZMIN_UI_TWEAKS = {
-    
-    "navbar_small_text": False,
-    "footer_small_text": False,
-    "body_small_text": False,
-    "brand_small_text": False,
-
-    "brand_colour": "navbar-primary",
-    "accent": "accent-primary",
-    "navbar": "navbar-primary navbar-dark",
-
-    "no_navbar_border": False,
-    "navbar_fixed": True,
-    "layout_boxed": False,
-    "footer_fixed": False,
-
-    "sidebar_fixed": True,
-    "sidebar": "sidebar-dark-primary",
-    "sidebar_nav_small_text": False,
-    "sidebar_disable_expand": False,
-    "sidebar_nav_child_style": "pills",
-    "sidebar_nav_compact_style": False,
-    "sidebar_nav_legacy_style": False,
-    "sidebar_nav_flat_style": True,
-
-    "theme": "cyborg",            
-    "dark_mode_theme": "cyborg",  
-    "button_classes": {
-        "primary": "btn-primary",
-        "secondary": "btn-secondary",
-        "info": "btn-info",
-        "warning": "btn-warning",
-        "danger": "btn-danger",
-        "success": "btn-success"
-    },
-
-}
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
-X_FRAME_OPTIONS = 'SAMEORIGIN'  # SAMEORIGIN et non DENY : l'admin Django/jazzmin encadre ses propres pages.
+# DENY et non SAMEORIGIN : l'unique raison de SAMEORIGIN etait l'admin Django,
+# dont jazzmin encadrait certaines pages dans des iframes (related_modal_active).
+# L'admin ayant ete retire, plus aucun gabarit du projet n'utilise <iframe>.
+X_FRAME_OPTIONS = 'DENY'
 
 # HTTPS termine par le proxy amont : Django s'y fie via X-Forwarded-Proto.
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -275,8 +249,16 @@ SECURE_CSP = {
     "default-src": [CSP.SELF],
     "script-src": [CSP.SELF, CSP.NONCE],
     "style-src": [CSP.SELF, CSP.UNSAFE_INLINE],
+    # data: conserve pour img-src : deux gabarits du projet dessinent leur motif
+    # de fond avec url("data:image/svg+xml,...") — admin/center/form.html et
+    # member/statistiques/statistiques.html. (Les 632 occurrences des CSS
+    # vendorises de jazzmin ont disparu avec l'admin Django.)
+    # Contrairement a ce qu'annonce le rapport Acunetix, data: dans img-src ne
+    # permet PAS d'executer de script : il faudrait pour cela le trouver dans
+    # script-src, object-src ou frame-src.
     "img-src": [CSP.SELF, "data:"],
-    "font-src": [CSP.SELF, "data:"],
+    # data: retire de font-src : aucune @font-face en data: dans le projet.
+    "font-src": [CSP.SELF],
     "connect-src": [CSP.SELF],
     "frame-ancestors": [CSP.SELF],
     "base-uri": [CSP.SELF],
@@ -287,6 +269,9 @@ SECURE_CSP = {
 DATA_UPLOAD_MAX_MEMORY_SIZE = 30*1024*1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 30*1024*1024
 # E-mail : SMTP si renseigne dans .env, sinon affichage en console (dev)
+# ATTENTION : sans EMAIL_HOST, le backend console ecrit l'integralite du message
+# — adresses des abonnes comprises — sur la sortie standard, donc dans les logs
+# du conteneur. A n'utiliser qu'en developpement.
 EMAIL_HOST = env('EMAIL_HOST', default='')
 if EMAIL_HOST:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -297,8 +282,21 @@ if EMAIL_HOST:
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-SERVER_EMAIL = 'admin@burkinasuudu.com'
+# Sans timeout, un SMTP qui ne repond pas bloque le worker gunicorn jusqu'au
+# --timeout de 120 s. La diffusion newsletter ouvre une connexion par lot de 50.
+EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT', default=20)
+
+# Pilotes par .env : avec Google Workspace, l'adresse d'expedition doit
+# correspondre a EMAIL_HOST_USER (ou a un alias « Envoyer en tant que » verifie),
+# sinon Gmail reecrit silencieusement l'en-tete From.
+SERVER_EMAIL = env('SERVER_EMAIL', default='admin@burkinasuudu.com')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@burkinasuudu.com')
+
+# URL publique du site, utilisee pour construire les liens absolus des e-mails
+# envoyes hors requete HTTP (commande `notifier_actualites`). Sans elle, le
+# repli fabriquait « http://<premier ALLOWED_HOSTS> », soit un lien en clair
+# vers un site servi exclusivement en HTTPS.
+SITE_URL = env('SITE_URL', default='')
 
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',

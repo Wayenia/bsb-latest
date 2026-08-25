@@ -146,7 +146,7 @@
               {% if t.soldee %}
                 <button class="btn-payer text-sm" disabled>Soldée</button>
               {% elif t.payable %}
-                <button class="btn-payer text-sm" onclick="ouvrirModalPaiement()">Encaisser</button>
+                <button class="btn-payer text-sm" data-action="ouvrir-paiement">Encaisser</button>
               {% else %}
                 <button class="btn-payer text-sm" disabled title="Réglez d'abord la tranche primordiale en cours">Encaisser</button>
               {% endif %}
@@ -171,7 +171,7 @@
           Enregistrer un paiement
         </button>
         {% else %}
-        <button class="btn-payer" onclick="ouvrirModalPaiement()">
+        <button class="btn-payer" data-action="ouvrir-paiement">
           Enregistrer un paiement
         </button>
         {% endif %}
@@ -254,7 +254,7 @@
       <h5 class="font-bold m-0" id="modalPaiementLabel">
         Enregistrer un paiement
       </h5>
-      <button type="button" onclick="fermerModalPaiement()" class="text-white text-xl leading-none bg-transparent border-0" style="cursor:pointer;">&times;</button>
+      <button type="button" data-action="fermer-paiement" class="text-white text-xl leading-none bg-transparent border-0" style="cursor:pointer;">&times;</button>
     </div>
 
     <form method="post" id="formPaiement" enctype="multipart/form-data" style="display:flex; flex-direction:column; min-height:0;">
@@ -353,7 +353,7 @@
       </div>
 
       <div class="flex justify-end gap-2 px-4 pb-4 pt-3" style="flex-shrink:0; border-top:1px solid #e5e7eb;">
-        <button type="button" onclick="fermerModalPaiement()" class="px-4 py-2 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+        <button type="button" data-action="fermer-paiement" class="px-4 py-2 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
           Annuler
         </button>
         <button type="submit" class="btn-payer px-5 py-2" id="btnSubmitPaiement">
@@ -415,6 +415,15 @@ document.getElementById('formPaiement').addEventListener('submit', function(e) {
     errDiv.classList.remove('hidden');
     return;
   }
+});
+
+// Délégation : les attributs onclick= inline sont bloqués par la CSP.
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var el = e.target.closest('[data-action]');
+  if (!el) return;
+  if (el.dataset.action === 'ouvrir-paiement') ouvrirModalPaiement();
+  else if (el.dataset.action === 'fermer-paiement') fermerModalPaiement();
 });
 </script>
 {% endif %}

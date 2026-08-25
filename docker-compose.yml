@@ -85,6 +85,50 @@ services:
     networks:
       - suudu_net
 
+  # Sauvegarde automatique quotidienne de la base.
+  # Meme image que suudu_db pour garantir que pg_dump a exactement la version du
+  # serveur. Le dump passe par le reseau interne (-h suudu_db), sans binaire
+  # docker ni acces au socket de l'hote : ce conteneur ne peut rien faire
+  # d'autre que lire la base.
+  # Retention : BACKUP_RETENTION fichiers (14 par defaut), soit ~2 semaines.
+  # Il n'existe aucune restauration automatique : elle reste une operation
+  # deliberee via ./db_restore.sh, pour qu'un simple redemarrage ne puisse
+  # jamais ecraser les donnees de production.
+  suudu_backup:
+    image: postgres:15.15-trixie
+    container_name: suudu_backup
+    restart: unless-stopped
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      BACKUP_INTERVAL: ${BACKUP_INTERVAL:-86400}
+      BACKUP_RETENTION: ${BACKUP_RETENTION:-14}
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      suudu_db:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Sauvegarde automatique : toutes les $${BACKUP_INTERVAL}s, retention $${BACKUP_RETENTION}."
+        while true; do
+          HORODATAGE=$$(date +%Y%m%d_%H%M%S)
+          FICHIER="/backups/suudu_db_$${HORODATAGE}.dump"
+          if pg_dump -h suudu_db -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -F c -f "$${FICHIER}"; then
+            echo "[$$(date -Is)] sauvegarde OK : $${FICHIER}"
+            ls -1t /backups/suudu_db_*.dump 2>/dev/null \
+              | tail -n +$$((BACKUP_RETENTION + 1)) \
+              | while read -r vieux; do echo "[$$(date -Is)] purge : $${vieux}"; rm -f "$${vieux}"; done
+          else
+            echo "[$$(date -Is)] ECHEC de la sauvegarde" >&2
+          fi
+          sleep "$${BACKUP_INTERVAL}"
+        done
+    networks:
+      - suudu_net
+
 volumes:
   suudu_postgres_data:
   suudu_pgadmin_data:

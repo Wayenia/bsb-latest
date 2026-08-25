@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from .forms import AbonnementForm
@@ -43,7 +44,27 @@ def abonnement(request):
                                   "Vous recevrez un e-mail à chaque nouvelle actualité.")
     else:
         messages.error(request, form.errors.get("email", ["Requête invalide."])[0])
-    return redirect(request.POST.get("suivant") or "actualites:liste")
+    return redirect(_suivant_sur(request))
+
+
+def _suivant_sur(request):
+    """Destination de retour apres abonnement, validee contre l'hote courant.
+
+    Le champ `suivant` est un champ cache du formulaire : sa valeur legitime est
+    `request.path`, mais rien n'empeche un tiers de poster le formulaire avec
+    une URL absolue. Sans ce controle, l'endpoint sert de tremplin de
+    redirection (phishing) depuis un domaine gouvernemental - c'est le finding
+    « Open Redirection » du scan Acunetix du 24/08/2026.
+
+    Meme convention que les autres redirections pilotees par l'utilisateur du
+    projet (courses/views.py, courses/views_admin.py).
+    """
+    suivant = request.POST.get("suivant")
+    if suivant and url_has_allowed_host_and_scheme(
+        suivant, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return suivant
+    return "actualites:liste"
 
 
 def desabonnement(request, token):
