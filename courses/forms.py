@@ -113,7 +113,7 @@ class PersonalInfoForm(forms.Form):
         ('cm1', 'CM1'), ('cm2', 'CM2'),
         ('6e', '6ème'), ('5e', '5ème'), ('4e', '4ème'), ('3e', '3ème'),
         ('2nde', '2nde'), ('1ere', '1ère'), ('terminale', 'Terminale'),
-        ('licence', 'Licence'),
+        ('licence', 'Licence'), ('maitrise', 'Maîtrise'),
     ]
     niveau_scolaire = forms.ChoiceField(
         label='Niveau scolaire',
@@ -1000,7 +1000,10 @@ class AgentForm(forms.ModelForm):
         return username
 
     def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip()
+        # Le champ modele email a null=True : Django met alors empty_value=None
+        # sur le form field auto-genere, donc cleaned_data['email'] peut valoir
+        # None (et pas juste etre absent) quand le champ est laisse vide.
+        email = (self.cleaned_data.get('email') or '').strip()
         if not email:
             # Optionnel : None (et non '') pour ne pas entrer en collision avec
             # d'autres comptes sans email sous la contrainte unique de la BD.
@@ -1252,7 +1255,10 @@ class EleveForm(forms.ModelForm):
         return username
 
     def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip()
+        # Le champ modele email a null=True : Django met alors empty_value=None
+        # sur le form field auto-genere, donc cleaned_data['email'] peut valoir
+        # None (et pas juste etre absent) quand le champ est laisse vide.
+        email = (self.cleaned_data.get('email') or '').strip()
         if not email:
             # Optionnel : None (et non '') pour ne pas entrer en collision avec
             # d'autres comptes sans email sous la contrainte unique de la BD.

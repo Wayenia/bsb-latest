@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}Importer — Statistiques réelles | BSB{% endblock %}
+{% block title %}Importer — Bilan des effectifs formés | BSB{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-6">
   {% include 'partials/messages.html' %}
 
   <div>
-    <a href="{% url 'courses:stats_reel_dashboard' %}" class="text-sm text-gray-400 hover:text-gray-600">Statistiques réelles</a>
+    <a href="{% url 'courses:stats_reel_dashboard' %}" class="text-sm text-gray-400 hover:text-gray-600">Bilan des effectifs formés</a>
     <h1 class="text-2xl font-black text-gray-900 mt-1">
       Importer — {{ formation.centre.nom_centre }} / {{ formation.filiere.nom_filiere }}
     </h1>

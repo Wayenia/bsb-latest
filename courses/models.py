@@ -404,9 +404,12 @@ class EffectifReel(models.Model):
     effectif_femmes_admis = models.PositiveIntegerField(default=0, verbose_name="Effectif femmes admises")
 
     # Statistiques réelles — "RÉPARTITION DES APPRENANTS VIVANT AVEC UN
-    # HANDICAP PAR MÉTIER ET PAR SEXE" : comme pour présents/admis, l'app ne
-    # connaît pas cette information (non déclarée à l'inscription) — saisie
-    # manuelle DSI, par site/formation, agrégée par métier à l'export.
+    # HANDICAP PAR MÉTIER ET PAR SEXE" : saisie/corrigée manuellement par le
+    # DSI, par site/formation, agrégée par métier à l'export — le modèle
+    # Excel les pré-suggère à partir du handicap déclaré à l'inscription
+    # (Eleve.a_handicap/type_handicap) tant qu'aucun EffectifReel n'existe
+    # encore pour cette formation (cf. courses/views_stats_reel.py), mais le
+    # DSI reste seul responsable de la valeur finale.
     effectif_hommes_handicap_moteur = models.PositiveIntegerField(default=0, verbose_name="Handicap moteur — hommes")
     effectif_femmes_handicap_moteur = models.PositiveIntegerField(default=0, verbose_name="Handicap moteur — femmes")
     effectif_hommes_handicap_visuel = models.PositiveIntegerField(default=0, verbose_name="Handicap sensoriel (visuel) — hommes")
@@ -654,7 +657,11 @@ class Dette(models.Model):
     date_echeance=models.DateTimeField(blank=True,null=True)
 
     def montant_paye(self):
-         return sum(p.montant_paiement for p in self.paiements.all())
+         # Un paiement annulé ne compte plus dans ce qui a été réglé — toute
+         # la logique de blocage/tranche/état de la dette est calculée à la
+         # volée à partir d'ici, donc l'exclusion suffit à tout remettre
+         # cohérent sans code de "réparation" en cascade ailleurs.
+         return sum(p.montant_paiement for p in self.paiements.all() if not p.annule)
 
     def reste_a_payer(self):
         return self.montant_total-self.montant_paye()
@@ -666,7 +673,7 @@ class Dette(models.Model):
     def paye_pour_tranche(self, tranche_frais):
         return sum(
             p.montant_paiement for p in self.paiements.all()
-            if p.tranche_frais_id == tranche_frais.id
+            if p.tranche_frais_id == tranche_frais.id and not p.annule
         )
 
     def reste_pour_tranche(self, tranche_frais):
@@ -830,7 +837,23 @@ class Paiement(models.Model):
         null=True,
         related_name="paiements_crees"
     )
-    
+
+    # Regroupe les paiements créés en une seule action (ex. "Solder ce
+    # frais"/"Solder l'inscription" génère un versement par tranche/frais) —
+    # c'est ce lot, pas une ligne isolée, qui est annulé d'un bloc.
+    groupe_id = models.UUIDField(null=True, blank=True, db_index=True, verbose_name="Lot d'encaissement")
+
+    # Annulation : le paiement reste en base (traçabilité, numéro de
+    # quittance jamais réutilisé) mais n'est plus compté dans
+    # Dette.montant_paye()/paye_pour_tranche() une fois annulé=True.
+    annule = models.BooleanField(default=False, verbose_name="Annulé")
+    motif_annulation = models.TextField(blank=True, null=True, verbose_name="Motif de l'annulation")
+    annule_par = models.ForeignKey(
+        'accounts.Utilisateur', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="paiements_annules", verbose_name="Annulé par"
+    )
+    date_annulation = models.DateTimeField(blank=True, null=True, verbose_name="Date d'annulation")
+
     class Meta:
         verbose_name = "Paiement"
         verbose_name_plural = "Paiements"
@@ -884,5 +907,5 @@ class PermissionsPlateforme(models.Model):
             ("voir_statistiques", "Voir les statistiques"),
             ("exporter_donnees", "Exporter des données (CSV/Excel/PDF)"),
             ("rechercher_tous_centres", "Rechercher un apprenant dans tous les centres (paiements)"),
-            ("gerer_statistiques_reelles", "Saisir et consulter les statistiques réelles (effectifs formés, listes nominatives)"),
+            ("gerer_statistiques_reelles", "Saisir et consulter le bilan des effectifs formés (listes nominatives)"),
         ]

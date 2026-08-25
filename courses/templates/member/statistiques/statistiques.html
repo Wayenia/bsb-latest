@@ -303,6 +303,16 @@
         </div>
 
         <div>
+          <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Statut de paiement</label>
+          <select name="statut_paiement" class="form-select">
+            <option value="">— Tous —</option>
+            <option value="totalement" {% if f_statut_paiement == "totalement" %}selected{% endif %}>Totalement réglé</option>
+            <option value="partiellement" {% if f_statut_paiement == "partiellement" %}selected{% endif %}>Partiellement réglé</option>
+            <option value="aucun" {% if f_statut_paiement == "aucun" %}selected{% endif %}>Rien n'est réglé</option>
+          </select>
+        </div>
+
+        <div>
           <label class="block text-sm font-semibold mb-1" style="color:var(--gris);">Genre</label>
           <select name="genre" class="form-select">
             <option value="">— Tous —</option>
@@ -598,14 +608,31 @@
         </tbody>
       </table>
     </div>
+    {% if recouvrement_centres.has_other_pages %}
+    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+      <p class="text-sm text-gray-500">
+        Page {{ recouvrement_centres.number }} / {{ recouvrement_centres.paginator.num_pages }}
+      </p>
+      <div class="flex gap-2">
+        {% if recouvrement_centres.has_previous %}
+        <a href="?{{ querystring_recouvrement }}&rpage={{ recouvrement_centres.previous_page_number }}"
+           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Précédent</a>
+        {% endif %}
+        {% if recouvrement_centres.has_next %}
+        <a href="?{{ querystring_recouvrement }}&rpage={{ recouvrement_centres.next_page_number }}"
+           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Suivant</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 
-  {% comment %} ══ DERNIÈRES INSCRIPTIONS ════════════════════════════════════════════════ {% endcomment %}
+  {% comment %} ══ HISTORIQUE DES INSCRIPTIONS ═══════════════════════════════════════════ {% endcomment %}
   <div class="section-card mb-6">
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
       <div class="section-title mb-0">
         <span class="icon-dot" style="background:var(--or);"></span>
-        Dernières inscriptions
+        Historique des inscriptions
       </div>
       <div class="btn-export-group">
         <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="pdf" class="btn-exp btn-exp-pdf">
@@ -668,6 +695,23 @@
         </tbody>
       </table>
     </div>
+    {% if dernieres_inscriptions.has_other_pages %}
+    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+      <p class="text-sm text-gray-500">
+        Page {{ dernieres_inscriptions.number }} / {{ dernieres_inscriptions.paginator.num_pages }}
+      </p>
+      <div class="flex gap-2">
+        {% if dernieres_inscriptions.has_previous %}
+        <a href="?{{ querystring_inscriptions }}&ipage={{ dernieres_inscriptions.previous_page_number }}"
+           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Précédent</a>
+        {% endif %}
+        {% if dernieres_inscriptions.has_next %}
+        <a href="?{{ querystring_inscriptions }}&ipage={{ dernieres_inscriptions.next_page_number }}"
+           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Suivant</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 
 </div>{% comment %} /container {% endcomment %}

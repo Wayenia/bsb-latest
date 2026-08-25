@@ -134,6 +134,7 @@ class Eleve(Utilisateur):
         ("1ere", "1ère"),
         ("terminale", "Terminale"),
         ("licence", "Licence"),
+        ("maitrise", "Maîtrise"),
     ]
 
     lieu_naissance = models.CharField(max_length=225, verbose_name="Lieu de naissance")

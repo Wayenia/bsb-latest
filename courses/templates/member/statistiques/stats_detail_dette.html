@@ -193,11 +193,14 @@
         </thead>
         <tbody>
           {% for p in paiements %}
-          <tr class="border-b border-gray-100 hover:bg-gray-50">
+          <tr class="border-b border-gray-100 hover:bg-gray-50 {% if p.annule %}opacity-50{% endif %}">
             <td class="py-2">
               <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Tranche {{ p.tranche }}</span>
+              {% if p.annule %}
+              <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700" title="{{ p.motif_annulation }}">Annulé</span>
+              {% endif %}
             </td>
-            <td class="py-2 font-semibold text-emerald-600">{{ p.montant_paiement|floatformat:0|intcomma }} FCFA</td>
+            <td class="py-2 font-semibold {% if p.annule %}text-gray-400 line-through{% else %}text-emerald-600{% endif %}">{{ p.montant_paiement|floatformat:0|intcomma }} FCFA</td>
             <td class="py-2">
               {% if p.mode_paiement == 'mobile' %}
                 <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Mobile Money</span>
@@ -216,11 +219,24 @@
                 <span class="text-gray-500">—</span>
               {% endif %}
             </td>
-            <td class="py-2 text-right">
+            <td class="py-2 text-right whitespace-nowrap">
               <a href="{% url 'courses:stats_quittance_tranche' dette.id p.tranche %}"
                  class="btn-quittance text-sm">
                 Quittance
               </a>
+              {% if not p.annule and perms.courses.gerer_paiements %}
+                {% if p.annulable %}
+                <button type="button" class="text-sm text-red-600 hover:underline ml-2"
+                        data-action="ouvrir-annulation" data-annulation-paiement="{{ p.id }}" data-annulation-libelle="{{ p.numero_quittance|default:p.tranche }}">
+                  Annuler ce versement
+                </button>
+                {% else %}
+                <button type="button" class="text-sm text-gray-300 cursor-not-allowed ml-2" disabled
+                        title="Des versements plus récents existent sur cette inscription — annulez-les d'abord, du plus récent au plus ancien.">
+                  Annuler ce versement
+                </button>
+                {% endif %}
+              {% endif %}
             </td>
           </tr>
           {% empty %}
@@ -364,6 +380,55 @@
   </div>
 </div>
 
+{% comment %} MODAL ANNULATION D'UN VERSEMENT {% endcomment %}
+<div id="modalAnnulation" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h2 style="font-weight:800;font-size:1.1rem;color:#374151;margin:0;">Annuler ce versement</h2>
+      <button type="button" data-action="fermer-annulation" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
+    </div>
+    <p id="modalAnnulationCible" style="font-size:.85rem;color:#6b7280;margin-bottom:1rem;"></p>
+    <p class="py-2 px-3 mb-3 rounded-lg bg-red-50 border border-red-300 text-red-800" style="font-size:.85rem;">
+      Le paiement reste conservé (traçabilité, numéro de quittance jamais réutilisé) mais n'est plus compté
+      comme réglé. Seul le versement le plus récent de cette inscription peut être annulé.
+    </p>
+    <form method="post" id="formAnnulation" action="">
+      {% csrf_token %}
+      <label class="block font-semibold text-sm text-gray-500 mb-1">Motif de l'annulation <span class="text-red-600">*</span></label>
+      <textarea name="motif_annulation" id="motifAnnulation" class="form-control-custom mb-3" rows="3" required></textarea>
+      <div class="flex justify-end gap-2">
+        <button type="button" data-action="fermer-annulation" class="px-4 py-2 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+          Fermer
+        </button>
+        <button type="submit" class="px-5 py-2 text-sm font-bold rounded-lg text-white" style="background:#dc2626;">
+          Confirmer l'annulation
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+function ouvrirModalAnnulation(paiementId, libelle) {
+  document.getElementById('formAnnulation').action = "{% url 'courses:stats_annuler_paiement' 0 %}".replace('0', paiementId);
+  document.getElementById('modalAnnulationCible').textContent = 'Versement : ' + libelle;
+  document.getElementById('motifAnnulation').value = '';
+  const modal = document.getElementById('modalAnnulation');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function fermerModalAnnulation() {
+  const modal = document.getElementById('modalAnnulation');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+document.getElementById('modalAnnulation').addEventListener('click', function (e) {
+  if (e.target === this) fermerModalAnnulation();
+});
+</script>
+
 <script nonce="{{ csp_nonce }}">
 const estPrimordiale = {{ tranche_cible.est_primordiale|yesno:"true,false" }};
 const montantCible = {{ montant_cible|floatformat:0 }};
@@ -417,13 +482,29 @@ document.getElementById('formPaiement').addEventListener('submit', function(e) {
   }
 });
 
-// Délégation : les attributs onclick= inline sont bloqués par la CSP.
+// Délégation : les attributs onclick= inline sont bloqués par la CSP
+// (script-src 'self' 'nonce-...'). ouvrirModalAnnulation et
+// fermerModalAnnulation sont déclarées dans le bloc <script> précédent, donc
+// disponibles ici : `function` au premier niveau crée une globale.
 document.addEventListener('click', function (e) {
   if (!e.target.closest) return;
   var el = e.target.closest('[data-action]');
   if (!el) return;
-  if (el.dataset.action === 'ouvrir-paiement') ouvrirModalPaiement();
-  else if (el.dataset.action === 'fermer-paiement') fermerModalPaiement();
+  switch (el.dataset.action) {
+    case 'ouvrir-paiement':
+      ouvrirModalPaiement();
+      break;
+    case 'fermer-paiement':
+      fermerModalPaiement();
+      break;
+    case 'ouvrir-annulation':
+      ouvrirModalAnnulation(Number(el.dataset.annulationPaiement),
+                            el.dataset.annulationLibelle);
+      break;
+    case 'fermer-annulation':
+      fermerModalAnnulation();
+      break;
+  }
 });
 </script>
 {% endif %}

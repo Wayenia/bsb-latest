@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('courses', '0044_alter_paiement_mode_paiement'),
+        ('courses', '0047_paiement_annule_paiement_annule_par_and_more'),
     ]
 
     operations = [

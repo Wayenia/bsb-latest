@@ -10,6 +10,7 @@ from django.core.files.storage import FileSystemStorage
 from django.db.models import Sum
 from django.db import transaction
 import qrcode
+import uuid
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
@@ -515,6 +516,7 @@ def effectuer_paiment(request, id):
                 paiement.piece_jointe_derogation = piece_jointe
 
             paiement.cree_par = request.user
+            paiement.groupe_id = uuid.uuid4()
             paiement.save()
 
             if dette.reste_a_payer() <= 0:
@@ -634,6 +636,10 @@ def telecharger_quittance(request, id):
     if paiement.dette.inscription.eleve != request.user.eleve:
          messages.error(request, "Action non autorisée.")
          return redirect('courses:mes_paiements')
+
+    if paiement.annule:
+        messages.error(request, "Ce versement a été annulé, sa quittance n'est plus disponible au téléchargement.")
+        return redirect('courses:mes_paiements')
 
     centre = paiement.dette.inscription.formation.centre
     header_left, header_right = _pdf_header_lines(centre)
@@ -786,6 +792,11 @@ def download_quittance(request,id):
         id=id,
         dette__inscription__eleve=request.user.eleve
     )
+
+    if paiement.annule:
+        messages.error(request, "Ce versement a été annulé, sa quittance n'est plus disponible au téléchargement.")
+        return redirect('courses:mes_paiements')
+
     dette=paiement.dette
     inscription=paiement.dette.inscription
     eleve=inscription.eleve
@@ -811,6 +822,18 @@ def download_quittance(request,id):
     p.drawCentredString(width/2, height-3.8*cm, "QUITTANCE DE PAIEMENT")
     p.setFont("Helvetica", 9)
     p.drawCentredString(width/2, height-4.4*cm, "Burkina Suudu Bawde")
+    # Tampon "ANNULÉE" : le paiement reste conservé pour l'audit (numéro de
+    # quittance jamais réutilisé) mais ce document ne doit jamais pouvoir
+    # passer pour un reçu valide s'il est réimprimé après annulation.
+    if paiement.annule:
+        p.saveState()
+        p.setFillColor(colors.red)
+        p.setFillAlpha(0.35)
+        p.setFont("Helvetica-Bold", 34)
+        p.translate(width/2, height/2)
+        p.rotate(30)
+        p.drawCentredString(0, 0, "ANNULÉE")
+        p.restoreState()
     # LIGNE SEPARATRICE
     y = height - 5.2*cm
     p.setLineWidth(0.8)
@@ -1268,7 +1291,8 @@ def paiement_list(request):
 
     # Le reste à payer est calculé à partir des dettes/paiements déjà préchargés :
     # filtrer en Python plutôt qu'avec une agrégation SQL fragile sur deux
-    # niveaux de relations (dettes -> paiements).
+    # niveaux de relations (dettes -> paiements). Les paiements annulés ne
+    # comptent plus comme payés (cf. Dette.montant_paye()).
     inscriptions_avec_reste = []
     for insc in inscriptions_qs:
         insc.total_du = sum(d.montant_total for d in insc.dettes.all())
@@ -1276,9 +1300,14 @@ def paiement_list(request):
             p.montant_paiement
             for d in insc.dettes.all()
             for p in d.paiements.all()
+            if not p.annule
         )
         insc.reste = insc.total_du - insc.total_paye
-        if insc.reste > 0:
+        # En parcours libre (sans recherche), on ne montre que ce qui reste dû —
+        # utile pour un caissier. Mais une recherche doit retrouver un apprenant
+        # même à reste nul (ex. annuler un versement après coup sur un dossier
+        # déjà entièrement réglé) : ce n'est prévu nulle part ailleurs.
+        if q or insc.reste > 0:
             inscriptions_avec_reste.append(insc)
 
     scope_labels = {
@@ -1737,8 +1766,12 @@ def _base_qs(user):
     dettes = Dette.objects.filter(
         inscription__formation__centre_id__in=centre_ids
     )
+    # annule=False : un versement annulé n'est plus considéré comme encaissé
+    # (cf. Dette.montant_paye()) — exclu ici une bonne fois pour toutes les
+    # statistiques/exports qui réutilisent ce queryset (totaux, recouvrement,
+    # répartition par mode de paiement, liste des paiements encaissés).
     paiements = Paiement.objects.filter(
-        dette__inscription__formation__centre_id__in=centre_ids
+        dette__inscription__formation__centre_id__in=centre_ids, annule=False
     )
     return inscriptions, dettes, paiements, centres_qs, directions_qs, scope
 
@@ -1759,6 +1792,7 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
     genre        = request.GET.get("genre")
     date_debut   = request.GET.get("date_debut")
     date_fin     = request.GET.get("date_fin")
+    statut_paiement_f = request.GET.get("statut_paiement")
 
     if direction_id and scope == "global":
         inscriptions_qs = inscriptions_qs.filter(formation__centre__direction_id=direction_id)
@@ -1805,12 +1839,91 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
         dettes_qs = dettes_qs.filter(inscription__date_inscription__date__lte=date_fin)
         paiements_qs = paiements_qs.filter(dette__inscription__date_inscription__date__lte=date_fin)
 
+    # Statut de paiement (totalement/partiellement/pas réglé) : ne se traduit
+    # pas par un simple champ à filtrer (il faut sommer dettes/paiements par
+    # inscription), et sommer sur deux relations inverses en cascade dans un
+    # seul .annotate() multiplierait les montants (piège classique de l'ORM
+    # Django) — calculé en Python, comme déjà fait pour la liste des
+    # paiements (paiement_list), puis appliqué en id__in.
+    if statut_paiement_f in ("totalement", "partiellement", "aucun"):
+        ids_ok = []
+        for insc in inscriptions_qs.prefetch_related('dettes__paiements'):
+            total_du = sum(d.montant_total for d in insc.dettes.all())
+            total_paye = sum(
+                p.montant_paiement for d in insc.dettes.all() for p in d.paiements.all() if not p.annule
+            )
+            if total_du <= 0:
+                continue
+            if statut_paiement_f == "totalement" and total_paye >= total_du:
+                ids_ok.append(insc.id)
+            elif statut_paiement_f == "partiellement" and 0 < total_paye < total_du:
+                ids_ok.append(insc.id)
+            elif statut_paiement_f == "aucun" and total_paye <= 0:
+                ids_ok.append(insc.id)
+        inscriptions_qs = inscriptions_qs.filter(id__in=ids_ok)
+        dettes_qs = dettes_qs.filter(inscription_id__in=ids_ok)
+        paiements_qs = paiements_qs.filter(dette__inscription_id__in=ids_ok)
+
     filters = {
         "centre_id": centre_id, "direction_id": direction_id, "filiere_id": filiere_id,
         "annee_id": annee_id, "statut_f": statut_f, "region_id": region_id,
         "genre": genre, "date_debut": date_debut, "date_fin": date_fin,
+        "statut_paiement_f": statut_paiement_f,
     }
     return inscriptions_qs, dettes_qs, paiements_qs, filters
+
+
+def _resume_filtres_stats(filters):
+    """Phrase récapitulant les filtres actifs du tableau de bord statistiques,
+    reprise dans les fichiers exportés (CSV/Excel/PDF) pour que leur contenu
+    reste traçable une fois détaché de l'écran qui les a produits."""
+    from .models import Region
+    from accounts.models import Utilisateur
+
+    parties = []
+
+    if filters.get("centre_id"):
+        centre = CentreFormation.objects.filter(pk=filters["centre_id"]).first()
+        parties.append(f"Centre : {centre.nom_centre if centre else '—'}")
+
+    if filters.get("direction_id"):
+        direction = Direction_reg.objects.filter(pk=filters["direction_id"]).first()
+        parties.append(f"Direction : {direction.nom_direction if direction else '—'}")
+
+    if filters.get("filiere_id"):
+        filiere = Filiere.objects.filter(pk=filters["filiere_id"]).first()
+        parties.append(f"Métier : {filiere.nom_filiere if filiere else '—'}")
+
+    if filters.get("annee_id"):
+        annee = AnneeScolaire.objects.filter(pk=filters["annee_id"]).first()
+        parties.append(f"Année de formation : {annee.libelle_anne if annee else '—'}")
+
+    if filters.get("statut_f"):
+        statut_labels = dict(Inscription.STATUT_CHOICE)
+        parties.append(f"Statut inscription : {statut_labels.get(filters['statut_f'], filters['statut_f'])}")
+
+    if filters.get("region_id"):
+        region = Region.objects.filter(pk=filters["region_id"]).first()
+        parties.append(f"Région : {region.nom_region if region else '—'}")
+
+    if filters.get("genre"):
+        genre_labels = dict(Utilisateur.SEXE_CHOICE)
+        parties.append(f"Genre : {genre_labels.get(filters['genre'], filters['genre'])}")
+
+    if filters.get("date_debut") or filters.get("date_fin"):
+        parties.append(f"Période : du {filters.get('date_debut') or '…'} au {filters.get('date_fin') or '…'}")
+
+    if filters.get("statut_paiement_f"):
+        statut_paiement_labels = {
+            "totalement": "Totalement réglé",
+            "partiellement": "Partiellement réglé",
+            "aucun": "Rien n'est réglé",
+        }
+        parties.append(
+            f"Statut de paiement : {statut_paiement_labels.get(filters['statut_paiement_f'], filters['statut_paiement_f'])}"
+        )
+
+    return " | ".join(parties) if parties else "Aucun filtre appliqué"
 
 
 def _can_access_eleve_finances(user, eleve):
@@ -1925,6 +2038,7 @@ def statistiques_view(request):
     genre        = filters["genre"]
     date_debut   = filters["date_debut"]
     date_fin     = filters["date_fin"]
+    statut_paiement_f = filters["statut_paiement_f"]
 
     # Narrowing du dropdown "centre" affiché à l'écran quand une direction est sélectionnée.
     if direction_id and scope == "global":
@@ -2000,6 +2114,9 @@ def statistiques_view(request):
         })
     recouvrement_centres.sort(key=lambda x: x["taux"], reverse=True)
 
+    recouvrement_paginator = Paginator(recouvrement_centres, 5)
+    recouvrement_page = recouvrement_paginator.get_page(request.GET.get("rpage"))
+
     # ── Évolution mensuelle inscriptions (12 derniers mois) ──────────────────
     from django.db.models.functions import TruncMonth
     evol_qs = (
@@ -2027,12 +2144,14 @@ def statistiques_view(request):
     mode_labels = [m["mode_paiement"].capitalize() for m in modes]
     mode_data   = [m["total"] or 0 for m in modes]
 
-    # ── Dernières inscriptions ────────────────────────────────────────────────
-    dernieres_inscriptions = (
+    # ── Historique des inscriptions (paginé, 5/page) ──────────────────────────
+    inscriptions_liste_qs = (
         inscriptions_qs
         .select_related("eleve", "formation__filiere", "formation__centre", "annee_scolaire")
-        .order_by("-date_inscription")[:20]
+        .order_by("-date_inscription")
     )
+    inscriptions_paginator = Paginator(inscriptions_liste_qs, 5)
+    dernieres_inscriptions = inscriptions_paginator.get_page(request.GET.get("ipage"))
 
     from .models import Region
     from accounts.models import Utilisateur
@@ -2057,11 +2176,24 @@ def statistiques_view(request):
             provinces__centre_formations__id__in=centre_ids_scope
         ).distinct()
 
+    # Querystrings pour les liens de pagination des deux sections paginées
+    # séparément (rpage/ipage) : on garde tous les filtres actifs, on retire
+    # juste le paramètre de page de la section concernée.
+    qd_recouvrement = request.GET.copy()
+    qd_recouvrement.pop("rpage", None)
+    querystring_recouvrement = qd_recouvrement.urlencode()
+
+    qd_inscriptions = request.GET.copy()
+    qd_inscriptions.pop("ipage", None)
+    querystring_inscriptions = qd_inscriptions.urlencode()
+
     context = {
         "stats":                  stats,
         "top_filieres":           top_filieres,
-        "recouvrement_centres":   recouvrement_centres,
+        "recouvrement_centres":   recouvrement_page,
         "dernieres_inscriptions": dernieres_inscriptions,
+        "querystring_recouvrement": querystring_recouvrement,
+        "querystring_inscriptions": querystring_inscriptions,
         "scope":                  scope,
         # Filtres disponibles
         "centres":    centres_scope.order_by("nom_centre"),
@@ -2080,6 +2212,7 @@ def statistiques_view(request):
         "f_genre":      genre,
         "f_date_debut": date_debut,
         "f_date_fin":   date_fin,
+        "f_statut_paiement": statut_paiement_f,
         # Donnees des graphiques. Transmises brutes : le template les serialise
         # avec le filtre `json_script`, qui echappe <, > et & — ce que
         # json.dumps ne fait pas. Un nom de metier contenant « </script> »
@@ -2100,7 +2233,7 @@ def statistiques_view(request):
 def export_csv(request):
     user = request.user
     inscriptions_qs, dettes_qs, paiements_qs, centres_scope, _, scope = _base_qs(user)
-    inscriptions_qs, dettes_qs, paiements_qs, _ = _apply_stats_filters(
+    inscriptions_qs, dettes_qs, paiements_qs, filters = _apply_stats_filters(
         request, inscriptions_qs, dettes_qs, paiements_qs, scope
     )
 
@@ -2110,6 +2243,8 @@ def export_csv(request):
     response["Content-Disposition"] = f'attachment; filename="export_{export_type}.csv"'
 
     writer = csv.writer(response, delimiter=";")
+    writer.writerow(["Filtres appliqués :", _resume_filtres_stats(filters)])
+    writer.writerow([])
 
     if export_type == "inscriptions":
         writer.writerow(["N°", "Apprenant", "Matricule", "Sexe", "Téléphone", "Email", "Métier", "Centre", "Direction", "Année", "Statut", "Date inscription"])
@@ -2178,7 +2313,7 @@ def export_csv(request):
 def export_excel(request):
     user = request.user
     inscriptions_qs, dettes_qs, paiements_qs, centres_scope, _, scope = _base_qs(user)
-    inscriptions_qs, dettes_qs, paiements_qs, _ = _apply_stats_filters(
+    inscriptions_qs, dettes_qs, paiements_qs, filters = _apply_stats_filters(
         request, inscriptions_qs, dettes_qs, paiements_qs, scope
     )
     export_type = request.GET.get("type", "inscriptions")
@@ -2190,6 +2325,7 @@ def export_excel(request):
     or_fill    = PatternFill("solid", fgColor="D4A017")
     header_font = Font(bold=True, color="FFFFFF", size=11)
     center_align = Alignment(horizontal="center", vertical="center")
+    filtres_font = Font(italic=True, color="6B7280", size=9)
 
     def style_header(row_cells):
         for cell in row_cells:
@@ -2197,11 +2333,17 @@ def export_excel(request):
             cell.font = header_font
             cell.alignment = center_align
 
+    def ecrire_resume_filtres():
+        ws.append([f"Filtres appliqués : {_resume_filtres_stats(filters)}"])
+        ws["A" + str(ws.max_row)].font = filtres_font
+        ws.append([])
+
     if export_type == "inscriptions":
         ws.title = "Inscriptions"
+        ecrire_resume_filtres()
         headers = ["N°","Apprenant","Matricule","Sexe","Téléphone","Email","Métier","Centre","Direction","Année","Statut","Date"]
         ws.append(headers)
-        style_header(ws[1])
+        style_header(ws[ws.max_row])
         for i, insc in enumerate(
             inscriptions_qs.select_related(
                 "eleve","formation__filiere","formation__centre__direction","annee_scolaire"
@@ -2226,9 +2368,10 @@ def export_excel(request):
 
     elif export_type == "recouvrement":
         ws.title = "Recouvrement"
+        ecrire_resume_filtres()
         headers = ["Centre","Direction","Total dû (FCFA)","Encaissé (FCFA)","Restant (FCFA)","Taux (%)"]
         ws.append(headers)
-        style_header(ws[1])
+        style_header(ws[ws.max_row])
         for centre in centres_scope.order_by("nom_centre"):
             c_dettes    = dettes_qs.filter(inscription__formation__centre=centre)
             c_paiements = paiements_qs.filter(dette__inscription__formation__centre=centre)
@@ -2258,7 +2401,7 @@ def export_excel(request):
 def export_pdf(request):
     user = request.user
     inscriptions_qs, dettes_qs, paiements_qs, centres_scope, directions_scope, scope = _base_qs(user)
-    inscriptions_qs, dettes_qs, paiements_qs, _ = _apply_stats_filters(
+    inscriptions_qs, dettes_qs, paiements_qs, filters = _apply_stats_filters(
         request, inscriptions_qs, dettes_qs, paiements_qs, scope
     )
     export_type = request.GET.get("type", "inscriptions")
@@ -2288,6 +2431,14 @@ def export_pdf(request):
     )
     cell_style = ParagraphStyle(
         "cell_bsb", parent=styles["Normal"], fontSize=8, leading=10,
+    )
+    filtres_style = ParagraphStyle(
+        "filtres_bsb",
+        parent=styles["Normal"],
+        fontSize=8,
+        fontName="Helvetica-Oblique",
+        textColor=rl_colors.HexColor("#6B7280"),
+        spaceAfter=10,
     )
 
     def cell(texte):
@@ -2343,6 +2494,7 @@ def export_pdf(request):
     if export_type == "inscriptions":
         story.append(Paragraph("Rapport des Inscriptions — BSB", title_style))
         story.append(Paragraph(f"Généré le {now}  |  {inscriptions_qs.count()} inscription(s)", sub_style))
+        story.append(Paragraph(f"Filtres appliqués : {_resume_filtres_stats(filters)}", filtres_style))
 
         data = [["N°", "Apprenant", "Matricule", "Métier", "Centre", "Année", "Statut", "Date"]]
         for i, insc in enumerate(
@@ -2369,6 +2521,7 @@ def export_pdf(request):
     elif export_type == "recouvrement":
         story.append(Paragraph("Rapport de Recouvrement par Centre — BSB", title_style))
         story.append(Paragraph(f"Généré le {now}", sub_style))
+        story.append(Paragraph(f"Filtres appliqués : {_resume_filtres_stats(filters)}", filtres_style))
 
         data = [["Centre", "Direction", "Total dû (FCFA)", "Encaissé (FCFA)", "Restant (FCFA)", "Taux (%)"]]
         for centre in centres_scope.order_by("nom_centre"):
@@ -2538,15 +2691,18 @@ class _CascadeInterrompue(Exception):
         super().__init__(message)
 
 
-def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogation=None, piece_jointe_derogation=None):
+def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogation=None, piece_jointe_derogation=None, groupe_id=None):
     """
     Encaisse `montant` sur cette dette : tranche primordiale d'abord (ou
     versement unique si le type de frais n'a pas de tranches), puis le reste
     sur les tranches suivantes dans l'ordre. Si `montant` est insuffisant
     pour couvrir entièrement la tranche primordiale non soldée, tout le
     montant lui est affecté en sous-paiement dérogatoire (motif et pièce
-    jointe supposés déjà validés par l'appelant). Retourne (nombre de
-    paiements créés, montant réellement encaissé, montant non utilisé).
+    jointe supposés déjà validés par l'appelant). `groupe_id` identifie le
+    lot d'encaissement (une action utilisateur peut créer plusieurs
+    paiements — c'est ce lot entier qui est annulable, pas une ligne isolée).
+    Retourne (nombre de paiements créés, montant réellement encaissé,
+    montant non utilisé).
     """
     tranche_num = dette.paiements.count()
     restant = montant
@@ -2562,7 +2718,7 @@ def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogati
             Paiement.objects.create(
                 dette=dette, montant_paiement=prise, mode_paiement=mode_paiement,
                 tranche=tranche_num, tranche_frais=None,
-                date_paiement=timezone.now(), cree_par=user,
+                date_paiement=timezone.now(), cree_par=user, groupe_id=groupe_id,
             )
             restant -= prise
             encaisse += prise
@@ -2583,7 +2739,7 @@ def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogati
                 Paiement.objects.create(
                     dette=dette, montant_paiement=restant, mode_paiement=mode_paiement,
                     tranche=tranche_num, tranche_frais=t,
-                    date_paiement=timezone.now(), cree_par=user,
+                    date_paiement=timezone.now(), cree_par=user, groupe_id=groupe_id,
                     motif_derogation=motif_derogation,
                     piece_jointe_derogation=piece_jointe_derogation,
                 )
@@ -2596,7 +2752,7 @@ def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogati
             Paiement.objects.create(
                 dette=dette, montant_paiement=prise, mode_paiement=mode_paiement,
                 tranche=tranche_num, tranche_frais=t,
-                date_paiement=timezone.now(), cree_par=user,
+                date_paiement=timezone.now(), cree_par=user, groupe_id=groupe_id,
             )
             encaisse += prise
             nb_paiements += 1
@@ -2684,7 +2840,8 @@ def stats_encaisser_solde_dette_view(request, dette_id):
             messages.error(request, err)
             return redirect(redirect_url)
 
-    nb, total, _ = _encaisser_montant_dette(dette, montant, mode, request.user, motif_derogation, piece_jointe_derogation)
+    groupe_id = uuid.uuid4()
+    nb, total, _ = _encaisser_montant_dette(dette, montant, mode, request.user, motif_derogation, piece_jointe_derogation, groupe_id=groupe_id)
 
     messages.success(
         request,
@@ -2765,6 +2922,7 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
             messages.error(request, err)
             return redirect(redirect_url)
 
+    groupe_id = uuid.uuid4()
     try:
         with transaction.atomic():
             restant = montant
@@ -2787,7 +2945,7 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
                             f"Le frais de dossier « {dette.frais_formation.type_frais} » doit être réglé "
                             f"intégralement en un seul versement (montant dû : {reste_dette:,.0f} FCFA)."
                         )
-                    nb, total, restant = _encaisser_montant_dette(dette, restant, mode, request.user)
+                    nb, total, restant = _encaisser_montant_dette(dette, restant, mode, request.user, groupe_id=groupe_id)
                     nb_total += nb
                     montant_total += total
                     continue
@@ -2802,7 +2960,7 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
                         )
                     motif, piece = motif_derogation, piece_jointe_derogation
 
-                nb, total, restant = _encaisser_montant_dette(dette, restant, mode, request.user, motif, piece)
+                nb, total, restant = _encaisser_montant_dette(dette, restant, mode, request.user, motif, piece, groupe_id=groupe_id)
                 nb_total += nb
                 montant_total += total
     except _CascadeInterrompue as exc:
@@ -2915,6 +3073,7 @@ def stats_detail_dette_view(request, dette_id):
             cree_par=request.user,  # ← ici
             motif_derogation=motif_derogation,
             piece_jointe_derogation=piece_jointe_derogation,
+            groupe_id=uuid.uuid4(),
         )
         paiement.save()
 
@@ -2922,7 +3081,7 @@ def stats_detail_dette_view(request, dette_id):
         # préchargée (prefetch_related) avant la création du paiement ci-dessus ;
         # `dette.paiements.all()` réutiliserait ce cache obsolète (sans le
         # paiement qu'on vient de créer), d'où une requête indépendante ici.
-        total_paye = Paiement.objects.filter(dette_id=dette.id).aggregate(s=Sum('montant_paiement'))['s'] or 0
+        total_paye = Paiement.objects.filter(dette_id=dette.id, annule=False).aggregate(s=Sum('montant_paiement'))['s'] or 0
         if dette.montant_total - total_paye <= 0:
             dette.etat_dette = 'soldé'
             dette.save()
@@ -2930,7 +3089,11 @@ def stats_detail_dette_view(request, dette_id):
         messages.success(request, f"Paiement de {montant:,.0f} FCFA enregistré — Tranche {tranche_num}.")
         return redirect('courses:stats_detail_dette', dette_id=dette_id)
 
-    paiements = dette.paiements.order_by('-date_paiement', '-tranche')
+    paiements = list(
+        dette.paiements.select_related('dette__inscription').order_by('-date_paiement', '-tranche')
+    )
+    for p in paiements:
+        p.annulable = (not p.annule) and _est_dernier_versement_inscription(p)
     montant_paye = dette.montant_paye()
     reste = dette.reste_a_payer()
     taux = (montant_paye / dette.montant_total * 100) if dette.montant_total > 0 else 0
@@ -2954,6 +3117,112 @@ def stats_detail_dette_view(request, dette_id):
 
 
 # ─────────────────────────────────────────────
+# ANNULATION D'UN PAIEMENT (ou du lot auquel il appartient)
+# ─────────────────────────────────────────────
+def _paiements_du_lot(paiement):
+    """Tous les paiements non annulés créés par la même action que
+    `paiement` (même groupe_id — ex. "Solder ce frais"/"Solder
+    l'inscription" génère un versement par tranche/frais en un seul clic).
+    Un paiement sans groupe_id (créé avant l'introduction des lots) forme
+    son propre lot, réduit à lui-même."""
+    if paiement.groupe_id:
+        return Paiement.objects.filter(
+            dette__inscription=paiement.dette.inscription,
+            groupe_id=paiement.groupe_id, annule=False,
+        )
+    return Paiement.objects.filter(pk=paiement.pk, annule=False)
+
+
+def _est_dernier_versement_inscription(paiement):
+    """True si le lot de `paiement` est le versement non annulé le plus
+    récent de son inscription — condition nécessaire pour pouvoir l'annuler
+    sans casser l'ordre primordiale/frais de dossier (LIFO : on ne défait
+    que le dernier mouvement, jamais un versement du milieu). Portée
+    limitée à l'inscription : deux apprenants différents ne s'influencent
+    jamais l'un l'autre."""
+    lot = _paiements_du_lot(paiement)
+    lot_ids = set(lot.values_list('pk', flat=True))
+    dernier_du_lot = lot.order_by('-date_paiement').first()
+    if not dernier_du_lot:
+        return False
+
+    plus_recent_ailleurs = (
+        Paiement.objects.filter(dette__inscription=paiement.dette.inscription, annule=False)
+        .exclude(pk__in=lot_ids)
+        .order_by('-date_paiement')
+        .first()
+    )
+    if not plus_recent_ailleurs:
+        return True
+    return dernier_du_lot.date_paiement >= plus_recent_ailleurs.date_paiement
+
+
+def _annuler_paiement(paiement, user, motif):
+    """Annule le lot entier de `paiement` (transaction.atomic — tout ou
+    rien) : chaque ligne reste en base (numéro de quittance jamais
+    réutilisé) mais n'est plus comptée dans Dette.montant_paye(), et
+    l'état de chaque dette touchée est remis à jour. Retourne le nombre de
+    paiements annulés."""
+    lot = list(_paiements_du_lot(paiement))
+    maintenant = timezone.now()
+    dettes_touchees = set()
+    with transaction.atomic():
+        for p in lot:
+            p.annule = True
+            p.motif_annulation = motif
+            p.annule_par = user
+            p.date_annulation = maintenant
+            p.save()
+            dettes_touchees.add(p.dette_id)
+        for dette_id in dettes_touchees:
+            dette = Dette.objects.get(pk=dette_id)
+            dette.etat_dette = 'soldé' if dette.reste_a_payer() <= 0 else 'non_soldé'
+            dette.save()
+    return len(lot)
+
+
+@login_required
+def stats_annuler_paiement_view(request, paiement_id):
+    paiement = get_object_or_404(
+        Paiement.objects.select_related('dette__inscription__eleve', 'dette__frais_formation__type_frais'),
+        id=paiement_id
+    )
+    dette = paiement.dette
+
+    if not _can_access_dette_finances(request.user, dette):
+        raise PermissionDenied("Vous n'avez pas accès aux informations financières de cette dette.")
+
+    redirect_url = f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}"
+
+    if request.method != 'POST':
+        return redirect(redirect_url)
+
+    if not (request.user.is_superuser or request.user.has_perm('courses.gerer_paiements')):
+        raise PermissionDenied("Vous n'avez pas la permission d'annuler un paiement.")
+
+    if paiement.annule:
+        messages.info(request, "Ce paiement est déjà annulé.")
+        return redirect(redirect_url)
+
+    motif = request.POST.get('motif_annulation', '').strip()
+    if not motif:
+        messages.error(request, "Un motif est obligatoire pour annuler un paiement.")
+        return redirect(redirect_url)
+
+    if not _est_dernier_versement_inscription(paiement):
+        messages.error(
+            request,
+            "Impossible d'annuler ce versement : des versements plus récents existent sur cette "
+            "inscription. Annulez-les d'abord, du plus récent au plus ancien."
+        )
+        return redirect(redirect_url)
+
+    nb = _annuler_paiement(paiement, request.user, motif)
+    messages.success(request, f"Versement annulé ({nb} paiement{'s' if nb > 1 else ''}).")
+    return redirect(redirect_url)
+
+
+# ─────────────────────────────────────────────
 # QUITTANCE D'UNE TRANCHE (liste des paiements)
 # ─────────────────────────────────────────────
 @login_required
@@ -2973,12 +3242,14 @@ def stats_quittance_tranche_view(request, dette_id, tranche):
         raise PermissionDenied("Vous n'avez pas accès aux informations financières de cette dette.")
 
     paiements = dette.paiements.filter(tranche=tranche).order_by('date_paiement')
+    est_apprenant = getattr(request.user, 'pk', None) == getattr(dette.inscription.eleve, 'pk', None)
 
     return render(request, 'member/statistiques/stats_quittance_tranche.html', {
         'dette': dette,
         'eleve': dette.inscription.eleve,
         'tranche': tranche,
         'paiements': paiements,
+        'est_apprenant': est_apprenant,
     })
 
 
@@ -3003,6 +3274,14 @@ def stats_download_quittance_view(request, paiement_id):
 
     if not _can_access_dette_finances(request.user, dette):
         raise PermissionDenied("Vous n'avez pas accès à cette quittance.")
+
+    # L'apprenant ne doit jamais pouvoir télécharger la quittance d'un
+    # versement annulé (seul le personnel peut la réimprimer, tamponnée
+    # "ANNULÉE", à des fins d'audit — cf. plus bas).
+    est_apprenant = getattr(request.user, 'pk', None) == getattr(eleve, 'pk', None)
+    if paiement.annule and est_apprenant:
+        messages.error(request, "Ce versement a été annulé, sa quittance n'est plus disponible au téléchargement.")
+        return redirect('courses:mes_paiements')
 
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=A5)
@@ -3031,6 +3310,15 @@ def stats_download_quittance_view(request, paiement_id):
     p.drawCentredString(width/2, height-3.8*cm, "QUITTANCE DE PAIEMENT")
     p.setFont("Helvetica", 9)
     p.drawCentredString(width/2, height-4.4*cm, "Burkina Suudu Bawdè")
+    if paiement.annule:
+        p.saveState()
+        p.setFillColor(colors.red)
+        p.setFillAlpha(0.35)
+        p.setFont("Helvetica-Bold", 34)
+        p.translate(width/2, height/2)
+        p.rotate(30)
+        p.drawCentredString(0, 0, "ANNULÉE")
+        p.restoreState()
 
     y = height - 5.2*cm
     p.setLineWidth(0.8)
@@ -3384,7 +3672,7 @@ def formateur_dashboard(request):
             ).count(),
             'vrais_inscrits': vrais.count(),
             'total_encaisse': Paiement.objects.filter(
-                dette__inscription__formation=formation
+                dette__inscription__formation=formation, annule=False
             ).aggregate(s=Sum('montant_paiement'))['s'] or 0,
         })
 
@@ -3475,6 +3763,7 @@ def formateur_etudiants(request, formation_id):
             p.montant_paiement
             for d in insc.dettes.all()
             for p in d.paiements.all()
+            if not p.annule
         )
         inscrits_data.append({
             'inscription': insc,
@@ -3542,7 +3831,7 @@ def formateur_export(request, formation_id, format):
     for i, insc in enumerate(inscriptions, 1):
         total_du = sum(d.montant_total for d in insc.dettes.all())
         total_paye = sum(
-            p.montant_paiement for d in insc.dettes.all() for p in d.paiements.all()
+            p.montant_paiement for d in insc.dettes.all() for p in d.paiements.all() if not p.annule
         )
         rows.append({
             'N°': i,

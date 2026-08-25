@@ -92,6 +92,11 @@ urlpatterns = [
          views.stats_encaisser_solde_inscription_view,
          name='stats_encaisser_solde_inscription'),
 
+    # ── Annulation d'un paiement (ou du lot auquel il appartient) ─────────────
+    path('statistiques/paiement/<int:paiement_id>/annuler',
+         views.stats_annuler_paiement_view,
+         name='stats_annuler_paiement'),
+
     # ── Quittance d'une tranche (liste des paiements) ─────────────────────────
     path('statistiques/paiement/dette/<int:dette_id>/tranche/<int:tranche>/',
          views.stats_quittance_tranche_view,

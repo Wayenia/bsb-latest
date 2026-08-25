@@ -212,7 +212,10 @@ class ProfilForm(forms.ModelForm):
         self.fields['adresse'].required = False
 
     def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip()
+        # Le champ modele email a null=True : Django met alors empty_value=None
+        # sur le form field auto-genere, donc cleaned_data['email'] peut valoir
+        # None (et pas juste etre absent) quand le champ est laisse vide.
+        email = (self.cleaned_data.get('email') or '').strip()
         if not email:
             # Optionnel : None (et non '') pour ne pas entrer en collision avec
             # d'autres comptes sans email sous la contrainte unique de la BD.

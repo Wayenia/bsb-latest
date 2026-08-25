@@ -9,6 +9,7 @@ import qrcode
 import csv
 import io
 import os
+import uuid
 from django.db.models import Q, Sum, Count
 from accounts.models import Utilisateur, Formateur, MembreAdministration, HistoriqueConnexion
 from .forms import AgentForm
@@ -760,6 +761,7 @@ def payment_list(request):
             p.montant_paiement
             for d in insc.dettes.all()
             for p in d.paiements.all()
+            if not p.annule
         )
         insc.reste = insc.total_du - insc.total_paye
 
@@ -772,6 +774,7 @@ def payment_create(request):
         if form.is_valid():
             payment = form.save(commit=False)
             payment.cree_par = request.user
+            payment.groupe_id = uuid.uuid4()
             payment.save()
             messages.success(request, 'Paiement enregistré avec succès!')
             return redirect('bsb_admin:payment_list')
@@ -1360,7 +1363,7 @@ MATRIX_PERMISSIONS = [
     ('rechercher_tous_centres', "Rechercher un apprenant dans tous les centres (paiements)", 'courses'),
     ('telecharger_pieces', "Télécharger les pièces jointes des candidats", 'courses'),
     ('voir_statistiques', "Voir les statistiques", 'courses'),
-    ('gerer_statistiques_reelles', "Gérer les statistiques réelles (saisie manuelle)", 'courses'),
+    ('gerer_statistiques_reelles', "Gérer le bilan des effectifs formés (saisie manuelle)", 'courses'),
     ('exporter_donnees', "Exporter des données (CSV/Excel/PDF)", 'courses'),
     ('gerer_facturation', "Créer/gérer les factures de prestation", 'accounts'),
     ('valider_facture_prestation', "Valider une facture proforma en définitive", 'accounts'),
