@@ -3194,11 +3194,16 @@ def stats_annuler_paiement_view(request, paiement_id):
 
     redirect_url = f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}"
 
-    if request.method != 'POST':
-        return redirect(redirect_url)
-
+    # Les deux controles d'autorisation sont evalues avant le filtre sur la
+    # methode : un utilisateur sans la permission doit recevoir un 403, y compris
+    # en GET. Place apres le test POST, ce controle renvoyait une redirection
+    # silencieuse — la mutation restait protegee, mais le refus n'etait ni
+    # visible pour l'utilisateur ni journalise.
     if not (request.user.is_superuser or request.user.has_perm('courses.gerer_paiements')):
         raise PermissionDenied("Vous n'avez pas la permission d'annuler un paiement.")
+
+    if request.method != 'POST':
+        return redirect(redirect_url)
 
     if paiement.annule:
         messages.info(request, "Ce paiement est déjà annulé.")
