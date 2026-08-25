@@ -248,7 +248,15 @@ from django.utils.csp import CSP
 SECURE_CSP = {
     "default-src": [CSP.SELF],
     "script-src": [CSP.SELF, CSP.NONCE],
-    "style-src": [CSP.SELF, CSP.UNSAFE_INLINE],
+    # 'unsafe-inline' retire : les 228 attributs style= des gabarits ont ete
+    # convertis en classes Tailwind a valeur arbitraire, qui emettent exactement
+    # la meme declaration CSS, et les blocs <style> portent desormais un nonce.
+    # Rappel : nonce et 'unsafe-inline' sont exclusifs — des qu'un nonce figure
+    # dans la directive, le navigateur ignore 'unsafe-inline'. C'etait donc tout
+    # ou rien, d'ou la conversion complete.
+    # Les gabarits de PDF (WeasyPrint) et d'e-mail gardent leurs styles en ligne :
+    # ils ne passent pas par un navigateur, la CSP ne s'y applique pas.
+    "style-src": [CSP.SELF, CSP.NONCE],
     # data: conserve pour img-src : deux gabarits du projet dessinent leur motif
     # de fond avec url("data:image/svg+xml,...") — admin/center/form.html et
     # member/statistiques/statistiques.html. (Les 632 occurrences des CSS

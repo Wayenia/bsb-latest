@@ -4,7 +4,7 @@
 {% block title %}Dettes de {{ eleve.nom }} {{ eleve.prenom }} | BSB{% endblock %}
 
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce }}">
   .stats-body { background:#f4f6fb; min-height:100vh; padding:2rem 1rem; }
   .page-card { background:#fff; border-radius:16px; box-shadow:0 2px 16px rgba(55, 65, 81,.09); padding:1.5rem; margin-bottom:1.5rem; }
   .avatar { width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#374151,#6b7280);color:#fff;font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
@@ -68,29 +68,29 @@
 
 {% block content %}
 <div class="stats-body">
-<div style="max-width:1100px;margin:0 auto;">
+<div class="max-w-[1100px] m-[0_auto]">
 
   {% comment %} Entête {% endcomment %}
-  <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+  <div class="flex items-center gap-[1rem] mb-[1.5rem] flex-wrap">
     <a href="{% url 'courses:paiement_list' %}" class="btn-back">
       Retour
     </a>
     <div>
-      <h2 style="font-weight:800;color:#374151;margin:0;font-size:1.4rem;">
+      <h2 class="font-[800] text-[#374151] m-[0] text-[1.4rem]">
         Dettes de l'apprenant
       </h2>
-      <p style="color:#6b7280;font-size:.85rem;margin:.2rem 0 0;">Liste des dettes par formation</p>
+      <p class="text-[#6b7280] text-[.85rem] m-[.2rem_0_0]">Liste des dettes par formation</p>
     </div>
   </div>
 
   {% comment %} Carte apprenant {% endcomment %}
   <div class="page-card">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;">
-      <div style="display:flex;align-items:center;gap:1rem;">
+    <div class="flex justify-between items-start flex-wrap gap-[1rem]">
+      <div class="flex items-center gap-[1rem]">
         <div class="avatar"></div>
         <div>
-          <div style="font-weight:800;font-size:1.15rem;color:#374151;">{{ eleve.nom }} {{ eleve.prenom }}</div>
-          <div style="margin-top:.3rem;">
+          <div class="font-[800] text-[1.15rem] text-[#374151]">{{ eleve.nom }} {{ eleve.prenom }}</div>
+          <div class="mt-[.3rem]">
             <span class="eleve-meta">{{ eleve.numero_identifiant|default:"—" }}</span>
             <span class="eleve-meta">{{ eleve.tel|default:"—" }}</span>
             <span class="eleve-meta">{{ eleve.email|default:"—" }}</span>
@@ -98,39 +98,39 @@
         </div>
       </div>
       <div class="total-badge">
-        <div style="font-size:1.2rem;font-weight:800;">{{ total_restant|floatformat:0|intcomma }} FCFA</div>
-        <div style="font-size:.75rem;color:#9ca3af;">Reste à payer (total)</div>
+        <div class="text-[1.2rem] font-[800]">{{ total_restant|floatformat:0|intcomma }} FCFA</div>
+        <div class="text-[.75rem] text-[#9ca3af]">Reste à payer (total)</div>
       </div>
     </div>
   </div>
 
   {% comment %} Inscriptions avec dettes {% endcomment %}
   {% for item in inscriptions_dettes %}
-  <div style="margin-bottom:1.25rem;">
+  <div class="mb-[1.25rem]">
 
     <div class="insc-header open" data-action="basculer-inscription">
       <div>
-        <div style="font-weight:700;font-size:1rem;">
+        <div class="font-[700] text-[1rem]">
           {{ item.inscription.formation.filiere.nom_filiere }}
         </div>
-        <div style="font-size:.82rem;opacity:.8;margin-top:.15rem;">
+        <div class="text-[.82rem] opacity-[.8] mt-[.15rem]">
           {{ item.inscription.formation.centre.nom_centre }}{% if item.inscription.annee_scolaire %} — {{ item.inscription.annee_scolaire }}{% endif %}
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:1.5rem;">
-        <div style="text-align:right;">
-          <div style="font-weight:700;font-size:.95rem;">{{ item.total_paye|floatformat:0|intcomma }} / {{ item.total_du|floatformat:0|intcomma }} FCFA</div>
-          <div style="font-size:.75rem;opacity:.75;">payé / dû</div>
+      <div class="flex items-center gap-[1.5rem]">
+        <div class="text-right">
+          <div class="font-[700] text-[.95rem]">{{ item.total_paye|floatformat:0|intcomma }} / {{ item.total_du|floatformat:0|intcomma }} FCFA</div>
+          <div class="text-[.75rem] opacity-[.75]">payé / dû</div>
         </div>
         {% if item.total_reste > 0 and perms.courses.encaisser_paiement %}
           {% if item.dossier_impaye %}
-          <button type="button" class="btn-detail" style="background:#e5e7eb;color:#9ca3af;cursor:not-allowed;"
+          <button type="button" class="btn-detail bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed"
                   data-action="aucune"
                   disabled title="Réglez d'abord entièrement le frais de dossier (bouton « Solder ce frais ») avant de pouvoir solder l'inscription">
             Solder l'inscription
           </button>
           {% else %}
-          <button type="button" class="btn-detail" style="background:linear-gradient(135deg,#059669,#10b981);"
+          <button type="button" class="btn-detail bg-[linear-gradient(135deg,#059669,#10b981)]"
                   data-action="solder"
                   data-solder-url="{% url 'courses:stats_encaisser_solde_inscription' item.inscription.id %}"
                   data-solder-cible="Toute l'inscription — {{ item.inscription.formation.filiere.nom_filiere }}"
@@ -147,10 +147,10 @@
       <div class="dette-grid">
         {% for dette in item.dettes %}
         <div class="dette-card">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.65rem;">
+          <div class="flex justify-between items-start mb-[.65rem]">
             <div>
-              <div style="font-weight:700;color:#374151;font-size:.95rem;">{{ dette.frais_formation.type_frais.libelle }}</div>
-              <div style="font-size:.78rem;color:#9ca3af;">Total : {{ dette.montant_total|floatformat:0|intcomma }} FCFA</div>
+              <div class="font-[700] text-[#374151] text-[.95rem]">{{ dette.frais_formation.type_frais.libelle }}</div>
+              <div class="text-[.78rem] text-[#9ca3af]">Total : {{ dette.montant_total|floatformat:0|intcomma }} FCFA</div>
             </div>
             {% if dette.etat_dette == 'soldé' %}
               <span class="badge-solde"> Soldée</span>
@@ -159,30 +159,34 @@
             {% endif %}
           </div>
 
-          <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.3rem;">
-            <span style="color:#059669;font-weight:600;">Payé : {{ dette.montant_paye|floatformat:0|intcomma }} FCFA</span>
-            <span style="color:#dc2626;font-weight:600;">Reste : {{ dette.reste|floatformat:0|intcomma }} FCFA</span>
+          <div class="flex justify-between text-[.82rem] mb-[.3rem]">
+            <span class="text-[#059669] font-[600]">Payé : {{ dette.montant_paye|floatformat:0|intcomma }} FCFA</span>
+            <span class="text-[#dc2626] font-[600]">Reste : {{ dette.reste|floatformat:0|intcomma }} FCFA</span>
           </div>
 
           <div class="prog-bar-wrap">
+            {% comment %} Largeur calculee : aucune classe Tailwind ne peut l'exprimer, et un
+               attribut style= est bloque par la CSP. Elle est donc posee par JavaScript depuis
+               data-largeur. Le setter de propriete (el.style.width = ...) reste autorise ; seuls
+               setAttribute("style", ...) et style.cssText sont bloques. {% endcomment %}
             <div class="prog-bar {% if dette.taux >= 100 %}prog-green{% elif dette.taux >= 50 %}prog-yellow{% else %}prog-red{% endif %}"
-                 style="width:{{ dette.taux }}%;"></div>
+                 data-largeur="{{ dette.taux|floatformat:2 }}"></div>
           </div>
-          <div style="text-align:right;font-size:.75rem;color:#9ca3af;margin-bottom:.75rem;">{{ dette.taux|floatformat:1 }}% réglé</div>
+          <div class="text-right text-[.75rem] text-[#9ca3af] mb-[.75rem]">{{ dette.taux|floatformat:1 }}% réglé</div>
 
           {% if dette.tranches %}
           <div class="tranches-toggle" data-action="basculer-tranches">
-            <span style="font-size:.72rem;color:#9ca3af;font-weight:700;text-transform:uppercase;">Tranches ({{ dette.tranches|length }})</span>
+            <span class="text-[.72rem] text-[#9ca3af] font-[700] uppercase">Tranches ({{ dette.tranches|length }})</span>
             <span class="chevron">▾</span>
           </div>
           <div class="tranches-body">
             {% for t in dette.tranches %}
             <div class="tranche-row">
-              <span style="color:#374151;{% if t.est_cible %}font-weight:700;{% endif %}">
+              <span class="text-[#374151]{% if t.est_cible %} font-[700]{% endif %}">
                 {{ t.tranche.libelle }}
-                {% if t.tranche.est_primordiale %}<span style="color:#d97706;">(primordiale)</span>{% endif %}
+                {% if t.tranche.est_primordiale %}<span class="text-[#d97706]">(primordiale)</span>{% endif %}
                 <br>
-                <span style="{% if t.soldee %}color:#059669;{% else %}color:#dc2626;{% endif %}font-weight:600;">
+                <span class="{% if t.soldee %}text-[#059669]{% else %}text-[#dc2626]{% endif %} font-[600]">
                   {{ t.paye|floatformat:0|intcomma }} / {{ t.montant|floatformat:0|intcomma }} FCFA
                 </span>
               </span>
@@ -197,8 +201,8 @@
             {% endfor %}
           </div>
           {% else %}
-          <div class="tranche-row" style="border-top:1px dashed #e2e8f0;margin-top:.5rem;padding-top:.6rem;">
-            <span style="color:#374151;">Montant à régler</span>
+          <div class="tranche-row border-t border-t-[1px] border-[#e2e8f0] mt-[.5rem] pt-[.6rem]">
+            <span class="text-[#374151]">Montant à régler</span>
             {% if dette.etat_dette == 'soldé' %}
               <button class="btn-payer-tranche" disabled title="Dette déjà soldée">Soldée</button>
             {% elif dette.bloquee %}
@@ -209,15 +213,15 @@
           </div>
           {% endif %}
 
-          <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:.5rem;">
+          <div class="flex justify-end gap-[.5rem] mt-[.5rem]">
             {% if dette.etat_dette != 'soldé' and perms.courses.encaisser_paiement %}
               {% if dette.bloquee %}
-              <button type="button" class="btn-detail" style="background:#e5e7eb;color:#9ca3af;cursor:not-allowed;"
+              <button type="button" class="btn-detail bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed"
                       disabled title="Réglez d'abord la tranche primordiale bloquante d'un autre type de frais">
                 Solder ce frais
               </button>
               {% else %}
-              <button type="button" class="btn-detail" style="background:linear-gradient(135deg,#059669,#10b981);"
+              <button type="button" class="btn-detail bg-[linear-gradient(135deg,#059669,#10b981)]"
                       data-action="solder" data-solder-url="{% url 'courses:stats_encaisser_solde_dette' dette.id %}" data-solder-cible="{{ dette.frais_formation.type_frais }}" data-solder-max="{{ dette.reste|floatformat:0 }}" data-solder-primordiale="{% if dette.tranche_cible_primordiale %}{{ dette.montant_a_payer|floatformat:0 }}{% else %}0{% endif %}">
                 Solder ce frais
               </button>
@@ -244,101 +248,101 @@
 </div>
 
 {% comment %} MODAL PAIEMENT (réutilisé pour toutes les tranches) {% endcomment %}
-<div id="modal-paiement-tranche" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
+<div id="modal-paiement-tranche" class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(0,0,0,0.45)]">
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <h2 style="font-weight:800;font-size:1.1rem;color:#374151;margin:0;">Enregistrer un paiement</h2>
-      <button type="button" data-action="fermer-paiement" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
+    <div class="flex justify-between items-center mb-[1rem]">
+      <h2 class="font-[800] text-[1.1rem] text-[#374151] m-[0]">Enregistrer un paiement</h2>
+      <button type="button" data-action="fermer-paiement" class="border-0 bg-transparent text-[1.4rem] leading-[1] text-[#9ca3af] cursor-pointer">&times;</button>
     </div>
-    <p id="modal-paiement-cible" style="font-size:.85rem;color:#6b7280;margin-bottom:1rem;"></p>
+    <p id="modal-paiement-cible" class="text-[.85rem] text-[#6b7280] mb-[1rem]"></p>
     <form method="post" id="form-paiement-tranche" action="" enctype="multipart/form-data">
       {% csrf_token %}
-      <div style="margin-bottom:.9rem;">
-        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Montant (FCFA)</label>
+      <div class="mb-[.9rem]">
+        <label class="block text-[.82rem] font-[600] text-[#374151] mb-[.3rem]">Montant (FCFA)</label>
         <input type="number" name="montant_paiement" id="modal-montant-input" min="1" step="1" required
-               style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;">
+               class="w-[100%] p-[.55rem_.75rem] border border-[2px] border-[#e2e8f0] rounded-[8px] text-[.9rem]">
       </div>
-      <div style="margin-bottom:1.1rem;">
-        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Mode de paiement</label>
-        <select name="mode_paiement" style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;">
+      <div class="mb-[1.1rem]">
+        <label class="block text-[.82rem] font-[600] text-[#374151] mb-[.3rem]">Mode de paiement</label>
+        <select name="mode_paiement" class="w-[100%] p-[.55rem_.75rem] border border-[2px] border-[#e2e8f0] rounded-[8px] text-[.9rem]">
           <option value="espece" selected>Espèce</option>
           <option value="mobile">Mobile Money</option>
           <option value="chèque">Chèque</option>
         </select>
       </div>
-      <div id="modal-derogation-wrap" style="margin-bottom:1.1rem;display:none;">
-        <p style="font-size:.75rem;color:#dc2626;font-weight:600;margin-bottom:.4rem;">
+      <div id="modal-derogation-wrap" class="mb-[1.1rem] hidden">
+        <p class="text-[.75rem] text-[#dc2626] font-[600] mb-[.4rem]">
             Montant inférieur au montant dû de la tranche primordiale : motif et pièce jointe obligatoires.
         </p>
-        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Motif de la dérogation</label>
+        <label class="block text-[.82rem] font-[600] text-[#374151] mb-[.3rem]">Motif de la dérogation</label>
         <textarea name="motif_derogation" id="modal-motif-derogation" rows="2"
-                  style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;margin-bottom:.5rem;"></textarea>
-        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Pièce jointe justificative</label>
+                  class="w-[100%] p-[.55rem_.75rem] border border-[2px] border-[#e2e8f0] rounded-[8px] text-[.9rem] mb-[.5rem]"></textarea>
+        <label class="block text-[.82rem] font-[600] text-[#374151] mb-[.3rem]">Pièce jointe justificative</label>
         <input type="file" name="piece_jointe_derogation" id="modal-piece-jointe-derogation" accept=".pdf,.jpg,.jpeg,.png"
-               style="width:100%;padding:.6rem;border:2px dashed #f0b429;background:#fffbeb;border-radius:8px;font-size:.85rem;">
-        <p style="font-size:.72rem;color:#9ca3af;margin-top:.3rem;">JPEG, JPG, PNG ou PDF — 5 Mo max</p>
+               class="w-[100%] p-[.6rem] border border-[2px] border-[#f0b429] bg-[#fffbeb] rounded-[8px] text-[.85rem]">
+        <p class="text-[.72rem] text-[#9ca3af] mt-[.3rem]">JPEG, JPG, PNG ou PDF — 5 Mo max</p>
       </div>
-      <div style="display:flex;gap:.6rem;">
-        <button type="button" data-action="fermer-paiement" style="flex:1;padding:.6rem;border-radius:8px;border:2px solid #e2e8f0;background:#fff;color:#374151;font-weight:600;font-size:.85rem;cursor:pointer;">Annuler</button>
-        <button type="submit" style="flex:2;padding:.6rem;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;">Confirmer</button>
+      <div class="flex gap-[.6rem]">
+        <button type="button" data-action="fermer-paiement" class="flex-[1] p-[.6rem] rounded-[8px] border border-[2px] border-[#e2e8f0] bg-[#fff] text-[#374151] font-[600] text-[.85rem] cursor-pointer">Annuler</button>
+        <button type="submit" class="flex-[2] p-[.6rem] rounded-[8px] border-0 bg-[#059669] text-[#fff] font-[700] text-[.85rem] cursor-pointer">Confirmer</button>
       </div>
     </form>
   </div>
 </div>
 
 {% comment %} MODAL SOLDER (réutilisé pour "Solder ce frais" et "Solder l'inscription") {% endcomment %}
-<div id="modal-solder" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
+<div id="modal-solder" class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(0,0,0,0.45)]">
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <h2 style="font-weight:800;font-size:1.1rem;color:#374151;margin:0;">Encaisser le solde</h2>
-      <button type="button" data-action="fermer-solder" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
+    <div class="flex justify-between items-center mb-[1rem]">
+      <h2 class="font-[800] text-[1.1rem] text-[#374151] m-[0]">Encaisser le solde</h2>
+      <button type="button" data-action="fermer-solder" class="border-0 bg-transparent text-[1.4rem] leading-[1] text-[#9ca3af] cursor-pointer">&times;</button>
     </div>
-    <p id="modal-solder-cible" style="font-size:.85rem;color:#6b7280;margin-bottom:1rem;"></p>
+    <p id="modal-solder-cible" class="text-[.85rem] text-[#6b7280] mb-[1rem]"></p>
     <form method="post" id="form-solder" action="" enctype="multipart/form-data">
       {% csrf_token %}
-      <div style="display:flex;gap:.9rem;margin-bottom:.9rem;flex-wrap:wrap;">
-        <div style="flex:1;min-width:150px;">
-          <label style="display:block;font-size:.78rem;font-weight:600;color:#374151;margin-bottom:.25rem;">Apprenant</label>
-          <div style="padding:.5rem .65rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;background:#f9fafb;color:#374151;">
-            {{ eleve.nom }} {{ eleve.prenom }}<br><span style="color:#9ca3af;font-size:.76rem;">{{ eleve.username }}</span>
+      <div class="flex gap-[.9rem] mb-[.9rem] flex-wrap">
+        <div class="flex-[1] min-w-[150px]">
+          <label class="block text-[.78rem] font-[600] text-[#374151] mb-[.25rem]">Apprenant</label>
+          <div class="p-[.5rem_.65rem] border border-[2px] border-[#e2e8f0] rounded-[8px] text-[.85rem] bg-[#f9fafb] text-[#374151]">
+            {{ eleve.nom }} {{ eleve.prenom }}<br><span class="text-[#9ca3af] text-[.76rem]">{{ eleve.username }}</span>
           </div>
         </div>
-        <div style="flex:1;min-width:150px;">
-          <label style="display:block;font-size:.78rem;font-weight:600;color:#374151;margin-bottom:.25rem;">Encaissé par</label>
-          <div style="padding:.5rem .65rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;background:#f9fafb;color:#374151;">
-            {{ request.user.get_full_name|default:request.user.username }}<br><span style="color:#9ca3af;font-size:.76rem;">{{ request.user.username }}</span>
+        <div class="flex-[1] min-w-[150px]">
+          <label class="block text-[.78rem] font-[600] text-[#374151] mb-[.25rem]">Encaissé par</label>
+          <div class="p-[.5rem_.65rem] border border-[2px] border-[#e2e8f0] rounded-[8px] text-[.85rem] bg-[#f9fafb] text-[#374151]">
+            {{ request.user.get_full_name|default:request.user.username }}<br><span class="text-[#9ca3af] text-[.76rem]">{{ request.user.username }}</span>
           </div>
         </div>
       </div>
-      <div style="margin-bottom:.3rem;">
-        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Montant à encaisser (FCFA)</label>
+      <div class="mb-[.3rem]">
+        <label class="block text-[.82rem] font-[600] text-[#374151] mb-[.3rem]">Montant à encaisser (FCFA)</label>
         <input type="number" name="montant_paiement" id="modal-solder-montant" min="1" step="1" required
-               style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;">
+               class="w-[100%] p-[.55rem_.75rem] border border-[2px] border-[#e2e8f0] rounded-[8px] text-[.9rem]">
       </div>
-      <p id="modal-solder-max" style="font-size:.76rem;color:#9ca3af;margin-bottom:.9rem;"></p>
-      <div id="modal-solder-derogation-wrap" style="margin-bottom:1.1rem;display:none;">
-        <p style="font-size:.75rem;color:#dc2626;font-weight:600;margin-bottom:.4rem;">
+      <p id="modal-solder-max" class="text-[.76rem] text-[#9ca3af] mb-[.9rem]"></p>
+      <div id="modal-solder-derogation-wrap" class="mb-[1.1rem] hidden">
+        <p class="text-[.75rem] text-[#dc2626] font-[600] mb-[.4rem]">
             Montant inférieur au montant dû de la tranche primordiale : motif et pièce jointe obligatoires.
         </p>
-        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Motif de la dérogation</label>
+        <label class="block text-[.82rem] font-[600] text-[#374151] mb-[.3rem]">Motif de la dérogation</label>
         <textarea name="motif_derogation" id="modal-solder-motif-derogation" rows="2"
-                  style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;margin-bottom:.5rem;"></textarea>
-        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Pièce jointe justificative</label>
+                  class="w-[100%] p-[.55rem_.75rem] border border-[2px] border-[#e2e8f0] rounded-[8px] text-[.9rem] mb-[.5rem]"></textarea>
+        <label class="block text-[.82rem] font-[600] text-[#374151] mb-[.3rem]">Pièce jointe justificative</label>
         <input type="file" name="piece_jointe_derogation" id="modal-solder-piece-jointe-derogation" accept=".pdf,.jpg,.jpeg,.png"
-               style="width:100%;padding:.6rem;border:2px dashed #f0b429;background:#fffbeb;border-radius:8px;font-size:.85rem;">
-        <p style="font-size:.72rem;color:#9ca3af;margin-top:.3rem;">JPEG, JPG, PNG ou PDF — 5 Mo max</p>
+               class="w-[100%] p-[.6rem] border border-[2px] border-[#f0b429] bg-[#fffbeb] rounded-[8px] text-[.85rem]">
+        <p class="text-[.72rem] text-[#9ca3af] mt-[.3rem]">JPEG, JPG, PNG ou PDF — 5 Mo max</p>
       </div>
-      <div style="margin-bottom:1.1rem;">
-        <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:.3rem;">Mode de paiement</label>
-        <select name="mode_paiement" style="width:100%;padding:.55rem .75rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.9rem;">
+      <div class="mb-[1.1rem]">
+        <label class="block text-[.82rem] font-[600] text-[#374151] mb-[.3rem]">Mode de paiement</label>
+        <select name="mode_paiement" class="w-[100%] p-[.55rem_.75rem] border border-[2px] border-[#e2e8f0] rounded-[8px] text-[.9rem]">
           <option value="espece" selected>Espèce</option>
           <option value="mobile">Mobile Money</option>
           <option value="chèque">Chèque</option>
         </select>
       </div>
-      <div style="display:flex;gap:.6rem;">
-        <button type="button" data-action="fermer-solder" style="flex:1;padding:.6rem;border-radius:8px;border:2px solid #e2e8f0;background:#fff;color:#374151;font-weight:600;font-size:.85rem;cursor:pointer;">Annuler</button>
-        <button type="submit" style="flex:2;padding:.6rem;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;">Valider le paiement</button>
+      <div class="flex gap-[.6rem]">
+        <button type="button" data-action="fermer-solder" class="flex-[1] p-[.6rem] rounded-[8px] border border-[2px] border-[#e2e8f0] bg-[#fff] text-[#374151] font-[600] text-[.85rem] cursor-pointer">Annuler</button>
+        <button type="submit" class="flex-[2] p-[.6rem] rounded-[8px] border-0 bg-[#059669] text-[#fff] font-[700] text-[.85rem] cursor-pointer">Valider le paiement</button>
       </div>
     </form>
   </div>

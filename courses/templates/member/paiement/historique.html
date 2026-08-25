@@ -163,16 +163,16 @@
 </div>
 
 {% comment %} MODAL DÉTAIL D'UN PAIEMENT {% endcomment %}
-<div id="modalDetailPaiement" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
+<div id="modalDetailPaiement" class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(0,0,0,0.45)]">
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <h2 style="font-weight:800;font-size:1.1rem;color:#374151;margin:0;">Détail du paiement</h2>
-      <button type="button" data-action="fermer-detail-paiement" style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
+    <div class="flex justify-between items-center mb-[1rem]">
+      <h2 class="font-[800] text-[1.1rem] text-[#374151] m-[0]">Détail du paiement</h2>
+      <button type="button" data-action="fermer-detail-paiement" class="border-0 bg-transparent text-[1.4rem] leading-[1] text-[#9ca3af] cursor-pointer">&times;</button>
     </div>
-    <dl id="detailPaiementCorps" style="font-size:.85rem;color:#374151;"></dl>
-    <div id="detailPaiementAnnulationWrap" class="hidden mt-3 pt-3" style="border-top:1px dashed #e5e7eb;">
+    <dl id="detailPaiementCorps" class="text-[.85rem] text-[#374151]"></dl>
+    <div id="detailPaiementAnnulationWrap" class="hidden mt-3 pt-3 border-t border-t-[1px] border-[#e5e7eb]">
       <p class="text-xs font-bold text-red-700 uppercase mb-2">Annulation</p>
-      <dl id="detailPaiementAnnulationCorps" style="font-size:.85rem;color:#374151;"></dl>
+      <dl id="detailPaiementAnnulationCorps" class="text-[.85rem] text-[#374151]"></dl>
     </div>
     <div class="flex justify-end mt-4">
       <button type="button" data-action="fermer-detail-paiement" class="px-4 py-2 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
@@ -184,9 +184,9 @@
 
 <script nonce="{{ csp_nonce }}">
 function ligneDetail(label, valeur) {
-  return '<div style="display:flex;justify-content:space-between;gap:1rem;padding:.3rem 0;border-bottom:1px solid #f3f4f6;">'
-       + '<dt style="color:#9ca3af;">' + label + '</dt>'
-       + '<dt style="font-weight:600;text-align:right;">' + valeur + '</dt>'
+  return '<div class="flex justify-between gap-[1rem] p-[.3rem_0] border-b border-b-[1px] border-[#f3f4f6]">'
+       + '<dt class="text-[#9ca3af]">' + label + '</dt>'
+       + '<dt class="font-[600] text-right">' + valeur + '</dt>'
        + '</div>';
 }
 

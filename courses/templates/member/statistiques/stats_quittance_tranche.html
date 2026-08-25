@@ -4,7 +4,7 @@
 {% block title %}Quittance — Tranche {{ tranche }} | BSB{% endblock %}
 
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce }}">
   body { background:#f4f6fb; }
   .page-card { background:#fff; border-radius:16px; box-shadow:0 2px 16px rgba(55, 65, 81,.09); border:none; }
   .btn-dl { background:linear-gradient(135deg,#dc2626,#ef4444); color:#fff; border:none; border-radius:8px; font-size:.82rem; padding:.38rem .9rem; font-weight:700; transition:all .15s; }
@@ -37,7 +37,7 @@
     <a href="{% url 'courses:stats_detail_dette' dette.id %}"
        class="inline-flex items-center px-3 py-1.5 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Retour</a>
     <div>
-      <h2 class="font-bold text-xl mb-0" style="color:#374151;">
+      <h2 class="font-bold text-xl mb-0 text-[#374151]">
         Quittance — Tranche {{ tranche }}
       </h2>
       <p class="text-gray-500 text-sm mb-0">
@@ -101,7 +101,7 @@
     {% comment %} Liste des paiements de la tranche {% endcomment %}
     <div class="lg:col-span-8">
       <div class="page-card p-4">
-        <div class="font-bold mb-3" style="color:#374151; font-size:1.05rem;">
+        <div class="font-bold mb-3 text-[#374151] text-[1.05rem]">
           Paiements de la tranche {{ tranche }}
         </div>
 

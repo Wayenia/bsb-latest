@@ -349,8 +349,7 @@
 {% comment %} ===== MODALS ===== {% endcomment %}
 {% for insc in inscriptions %}
 <div id="insc-{{ insc.id }}"
-     class="fixed inset-0 z-50 hidden items-center flex justify-center p-4"
-     style="background: rgba(0,0,0,0.5);">
+     class="fixed inset-0 z-50 hidden items-center flex justify-center p-4 bg-[rgba(0,0,0,0.5)]">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden">
 
         <div class="px-6 py-4 border-b border-gray-200 flex items-start justify-between">
@@ -470,11 +469,11 @@
 {% endfor %}
 
 {% comment %} MODAL PAIEMENT (réutilisé pour toutes les tranches / tous les types de frais) {% endcomment %}
-<div id="modal-paiement-tranche" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.45);">
+<div id="modal-paiement-tranche" class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(0,0,0,0.45)]">
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <h2 style="font-weight:800;font-size:1.1rem;color:#374151;margin:0;">Enregistrer un paiement</h2>
-      <button type="button" data-paiement-fermer style="border:none;background:none;font-size:1.4rem;line-height:1;color:#9ca3af;cursor:pointer;">&times;</button>
+    <div class="flex justify-between items-center mb-[1rem]">
+      <h2 class="font-[800] text-[1.1rem] text-[#374151] m-[0]">Enregistrer un paiement</h2>
+      <button type="button" data-paiement-fermer class="border-0 bg-transparent text-[1.4rem] leading-[1] text-[#9ca3af] cursor-pointer">&times;</button>
     </div>
     <p id="modal-paiement-cible" class="text-sm text-gray-500 mb-4"></p>
     <form method="post" id="form-paiement-tranche" action="" enctype="multipart/form-data">
