@@ -168,6 +168,13 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# staticfiles/media sont montes en bind mount depuis l'hote (dev). Sous WSL2,
+# les chemins /mnt/c (DrvFs) refusent chmod() avec EPERM meme quand l'ecriture
+# fonctionne : collectstatic plantait sur ce chmod. On desactive le chmod
+# applique par Django apres chaque fichier ecrit.
+FILE_UPLOAD_PERMISSIONS = None
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = None
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
