@@ -70,9 +70,7 @@ def log(label, created, identifier=""):
     print(f"   {status} | {label}: {identifier}")
 
 
-# =============================================================================
-# ÉTAPE 1 — COMPTE ADMINISTRATEUR
-# =============================================================================
+# == ÉTAPE 1 — COMPTE ADMINISTRATEUR ===========================================
 print("\n[1/6] Création du compte administrateur...")
 
 admin_obj, admin_created = Utilisateur.objects.get_or_create(
@@ -95,9 +93,7 @@ admin_obj, admin_created = Utilisateur.objects.get_or_create(
 log("Admin", admin_created, admin_obj.username)
 
 
-# =============================================================================
-# ÉTAPE 2 — RÉGIONS ET PROVINCES (découpage 2025 — 17 régions / 47 provinces)
-# =============================================================================
+# == ÉTAPE 2 — RÉGIONS ET PROVINCES (découpage 2025 — 17 régions / 47 provinces) ===
 print("\n[2/6] Création des régions et provinces...")
 
 # (code région tel qu'utilisé dans le fichier des métiers, chef-lieu de région)
@@ -194,14 +190,10 @@ for nom_province, region_code, chef_lieu in PROVINCES_DATA:
 print(f"   ✓ {len(regions)} régions | {province_count} nouvelles provinces (total {Province.objects.count()})")
 
 
-# =============================================================================
-# ÉTAPE 3 — DIRECTIONS INTER-RÉGIONALES
-# =============================================================================
+# == ÉTAPE 3 — DIRECTIONS INTER-RÉGIONALES =====================================
 print("\n[3/6] Création des directions inter-régionales...")
 
-# Chaque direction inter-régionale couvre plusieurs régions. Le champ
-# "chef_lieu" reprend la ville de la région chef-lieu de la direction, telle
-# que communiquée par le MESFPT (et non plus le premier centre recensé).
+# chef_lieu : ville de la region chef-lieu, telle que communiquee par le MESFPT.
 DIRECTIONS_DATA = [
     ("Direction Inter-Régionale N°1", "Kadiogo, Nakambé, Nazinon, Goulmou, Nando", "Ouagadougou"),
     ("Direction Inter-Régionale N°2", "Guiriko, Bankui, Djoro, Tannounyan, Sourou", "Bobo-Dioulasso"),
@@ -218,14 +210,11 @@ for nom, region_label, chef_lieu in DIRECTIONS_DATA:
     log("Direction", created, nom)
 
 
-# =============================================================================
-# ÉTAPE 4 — CENTRES DE FORMATION PROFESSIONNELLE
-# =============================================================================
+# == ÉTAPE 4 — CENTRES DE FORMATION PROFESSIONNELLE ============================
 print("\n[4/6] Création des centres de formation...")
 
-# (nom du centre, direction, province) — pas de niveau/adresse/ville :
-# ces informations ne sont pas fournies par le fichier source et ne sont
-# pas inventées ici ; à compléter via l'écran d'administration des centres.
+# (nom, direction, province). Niveau, adresse et ville sont absents du fichier
+# source : a completer via l'ecran d'administration des centres.
 CENTRES_DATA = [
     ("Centre d’Evaluation et de Formation Professionnelle de Ouagadougou (CEFPO)", "Direction Inter-Régionale N°1", "Kadiogo"),
     ("Centre de formation professionnelle de Cissin (Ouagadougou)", "Direction Inter-Régionale N°1", "Kadiogo"),
@@ -278,14 +267,11 @@ for nom_centre, direction_nom, province_nom in CENTRES_DATA:
 print(f"   ✓ {centre_count} nouveaux centres (total {CentreFormation.objects.count()})")
 
 
-# =============================================================================
-# ÉTAPE 5 — MÉTIERS DE FORMATION (FILIÈRES)
-# =============================================================================
+# == ÉTAPE 5 — MÉTIERS DE FORMATION (FILIÈRES) =================================
 print("\n[5/6] Création des métiers de formation...")
 
-# (nom du métier, titre professionnel délivré, conditions d'accès)
-# La durée de formation n'est volontairement pas renseignée ici : elle est
-# fixée au moment de la programmation (elle dépend du centre, pas du métier).
+# (nom, titre professionnel, conditions d'acces). La duree depend du centre et
+# se fixe a la programmation.
 METIERS_DATA = [
     ("Plombier polyvalent", "BQP", "Niveau 3ème au moins ou être titulaire du CQP ou du CAP d'un métier de la même filière + 3 ans d'expérience professionnelle"),
     ("Maintenancier des équipements et systèmes informatiques", "BQP", "Niveau 3ème au moins ou être titulaire du CQP ou du CAP d'un métier de la même filière + 3 ans d'expérience professionnelle"),
@@ -335,10 +321,7 @@ METIERS_DATA = [
     ("Electronicien de maintenance", "BPT", "Niveau de la classe de 1ère, ou être titulaire du BQP ou du BEP dans la filière ou le corps de métier + 3 ans d'expérience professionnelle prouvé (attestation, certificat de travail)"),
     ("Pâtissier", "BPT", "Niveau de la classe de 1ère, ou être titulaire du BQP ou du BEP dans la filière ou le corps de métier + 3 ans d'expérience professionnelle prouvé (attestation, certificat de travail)"),
 
-    # Ajoutés depuis le communiqué de recrutement FI 2026-2027 (métiers
-    # absents de la liste précédente ; conditions d'accès alignées sur le
-    # standard déjà utilisé pour le même titre professionnel ailleurs dans
-    # cette liste).
+    # Ajoutes depuis le communique de recrutement FI 2026-2027.
     ("Esthéticien", "BQP", "Niveau 3ème au moins ou être titulaire du CQP ou du CAP d'un métier de la même filière + 3 ans d'expérience professionnelle"),
     ("Sérigraphie sur textile", "CQP", "Niveau CM2 au moins"),
     ("Monteur /dépanneur en climatisation industrielle", "BQP", "Niveau 3ème au moins ou être titulaire du CQP ou du CAP d'un métier de la même filière + 3 ans d'expérience professionnelle"),
@@ -366,34 +349,15 @@ for nom_filiere, titre_professionnel, conditions_acces in METIERS_DATA:
 print(f"   ✓ {metier_count} nouveaux métiers (total {Filiere.objects.count()})")
 
 
-# =============================================================================
-# ÉTAPE 6 — UTILISATEURS DE LA PLATEFORME (HABILITATIONS EXPLOITATION YUPAAN)
-# =============================================================================
+# == ÉTAPE 6 — UTILISATEURS DE LA PLATEFORME (HABILITATIONS EXPLOITATION YUPAAN) ===
 print("\n[6/6] Création des utilisateurs de la plateforme...")
 
-# Source : accounts/templates/HABILITATIONS EXPLOITATION_YUPAAN_V2.xlsx
-# (51 comptes réels). Transcription faite ligne par ligne, à la main, PAS
-# par un parseur automatique de nom/prénom — le fichier mélange les deux
-# ordres ("NOM Prénom(s)" la plupart du temps, parfois l'inverse). Le
-# USERNAME (format Prénom.NOM, colonne fiable) sert d'ancre pour trancher
-# nom vs prénom à chaque fois qu'il y a un doute (ex. ligne 12 "ISSOUF DERA"
-# / username Issouf.DERA → prénom=Issouf, nom=Dera, alors que le champ
-# combiné est ici dans l'ordre inverse du reste du fichier).
+# Source : HABILITATIONS EXPLOITATION_YUPAAN_V2.xlsx, 51 comptes transcrits a la
+# main. Le username (Prenom.NOM) tranche nom et prenom, le fichier melangeant les
+# deux ordres. Anomalies du fichier source et regles retenues : README 9.
 #
-# 4 anomalies du fichier source, résolues avec l'utilisateur avant
-# transcription (ne pas "corriger" à nouveau si le fichier change) :
-#   - Lignes 45/46 (YMIEN WASSA / KERE SAIDOU) : le fichier source avait
-#     leurs username/email inversés, et réutilisait par erreur l'email de
-#     TRAORE NESSAN (ligne 24). Résolu : Ymien Wassa garde
-#     wassa.ymien@gmail.com ; Kere Saidou n'a pas d'email connu → placeholder
-#     à corriger par l'intéressé via "Mon profil".
-#   - Ligne 51 (OUEDRAOGO SALAM, "DCAPPS-TT") : email vide → placeholder.
-#   - Ligne 18 (SOULAMA S. IRENE) : email tronqué "souiresa@yahoo.f" →
-#     corrigé silencieusement en ".fr" (typo évidente, sans ambiguïté).
-#
-# `sexe` n'est fourni par aucune ligne du fichier source : valeur par défaut
-# du modèle ('m') utilisée pour tout le monde, à corriger individuellement
-# par chaque titulaire via "Mon profil".
+# `sexe` n'est fourni par aucune ligne du fichier source : valeur par defaut du
+# modele pour tout le monde, a corriger par chaque titulaire via Mon profil.
 
 # (nom, prénom, username, email, mot de passe par défaut)
 DG_DATA = ("Pale", "Kèrabouro", "Kèrabouro.PALE", "keraple@gmail.com", "YupaanBSB@DG")
@@ -408,10 +372,8 @@ DIR_DATA = [
 # (nom, prénom, username, email, mot de passe par défaut)
 DAF_DATA = ("Tiemtore", "Abdoul Aziz", "AbdoulAziz.TIEMTORE", "tientoreaziz100@gmail.com", "YupaanBSB@DAF")
 
-# (nom, prénom, username, email, mot de passe par défaut, clé dans `centres`)
-# — 29 Directeurs de Centre : correspondance 1:1 vérifiée avec les 29 clés
-# de CENTRES_DATA (étape 4), établie via l'acronyme entre parenthèses du
-# fichier source (CEFPO, CFPI-B, CRFP-X, CPFP-X, CFPR-Z).
+# 29 directeurs de centre, en correspondance 1:1 avec les cles de CENTRES_DATA,
+# etablie par l'acronyme du fichier source.
 CENTRE_DIRECTEURS_DATA = [
     ("Batienon/Rouamba", "Jeanne Fleur", "JeanneFleure.ROUAMBA", "jeannebatienon@gmail.com", "YupaanBSB@DC1",
      "Centre d’Evaluation et de Formation Professionnelle de Ouagadougou (CEFPO)"),
@@ -482,10 +444,8 @@ CAISSIERS_CENTRE_DATA = [
      "Centre d’Evaluation et de Formation Professionnelle de Ouagadougou (CEFPO)"),
 ]
 
-# (nom, prénom, username, email, mot de passe par défaut, emploi, user_type)
-# — personnel du siège sans centre/direction de rattachement : le DESP
-# rejoint le rôle 'deps' déjà câblé, le reste va dans la voie générique
-# 'membre' (fonction libre, cf. décision d'architecture rôles/permissions).
+# Personnel du siege, sans rattachement : le DESP prend le role deps, le reste
+# la voie generique membre.
 MEMBRES_SIEGE_DATA = [
     ("Bako/Zaghre", "Edwige", "Edwige.ZAGHRE", "zghred@gmail.com", "YupaanBSB@SG",
      "Secrétaire Générale (SG)", "membre"),
@@ -607,9 +567,7 @@ print(f"   ✓ {utilisateurs_plateforme_count} utilisateurs de la plateforme tra
       f"(total {Utilisateur.objects.count()} comptes)")
 
 
-# =============================================================================
-# RÉSUMÉ FINAL
-# =============================================================================
+# == RÉSUMÉ FINAL ==============================================================
 print("\n" + "=" * 80)
 print("   RÉSUMÉ DE LA POPULATION")
 print("=" * 80)

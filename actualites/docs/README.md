@@ -52,11 +52,18 @@ actualités. Le courrier envoyé est construit à partir de l'actualité elle-m�
 | `auteur` | clé étrangère | Utilisateur ayant créé l'actualité |
 | `statut` | `brouillon` ou `publiee` | Seules les actualités publiées sont visibles |
 | `date_publication` | date et heure | Renseignée automatiquement à la publication si absente |
+| `date_fin_publication` | date et heure, facultatif | Retrait automatique de l'affichage à l'échéance |
 | `abonnes_notifies` | booléen | Empêche un second envoi si l'actualité est modifiée puis republiée |
 
-Une actualité est visible du public lorsque son statut vaut `publiee` **et** que sa date
-de publication est atteinte. Une date future permet donc de préparer une publication à
-l'avance : l'article restera masqué jusqu'à l'échéance.
+Une actualité est visible du public lorsque son statut vaut `publiee`, que sa date de
+publication est atteinte, et que sa date de fin de publication — si elle est renseignée —
+ne l'est pas encore (`Actualite.est_visible`). Une date de début future permet de préparer
+une publication à l'avance : l'article reste masqué jusqu'à l'échéance.
+
+La fin de publication est **un retrait d'affichage, pas une suppression** : le statut en base
+reste `publiee` et l'article demeure consultable depuis le back-office. La condition est
+évaluée à chaque requête, sans tâche planifiée. Le formulaire refuse une date de fin
+antérieure ou égale à la date de publication.
 
 Le calcul du `slug` garantit l'unicité en suffixant un numéro (`titre`, `titre-2`, `titre-3`).
 
@@ -213,6 +220,11 @@ depuis un shell ou une commande d'administration.
 | Désabonnement par un tiers | Jeton aléatoire de 32 octets, aucun identifiant en clair dans l'adresse |
 | Injection de code dans un article | Contenu rendu avec le filtre `linebreaks`, qui échappe le HTML saisi |
 | Divulgation des brouillons | Réponse 404, et non 403, pour ne pas révéler leur existence |
+| Dépôt d'un fichier hostile en illustration | `ImageField` vérifie le contenu du fichier ; `clean_image()` restreint en outre aux types JPEG, PNG et WebP, et à 5 Mo |
+| Épuisement du disque par abonnements répétés | Débit plafonné par nginx sur `/actualites/abonnement` |
+
+L'attribut `accept` du sélecteur de fichier n'est qu'un confort d'interface : le contrôle qui
+compte est `clean_image()`, côté serveur.
 
 Les en-têtes de sécurité HTTP et la politique de mots de passe restent ceux du projet,
 appliqués globalement par `config.middleware.SecurityHeadersMiddleware` et par nginx.
@@ -251,14 +263,14 @@ actualites/
 ├── notifications.py           Construction et envoi des courriers
 ├── urls.py                    Routes publiques
 ├── urls_admin.py              Routes du back-office
-├── admin.py                   Enregistrement dans l'administration Django
 ├── management/commands/
 │   ├── actualites_demo.py     Jeu de données de démonstration
 │   └── notifier_actualites.py Diffusion des notifications en attente
 ├── migrations/
 │   ├── 0001_initial.py
 │   ├── 0002_seed_permissions.py
-│   └── 0003_abonnenewsletter_nb_echecs.py
+│   ├── 0003_abonnenewsletter_nb_echecs.py
+│   └── 0004_actualite_date_fin_publication.py
 ├── templates/
 │   ├── actualites/            Pages publiques et gabarits de courrier
 │   └── admin/actualite/       Écrans du back-office

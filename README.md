@@ -23,6 +23,9 @@ maintenir le projet en bon état.
 7. [Déploiement en production](#7-déploiement-en-production)
 8. [Sécurité — règles à respecter](#8-sécurité--règles-à-respecter)
 9. [Points de vigilance techniques](#9-points-de-vigilance-techniques)
+   - 9.1 Éléments présents mais non exploités · 9.2 Sécurité applicative ·
+     9.3 Exécution en conteneur non privilégié · 9.4 Courrier électronique ·
+     9.5 Peuplement initial · 9.6 Facturation
 10. [Résolution des incidents courants](#10-résolution-des-incidents-courants)
 11. [Organisation des fichiers](#11-organisation-des-fichiers)
 
@@ -44,10 +47,13 @@ Une brique supplémentaire, indépendante du parcours scolaire, gère la **factu
 de prestations de services** pour le compte de la Direction Administrative et
 Financière (DAF) : devis, factures, encaissements.
 
+Le site publie enfin des **actualités**, auxquelles le public peut s'abonner pour
+recevoir une notification par courrier électronique.
+
 **Ce que ce dépôt contient.** Le code source complet de l'application (backend
 Django, gabarits HTML, feuilles de styles Tailwind CSS) ainsi que la configuration
 nécessaire pour la faire fonctionner avec Docker (base de données, serveur web,
-cache).
+cache, sauvegarde quotidienne).
 
 ---
 
@@ -71,7 +77,7 @@ l'interactivité (formulaires en plusieurs étapes, menus).
 
 ### 2.2 Applications Django
 
-Le projet est découpé en quatre applications Django, chacune avec une
+Le projet est découpé en cinq applications Django, chacune avec une
 responsabilité précise :
 
 - **`accounts`** — Comptes utilisateurs, connexion/inscription, et le module de
@@ -79,29 +85,38 @@ responsabilité précise :
 - **`courses`** — Le cœur métier : centres de formation, filières (métiers),
   modules, programmations de formation, inscriptions, frais, dettes, paiements de
   scolarité, statistiques, et tout le back-office d'administration (`/bsb/`).
+- **`actualites`** — Actualités publiques, abonnement à la lettre d'information et
+  diffusion par courrier électronique. Cette application dispose de sa propre
+  documentation : [actualites/docs/README.md](actualites/docs/README.md).
 - **`apis`** — Contient uniquement un « sérialiseur » (`UserRegisterSerializer`)
   utilisé par la page d'inscription. Ce n'est **pas** une API exposée publiquement
   (aucune route n'y est raccordée) ; le nom peut prêter à confusion mais il s'agit
   d'un outil interne de validation de formulaire.
 - **`config`** — Réglages globaux du projet (`settings.py`), routage racine
-  (`urls.py`), et un middleware maison qui renforce les en-têtes de sécurité HTTP.
+  (`urls.py`), et deux middlewares maison : l'un renforce les en-têtes de sécurité
+  HTTP, l'autre bloque les tentatives de connexion répétées (voir 9.2).
 
 ### 2.3 Services Docker
 
-Le fichier `docker-compose.yml` définit cinq services :
+Le fichier `docker-compose.yml` définit six services :
 
 | Service | Conteneur | Rôle | Accès depuis l'extérieur |
 |---|---|---|---|
 | `suudu_backend` | Django + Gunicorn | Traite les requêtes de l'application | Non (uniquement via nginx) |
 | `suudu_db` | PostgreSQL 15 | Stocke toutes les données | Non |
 | `suudu_nginx` | Nginx | Sert les pages, les fichiers statiques et médias | Oui, port **80** |
-| `suudu_redis` | Redis | Prévu pour le cache/les tâches asynchrones | Non |
-| `suudu_pgadmin` | pgAdmin | Interface d'administration de la base de données | Non exposé par défaut (voir section 9) |
+| `suudu_redis` | Redis | Compteur du verrou anti-force brute (voir 9.2) | Non |
+| `suudu_backup` | PostgreSQL 15 | Sauvegarde quotidienne de la base | Non |
+| `suudu_pgadmin` | pgAdmin | Interface d'administration de la base de données | Non exposé par défaut (voir 9.1) |
 
 Au démarrage, le conteneur `suudu_backend` exécute automatiquement, dans l'ordre :
-application des migrations de base de données (`migrate`), regroupement des
-fichiers statiques (`collectstatic`), puis lancement du serveur (`gunicorn`). Cette
-séquence est définie dans `entrypoint.sh`.
+application des migrations (`migrate`), regroupement des fichiers statiques
+(`collectstatic --clear`), puis lancement du serveur (`gunicorn`). Cette séquence est
+définie dans `entrypoint.sh`. Le peuplement initial des données n'y figure plus : il se
+lance manuellement (voir 9.5).
+
+Le conteneur applicatif tourne sans privilèges, sous un compte dédié et non sous `root`.
+Cette contrainte a des conséquences sur les droits des dossiers montés : voir 9.3.
 
 ### 2.4 Schéma de routage général
 
@@ -110,12 +125,14 @@ séquence est définie dans `entrypoint.sh`.
 | `/` | `courses.urls` | Élèves, formateurs, personnel de centre |
 | `/accounts/` | `accounts.urls` | Connexion, inscription, module DAF |
 | `/bsb/` | `courses.urls_admin` | Back-office : direction, DEPS, administrateurs |
-| `/admin/` | Administration Django native | Développeurs et super-utilisateurs uniquement |
+| `/actualites/` | `actualites.urls` | Actualités publiques et abonnement |
+| `/bsb/actualites/` | `actualites.urls_admin` | Rédaction et diffusion des actualités |
 
-`/admin/` (l'administration technique fournie par Django) et `/bsb/` (l'interface
-métier propre à l'application) sont deux choses différentes : la première sert
-surtout à la maintenance technique, la seconde est l'outil de travail quotidien du
-personnel de direction.
+**L'administration technique fournie par Django a été retirée.** L'adresse `/admin/` ne
+répond plus, et les modules correspondants ne sont plus installés. `/bsb/` est désormais
+la seule interface d'administration : c'est l'outil de travail quotidien du personnel de
+direction, et toute intervention passe par lui. Cette suppression est délibérée et ne doit
+pas être annulée pour dépanner : elle ferme une porte d'entrée connue des attaquants.
 
 ---
 
@@ -137,7 +154,7 @@ correspondant — il n'y a jamais besoin de le faire à la main.
 | **Directeur inter-régional** | Une direction régionale | Vue et statistiques limitées à sa direction et aux centres qui en dépendent. |
 | **DAF** (Directeur Administratif et Financier) | Un centre (optionnel) | Utilise exclusivement le module de facturation de prestations (section 5). |
 | **Administrateur / Directeur Général** | Global | Accès complet : configuration de l'offre de formation, gestion des comptes du personnel, gestion des permissions, statistiques globales. |
-| **Super-utilisateur** | — | Compte technique Django : accès total, y compris à `/admin/`. À réserver aux personnes chargées de la maintenance du système. |
+| **Super-utilisateur** | — | Compte technique Django : accès total à `/bsb/`, sans passer par les permissions. À réserver aux personnes chargées de la maintenance du système. |
 
 **Note technique.** Les permissions ne sont pas figées dans le code : un
 administrateur peut, depuis l'écran **Gestion des permissions**
@@ -364,34 +381,167 @@ existantes.
 - Toute permission accordée à un rôle doit passer par l'écran **RH → Permissions**
   plutôt que par une modification de code, afin de garder une trace claire et
   réversible des accès accordés.
+- **Ne jamais retirer les exclusions du fichier `.dockerignore`.** Sans elles, le
+  `COPY . .` du `Dockerfile` recopie l'intégralité du dossier de travail dans
+  l'image, `.env` compris : la clé secrète et les mots de passe de la base et de
+  pgAdmin deviennent lisibles par toute personne ayant accès à l'image, alors
+  même que le fichier est exclu de Git. Sont également exclus `.git`, `backups/`
+  (dumps de la base), `media/` (documents déposés par les usagers) et
+  `staticfiles/`. Si une image a été construite sans ces exclusions et diffusée,
+  considérer les secrets du `.env` comme compromis et procéder à leur rotation.
 
 ---
 
 ## 9. Points de vigilance techniques
 
-Ces éléments existent dans la configuration mais ne sont, à ce jour, pas
-pleinement exploités par le code applicatif. Ils sont documentés ici pour éviter
-toute fausse hypothèse lors d'une future intervention :
+Cette section rassemble les comportements non évidents du projet : ceux qu'une
+lecture du code seule ne permet pas de deviner, et dont l'ignorance conduit à des
+diagnostics erronés. Les commentaires du code y renvoient plutôt que de répéter
+ces explications.
 
-- **Redis et Celery** sont installés et configurés (`REDIS_LOCATION_URL`,
-  `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`, conteneur `suudu_redis`), mais
-  aucun cache Django (`CACHES`) ni aucune tâche asynchrone Celery n'est
-  actuellement défini dans le code. Le conteneur Redis tourne sans consommateur
-  réel — prévu pour un usage futur.
+### 9.1 Éléments présents mais non exploités
+
+- **Celery** est installé et configuré (`CELERY_BROKER_URL`,
+  `CELERY_RESULT_BACKEND`), mais aucune tâche asynchrone n'est définie dans le
+  code. Aucune file de traitement n'existe. Redis, en revanche, est bien utilisé
+  depuis la mise en place du verrou anti-force brute (voir 9.3).
 - **`djangorestframework_simplejwt`** est installé mais aucune authentification
-  par jeton (JWT) n'est activée ; l'authentification utilisée est celle des
-  sessions Django classiques (cookies).
-- **pgAdmin** (`suudu_pgadmin`) ne publie aucun port vers l'hôte dans
-  `docker-compose.yml` actuel, malgré la variable `PGADMIN_PORT` définie dans
-  `.env`. Pour y accéder depuis un navigateur, il faut ajouter explicitement le
-  mappage de port correspondant dans `docker-compose.yml`, ou s'y connecter
-  depuis l'intérieur du réseau Docker.
-- **Fuseau horaire** : `TIME_ZONE` est réglé sur `UTC` dans `config/settings.py`,
-  et non sur l'heure de Ouagadougou. Les horodatages affichés (dates de création,
-  de paiement) sont donc en UTC sauf conversion explicite côté gabarit.
+  par jeton n'est activée ; l'authentification utilisée est celle des sessions
+  Django classiques.
+- **pgAdmin** (`suudu_pgadmin`) ne publie aucun port vers l'hôte, malgré la
+  variable `PGADMIN_PORT` définie dans `.env`. Pour y accéder, ajouter
+  explicitement le mappage de port dans `docker-compose.yml`.
 - **`apis`** est une application au nom trompeur : elle ne sert qu'à valider le
-  formulaire d'inscription (`UserRegisterSerializer`) et ne constitue pas une API
-  publique.
+  formulaire d'inscription et ne constitue pas une API publique.
+- **La table `django_admin_log`** subsiste en base, orpheline, depuis le retrait
+  de l'administration Django. Aucun code ne la lit. Sa suppression manuelle
+  (`DROP TABLE django_admin_log`) est possible après vérification.
+- **Fuseau horaire** : `TIME_ZONE` vaut `UTC`, et non l'heure de Ouagadougou. Les
+  horodatages affichés sont donc en UTC, sauf conversion explicite dans le
+  gabarit.
+
+### 9.2 Sécurité applicative
+
+- **Politique de sécurité du contenu (CSP)** : la directive `style-src` combine
+  `'self'` et un nonce. Un nonce et `'unsafe-inline'` sont mutuellement
+  exclusifs — dès qu'un nonce figure dans une directive, le navigateur ignore
+  `'unsafe-inline'`. Il n'existe donc pas de position intermédiaire : tout
+  attribut `style=` écrit dans un gabarit sera bloqué. Une valeur calculée
+  (largeur de barre, position) se pose en JavaScript depuis un attribut `data-*`.
+  Le passage par `el.style.width` reste autorisé ; `setAttribute("style", ...)`
+  et `style.cssText` sont bloqués.
+- Les gabarits de **PDF (WeasyPrint) et de courrier électronique** conservent
+  leurs styles en ligne : ils ne passent pas par un navigateur, la CSP ne s'y
+  applique pas.
+- `data:` est conservé dans `img-src` pour deux gabarits qui dessinent leur motif
+  de fond en SVG intégré. Contrairement à ce qu'indiquent certains rapports
+  d'audit, `data:` dans `img-src` ne permet pas l'exécution de script : il
+  faudrait pour cela le retrouver dans `script-src`, `object-src` ou `frame-src`.
+- **Messages Django** : `MESSAGE_STORAGE` utilise la session et non un cookie. Le
+  stockage par défaut essaie d'abord le cookie ; or, lorsqu'il l'efface, Django
+  appelle `delete_cookie()`, qui ne transmet ni `HttpOnly` ni `Secure`. Un audit
+  signale alors un cookie non protégé — sans risque réel, le cookie étant vide et
+  expiré, mais impossible à corriger à la source. Le stockage en session
+  supprime le cookie et l'alerte.
+- **Cookies en développement local** : `SESSION_COOKIE_SECURE` et
+  `CSRF_COOKIE_SECURE` valent `not DEBUG`. En HTTP simple (`http://localhost`),
+  le navigateur n'envoie pas ces cookies : la connexion et la vérification CSRF
+  échouent. Ce comportement est attendu et ne doit pas être « corrigé » en
+  production. Pour tester ce flux en local, utiliser un tunnel HTTPS.
+- **Limitation des tentatives de connexion** : deux garde-fous complémentaires
+  cohabitent. Nginx plafonne le débit par adresse IP (`limit_req_zone`), tandis
+  que `accounts/ratelimit.py` verrouille le compte visé — lequel, contrairement à
+  une adresse IP, ne peut pas être usurpé. Le compteur applicatif est stocké dans
+  Redis afin d'être partagé par les trois processus `gunicorn` ; sans cela, le
+  seuil serait trois fois plus permissif. Si Redis devient indisponible, le
+  verrou s'ouvre (`IGNORE_EXCEPTIONS`) : le site reste accessible et les erreurs
+  sont journalisées, plutôt que de renvoyer une erreur 500 sur chaque page.
+
+### 9.3 Exécution en conteneur non privilégié
+
+Le conteneur applicatif ne tourne pas en `root` mais sous le compte `appuser`
+(uid 10001, défini dans le `Dockerfile`). Cette contrainte a trois conséquences
+que Docker ne résout pas seul.
+
+- **Un montage lié (`bind mount`) ignore le `chown` de l'image** et conserve les
+  droits du dossier de l'hôte. Un dossier rempli par une version antérieure du
+  conteneur, qui tournait alors en `root`, devient inaccessible en écriture.
+- **`staticfiles` est un volume nommé** (`suudu_staticfiles`) et non un montage
+  lié. Docker initialise un volume nommé avec les droits de l'image : il reste
+  donc inscriptible quel que soit l'hôte. Il s'agit de données dérivées,
+  régénérées à chaque démarrage par `collectstatic --clear`. Le même volume est
+  monté en lecture seule par Nginx.
+- **`media` reste un montage lié**, les documents déposés par les usagers devant
+  rester consultables depuis l'hôte. Son propriétaire doit donc être aligné sur
+  l'uid 10001, faute de quoi tout téléversement échoue en `PermissionError`.
+- **`backups` est également un montage lié**, mais dans l'autre sens : c'est le
+  conteneur `suudu_backup` qui y écrit, en tant que `root`, si bien que le dossier
+  devient inaccessible en écriture pour l'utilisateur de l'hôte. `db_dump.sh`
+  échoue alors à l'étape `docker cp` avec `permission denied`. Le dossier doit donc
+  appartenir à l'utilisateur du projet ; le conteneur, qui écrit en `root`,
+  continue de fonctionner sans changement.
+- Le script `./fix_perms.sh` réalise ces deux alignements. Il est idempotent, ne
+  requiert pas de `sudo`, et est appelé automatiquement par `deploy.sh` et
+  `redeploy.sh`. Le lancer à la main après avoir restauré une sauvegarde ou copié
+  des fichiers dans `media/` depuis un autre poste.
+- **`logs` est également un volume nommé** (`suudu_security_logs`), pour la même
+  raison : le journal de sécurité doit rester inscriptible indépendamment des
+  droits du dossier de travail sur l'hôte.
+- **Sous WSL2**, les chemins `/mnt/c` refusent l'appel `chmod()` même lorsque
+  l'écriture aboutit. `FILE_UPLOAD_PERMISSIONS` et
+  `FILE_UPLOAD_DIRECTORY_PERMISSIONS` sont donc fixés à `None`, ce qui désactive
+  le `chmod` appliqué par Django après chaque écriture.
+
+### 9.4 Courrier électronique
+
+- Tant que `EMAIL_HOST` est vide, Django utilise le backend « console » : le
+  message complet, **adresses des abonnés comprises**, est écrit sur la sortie
+  standard, donc dans les journaux du conteneur. À réserver au développement.
+- Avec Google Workspace, `DEFAULT_FROM_EMAIL` doit correspondre à
+  `EMAIL_HOST_USER`, ou à un alias « Envoyer en tant que » vérifié. Dans le cas
+  contraire, Gmail réécrit silencieusement l'en-tête `From`.
+- `SITE_URL` sert à construire les liens absolus des messages envoyés hors
+  requête HTTP (commande `notifier_actualites`). Laissée vide, la valeur de repli
+  fabrique un lien en `http://` vers un site servi exclusivement en HTTPS.
+- `EMAIL_TIMEOUT` est indispensable : sans délai d'attente, un serveur SMTP qui
+  ne répond pas immobilise un processus `gunicorn` pendant 120 secondes.
+
+### 9.5 Peuplement initial des données
+
+`populate_data.py` n'est plus exécuté au démarrage du conteneur ; la ligne
+correspondante de `entrypoint.sh` est volontairement commentée. Ce script crée un
+superutilisateur et 51 comptes d'agents dont les mots de passe sont écrits en dur
+dans un fichier suivi par Git, et les affiche dans les journaux de déploiement.
+Il n'a sa place qu'en phase de recette, lancé manuellement, une seule fois, sur
+une base neuve :
+
+```bash
+docker compose exec suudu_backend python manage.py shell < populate_data.py
+```
+
+Désactiver cette exécution empêche la recréation de comptes supprimés, mais ne
+change rien aux comptes déjà présents en base : seule la rotation des mots de
+passe existants lève le risque.
+
+Deux précisions sur les données transcrites, à ne pas « corriger » de nouveau :
+
+- Le fichier source mélange les ordres « NOM Prénom » et « Prénom NOM ». C'est le
+  nom d'utilisateur (`Prénom.NOM`, colonne fiable) qui fait foi pour départager.
+- Quatre anomalies ont été résolues avant transcription : deux comptes avaient
+  leurs identifiants et adresses inversés et réutilisaient l'adresse d'un
+  troisième ; deux adresses manquantes ou tronquées ont été remplacées par une
+  valeur d'attente. Le champ `sexe` n'est fourni par aucune ligne : la valeur par
+  défaut du modèle s'applique à tous. Ces valeurs sont à corriger par chaque
+  titulaire via l'écran « Mon profil ».
+
+### 9.6 Facturation
+
+Le numéro de facture est unique sur l'ensemble de la table, factures proforma et
+définitives confondues. Le compteur ne doit donc jamais être filtré par
+`type_facture` : une proforma et une facture définitive de la même année
+calculeraient alors le même numéro. Le numéro est régénéré chaque fois qu'il est
+remis à vide, ce qui correspond au passage d'une proforma à une facture
+définitive.
 
 ---
 
@@ -435,22 +585,36 @@ section 7.2) — un simple `restart` ne suffit pas.
 ## 11. Organisation des fichiers
 
 ```
-bsb-full-stack/
-├── accounts/           Comptes utilisateurs, connexion/inscription, module DAF
-├── apis/                Sérialiseur d'inscription (usage interne)
-├── config/               Réglages Django, routage racine, middleware de sécurité
-├── courses/             Cœur métier : centres, filières, inscriptions, paiements, back-office /bsb/
+bsb-latest/
+├── accounts/             Comptes utilisateurs, connexion/inscription, module DAF
+├── actualites/           Actualités publiques et diffusion aux abonnés
+├── apis/                 Sérialiseur d'inscription (usage interne)
+├── config/               Réglages Django, routage racine, middlewares de sécurité
+├── courses/              Cœur métier : centres, métiers, inscriptions, paiements, back-office /bsb/
 ├── nginx/                Configuration du serveur web (nginx.conf, Dockerfile)
 ├── static/               Fichiers statiques sources (dont static/src/input.css pour Tailwind)
-├── staticfiles/          Fichiers statiques regroupés (générés, non versionnés)
 ├── templates/            Gabarits HTML communs
-├── media/                Fichiers déposés par les utilisateurs (non versionné)
-├── docker-compose.yml    Définition des services (backend, base, nginx, redis, pgadmin)
-├── Dockerfile             Image de l'application Django
-├── entrypoint.sh          Séquence de démarrage du conteneur applicatif
-├── deploy.sh              Script de déploiement (génère un .env de secours si absent)
-├── requirements.txt       Dépendances Python
-├── package.json           Dépendances et scripts de compilation Tailwind CSS
-├── .env.example           Modèle de configuration (à copier en .env)
-└── test_security.py       Script manuel de vérification des en-têtes de sécurité HTTP
+├── media/                Documents déposés par les usagers (non versionné, voir 9.3)
+├── backups/              Sauvegardes de la base produites par db_dump.sh (non versionné)
+├── docker-compose.yml    Définition des services (backend, base, nginx, redis, pgadmin, sauvegarde)
+├── Dockerfile            Image de l'application Django
+├── .dockerignore         Exclusions du contexte de build (voir section 8)
+├── entrypoint.sh         Séquence de démarrage du conteneur applicatif
+├── deploy.sh             Premier déploiement (génère un .env de secours si absent)
+├── redeploy.sh           Mise à jour d'un déploiement existant
+├── fix_perms.sh          Alignement des droits de media/ et backups/ (voir 9.3)
+├── db_dump.sh            Sauvegarde de la base
+├── db_restore.sh         Restauration d'une sauvegarde
+├── populate_data.py      Peuplement initial, à lancer manuellement (voir 9.5)
+├── requirements.txt      Dépendances Python
+├── package.json          Dépendances et scripts de compilation Tailwind CSS
+└── test_security.py      Script manuel de vérification des en-têtes de sécurité HTTP
+```
+
+Les fichiers statiques regroupés par `collectstatic` ne figurent plus dans un
+dossier de l'hôte : ils résident dans le volume nommé `suudu_staticfiles`
+(voir 9.3). Pour les inspecter :
+
+```bash
+docker compose exec suudu_backend ls /app/staticfiles
 ```

@@ -36,11 +36,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
 
-    # Declare explicitement (sans validateur d'unicite automatique) : la
-    # contrainte unique porte uniquement sur les adresses reellement saisies,
-    # verifiee a la main dans validate() — sinon deux comptes laissant ce
-    # champ vide se bloqueraient l'un l'autre (chaine vide != NULL en base,
-    # mais deux chaines vides sont identiques pour la contrainte unique).
+    # Sans validateur d'unicite automatique : l'unicite est verifiee dans
+    # validate() sur les seules adresses saisies, sinon deux champs vides
+    # se bloqueraient mutuellement.
     email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
 
     lieu_naissance = serializers.CharField(required=True, allow_blank=False)
@@ -72,13 +70,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({"password": "Les mots de passe ne correspondent pas."})
 
-        # AUTH_PASSWORD_VALIDATORS est declare dans les settings mais Django ne
-        # l'applique QUE si validate_password() est appele. Les formulaires
-        # d'admin et de changement de mot de passe le font ; ce serializer, qui
-        # est le point d'inscription public, ne le faisait pas : un compte
-        # pouvait etre cree avec le mot de passe « 1 ».
-        # L'instance non sauvegardee sert au validateur de similarite, qui
-        # compare le mot de passe au nom d'utilisateur, au nom et a l'e-mail.
+        # AUTH_PASSWORD_VALIDATORS ne s'applique que si validate_password() est
+        # appele. L'instance non sauvegardee sert au validateur de similarite.
         utilisateur_temoin = Eleve(
             username=attrs.get('username') or '',
             email=(attrs.get('email') or ''),

@@ -548,11 +548,8 @@ def subscription_list(request):
             'filter': f,
         })
 
-    # Portée multi-centres, sans filtre : accordéon centres -> inscriptions
-    # (même principe que régions -> provinces) : la liste des centres est
-    # paginée (10/page) et, pour le centre déplié (paramètre ?centre=), ses
-    # inscriptions sont elles-mêmes paginées (10/page, paramètre ?ipage=)
-    # sans recharger toute la liste des centres.
+    # Accordeon centres -> inscriptions : les deux niveaux sont pagines
+    # separement (?centre= et ?ipage=), sans recharger la liste des centres.
     compte_par_centre = {
         row['formation__centre_id']: row['n']
         for row in f.qs.values('formation__centre_id').annotate(n=Count('id'))
@@ -807,9 +804,7 @@ def payment_delete(request, id):
     return render(request, 'admin/payment/confirm_delete.html', {'object': payment})
 
 
-# ─────────────────────────────────────────────
-# HISTORIQUE DES CONNEXIONS
-# ─────────────────────────────────────────────
+# == HISTORIQUE DES CONNEXIONS =================================================
 def _historique_connexion_filtered(request):
     centres_qs, _, scope = _get_scope(request.user)
     qs = HistoriqueConnexion.objects.select_related('utilisateur', 'centre').order_by('-date_evenement')
@@ -1292,11 +1287,7 @@ def agent_delete(request, id):
     return render(request, 'admin/rh/agent_confirm_delete.html', {'object': agent})
 
 
-# ─────────────────────────────────────────────
-# GESTION DES APPRENANTS — modification complète (y compris mot de passe),
-# distincte des écrans d'inscription : ici on corrige/complète le dossier
-# d'un élève déjà existant (identité, contact, mot de passe oublié, etc.)
-# ─────────────────────────────────────────────
+# == GESTION DES APPRENANTS — modification complète (y compris mot de passe), distincte des écrans d'inscription : ici on corrige/complète le dossier d'un élève déjà existant (identité, contact, mot de passe oublié, etc.) ===
 
 @require_permission('accounts.gerer_eleves')
 def eleve_list(request):
@@ -1333,14 +1324,10 @@ def eleve_update(request, id):
     return render(request, 'admin/eleve/form.html', {'form': form, 'object': eleve})
 
 
-# ─────────────────────────────────────────────
-# GESTION DES PERMISSIONS — matrice rôle × action
-# ─────────────────────────────────────────────
+# == GESTION DES PERMISSIONS — matrice rôle × action ===========================
 
-# Permissions métier affichées dans la matrice (codename, libellé, app_label).
-# Volontairement une liste courte et curatée — pas les permissions Django
-# auto-générées (add/change/delete/view en anglais) qui n'ont aucun sens
-# pour un utilisateur non technique.
+# Liste curatee : les permissions Django auto-generees (add/change/delete/view)
+# n'ont aucun sens pour un utilisateur non technique.
 MATRIX_PERMISSIONS = [
     ('gerer_regions', "Créer/modifier/supprimer une région ou province", 'courses'),
     ('gerer_directions', "Créer/modifier/supprimer une direction inter-régionale", 'courses'),
@@ -1442,16 +1429,8 @@ def agent_toggle_active(request, id):
     return redirect('bsb_admin:agent_list')
 
 
-# ─────────────────────────────────────────────
-# À ajouter dans les imports en haut de views_admin.py
-# ─────────────────────────────────────────────
-# from .models import (..., TypeFrais, ...)
-# from .forms  import (..., TypeFraisForm, AnneeScolaireForm)
 
-
-# ─────────────────────────────────────────────
-# TYPE DE FRAIS CRUD
-# ─────────────────────────────────────────────
+# == TYPE DE FRAIS CRUD ========================================================
 
 @require_permission('courses.gerer_frais')
 def type_frais_list(request):
@@ -1542,9 +1521,7 @@ def type_frais_tranches(request, id):
     })
 
 
-# ─────────────────────────────────────────────
-# ANNÉE SCOLAIRE CRUD  (remplace les 2 vues existantes)
-# ─────────────────────────────────────────────
+# == ANNÉE SCOLAIRE CRUD  (remplace les 2 vues existantes) =====================
 
 @require_permission('courses.gerer_annees')
 def annee_list(request):

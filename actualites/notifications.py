@@ -22,9 +22,7 @@ def notifier_abonnes(actualite, request=None):
     def absolu(chemin):
         if request is not None:
             return request.build_absolute_uri(chemin)
-        # Hors requete HTTP (commande `notifier_actualites`) : SITE_URL est la
-        # seule source fiable du schema. L'ancien repli forgeait un lien en
-        # « http:// » vers un site servi exclusivement en HTTPS.
+        # Hors requete HTTP, SITE_URL est la seule source fiable du schema.
         base = (settings.SITE_URL or "").rstrip("/")
         if not base:
             hote = (settings.ALLOWED_HOSTS or ["localhost"])[0]

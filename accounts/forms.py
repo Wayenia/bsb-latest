@@ -163,10 +163,9 @@ class PaiementPrestationForm(forms.Form):
         self.fields['mode_paiement'].choices = Paiement_prestation.MODE_PAIEMENT
 
 
-# ─── Profil (self-service, tous rôles) ─────────────────────────────────────
-# Champs verrouillés (non modifiables ici) : username, matricule,
-# numero_identifiant, user_type, permissions/groupes — ce ne sont pas des
-# "infos personnelles" mais des identifiants/droits gérés par l'administration.
+# ── Profil (self-service, tous roles) ────────────────────────────────────────
+# Identifiants et droits (username, matricule, numero_identifiant, user_type,
+# groupes) restent geres par l'administration et ne sont pas modifiables ici.
 
 class TelWidget(forms.TextInput):
     """Retire les espaces avant validation : le format international attendu
@@ -205,10 +204,8 @@ class ProfilForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['date_naissance'].widget.attrs['max'] = max_date_naissance().isoformat()
-        # La plupart des comptes (RH, import en masse...) sont créés sans adresse,
-        # comme partout ailleurs dans le projet (voir courses/forms.py) : la rendre
-        # obligatoire ici bloquait la sauvegarde du profil pour ces comptes, même
-        # sans toucher au champ adresse.
+        # La plupart des comptes sont crees sans adresse : la rendre obligatoire
+        # ici bloquerait la sauvegarde de leur profil.
         self.fields['adresse'].required = False
 
     def clean_email(self):
@@ -255,10 +252,8 @@ class ProfilEleveForm(ProfilForm):
             'date_etablissement_document': forms.DateInput(attrs={'class': _BASE_CLASSES, 'type': 'date'}, format='%Y-%m-%d'),
         }
 
-    # Ces champs composent l'identifiant unique de l'apprenant
-    # (numero_identifiant, voir Eleve.generate_identifiant) : les modifier
-    # après coup romprait cet identifiant, donc ils restent visibles mais
-    # non modifiables (grisés) sur le formulaire de profil.
+    # Composent numero_identifiant : les modifier apres coup le romprait, d'ou
+    # l'affichage en lecture seule.
     CHAMPS_IDENTIFIANT = (
         'date_naissance', 'lieu_naissance',
         'type_document', 'numero_document', 'date_etablissement_document',

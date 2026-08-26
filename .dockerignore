@@ -1,0 +1,37 @@
+# Contexte de build. Sans ces exclusions, le COPY . . du Dockerfile embarque
+# .env (secrets), .git, backups/ et staticfiles/ dans l'image (README 8).
+# media/, staticfiles/ et logs/ sont recrees par le Dockerfile et alimentes par
+# des volumes au runtime : les exclure ici est sans effet sur l'execution.
+
+# Secrets
+.env
+.env.*
+
+# Historique et outillage
+.git
+.gitignore
+.gitattributes
+.github
+.idea
+.vscode
+
+# Dependances front (Tailwind se compile sur l'hote)
+node_modules
+
+# Donnees derivees ou de runtime
+staticfiles/
+media/
+logs/
+backups/
+
+# Artefacts Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Journaux
+*.log
+logs.txt
+*.sqlite3

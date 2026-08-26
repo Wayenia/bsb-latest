@@ -150,34 +150,6 @@ def changer_mot_de_passe(request):
     return render(request, 'accounts/changer_mot_de_passe.html', {'form': form})
 
 
-# HELPER
-# def _redirect_to_dashboard(user, request):  # ← ajouter request
-#     if user.user_type == 'eleve':
-#         return redirect('courses:student_dashboard')
-    
-#     elif user.user_type == 'formateur':
-#         return redirect('courses:teacher_dashboard')
-    
-#     elif user.user_type == 'admin':
-#         return redirect('bsb_admin:admin_dashboard')
-    
-#     elif user.user_type == 'membre':
-#         try:
-#             membre = user.membreadministration
-#             if membre.structure:
-#                 return redirect('courses:member_dashboard', centre_id=membre.structure_id)
-#             else:
-#                 return redirect('courses:member_dashboard_direction', direction_id=membre.direction_id)
-#         except Exception:
-#             messages.error(request, "Profil membre introuvable.")  # ← request ajouté
-#             return redirect('accounts:login')
-    
-#     else:
-#         if user.is_superuser:
-#             return redirect('bsb_admin:admin_dashboard')
-#         return redirect('accounts:login')
-
-
 ############### MODULE FACTURATION ET PRESTATION (DAF) #############
 
 from decimal import Decimal, InvalidOperation
@@ -516,9 +488,8 @@ def facture_create(request):
             facture.save(update_fields=['montant_total'])
 
             messages.success(request, f"Facture {facture.numero} créée avec succès.")
-            # Retour sur le formulaire de création (page rafraîchie, prête pour
-            # une nouvelle facture) avec le PDF déclenché automatiquement en
-            # téléchargement (voir le script de facture_form.html).
+            # Formulaire rafraichi, PDF declenche en telechargement par le
+            # script de facture_form.html.
             return redirect(f"{reverse('accounts:facture_create')}?facture={facture.id}")
 
         # Messages d'erreur précis (champ par champ) plutôt qu'un message générique.
@@ -847,9 +818,8 @@ def prestation_encaisser(request, id):
         )
 
     messages.success(request, f"Paiement de {montant_total_verse} FCFA encaissé — reçu {paiement.numero_recu}.")
-    # Retour sur la page de la facture (état à jour : reste dû, historique des
-    # paiements) avec le reçu déclenché automatiquement en téléchargement
-    # (voir le script de facture_detail.html qui lit ce paramètre).
+    # Facture a jour, recu declenche en telechargement par le script de
+    # facture_detail.html, qui lit ce parametre.
     return redirect(f"{reverse('accounts:facture_detail', kwargs={'id': id})}?recu={paiement.id}")
 
 
@@ -870,9 +840,7 @@ def prestation_recu_pdf(request, id):
     })
     pdf_file = weasyprint.HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
     response = HttpResponse(pdf_file, content_type='application/pdf')
-    # "attachment" : déclenché automatiquement en téléchargement depuis
-    # facture_detail.html sans quitter/naviguer hors de la page (voir le
-    # script qui pointe window.location vers cette URL après un encaissement).
+    # attachment : telechargement declenche sans quitter facture_detail.html.
     response['Content-Disposition'] = f'attachment; filename="recu_{paiement.numero_recu}.pdf"'
     return response
 

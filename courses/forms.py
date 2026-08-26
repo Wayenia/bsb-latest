@@ -967,10 +967,8 @@ class AgentForm(forms.ModelForm):
 
             # deps : rien à préremplir (rôle seul)
 
-        # Le choix du module est restreint aux modules du métier sélectionné.
-        # La valeur postée (si le formulaire est soumis) prime sur celle de
-        # l'instance, sinon la sélection précédente serait perdue au premier
-        # changement de métier (rejet en validation d'un module valide).
+        # Modules restreints au metier choisi ; la valeur postee prime sur celle
+        # de l'instance, sinon un module valide serait rejete.
         if self.is_bound:
             filiere_id_for_modules = self.data.get('filiere') or None
         else:
@@ -1165,12 +1163,9 @@ class AgentForm(forms.ModelForm):
         return instance
 
 
-# ─── Gestion des apprenants (écran DSI/admin — accounts.gerer_eleves) ────────
-# Édition complète d'un compte élève, y compris le mot de passe — distinct de
-# ProfilEleveForm (self-service, accounts/forms.py) qui verrouille
-# username/matricule/numero_identifiant : ici c'est un tiers habilité qui
-# corrige/complète le dossier, donc l'accès est plus large (même pattern que
-# AgentForm : champ password optionnel, "laisser vide pour ne pas modifier").
+# ── Gestion des apprenants (accounts.gerer_eleves) ───────────────────────────
+# Edition complete par un tiers habilite, mot de passe compris, contrairement a
+# ProfilEleveForm qui verrouille les identifiants en self-service.
 class EleveForm(forms.ModelForm):
 
     password = forms.CharField(
@@ -1411,10 +1406,9 @@ TrancheFraisFormSet = inlineformset_factory(
     can_delete=True,
 )
 
-# ─── ÉQUIPE (Directeur Général et membres de l'administration) ────────────────
-# Ces deux modèles alimentent la page publique « À propos ». Ils n'étaient
-# éditables que via l'admin Django ; ces formulaires alimentent le back-office
-# /bsb/equipe/ qui l'a remplacé.
+# ── Equipe (direction generale et membres de l'administration) ───────────────
+# Alimente la page publique « A propos » via /bsb/equipe/, qui a remplace
+# l'admin Django.
 
 _CLASSES_CHAMP = (
     'w-full px-4 py-3 border border-gray-300 rounded-lg '

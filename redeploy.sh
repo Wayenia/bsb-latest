@@ -1,9 +1,5 @@
 #!/bin/bash
-# ============================================================
-# A lancer depuis le dossier bsb-latest-version deja clone :
-#   git pull doit avoir ete fait au prealable OU est fait ici.
-#   ./redeploy.sh
-# ============================================================
+# Mise a jour d'un deploiement existant : git pull, rebuild, migrations, controles.
 set -e
 
 echo "=== 1. Recuperation du code ==="
@@ -12,6 +8,10 @@ git pull
 echo ""
 echo "=== 2. Arret propre (AUCUN volume supprime) ==="
 docker compose down
+
+echo ""
+echo "=== 2 bis. Normalisation des droits de ./media et ./backups ==="
+./fix_perms.sh
 
 echo ""
 echo "=== 3. Reconstruction + redemarrage ==="
@@ -23,7 +23,7 @@ sleep 5
 docker compose ps
 
 echo ""
-echo "=== 5. Migrations (fusion 0037 + migrations posterieures, ne supprime aucune donnee) ==="
+echo "=== 5. Migrations ==="
 docker compose exec -T suudu_backend python manage.py migrate
 
 echo ""

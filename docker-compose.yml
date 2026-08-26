@@ -5,7 +5,9 @@ services:
     restart: unless-stopped
     volumes:
       - .:/app
-      - ./staticfiles:/app/staticfiles
+      # Volume nomme et non bind mount : initialise avec les droits de l'image,
+      # donc inscriptible par appuser (README 9).
+      - suudu_staticfiles:/app/staticfiles
       - ./media:/app/media
       - suudu_security_logs:/app/logs
     command: ["./entrypoint.sh"]
@@ -55,8 +57,8 @@ services:
     ports:
       - 80:80
     volumes:
-      - ./staticfiles:/app/staticfiles
-      - ./media:/app/media
+      - suudu_staticfiles:/app/staticfiles:ro
+      - ./media:/app/media:ro
     depends_on:
       suudu_backend:
         condition: service_healthy
@@ -86,15 +88,8 @@ services:
     networks:
       - suudu_net
 
-  # Sauvegarde automatique quotidienne de la base.
-  # Meme image que suudu_db pour garantir que pg_dump a exactement la version du
-  # serveur. Le dump passe par le reseau interne (-h suudu_db), sans binaire
-  # docker ni acces au socket de l'hote : ce conteneur ne peut rien faire
-  # d'autre que lire la base.
-  # Retention : BACKUP_RETENTION fichiers (14 par defaut), soit ~2 semaines.
-  # Il n'existe aucune restauration automatique : elle reste une operation
-  # deliberee via ./db_restore.sh, pour qu'un simple redemarrage ne puisse
-  # jamais ecraser les donnees de production.
+  # Sauvegarde quotidienne, par le reseau interne et sans acces au socket Docker.
+  # Aucune restauration automatique : elle passe par ./db_restore.sh (README 7).
   suudu_backup:
     image: postgres:15.15-trixie
     container_name: suudu_backup
@@ -135,6 +130,7 @@ volumes:
   suudu_pgadmin_data:
   suudu_redis_data:
   suudu_security_logs:
+  suudu_staticfiles:
   
 networks:
   suudu_net:

@@ -1,18 +1,7 @@
 #!/bin/sh
-# Restaure un fichier .dump (produit par db_dump.sh / pg_dump -F c) dans le
-# conteneur suudu_db. Le conteneur suudu_db doit deja tourner :
-#   docker compose up -d suudu_db
-#
-# Usage : ./db_restore.sh chemin/vers/suudu_db_XXXXXXXX.dump [--force]
-#
-#   --force  saute la demande de confirmation. Reserve aux scripts (CI,
-#            provisionnement d'une machine neuve). ATTENTION : --clean detruit
-#            les objets existants, ne l'utilisez jamais sur une base de
-#            production sans avoir pris un dump juste avant.
-#
-# Ce script NE tourne PAS dans l'entrypoint du backend : il s'appuie sur
-# `docker exec`, indisponible depuis l'interieur d'un conteneur. La restauration
-# reste une operation deliberee, lancee depuis l'hote.
+# Restaure un .dump dans suudu_db, qui doit deja tourner.
+# Usage : ./db_restore.sh chemin/vers/fichier.dump [--force]
+# --force saute la confirmation ; --clean detruit les objets existants (README 7).
 set -e
 
 DUMP_FILE=""
@@ -34,9 +23,8 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-# `.` et non `export $(... | xargs)` : xargs interprete guillemets et
-# antislashs, ce qui corrompait silencieusement un mot de passe genere
-# contenant ces caracteres.
+# sed et non xargs, qui interprete guillemets et antislashs et corrompt un mot
+# de passe en contenant.
 POSTGRES_USER=$(sed -n 's/^POSTGRES_USER=//p' .env | head -1)
 POSTGRES_DB=$(sed -n 's/^POSTGRES_DB=//p' .env | head -1)
 

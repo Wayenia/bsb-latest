@@ -165,10 +165,7 @@
           </div>
 
           <div class="prog-bar-wrap">
-            {% comment %} Largeur calculee : aucune classe Tailwind ne peut l'exprimer, et un
-               attribut style= est bloque par la CSP. Elle est donc posee par JavaScript depuis
-               data-largeur. Le setter de propriete (el.style.width = ...) reste autorise ; seuls
-               setAttribute("style", ...) et style.cssText sont bloques. {% endcomment %}
+            {# Largeur posee par JavaScript depuis data-largeur : el.style.width reste autorise par la CSP, pas setAttribute("style"). #}
             <div class="prog-bar {% if dette.taux >= 100 %}prog-green{% elif dette.taux >= 50 %}prog-yellow{% else %}prog-red{% endif %}"
                  data-largeur="{{ dette.taux|floatformat:2 }}"></div>
           </div>

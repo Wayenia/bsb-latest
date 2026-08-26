@@ -38,12 +38,7 @@
                 </span>
               </div>
 
-              {% comment %} Le message construit depuis la vue avec format_html :
-                 c'est deja une chaine « safe », ses balises <strong>/<em> sont
-                 donc rendues telles quelles et les valeurs venant de la base y
-                 sont echappees. Surtout pas de filtre |safe ici : il ferait
-                 confiance en bloc, y compris si la vue repassait un jour a une
-                 f-string non echappee. {% endcomment %}
+              {# Message deja rendu safe par format_html cote vue. Ne jamais ajouter |safe ici. #}
               <p class="text-slate-700 text-sm leading-relaxed">
                 {{ notif.message }}
               </p>

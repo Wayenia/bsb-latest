@@ -137,12 +137,7 @@
         {% if messages %}
         <div class="fixed top-[80px] right-[20px] z-[9999] min-w-[300px] max-w-[420px]">
             {% for message in messages %}
-            {% comment %} Tout en classes : la CSP n'accepte plus 'unsafe-inline' pour style-src,
-               un attribut style= serait donc bloqué. `animate-[slideIn_.3s_ease]` réutilise le
-               @keyframes slideIn declare dans le bloc de styles ci-dessus, lequel porte un nonce.
-               Chaque couleur de liseré est écrite en entier dans sa branche : le scanner JIT de
-               Tailwind cherche des noms de classe littéraux dans les fichiers, il ne saurait pas
-               reconstruire « border-l-[ » + une valeur interpolée. {% endcomment %}
+            {# Tout en classes : un attribut style= serait bloque par la CSP, et Tailwind ne sait pas reconstruire une classe interpolee. #}
             <div data-automsg
                  class="flex items-start gap-[.75rem] bg-[#fff] rounded-[12px] p-[1rem_1.25rem]
                         mb-[.75rem] shadow-[0_4px_24px_rgba(0,0,0,.13)] animate-[slideIn_.3s_ease]

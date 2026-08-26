@@ -368,9 +368,7 @@ class CentreEtFiliere(models.Model):
         return "—"
 
 
-# ─────────────────────────────────────────────
-# STATISTIQUES RÉELLES — effectifs formés (saisie manuelle DSI)
-# ─────────────────────────────────────────────
+# ── STATISTIQUES RÉELLES — effectifs formés (saisie manuelle DSI) ─────────────
 class EffectifReel(models.Model):
     """Effectif réel (H/F) formé pour une formation (CentreEtFiliere), pour
     un site donné. Saisi/corrigé manuellement par le DSI via le module
@@ -384,10 +382,8 @@ class EffectifReel(models.Model):
         max_length=150, blank=True, default="",
         verbose_name="Site/antenne", help_text="Laisser vide pour le centre principal"
     )
-    # Une formation (CentreEtFiliere) n'est PAS unique par année (unique_together
-    # = centre+filière seulement, réutilisée d'une année sur l'autre) — les
-    # effectifs doivent donc porter leur propre année pour ne pas s'écraser
-    # d'une année sur l'autre.
+    # Une formation n'est pas unique par annee : les effectifs portent la leur
+    # pour ne pas s'ecraser d'une annee sur l'autre.
     annee_scolaire = models.ForeignKey(
         AnneeScolaire, on_delete=models.CASCADE, null=True, blank=True,
         related_name="effectifs_reels", verbose_name="Année de formation"
@@ -395,21 +391,14 @@ class EffectifReel(models.Model):
     effectif_hommes = models.PositiveIntegerField(default=0, verbose_name="Effectif hommes inscrits")
     effectif_femmes = models.PositiveIntegerField(default=0, verbose_name="Effectif femmes inscrits")
 
-    # Statistiques réelles — "RESULTATS AUX EXAMENS DE CERTIFICATION" : l'app
-    # gère les inscrits, mais ni la présence à l'examen ni la réussite
-    # (admission) ne sont des données qu'elle connaît — saisie manuelle DSI.
+    # Presence et admission a l'examen : inconnues de l'app, saisie manuelle DSI.
     effectif_hommes_presents = models.PositiveIntegerField(default=0, verbose_name="Effectif hommes présents à l'examen")
     effectif_femmes_presents = models.PositiveIntegerField(default=0, verbose_name="Effectif femmes présentes à l'examen")
     effectif_hommes_admis = models.PositiveIntegerField(default=0, verbose_name="Effectif hommes admis")
     effectif_femmes_admis = models.PositiveIntegerField(default=0, verbose_name="Effectif femmes admises")
 
-    # Statistiques réelles — "RÉPARTITION DES APPRENANTS VIVANT AVEC UN
-    # HANDICAP PAR MÉTIER ET PAR SEXE" : saisie/corrigée manuellement par le
-    # DSI, par site/formation, agrégée par métier à l'export — le modèle
-    # Excel les pré-suggère à partir du handicap déclaré à l'inscription
-    # (Eleve.a_handicap/type_handicap) tant qu'aucun EffectifReel n'existe
-    # encore pour cette formation (cf. courses/views_stats_reel.py), mais le
-    # DSI reste seul responsable de la valeur finale.
+    # Saisis par le DSI, pre-suggeres depuis le handicap declare a l'inscription
+    # tant qu'aucun EffectifReel n'existe pour la formation.
     effectif_hommes_handicap_moteur = models.PositiveIntegerField(default=0, verbose_name="Handicap moteur — hommes")
     effectif_femmes_handicap_moteur = models.PositiveIntegerField(default=0, verbose_name="Handicap moteur — femmes")
     effectif_hommes_handicap_visuel = models.PositiveIntegerField(default=0, verbose_name="Handicap sensoriel (visuel) — hommes")
@@ -570,9 +559,7 @@ class Inscription(models.Model):
         related_name="reinscriptions", verbose_name="Inscription rejetée d'origine"
     )
 
-    # Statistiques réelles (saisies manuellement par le DSI — voir module
-    # "Statistiques réelles") : l'app gère les inscriptions mais ne sait pas,
-    # par exemple, si l'apprenant est en internat/résidentiel ou en duale.
+    # Saisi par le DSI : l'app ignore le mode de formation reel de l'apprenant.
     MODE_FORMATION_CHOICES = [
         ("residentielle", "Résidentielle"),
         ("duale", "Duale"),
@@ -657,10 +644,8 @@ class Dette(models.Model):
     date_echeance=models.DateTimeField(blank=True,null=True)
 
     def montant_paye(self):
-         # Un paiement annulé ne compte plus dans ce qui a été réglé — toute
-         # la logique de blocage/tranche/état de la dette est calculée à la
-         # volée à partir d'ici, donc l'exclusion suffit à tout remettre
-         # cohérent sans code de "réparation" en cascade ailleurs.
+         # Tout l'etat de la dette derive de cette somme : exclure les paiements
+         # annules ici suffit, sans reparation en cascade ailleurs.
          return sum(p.montant_paiement for p in self.paiements.all() if not p.annule)
 
     def reste_a_payer(self):
@@ -792,10 +777,6 @@ class DocumentEleve(models.Model):
 
 # PAYMENT
 class Paiement(models.Model):
-    # PAYMENT_STATUS = [
-    #     ("paye", "Paye"),
-    #     ("non_paye", "Non paye"),
-    # ]
     PAYMENT_MODE = [
         ("chèque", "Chèque"),
         ("mobile", "Mobile Money"),
@@ -838,14 +819,12 @@ class Paiement(models.Model):
         related_name="paiements_crees"
     )
 
-    # Regroupe les paiements créés en une seule action (ex. "Solder ce
-    # frais"/"Solder l'inscription" génère un versement par tranche/frais) —
-    # c'est ce lot, pas une ligne isolée, qui est annulé d'un bloc.
+    # Regroupe les paiements crees en une seule action : c'est ce lot, et non
+    # une ligne isolee, qui est annule d'un bloc.
     groupe_id = models.UUIDField(null=True, blank=True, db_index=True, verbose_name="Lot d'encaissement")
 
-    # Annulation : le paiement reste en base (traçabilité, numéro de
-    # quittance jamais réutilisé) mais n'est plus compté dans
-    # Dette.montant_paye()/paye_pour_tranche() une fois annulé=True.
+    # Le paiement annule reste en base pour la tracabilite, mais n'est plus
+    # compte dans les montants regles.
     annule = models.BooleanField(default=False, verbose_name="Annulé")
     motif_annulation = models.TextField(blank=True, null=True, verbose_name="Motif de l'annulation")
     annule_par = models.ForeignKey(
@@ -889,12 +868,6 @@ class Paiement(models.Model):
             raise IntegrityError("Impossible de générer un numéro de quittance unique après plusieurs tentatives.")
         return super().save(*args, **kwargs)
         
-#Realtion entre administrationmembre et centre de formation pour la gestion des centres de formation
-# class Affectation(models.Model):
-#      membre=models.ForeignKey("accounts.MembreAdministration",on_delete=models.CASCADE,verbose_name="Membre de l'administration")
-#      centre=models.ForeignKey(CentreFormation,on_delete=models.CASCADE,verbose_name="Centre de formation")
-#      date_debut=models.DateField(verbose_name="Date de debut")
-#      date_fin=models.DateField(verbose_name="Date de fin",null=True, blank=True)
 
 
 # MODÈLE MARQUEUR — ne porte aucune donnée, sert uniquement à rattacher des

@@ -25,10 +25,8 @@ class Actualite(models.Model):
                                null=True, blank=True, related_name="actualites", verbose_name="Auteur")
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default="brouillon", verbose_name="Statut")
     date_publication = models.DateTimeField(null=True, blank=True, verbose_name="Date de publication")
-    # Facultatif : passee cette date, l'actualite disparait de la liste et de la
-    # page publiques sans aucune action manuelle (cf. _publiees() et est_visible
-    # ci-dessous, evalues a chaque requete - pas de tache planifiee necessaire).
-    # Le statut en base reste "publiee" : c'est un historique, pas une suppression.
+    # Evalue a chaque requete, sans tache planifiee. Le statut en base reste
+    # « publiee » : c'est un retrait d'affichage, pas une suppression.
     date_fin_publication = models.DateTimeField(null=True, blank=True, verbose_name="Fin de publication")
     # Empêche un second envoi si l'actualité est modifiée puis republiée.
     abonnes_notifies = models.BooleanField(default=False, verbose_name="Abonnés déjà notifiés")

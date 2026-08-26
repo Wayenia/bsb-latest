@@ -41,11 +41,7 @@
                                            {% if checked %}checked{% endif %}
                                            class="sr-only peer">
                                     <span class="w-11 h-6 flex items-center rounded-full bg-gray-300 peer-checked:bg-bsb-green transition-colors relative">
-                                        {% comment %} L'attribut style= qui figurait ici posait
-                                           « left: 1.5rem ou 0.25rem » selon `checked`, soit exactement
-                                           ce que font deja `left-1` et `peer-checked:left-6`. Il etait
-                                           redondant, et la variante peer- a l'avantage de suivre la case
-                                           en direct, sans rechargement. {% endcomment %}
+                                        {# left-1 et peer-checked:left-6 remplacent l'ancien style= et suivent la case sans rechargement. #}
                                         <span class="w-4 h-4 bg-white rounded-full shadow absolute left-1 peer-checked:left-6 transition-all"></span>
                                     </span>
                                 </label>

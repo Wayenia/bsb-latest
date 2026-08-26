@@ -37,9 +37,8 @@ def _valeurs_autorisees(col):
                 .distinct()
             )
         except Exception:
-            # Base de données momentanément indisponible : le fichier modèle
-            # doit quand même pouvoir être généré (juste sans la liste des
-            # valeurs existantes).
+            # Base indisponible : le modele reste generable, sans la liste des
+            # valeurs existantes.
             return "(liste indisponible pour le moment — consultez la liste correspondante dans l'application)"
         if not noms:
             return "(aucun(e) existant(e) en base pour le moment)"

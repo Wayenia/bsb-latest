@@ -1,9 +1,4 @@
-{% comment %}
-Bouton "Importer Excel" à inclure sur une page de liste, à côté du bouton
-"+ Créer" déjà présent. Usage :
-  {% include 'partials/import_export_buttons.html' with upload_url=... %}
-  {% include 'partials/import_export_buttons.html' with upload_url=... label="Importer régions" %}
-{% endcomment %}
+{# Bouton « Importer Excel » pour une page de liste. Parametres : upload_url, label (facultatif). #}
 <a href="{{ upload_url }}"
    class="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow-500 text-white text-sm font-bold rounded-lg hover:bg-yellow-600 transition-all shadow-sm">
   {{ label|default:"Importer Excel" }}

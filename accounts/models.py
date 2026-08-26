@@ -7,9 +7,8 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, FileExtensionValidator
 
-# Format international (E.164) : + suivi de l'indicatif pays puis du numéro
-# local. La validation précise du nombre de chiffres selon le pays est faite
-# côté client (intl-tel-input) ; ce validateur sert de garde-fou serveur.
+# Garde-fou serveur au format E.164 ; le nombre de chiffres par pays est valide
+# cote client par intl-tel-input.
 phone_validator = RegexValidator(
     regex=r'^\+[1-9]\d{6,14}$',
     message="Le numéro doit être au format international avec l'indicatif du pays (ex : +226 70 00 00 00)."
@@ -65,10 +64,8 @@ class Utilisateur(AbstractUser):
         related_query_name="utilisateur",
     )
 
-    # Rôle métier (user_type) -> nom du groupe Django correspondant. Un utilisateur
-    # est automatiquement rattaché à ce groupe à chaque save(), quel que soit
-    # l'endroit où le compte est créé/modifié (formulaire RH, admin Django, etc.).
-    # 'eleve' est volontairement absent : les élèves ne portent aucune permission.
+    # user_type -> groupe Django, applique a chaque save() d'ou qu'il vienne.
+    # 'eleve' est absent : les eleves ne portent aucune permission.
     ROLE_GROUPS = {
         'admin': 'Admin',
         'dg': 'Directeur Général',
@@ -474,12 +471,9 @@ class Facture_prestation(models.Model):
     def save(self, *args, **kwargs):
         from django.db import transaction, IntegrityError
 
-        # Générer le numéro à la création, et de nouveau chaque fois qu'il est
-        # explicitement remis à vide (cas de la validation proforma -> définitive,
-        # qui doit obtenir un nouveau numéro). `numero` est unique sur TOUTE la
-        # table (proforma et définitive confondues) : le compteur ne doit donc
-        # jamais être filtré par type_facture, sinon une proforma et une
-        # définitive de la même année peuvent calculer le même numéro.
+        # Numero regenere des qu'il est remis a vide (validation proforma vers
+        # definitive). Le compteur n'est jamais filtre par type_facture : numero
+        # est unique sur toute la table (README 9).
         if not self.numero:
             annee = timezone.now().year
             dernier = Facture_prestation.objects.filter(

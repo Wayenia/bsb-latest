@@ -41,10 +41,7 @@ NOMINATIF_SHEET = "Liste nominative"
 EFFECTIFS_SHEET = "Effectifs"
 
 
-# ─────────────────────────────────────────────
-# Specs de colonnes (réutilisent ColumnSpec/resolve_column/read_rows du
-# module d'import générique, sans passer par son moteur de création)
-# ─────────────────────────────────────────────
+# ── Specs de colonnes (réutilisent ColumnSpec/resolve_column/read_rows du module d'import générique, sans passer par son moteur de création) ───
 
 _NOMINATIF_COLUMNS = [
     ColumnSpec("ID (ne pas modifier)", "id", required=True, kind="int"),
@@ -69,13 +66,8 @@ _EFFECTIFS_COLUMNS = [
     ColumnSpec("Effectif admis hommes", "effectif_hommes_admis", required=True, kind="int",
                 help_text="Apprenants admis (reçus) à l'examen de certification."),
     ColumnSpec("Effectif admis femmes", "effectif_femmes_admis", required=True, kind="int"),
-    # Répartition des apprenants vivant avec un handicap, par métier et par
-    # sexe — 6 catégories (moteur / sensoriel visuel / sensoriel auditif /
-    # épilepsie / asthme / autres maladies). Pré-suggérée à partir du handicap
-    # déclaré à l'inscription (Eleve.a_handicap/type_handicap) quand aucun
-    # EffectifReel n'existe encore ; le DSI reste libre de corriger avant de
-    # televerser — contrairement à présents/admis (examen de certification),
-    # totalement inconnus de l'app.
+    # Six categories, pre-suggerees depuis le handicap declare a l'inscription
+    # tant qu'aucun EffectifReel n'existe. Le DSI corrige avant televersement.
     ColumnSpec("Handicap moteur — hommes", "effectif_hommes_handicap_moteur", required=False, kind="int",
                 help_text="Apprenants en situation de handicap moteur."),
     ColumnSpec("Handicap moteur — femmes", "effectif_femmes_handicap_moteur", required=False, kind="int"),
@@ -127,9 +119,8 @@ def _subtotal_label(centre):
     return "Total"
 
 
-# Ordre des titres professionnels utilisé par le tableau "RESULTATS AUX
-# EXAMENS DE CERTIFICATION" (3 sections Inscrits/Présents/Admis × 4 titres ×
-# H/F/T = 36 colonnes de données, dans cet ordre précis).
+# Ordre impose par le tableau des resultats aux examens : 3 sections x 4 titres
+# x H/F/T, soit 36 colonnes.
 TITRES_PROFESSIONNELS = ['CQP', 'BQP', 'BPT', 'BPTS']
 
 
@@ -147,11 +138,7 @@ def _build_certification_columns(titre, inscrits, presents, admis):
     return columns
 
 
-# Catégories (champ hommes, champ femmes) utilisées par le tableau
-# "RÉPARTITION DES APPRENANTS VIVANT AVEC UN HANDICAP PAR MÉTIER ET PAR SEXE",
-# dans cet ordre précis (celui du modèle de référence) : Handicap moteur,
-# Handicap sensoriel (Visuel, Auditif), Maladies invalidantes (Épilepsie,
-# Asthme), Autres maladies.
+# Ordre impose par le modele de reference du tableau handicap.
 _HANDICAP_CATEGORIES = [
     ('effectif_hommes_handicap_moteur', 'effectif_femmes_handicap_moteur'),
     ('effectif_hommes_handicap_visuel', 'effectif_femmes_handicap_visuel'),
@@ -161,10 +148,8 @@ _HANDICAP_CATEGORIES = [
     ('effectif_hommes_autres_maladies', 'effectif_femmes_autres_maladies'),
 ]
 
-# Correspondance entre Eleve.type_handicap (déclaré à l'inscription) et les
-# champs EffectifReel homologues, pour pré-remplir la feuille "Effectifs" du
-# modèle Excel — le DSI reste libre de corriger avant de televerser, sa
-# saisie prévaut ensuite sur cette valeur suggérée (cf. bloc `if existants`).
+# Pre-remplit la feuille Effectifs depuis le handicap declare ; la saisie du
+# DSI prevaut ensuite sur cette suggestion.
 _TYPE_HANDICAP_VERS_CHAMPS = {
     'moteur': ('effectif_hommes_handicap_moteur', 'effectif_femmes_handicap_moteur'),
     'sensoriel_visuel': ('effectif_hommes_handicap_visuel', 'effectif_femmes_handicap_visuel'),
@@ -252,9 +237,7 @@ def _selected_filters(request):
     }
 
 
-# ─────────────────────────────────────────────
-# Dashboard : liste des formations du périmètre
-# ─────────────────────────────────────────────
+# ── Dashboard : liste des formations du périmètre ─────────────────────────────
 
 @require_permission('courses.gerer_statistiques_reelles')
 def stats_reel_dashboard(request):
@@ -263,11 +246,8 @@ def stats_reel_dashboard(request):
 
     formations = _formations_scope_qs(request.user)
 
-    # Une formation (CentreEtFiliere) n'est pas propre à une année (elle est
-    # réutilisée d'une année sur l'autre) — les compteurs et le filtre année
-    # doivent donc se baser sur Inscription.annee_scolaire (qui, lui, est
-    # correct par élève), pas sur CentreEtFiliere.annee_prog (une valeur
-    # fixe, celle de la première programmation).
+    # Une formation est reutilisee d'une annee sur l'autre : le filtre annee se
+    # base sur Inscription.annee_scolaire, pas sur CentreEtFiliere.annee_prog.
     if selected['annee_id']:
         annee_q = Q(inscription__annee_scolaire_id=selected['annee_id'])
         formations = formations.filter(inscription__annee_scolaire_id=selected['annee_id']).distinct()
@@ -337,9 +317,7 @@ def _resolve_annee(request, formation):
     )
 
 
-# ─────────────────────────────────────────────
-# Téléchargement du modèle Excel pour une formation
-# ─────────────────────────────────────────────
+# ── Téléchargement du modèle Excel pour une formation ─────────────────────────
 
 @require_permission('courses.gerer_statistiques_reelles')
 def stats_reel_formation_template(request, formation_id):
@@ -406,10 +384,8 @@ def stats_reel_formation_template(request, formation_id):
             inscription.observations_reel or "",
         ])
 
-    # ── Feuille 2 : Effectifs (agrégés, éditables) ─────────────────────────
-    # Inscrits : pré-calculés depuis les inscriptions (ce que l'app sait déjà).
-    # Présents / Admis : l'app ne le sait pas (examen de certification) — à
-    # saisir manuellement, sans valeur suggérée.
+    # Feuille 2, effectifs editables : les inscrits sont pre-calcules, presents
+    # et admis relevent de l'examen de certification et restent a saisir.
     ws2 = wb.create_sheet(EFFECTIFS_SHEET)
     eff_headers = ["Site"] + [c.header + (" *" if c.required else "") for c in _EFFECTIFS_COLUMNS[1:]]
     for col_idx, text in enumerate(eff_headers, start=1):
@@ -427,11 +403,8 @@ def stats_reel_formation_template(request, formation_id):
     else:
         h = inscriptions.filter(eleve__sexe='m').count()
         f = inscriptions.filter(eleve__sexe='f').count()
-        # Seuls les inscrits sont pré-calculés avec certitude (ce que l'app
-        # sait) — présents/admis restent à 0 (examen de certification,
-        # inconnu de l'app). Le handicap est pré-rempli à partir de ce que
-        # l'apprenant a déclaré à l'inscription, à titre de suggestion : le
-        # DSI reste libre de le corriger avant de televerser le fichier.
+        # Presents et admis restent a 0 : l'app ne les connait pas. Le handicap
+        # est une suggestion, corrigeable avant televersement.
         valeurs_suggerees = {'effectif_hommes': h, 'effectif_femmes': f}
         for type_code, (champ_h, champ_f) in _TYPE_HANDICAP_VERS_CHAMPS.items():
             valeurs_suggerees[champ_h] = inscriptions.filter(
@@ -487,9 +460,7 @@ def stats_reel_formation_template(request, formation_id):
     return response
 
 
-# ─────────────────────────────────────────────
-# Upload du fichier rempli
-# ─────────────────────────────────────────────
+# ── Upload du fichier rempli ──────────────────────────────────────────────────
 
 @require_permission('courses.gerer_statistiques_reelles')
 def stats_reel_formation_upload(request, formation_id):
@@ -587,9 +558,8 @@ def stats_reel_formation_upload(request, formation_id):
         try:
             with transaction.atomic():
                 site = resolved.get('site') or ''
-                # Colonnes handicap/maladies non obligatoires : cellule vide →
-                # None côté resolve_column, ramené à 0 (PositiveIntegerField
-                # non nullable) — pas d'effectif déclaré dans cette catégorie.
+                # Colonnes handicap facultatives : cellule vide ramenee a 0, le
+                # champ n'etant pas nullable.
                 defaults = {
                     col.field_name: (resolved.get(col.field_name) or 0)
                     for col in _EFFECTIFS_COLUMNS if col.field_name != 'site'
@@ -610,9 +580,7 @@ def stats_reel_formation_upload(request, formation_id):
     })
 
 
-# ─────────────────────────────────────────────
-# Export PDF — liste nominative des apprenants en résidentielle, par DIR
-# ─────────────────────────────────────────────
+# ── Export PDF — liste nominative des apprenants en résidentielle, par DIR ────
 
 @require_permission('courses.gerer_statistiques_reelles')
 def stats_reel_export_nominatif(request):
@@ -666,9 +634,7 @@ def stats_reel_export_nominatif(request):
     return response
 
 
-# ─────────────────────────────────────────────
-# Export Excel — situation des formés (effectifs), par DIR
-# ─────────────────────────────────────────────
+# ── Export Excel — situation des formés (effectifs), par DIR ──────────────────
 
 @require_permission('courses.gerer_statistiques_reelles')
 def stats_reel_export_agrege(request):
@@ -783,10 +749,7 @@ def stats_reel_export_agrege(request):
     return response
 
 
-# ─────────────────────────────────────────────
-# Export PDF — RESULTATS AUX EXAMENS DE CERTIFICATION
-# (Inscrits / Présents / Admis, par titre professionnel, par DIR)
-# ─────────────────────────────────────────────
+# ── Export PDF — RESULTATS AUX EXAMENS DE CERTIFICATION (Inscrits / Présents / Admis, par titre professionnel, par DIR) ───
 
 @require_permission('courses.gerer_statistiques_reelles')
 def stats_reel_export_certification(request):
@@ -868,10 +831,7 @@ def stats_reel_export_certification(request):
     return response
 
 
-# ─────────────────────────────────────────────
-# Export PDF — RÉPARTITION DES APPRENANTS VIVANT AVEC UN HANDICAP
-# PAR MÉTIER ET PAR SEXE
-# ─────────────────────────────────────────────
+# ── Export PDF — RÉPARTITION DES APPRENANTS VIVANT AVEC UN HANDICAP PAR MÉTIER ET PAR SEXE ───
 
 @require_permission('courses.gerer_statistiques_reelles')
 def stats_reel_export_handicap(request):
@@ -893,9 +853,8 @@ def stats_reel_export_handicap(request):
     if annee_id:
         qs = qs.filter(annee_scolaire_id=annee_id)
 
-    # Une ligne par métier (agrégée sur tous les centres/sites du périmètre) —
-    # ce tableau ne se décompose pas par direction, contrairement aux 2 autres
-    # exports (voir le modèle de référence : une seule colonne "Métiers").
+    # Une ligne par metier, agregee sur tout le perimetre : ce tableau ne se
+    # decompose pas par direction, contrairement aux deux autres exports.
     champs_sommes = [c for paire in _HANDICAP_CATEGORIES for c in paire]
     par_metier = (
         qs.values('formation__filiere__nom_filiere')

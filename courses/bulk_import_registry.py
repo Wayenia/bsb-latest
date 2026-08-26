@@ -256,10 +256,9 @@ SPEC_CENTRE = ImportSpec(
 )
 
 
-# ─── Agent (Formateur / MembreAdministration / DirecteurInterRegional) ───
-# Mot de passe généré automatiquement (jamais dans le fichier Excel) — voir
-# AgentForm.save() : un mot de passe vide sur un compte neuf appelle
-# set_unusable_password(), il faut donc toujours en injecter un.
+# ── Agent (formateur, membre de l'administration, directeur inter-regional) ──
+# Mot de passe genere automatiquement, jamais lu dans le fichier : un mot de
+# passe vide appellerait set_unusable_password().
 
 _ROLE_CHOICES_IMPORT = [c for c in USER_TYPE_CHOICES if c[0]]
 
@@ -340,10 +339,9 @@ SPEC_AGENT = ImportSpec(
 )
 
 
-# ─── Programmation (CentreEtFiliere) — mode manuel car une ligne touche 3 ──
-# modèles : Filiere (créée ou mise à jour, dédupliquée par nom — plusieurs
-# centres partagent souvent le même métier), CentreEtFiliere (la formation
-# elle-même) et Frais (propre à CHAQUE couple centre+métier, jamais partagé).
+# ── Programmation (CentreEtFiliere) ──────────────────────────────────────────
+# Mode manuel : une ligne touche trois modeles, Filiere (dedupliquee par nom),
+# CentreEtFiliere et Frais (propre a chaque couple centre-metier).
 
 def _parse_date_aware(value):
     """resolve_column(kind="date") renvoie une chaîne "AAAA-MM-JJ" ; les 3
@@ -370,9 +368,8 @@ def _programmation_validator(resolved):
     if CentreEtFiliere.objects.filter(centre_id=centre_id, filiere__nom_filiere__iexact=nom_filiere).exists():
         return False, None, [f"Cette formation « {nom_filiere} » existe déjà pour ce centre."]
 
-    # Filiere : dédupliquée par nom. Le fichier Excel fait autorité — si le
-    # métier existe déjà, ses infos sont mises à jour avec les valeurs de la
-    # ligne (plutôt que de garder silencieusement l'ancienne valeur).
+    # Le fichier fait autorite : un metier deja present est mis a jour avec les
+    # valeurs de la ligne.
     filiere = Filiere.objects.filter(nom_filiere__iexact=nom_filiere).first()
     filiere_fields = {
         "niveau_diplome": resolved.get("niveau_diplome") or None,

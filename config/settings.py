@@ -3,15 +3,12 @@ import os
 import environ 
 from datetime import timedelta
 
-#BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# env
 env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
-# secret key
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env('DEBUG', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
@@ -21,9 +18,7 @@ CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS')
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
 CORS_ALLOW_CREDENTIALS = env('CORS_ALLOW_CREDENTIALS', default=True)
 
-# IP du serveur hôte, détectée automatiquement au déploiement (voir docker-compose.yml
-# / README : HOST_IP=$(hostname -I | awk '{print $1}' | head -1)) et injectée dans le
-# conteneur. Permet d'accéder à l'application via l'IP du serveur, en plus du nom de domaine.
+# IP du serveur injectee par docker-compose : acces par IP en plus du domaine.
 HOST_IP = os.environ.get('HOST_IP', '').strip()
 if HOST_IP:
     ALLOWED_HOSTS.append(HOST_IP)
@@ -33,11 +28,7 @@ if HOST_IP:
 
 # Application definition
 INSTALLED_APPS = [
-    # 'jazzmin' et 'django.contrib.admin' ont ete retires : l'admin Django
-    # n'avait servi qu'au debogage, toute l'administration passe par /bsb/.
-    # Note : la table django_admin_log subsiste en base, orpheline et inerte ;
-    # elle peut etre supprimee manuellement (DROP TABLE django_admin_log) apres
-    # verification, aucun code du projet ne la lit.
+    # jazzmin et django.contrib.admin retires : administration via /bsb/ (README 9).
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -71,10 +62,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'config.middleware.SecurityHeadersMiddleware',
     'django.middleware.csp.ContentSecurityPolicyMiddleware',
-    # En dernier volontairement : quand ce middleware court-circuite une requete
-    # (verrou anti-force brute), la reponse 429 remonte quand meme a travers
-    # TOUS les middlewares declares au-dessus et herite donc de la CSP et des
-    # en-tetes de securite. Place plus haut, la page de blocage sortirait sans.
+    # En dernier : la reponse 429 traverse ainsi les middlewares au-dessus et
+    # herite de la CSP et des en-tetes de securite.
     'config.middleware.LimitationConnexionMiddleware',
 ]
 
@@ -112,16 +101,8 @@ DATABASES = {
     }
 }
 
-# Cache Redis. Indispensable au verrou anti-force brute (accounts/ratelimit.py) :
-# le compteur doit etre partage par les trois workers gunicorn, sans quoi le
-# seuil serait de fait trois fois plus permissif. django-redis figurait deja
-# dans requirements.txt mais aucun CACHES n'etait declare : Django retombait
-# silencieusement sur LocMemCache, local a chaque processus.
-#
-# IGNORE_EXCEPTIONS : si Redis tombe, on prefere que le site reste debout plutot
-# que de renvoyer 500 sur chaque page. Le verrou s'ouvre alors (fail-open) ; les
-# erreurs sont journalisees pour que la panne ne passe pas inapercue, et le
-# service Redis n'expose aucun port hors du reseau Docker interne.
+# Compteur du verrou anti-force brute (accounts/ratelimit.py), partage par les
+# workers gunicorn. IGNORE_EXCEPTIONS ouvre le verrou si Redis tombe (README 9).
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
@@ -168,10 +149,7 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# staticfiles/media sont montes en bind mount depuis l'hote (dev). Sous WSL2,
-# les chemins /mnt/c (DrvFs) refusent chmod() avec EPERM meme quand l'ecriture
-# fonctionne : collectstatic plantait sur ce chmod. On desactive le chmod
-# applique par Django apres chaque fichier ecrit.
+# Sous WSL2, /mnt/c refuse chmod() : desactive le chmod post-ecriture de Django.
 FILE_UPLOAD_PERMISSIONS = None
 FILE_UPLOAD_DIRECTORY_PERMISSIONS = None
 
@@ -208,43 +186,29 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
 }
 
-# Les messages transitent par la session, jamais par un cookie.
-# Le stockage par defaut (FallbackStorage) essaie CookieStorage en premier. Or
-# Django, quand il *efface* ce cookie, appelle response.delete_cookie(), qui ne
-# transmet ni httponly ni secure (cf. HttpResponseBase.delete_cookie : le drapeau
-# Secure n'est pose que pour les noms prefixes __Secure-/__Host-). D'ou les deux
-# alertes « Cookies Not Marked as HttpOnly / Secure » du scan Acunetix du
-# 24/08/2026 — sans risque reel puisque le cookie signale est vide et deja
-# expire, mais impossible a corriger a la source.
-# SessionStorage supprime purement et simplement ce cookie, ferme les deux
-# alertes, et garde le contenu des messages cote serveur.
+# Messages en session et non en cookie : delete_cookie() ne pose ni HttpOnly ni
+# Secure sur le cookie efface (README 9).
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
-# DENY et non SAMEORIGIN : l'unique raison de SAMEORIGIN etait l'admin Django,
-# dont jazzmin encadrait certaines pages dans des iframes (related_modal_active).
-# L'admin ayant ete retire, plus aucun gabarit du projet n'utilise <iframe>.
+# DENY : l'admin Django, seule raison du SAMEORIGIN, a ete retire.
 X_FRAME_OPTIONS = 'DENY'
 
 # HTTPS termine par le proxy amont : Django s'y fie via X-Forwarded-Proto.
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# HSTS (findings V07) : force le navigateur a n'utiliser que HTTPS pendant 1 an.
+# HSTS : HTTPS obligatoire pendant un an.
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
-# SECURE_SSL_REDIRECT reste False : la terminaison TLS est en amont (cf. CLAUDE.md).
+# SECURE_SSL_REDIRECT reste False : terminaison TLS en amont.
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_AGE = 86400
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-# True car le site est servi en HTTPS réel via le proxy externe (TLS terminé en
-# amont, cf. règle "jamais de redirection HTTPS ici"). En local (http://localhost),
-# le navigateur n'enverra pas ces cookies : login/CSRF sembleront "casser" en dev
-# HTTP pur, c'est attendu — utiliser un tunnel HTTPS local ou DEBUG-only override
-# si besoin de tester ce flux précis en clair.
+# Cookies Secure hors DEBUG : en HTTP local, login et CSRF echouent (README 9).
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
@@ -255,24 +219,10 @@ from django.utils.csp import CSP
 SECURE_CSP = {
     "default-src": [CSP.SELF],
     "script-src": [CSP.SELF, CSP.NONCE],
-    # 'unsafe-inline' retire : les 228 attributs style= des gabarits ont ete
-    # convertis en classes Tailwind a valeur arbitraire, qui emettent exactement
-    # la meme declaration CSS, et les blocs <style> portent desormais un nonce.
-    # Rappel : nonce et 'unsafe-inline' sont exclusifs — des qu'un nonce figure
-    # dans la directive, le navigateur ignore 'unsafe-inline'. C'etait donc tout
-    # ou rien, d'ou la conversion complete.
-    # Les gabarits de PDF (WeasyPrint) et d'e-mail gardent leurs styles en ligne :
-    # ils ne passent pas par un navigateur, la CSP ne s'y applique pas.
+    # Nonce sans 'unsafe-inline' : les deux sont exclusifs (README 9).
     "style-src": [CSP.SELF, CSP.NONCE],
-    # data: conserve pour img-src : deux gabarits du projet dessinent leur motif
-    # de fond avec url("data:image/svg+xml,...") — admin/center/form.html et
-    # member/statistiques/statistiques.html. (Les 632 occurrences des CSS
-    # vendorises de jazzmin ont disparu avec l'admin Django.)
-    # Contrairement a ce qu'annonce le rapport Acunetix, data: dans img-src ne
-    # permet PAS d'executer de script : il faudrait pour cela le trouver dans
-    # script-src, object-src ou frame-src.
+    # data: requis par deux gabarits qui dessinent leur fond en SVG inline.
     "img-src": [CSP.SELF, "data:"],
-    # data: retire de font-src : aucune @font-face en data: dans le projet.
     "font-src": [CSP.SELF],
     "connect-src": [CSP.SELF],
     "frame-ancestors": [CSP.SELF],
@@ -283,10 +233,8 @@ SECURE_CSP = {
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 30*1024*1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 30*1024*1024
-# E-mail : SMTP si renseigne dans .env, sinon affichage en console (dev)
-# ATTENTION : sans EMAIL_HOST, le backend console ecrit l'integralite du message
-# — adresses des abonnes comprises — sur la sortie standard, donc dans les logs
-# du conteneur. A n'utiliser qu'en developpement.
+# SMTP si EMAIL_HOST est renseigne, sinon console : le backend console ecrit les
+# adresses des abonnes dans les logs du conteneur, developpement uniquement.
 EMAIL_HOST = env('EMAIL_HOST', default='')
 if EMAIL_HOST:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -297,20 +245,15 @@ if EMAIL_HOST:
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Sans timeout, un SMTP qui ne repond pas bloque le worker gunicorn jusqu'au
-# --timeout de 120 s. La diffusion newsletter ouvre une connexion par lot de 50.
+# Sans timeout, un SMTP muet bloque le worker gunicorn pendant 120 s.
 EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT', default=20)
 
-# Pilotes par .env : avec Google Workspace, l'adresse d'expedition doit
-# correspondre a EMAIL_HOST_USER (ou a un alias « Envoyer en tant que » verifie),
-# sinon Gmail reecrit silencieusement l'en-tete From.
+# Avec Google Workspace, doit correspondre a EMAIL_HOST_USER (README 9).
 SERVER_EMAIL = env('SERVER_EMAIL', default='admin@burkinasuudu.com')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@burkinasuudu.com')
 
-# URL publique du site, utilisee pour construire les liens absolus des e-mails
-# envoyes hors requete HTTP (commande `notifier_actualites`). Sans elle, le
-# repli fabriquait « http://<premier ALLOWED_HOSTS> », soit un lien en clair
-# vers un site servi exclusivement en HTTPS.
+# Liens absolus des e-mails envoyes hors requete HTTP ; vide, le repli produit
+# un lien en http:// (README 9).
 SITE_URL = env('SITE_URL', default='')
 
 PASSWORD_HASHERS = [
@@ -331,12 +274,7 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            # /app est monte en bind depuis l'hote (docker-compose.yml) : ses
-            # permissions dependent de l'utilisateur du serveur de prod et ne
-            # sont pas garanties inscriptibles par l'utilisateur non-root du
-            # conteneur (appuser, uid 10001). /app/logs est monte a part, sur
-            # un volume Docker nomme initialise avec les permissions de
-            # l'image, donc toujours inscriptible quel que soit l'hote.
+            # /app/logs est un volume nomme, donc inscriptible par appuser (README 9).
             'filename': os.path.join(BASE_DIR, 'logs', 'security.log'),
         },
     },

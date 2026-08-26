@@ -57,10 +57,8 @@ def subscribe_selection_view(request):
     annees = AnneeScolaire.objects.all()
     centres = CentreFormation.objects.all()
 
-    # Retour sur cette page (bouton "Précédent" depuis Informations
-    # personnelles) sans paramètre GET explicite : on retrouve année/centre/
-    # métier depuis la formation déjà choisie (mémorisée en session dès
-    # l'entrée dans personal_info_view) plutôt que de tout vider.
+    # Retour sans parametre GET : on retrouve annee/centre/metier depuis la
+    # formation memorisee en session plutot que de tout vider.
     session_career = None
     if 'annee' not in request.GET and 'centre' not in request.GET:
         session_career_id = request.session.get('career_id')
@@ -187,11 +185,8 @@ def documents_view(request):
             if doc.est_requis and doc.libelle_piece not in request.FILES:
                 errors.append(f'Le document « {doc.libelle_piece} » est obligatoire.')
 
-        # Seuls JPEG/JPG/PNG/PDF sont acceptés pour les documents envoyés par
-        # l'élève : extension ET signature binaire verifiees, pour empecher un
-        # fichier .html/.svg renomme (vecteur XSS stocke contre le personnel
-        # qui ouvre ces documents via "Visualiser"). Taille max 5 Mo par
-        # fichier, alignee sur client_max_body_size (5m) de nginx.
+        # Extension et signature binaire verifiees : un .html ou .svg renomme
+        # serait un XSS stocke contre le personnel qui ouvre le document.
         for doc in required_doc:
             if doc.libelle_piece in request.FILES:
                 err = _valider_fichier_upload(request.FILES[doc.libelle_piece])
@@ -233,9 +228,8 @@ def personal_info_view(request, career_id):
 
     #eleve = request.user.eleve
 
-    # Réinscription après rejet : on mémorise l'inscription rejetée d'origine en session
-    # (elle ne survit pas forcément dans l'URL après le POST) et on préremplit le formulaire
-    # avec les informations qu'elle contenait.
+    # Reinscription apres rejet : l'inscription d'origine est memorisee en
+    # session, l'URL ne la conservant pas apres le POST.
     from_rejected_param = request.GET.get('from_rejected')
     if from_rejected_param:
         request.session['from_rejected_id'] = from_rejected_param
@@ -271,12 +265,8 @@ def personal_info_view(request, career_id):
             'organisation_email': rejected_inscription.organisation_email or '',
         })
 
-    # Retour sur cette page après une première soumission dans le même
-    # parcours (bouton "Précédent" depuis Documents, ou "Modifier mes
-    # informations" depuis le Récapitulatif) : on réaffiche ce que l'élève
-    # avait saisi pour la personne à contacter plutôt que de le vider, ces
-    # champs n'existant pas sur le modèle Eleve (donc jamais restaurés par
-    # les valeurs ci-dessus).
+    # La personne a contacter n'existe pas sur le modele Eleve : sa saisie est
+    # relue en session pour ne pas etre perdue au retour sur la page.
     student_data = request.session.get('student_data')
     if student_data:
         initial.update({
@@ -360,11 +350,8 @@ def recap_view(request):
             return redirect('courses:my_subscriptions')
 
         if career.type_formation == 'initiale':
-            # Autant de demandes en Formation Initiale que voulu, dans
-            # n'importe quel centre, tant qu'aucune n'est encore validée
-            # cette année scolaire — seule une inscription déjà VALIDÉE
-            # bloque de nouvelles demandes (les demandes en attente
-            # n'empêchent pas d'en déposer d'autres en parallèle).
+            # Seule une inscription deja validee bloque de nouvelles demandes ;
+            # les demandes en attente peuvent coexister.
             conflit = Inscription.objects.filter(
                 eleve=request.user.eleve,
                 annee_scolaire=career.annee_prog,
@@ -468,11 +455,8 @@ def effectuer_paiment(request, id):
     if not is_self and not (request.user.is_superuser or request.user.has_perm('courses.encaisser_paiement')):
         raise PermissionDenied("Vous ne pouvez régler que vos propres dettes.")
 
-    # Paiement en ligne désactivé pour les apprenants : ils doivent se rendre
-    # au centre BSB le plus proche. Le circuit de paiement lui-même n'est pas
-    # touché — cette redirection ne s'applique qu'à l'élève réglant sa propre
-    # dette (is_self) ; le personnel autorisé (encaisser_paiement) continue
-    # d'utiliser cette vue normalement, rien ci-dessous n'est modifié pour eux.
+    # Paiement en ligne desactive pour les apprenants uniquement : le personnel
+    # autorise continue d'utiliser cette vue normalement.
     if is_self:
         return redirect('courses:paiement_info_centre')
 
@@ -506,9 +490,8 @@ def effectuer_paiment(request, id):
             # Le numéro de quittance est généré automatiquement à l'enregistrement
             # (voir Paiement.save()), avec nouvelle tentative en cas de collision.
 
-            # L'élève doit régler exactement le montant dû (tranche ou dette
-            # entière) ; les autres rôles (caisse, admin, gestionnaire...)
-            # peuvent régler un montant partiel.
+            # L'eleve regle exactement le montant du ; les autres roles peuvent
+            # encaisser un montant partiel.
             if is_self and paiement.montant_paiement != montant_cible:
                 messages.error(request, f"Vous devez régler exactement le montant dû ({montant_cible:,.0f} FCFA).")
                 return render(request, 'student/paiement/form.html', {
@@ -576,12 +559,8 @@ def effectuer_paiment(request, id):
         'montant_cible': montant_cible,
     })
 
-#Afficher tous les paiemnents de l'élève conneecté en fait c'est mieux on a pas beoin des dettes on affiche tout
-# require_role('eleve') et pas seulement login_required : la vue lit
-# request.user.eleve, qui leve AttributeError sur un visiteur anonyme et
-# Eleve.DoesNotExist sur un agent — dans les deux cas une erreur 500 au lieu
-# d'un refus propre. Les donnees restaient filtrees par eleve (aucune fuite),
-# mais l'absence de garde produisait des 500 exploitables en deni de service.
+# require_role et non login_required : la vue lit request.user.eleve, qui leve
+# une exception sur un visiteur anonyme ou un agent, soit une 500 au lieu d'un refus.
 @require_role('eleve')
 def liste_paiement(request):
     paiements=Paiement.objects.filter(dette__inscription__eleve=request.user.eleve).select_related('dette','dette__inscription','dette__inscription__eleve').order_by('-date_paiement')
@@ -592,9 +571,7 @@ def liste_paiement(request):
         'paiements': paiements,
     })
               
-# ─────────────────────────────────────────────
-# EN-TÊTE OFFICIEL PARTAGÉ POUR LES PDF GÉNÉRÉS
-# ─────────────────────────────────────────────
+# ── EN-TÊTE OFFICIEL PARTAGÉ POUR LES PDF GÉNÉRÉS ─────────────────────────────
 def _pdf_header_lines(centre=None, direction=None):
     """Retourne (lignes_gauche, lignes_droite) de l'en-tête officiel.
 
@@ -659,9 +636,7 @@ def _draw_pdf_watermark(p, width, height, favicon_path=None):
     except Exception:
         pass
 
-# ─────────────────────────────────────────────
-# ELEVE — Télécharger la quittance PDF
-# ─────────────────────────────────────────────
+# ── ELEVE — Télécharger la quittance PDF ──────────────────────────────────────
 @require_role('eleve')
 def telecharger_quittance(request, id):
     
@@ -707,9 +682,7 @@ def telecharger_quittance(request, id):
     return response
 
 
-# ─────────────────────────────────────────────
-# RÉCÉPISSÉ DE DEMANDE D'INSCRIPTION (dépôt ou validation, sans paiement)
-# ─────────────────────────────────────────────
+# ── RÉCÉPISSÉ DE DEMANDE D'INSCRIPTION (dépôt ou validation, sans paiement) ───
 @login_required
 def telecharger_recepisse(request, id):
     inscription = get_object_or_404(
@@ -752,9 +725,7 @@ def telecharger_recepisse(request, id):
     return response
 
 
-# ─────────────────────────────────────────────
-# ATTESTATION D'INSCRIPTION (nécessite au moins un paiement)
-# ─────────────────────────────────────────────
+# ── ATTESTATION D'INSCRIPTION (nécessite au moins un paiement) ────────────────
 @login_required
 def telecharger_attestation(request, id):
     inscription = get_object_or_404(
@@ -779,10 +750,8 @@ def telecharger_attestation(request, id):
     centre = inscription.formation.centre
     header_left, header_right = _pdf_header_lines(centre)
 
-    # "Directeur du centre" = le membre de l'administration rattaché à ce
-    # centre avec le rôle "gestionnaire" (= Directeur de Centre — voir
-    # ROLE_GROUPS). À défaut (poste vacant), on retombe sur une formule
-    # générique plutôt que de laisser un nom vide sur le document officiel.
+    # Directeur du centre = membre rattache au centre avec le role gestionnaire.
+    # Poste vacant : formule generique plutot qu'un nom vide sur l'acte officiel.
     directeur_centre = MembreAdministration.objects.filter(
         structure=centre, user_type='gestionnaire'
     ).first()
@@ -792,9 +761,7 @@ def telecharger_attestation(request, id):
         directeur_titre = "Directrice"
         directeur_titre_article = "La Directrice"
     else:
-        # Par défaut (sexe masculin, ou poste vacant/genre inconnu) : formes
-        # masculines, cohérent avec le "Le Directeur du centre" générique
-        # utilisé plus haut quand le poste est vacant.
+        # Formes masculines par defaut, y compris poste vacant ou genre inconnu.
         directeur_civilite = "M." if directeur_centre else ""
         directeur_titre = "Directeur"
         directeur_titre_article = "Le Directeur"
@@ -863,9 +830,8 @@ def download_quittance(request,id):
     p.drawCentredString(width/2, height-3.8*cm, "QUITTANCE DE PAIEMENT")
     p.setFont("Helvetica", 9)
     p.drawCentredString(width/2, height-4.4*cm, "Burkina Suudu Bawde")
-    # Tampon "ANNULÉE" : le paiement reste conservé pour l'audit (numéro de
-    # quittance jamais réutilisé) mais ce document ne doit jamais pouvoir
-    # passer pour un reçu valide s'il est réimprimé après annulation.
+    # Le paiement annule est conserve pour l'audit, mais sa quittance ne doit
+    # jamais pouvoir passer pour un recu valide.
     if paiement.annule:
         p.saveState()
         p.setFillColor(colors.red)
@@ -879,9 +845,7 @@ def download_quittance(request,id):
     y = height - 5.2*cm
     p.setLineWidth(0.8)
     p.line(1.5*cm, y, width-1.5*cm, y)
-    # FONCTION HELPER — bascule automatiquement sur plusieurs lignes si la
-    # valeur (ex. nom de centre ou de métier à rallonge) dépasse la largeur
-    # disponible entre la colonne valeur et la marge droite.
+    # Bascule sur plusieurs lignes si la valeur depasse la largeur disponible.
     def ligne(label, valeur, y_pos):
         p.setFont("Helvetica-Bold", 10)
         p.drawString(1.5*cm, y_pos, label)
@@ -974,9 +938,8 @@ def download_quittance(request,id):
     qr_img.save(qr_buffer, format='PNG')
     qr_buffer.seek(0)
 
-    # Position calculée à partir de la fin du texte (et non plus une valeur
-    # fixe) pour que le QR code ne chevauche jamais les lignes ci-dessus,
-    # même si certaines ont débordé sur plusieurs lignes.
+    # Position calculee depuis la fin du texte : le QR ne chevauche jamais les
+    # lignes ci-dessus, meme debordantes.
     qr_size = 3*cm
     qr_x = (width - qr_size) / 2  # centré horizontalement
     qr_y = max(y - 0.3*cm - qr_size, 0.9*cm)
@@ -1330,10 +1293,8 @@ def paiement_list(request):
             formation__centre_id__in=centres_qs.values_list('id', flat=True)
         ).order_by('-date_inscription')
 
-    # Le reste à payer est calculé à partir des dettes/paiements déjà préchargés :
-    # filtrer en Python plutôt qu'avec une agrégation SQL fragile sur deux
-    # niveaux de relations (dettes -> paiements). Les paiements annulés ne
-    # comptent plus comme payés (cf. Dette.montant_paye()).
+    # Reste a payer filtre en Python sur les donnees prechargees : une agregation
+    # SQL sur deux niveaux de relations serait fragile.
     inscriptions_avec_reste = []
     for insc in inscriptions_qs:
         insc.total_du = sum(d.montant_total for d in insc.dettes.all())
@@ -1344,10 +1305,8 @@ def paiement_list(request):
             if not p.annule
         )
         insc.reste = insc.total_du - insc.total_paye
-        # En parcours libre (sans recherche), on ne montre que ce qui reste dû —
-        # utile pour un caissier. Mais une recherche doit retrouver un apprenant
-        # même à reste nul (ex. annuler un versement après coup sur un dossier
-        # déjà entièrement réglé) : ce n'est prévu nulle part ailleurs.
+        # Sans recherche, seuls les restes dus sont listes ; une recherche doit
+        # retrouver un apprenant meme solde, pour annuler un versement.
         if q or insc.reste > 0:
             inscriptions_avec_reste.append(insc)
 
@@ -1358,9 +1317,8 @@ def paiement_list(request):
         'none': "aucun centre (aucune structure ne vous est rattachée)",
     }
 
-    # Recherche cross-centre ou portée mono-centre : liste plate, comme
-    # avant (une recherche cible un apprenant précis, peu importe son centre ;
-    # un gestionnaire/caissier n'a qu'un seul centre, pas besoin d'accordéon).
+    # Liste plate : une recherche cible un apprenant precis, et un gestionnaire
+    # ou caissier n'a de toute facon qu'un seul centre.
     if q or not multi_centre:
         paginator = Paginator(inscriptions_avec_reste, 10)
         inscriptions = paginator.get_page(request.GET.get('page'))
@@ -1374,11 +1332,8 @@ def paiement_list(request):
             'peut_rechercher_tous_centres': peut_rechercher_tous_centres,
         })
 
-    # Portée multi-centres, sans recherche : accordéon centres -> inscriptions
-    # (même principe que régions -> provinces) : la liste des centres est
-    # paginée (10/page) et, pour le centre déplié (paramètre ?centre=), ses
-    # inscriptions à reste à payer sont elles-mêmes paginées (10/page,
-    # paramètre ?ipage=) — sans recharger toute la liste des centres.
+    # Accordeon centres -> inscriptions : les deux niveaux sont pagines
+    # separement (?centre= et ?ipage=), sans recharger la liste des centres.
     compte_par_centre = {}
     inscriptions_par_centre = {}
     for insc in inscriptions_avec_reste:
@@ -1492,9 +1447,7 @@ def member_dashboard_direction(request, id):
 
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  CRÉER UN MÉTIER  (anciennement create_fees)
-# ─────────────────────────────────────────────────────────────────────────────
+# ── CRÉER UN MÉTIER  (anciennement create_fees) ───────────────────────────────
 def _process_metier_modules(request, filiere, form):
     """
     Associe à ce métier les modules existants cochés dans le formulaire, plus
@@ -1549,9 +1502,7 @@ def field_import(request):
     return handle_import_upload(request, SPEC_FILIERE)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  LISTE DES MÉTIERS D'UN CENTRE  (anciennement member_filiere_list)
-# ─────────────────────────────────────────────────────────────────────────────
+# ── LISTE DES MÉTIERS D'UN CENTRE  (anciennement member_filiere_list) ─────────
 @require_permission('courses.gerer_metiers')
 def member_metier_list(request):
     from django.db.models import Count
@@ -1589,11 +1540,8 @@ def home(request):
         .select_related('centre', 'filiere', 'annee_prog')
         .order_by('-date_lancement')
     )
-    # Un carrousel représente un métier, mais un même métier peut être
-    # programmé sur plusieurs centres/années (plusieurs CentreEtFiliere) :
-    # on garde une seule carte par métier (la plus récemment lancée), mais on
-    # calcule quand même, sur l'ENSEMBLE de ses formations actives, la date
-    # limite d'inscription qui expire le plus tôt.
+    # Une seule carte par metier (la plus recente), mais la date limite retenue
+    # est la plus proche parmi toutes ses formations actives.
     seen_filieres = set()
     active_careers = []
     earliest_deadlines = {}
@@ -1652,9 +1600,8 @@ def redirect_to_dashboard(request):
     if utype in ('admin', 'dg'):
         return redirect('bsb_admin:admin_dashboard')
 
-    # ── Deps, agent_comptable et membre (personnel du siège, sans centre ni
-    # direction de rattachement) → member_dashboard (accès global en lecture,
-    # ce que chacun peut y FAIRE reste gouverné par ses permissions) ────────
+    # Personnel du siege, sans centre ni direction : acces global en lecture,
+    # les actions restant gouvernees par les permissions.
     if utype in ['deps', 'agent_comptable', 'membre']:
         return redirect('courses:member_dashboard')
 
@@ -1765,9 +1712,8 @@ def _get_scope(user):
             "global",
         )
 
-    # Directeur Inter-régional : toujours limité à sa propre direction
-    # (un directeur ayant besoin d'une portée globale doit être promu vers un
-    # rôle qui l'a par défaut — admin/dg/deps — plutôt que via un booléen caché)
+    # Directeur inter-regional : toujours limite a sa direction. Une portee
+    # globale passe par une promotion de role, jamais par un booleen cache.
     if utype == "dir":
         try:
             dir_obj = DirecteurInterRegional.objects.get(pk=user.pk)
@@ -1807,10 +1753,8 @@ def _base_qs(user):
     dettes = Dette.objects.filter(
         inscription__formation__centre_id__in=centre_ids
     )
-    # annule=False : un versement annulé n'est plus considéré comme encaissé
-    # (cf. Dette.montant_paye()) — exclu ici une bonne fois pour toutes les
-    # statistiques/exports qui réutilisent ce queryset (totaux, recouvrement,
-    # répartition par mode de paiement, liste des paiements encaissés).
+    # annule=False une fois pour toutes : un versement annule n'est plus
+    # encaisse pour aucune des statistiques qui reutilisent ce queryset.
     paiements = Paiement.objects.filter(
         dette__inscription__formation__centre_id__in=centre_ids, annule=False
     )
@@ -1880,12 +1824,8 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
         dettes_qs = dettes_qs.filter(inscription__date_inscription__date__lte=date_fin)
         paiements_qs = paiements_qs.filter(dette__inscription__date_inscription__date__lte=date_fin)
 
-    # Statut de paiement (totalement/partiellement/pas réglé) : ne se traduit
-    # pas par un simple champ à filtrer (il faut sommer dettes/paiements par
-    # inscription), et sommer sur deux relations inverses en cascade dans un
-    # seul .annotate() multiplierait les montants (piège classique de l'ORM
-    # Django) — calculé en Python, comme déjà fait pour la liste des
-    # paiements (paiement_list), puis appliqué en id__in.
+    # Calcule en Python puis applique en id__in : sommer deux relations inverses
+    # dans un seul annotate() multiplierait les montants.
     if statut_paiement_f in ("totalement", "partiellement", "aucun"):
         ids_ok = []
         for insc in inscriptions_qs.prefetch_related('dettes__paiements'):
@@ -2093,11 +2033,8 @@ def statistiques_view(request):
 
     centre_ids_scope = list(centres_scope.values_list("id", flat=True))
 
-    # Champ "Métier" : si un centre précis est sélectionné, ses métiers priment ;
-    # sinon on retombe sur les métiers déjà lancés dans les centres du périmètre
-    # (centres de la direction sélectionnée pour l'accès national, centres de la
-    # direction/du centre de portée pour les accès directionnel/centre) ; en
-    # accès national sans aucun filtre, tous les métiers actifs sont proposés.
+    # Metiers proposes : ceux du centre selectionne, sinon ceux du perimetre,
+    # sinon tous les metiers actifs en acces national sans filtre.
     if centre_id and scope in ("global", "direction"):
         filieres_scope = Filiere.objects.filter(
             is_active=True, centreetfiliere__centre_id=centre_id
@@ -2217,9 +2154,8 @@ def statistiques_view(request):
             provinces__centre_formations__id__in=centre_ids_scope
         ).distinct()
 
-    # Querystrings pour les liens de pagination des deux sections paginées
-    # séparément (rpage/ipage) : on garde tous les filtres actifs, on retire
-    # juste le paramètre de page de la section concernée.
+    # Pagination des deux sections : on conserve les filtres actifs et on retire
+    # seulement le parametre de page concerne.
     qd_recouvrement = request.GET.copy()
     qd_recouvrement.pop("rpage", None)
     querystring_recouvrement = qd_recouvrement.urlencode()
@@ -2254,10 +2190,8 @@ def statistiques_view(request):
         "f_date_debut": date_debut,
         "f_date_fin":   date_fin,
         "f_statut_paiement": statut_paiement_f,
-        # Donnees des graphiques. Transmises brutes : le template les serialise
-        # avec le filtre `json_script`, qui echappe <, > et & — ce que
-        # json.dumps ne fait pas. Un nom de metier contenant « </script> »
-        # sortait autrement du bloc <script> (XSS stocke).
+        # Transmises brutes : le template les serialise avec json_script, qui
+        # echappe <, > et &, contrairement a json.dumps.
         "evol_labels":       evol_labels,
         "evol_data":         evol_data,
         "mode_labels":       mode_labels,
@@ -2628,9 +2562,7 @@ def export_pdf(request):
     return response
 
 
-# ─────────────────────────────────────────────
-# DETTES D'UN ÉLÈVE (groupées par inscription)
-# ─────────────────────────────────────────────
+# ── DETTES D'UN ÉLÈVE (groupées par inscription) ──────────────────────────────
 @login_required
 def stats_dettes_eleve_view(request, eleve_id):
     eleve = get_object_or_404(Eleve, id=eleve_id)
@@ -2806,9 +2738,7 @@ def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogati
     return nb_paiements, encaisse, restant
 
 
-# ─────────────────────────────────────────────
-# ENCAISSER UN MONTANT SUR UN TYPE DE FRAIS (une dette)
-# ─────────────────────────────────────────────
+# ── ENCAISSER UN MONTANT SUR UN TYPE DE FRAIS (une dette) ─────────────────────
 @login_required
 def stats_encaisser_solde_dette_view(request, dette_id):
     dette = get_object_or_404(
@@ -2892,9 +2822,7 @@ def stats_encaisser_solde_dette_view(request, dette_id):
     return redirect(redirect_url)
 
 
-# ─────────────────────────────────────────────
-# ENCAISSER UN MONTANT SUR L'ENSEMBLE DES TYPES DE FRAIS D'UNE INSCRIPTION
-# ─────────────────────────────────────────────
+# ── ENCAISSER UN MONTANT SUR L'ENSEMBLE DES TYPES DE FRAIS D'UNE INSCRIPTION ───
 @login_required
 def stats_encaisser_solde_inscription_view(request, inscription_id):
     inscription = get_object_or_404(
@@ -2913,9 +2841,8 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
 
     redirect_url = f"{reverse('courses:stats_dettes_eleve', args=[inscription.eleve_id])}?inscription={inscription.id}"
 
-    # Le frais de dossier se règle intégralement via son propre bouton
-    # « Solder ce frais » — « Solder l'inscription » ne devient utilisable
-    # qu'une fois ce frais soldé (cf. bouton grisé côté template).
+    # Le frais de dossier se regle integralement par son propre bouton ; solder
+    # l'inscription n'est possible qu'ensuite.
     dette_dossier_impayee = next(
         (d for d in inscription.dettes.all()
          if d.frais_formation.type_frais.est_frais_de_dossier and d.reste_a_payer() > 0),
@@ -2947,10 +2874,8 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
         messages.error(request, f"Le montant saisi ({montant:,.0f} FCFA) dépasse le reste dû total ({reste_total:,.0f} FCFA).")
         return redirect(redirect_url)
 
-    # La dette bloquante (tranche primordiale non réglée) est traitée en
-    # premier, pour respecter le même ordre que l'encaissement tranche par
-    # tranche ; le reste du montant cascade ensuite sur les tranches et
-    # types de frais suivants.
+    # La dette bloquante est traitee en premier, comme dans l'encaissement
+    # tranche par tranche ; le reste cascade ensuite.
     dette_bloquante, _ = inscription.dette_et_tranche_bloquantes()
     if dette_bloquante:
         dettes.sort(key=lambda d: 0 if d.id == dette_bloquante.id else 1)
@@ -2976,10 +2901,8 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
                 if reste_dette <= 0:
                     continue
 
-                # Un frais de dossier se règle en une seule fois, intégralement :
-                # ni paiement partiel, ni dérogation applicable. Tant qu'il n'est
-                # pas soldé, aucune autre dette n'est de toute façon atteinte ici
-                # (elle est bloquante — cf. dette_et_tranche_bloquantes).
+                # Frais de dossier : reglement integral, sans paiement partiel
+                # ni derogation.
                 if dette.frais_formation.type_frais.est_frais_de_dossier:
                     if restant < reste_dette:
                         raise _CascadeInterrompue(
@@ -3019,9 +2942,7 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
     return redirect(redirect_url)
 
 
-# ─────────────────────────────────────────────
-# DÉTAIL D'UNE DETTE (tranches + modal paiement)
-# ─────────────────────────────────────────────
+# ── DÉTAIL D'UNE DETTE (tranches + modal paiement) ────────────────────────────
 @login_required
 def stats_detail_dette_view(request, dette_id):
     dette = get_object_or_404(
@@ -3118,10 +3039,8 @@ def stats_detail_dette_view(request, dette_id):
         )
         paiement.save()
 
-        # Mettre à jour l'état de la dette si soldée. `dette.paiements` a été
-        # préchargée (prefetch_related) avant la création du paiement ci-dessus ;
-        # `dette.paiements.all()` réutiliserait ce cache obsolète (sans le
-        # paiement qu'on vient de créer), d'où une requête indépendante ici.
+        # Requete independante : dette.paiements a ete prechargee avant la
+        # creation du paiement et son cache ne le contient pas.
         total_paye = Paiement.objects.filter(dette_id=dette.id, annule=False).aggregate(s=Sum('montant_paiement'))['s'] or 0
         if dette.montant_total - total_paye <= 0:
             dette.etat_dette = 'soldé'
@@ -3157,9 +3076,7 @@ def stats_detail_dette_view(request, dette_id):
     })
 
 
-# ─────────────────────────────────────────────
-# ANNULATION D'UN PAIEMENT (ou du lot auquel il appartient)
-# ─────────────────────────────────────────────
+# ── ANNULATION D'UN PAIEMENT (ou du lot auquel il appartient) ─────────────────
 def _paiements_du_lot(paiement):
     """Tous les paiements non annulés créés par la même action que
     `paiement` (même groupe_id — ex. "Solder ce frais"/"Solder
@@ -3235,11 +3152,8 @@ def stats_annuler_paiement_view(request, paiement_id):
 
     redirect_url = f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}"
 
-    # Les deux controles d'autorisation sont evalues avant le filtre sur la
-    # methode : un utilisateur sans la permission doit recevoir un 403, y compris
-    # en GET. Place apres le test POST, ce controle renvoyait une redirection
-    # silencieuse — la mutation restait protegee, mais le refus n'etait ni
-    # visible pour l'utilisateur ni journalise.
+    # Autorisation evaluee avant le filtre sur la methode : sans la permission,
+    # le refus doit etre un 403 y compris en GET, donc visible et journalise.
     if not (request.user.is_superuser or request.user.has_perm('courses.gerer_paiements')):
         raise PermissionDenied("Vous n'avez pas la permission d'annuler un paiement.")
 
@@ -3268,9 +3182,7 @@ def stats_annuler_paiement_view(request, paiement_id):
     return redirect(redirect_url)
 
 
-# ─────────────────────────────────────────────
-# QUITTANCE D'UNE TRANCHE (liste des paiements)
-# ─────────────────────────────────────────────
+# ── QUITTANCE D'UNE TRANCHE (liste des paiements) ─────────────────────────────
 @login_required
 def stats_quittance_tranche_view(request, dette_id, tranche):
     dette = get_object_or_404(
@@ -3299,9 +3211,7 @@ def stats_quittance_tranche_view(request, dette_id, tranche):
     })
 
 
-# ─────────────────────────────────────────────
-# TÉLÉCHARGER QUITTANCE PDF (réutilisable)
-# ─────────────────────────────────────────────
+# ── TÉLÉCHARGER QUITTANCE PDF (réutilisable) ──────────────────────────────────
 @login_required
 def stats_download_quittance_view(request, paiement_id):
     paiement = get_object_or_404(
@@ -3321,9 +3231,7 @@ def stats_download_quittance_view(request, paiement_id):
     if not _can_access_dette_finances(request.user, dette):
         raise PermissionDenied("Vous n'avez pas accès à cette quittance.")
 
-    # L'apprenant ne doit jamais pouvoir télécharger la quittance d'un
-    # versement annulé (seul le personnel peut la réimprimer, tamponnée
-    # "ANNULÉE", à des fins d'audit — cf. plus bas).
+    # Quittance d'un versement annule : reservee au personnel, pour l'audit.
     est_apprenant = getattr(request.user, 'pk', None) == getattr(eleve, 'pk', None)
     if paiement.annule and est_apprenant:
         messages.error(request, "Ce versement a été annulé, sa quittance n'est plus disponible au téléchargement.")
@@ -3428,11 +3336,8 @@ def stats_download_quittance_view(request, paiement_id):
     y = ligne("Reste à payer :", f"{dette.reste_a_payer():,.0f} FCFA", y)
     y = ligne("État de la dette :", dette.get_etat_dette_display(), y)
 
-    # QR Code — identifiant élève volontairement absent de la quittance (et du
-    # QR) : ce document circule hors de la plateforme et n'a pas à exposer cet
-    # identifiant. Position calculée à partir de la fin du texte (et non plus
-    # une valeur fixe) pour ne jamais chevaucher les lignes ci-dessus, même si
-    # certaines ont débordé sur plusieurs lignes.
+    # Identifiant eleve volontairement absent : ce document circule hors de la
+    # plateforme. Position calculee depuis la fin du texte, pour ne rien couvrir.
     qr_data = (
         f"Quittance : {paiement.numero_quittance}\n"
         f"Date : {paiement.date_paiement.strftime('%d/%m/%Y à %H:%M')}\n"
@@ -4116,9 +4021,7 @@ from django.db.models import Q, Count
 from .models import Region, Province
 
 
-# ──────────────────────────────────────────────
-#  RÉGION — Liste + filtres
-# ──────────────────────────────────────────────
+# ── RÉGION — Liste + filtres ──────────────────────────────────────────────────
 
 @login_required
 def region_list(request):
@@ -4149,9 +4052,7 @@ def region_list(request):
     })
 
 
-# ──────────────────────────────────────────────
-#  RÉGION — Créer / Modifier
-# ──────────────────────────────────────────────
+# ── RÉGION — Créer / Modifier ─────────────────────────────────────────────────
 
 @require_permission('courses.gerer_regions')
 def region_create(request):
@@ -4234,9 +4135,7 @@ def region_delete(request, pk):
     return render(request, "admin/region/region_confirm_delete.html", {"region": region})
 
 
-# ──────────────────────────────────────────────
-#  PROVINCE — Créer / Modifier / Supprimer
-# ──────────────────────────────────────────────
+# ── PROVINCE — Créer / Modifier / Supprimer ───────────────────────────────────
 
 @require_permission('courses.gerer_regions')
 def province_create(request):
@@ -4388,11 +4287,8 @@ def page_notifications(request):
                 total=Sum("montant")
             )["total"] or 0
 
-            # format_html et non f-string : le message est rendu tel quel dans
-            # le template (balises <strong> volontaires), donc tout ce qui vient
-            # de la base doit etre echappe. `motif_rejet` en particulier est du
-            # texte libre saisi par un agent - sans echappement, c'est un XSS
-            # stocke de l'agent vers l'apprenant.
+            # format_html et non f-string : le message est rendu tel quel, et
+            # motif_rejet est du texte libre saisi par un agent.
             if total_frais:
                 message = format_html(
                     "✅ Félicitations ! Votre dossier d'inscription à la formation "
@@ -4401,9 +4297,7 @@ def page_notifications(request):
                     "<strong>75% du montant de la formation</strong>, soit <strong>{} FCFA</strong>. "
                     "Rendez-vous dans la section <em>Mes inscriptions</em> pour procéder au paiement.",
                     inscription.formation.filiere,
-                    # Pre-formate : format_html convertit chaque argument en
-                    # chaine avant de l'inserer, une spec numerique ({:,.0f})
-                    # y echouerait.
+                    # Pre-formate : format_html rejette une spec numerique.
                     f"{total_frais * 0.75:,.0f}",
                 )
             else:

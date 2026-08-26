@@ -590,9 +590,7 @@
             <td>
               <div class="prog-wrap">
                 <div class="prog-bar-outer">
-                  {% comment %} La couleur devient une classe conditionnelle ; la largeur, calculee,
-                     est posee par JavaScript depuis data-largeur (un attribut style= serait bloque
-                     par la CSP, et aucune classe ne peut porter une valeur variable). {% endcomment %}
+                  {# Largeur posee par JavaScript depuis data-largeur : un style= serait bloque par la CSP. #}
                   <div class="prog-bar-inner {% if r.taux >= 80 %}bg-[#16A34A]{% elif r.taux >= 50 %}bg-[var(--or)]{% else %}bg-[var(--rouge)]{% endif %}"
                     data-largeur="{{ r.taux|floatformat:2 }}">
                   </div>
@@ -723,10 +721,7 @@
 {% block extra_js %}
 <script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
 
-{% comment %} Donnees des graphiques.
-   `json_script` serialise dans une balise <script type="application/json"> en
-   echappant <, > et & : un nom de metier contenant « </script> » ne peut plus
-   fermer le bloc. C'est ce que ne faisait pas json.dumps rendu avec |safe. {% endcomment %}
+{# json_script echappe <, > et & : un nom de metier ne peut pas fermer le bloc <script>. #}
 {{ evol_labels|json_script:"data-evol-labels" }}
 {{ evol_data|json_script:"data-evol-valeurs" }}
 {{ mode_labels|json_script:"data-mode-labels" }}

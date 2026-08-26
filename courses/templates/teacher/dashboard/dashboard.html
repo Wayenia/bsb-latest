@@ -21,9 +21,7 @@
       </div>
     </div>
 
-    {% comment %} ══════════════════════════════════════════════════════════════════════
-         Navigation — cartes filtrées par permission (matrice de rôles)
-    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
+    {# Navigation — cartes filtrées par permission (matrice de rôles) #}
     {% if perms.courses.voir_statistiques or perms.courses.gerer_statistiques_reelles or perms.courses.voir_inscriptions or perms.courses.gerer_centres or perms.courses.encaisser_paiement or perms.courses.gerer_paiements or perms.courses.gerer_metiers or perms.courses.gerer_programmations or perms.courses.gerer_modules or perms.courses.gerer_regions or perms.courses.gerer_directions or perms.courses.gerer_frais or perms.courses.gerer_annees or perms.accounts.gerer_agents or perms.accounts.gerer_permissions or perms.accounts.gerer_facturation or perms.accounts.encaisser_prestation %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Pilotage</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">

@@ -49,9 +49,7 @@
       </div>
     </div>
 
-    {% comment %} ══════════════════════════════════════════════════════════════════════
-         SECTION 1 — Pilotage (accès direct aux écrans les plus utilisés)
-    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
+    {# SECTION 1 — Pilotage (accès direct aux écrans les plus utilisés) #}
     {% if perms.courses.voir_statistiques or perms.courses.gerer_statistiques_reelles or perms.courses.voir_inscriptions or perms.courses.gerer_paiements or perms.courses.encaisser_paiement %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Pilotage</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -106,9 +104,7 @@
     </div>
     {% endif %}
 
-    {% comment %} ══════════════════════════════════════════════════════════════════════
-         SECTION 2 — Offre de formation
-    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
+    {# SECTION 2 — Offre de formation #}
     {% if perms.courses.gerer_metiers or perms.courses.gerer_programmations or perms.courses.gerer_centres or perms.courses.gerer_modules %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Offre de formation</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -164,9 +160,7 @@
     </div>
     {% endif %}
 
-    {% comment %} ══════════════════════════════════════════════════════════════════════
-         SECTION 3 — Organisation territoriale
-    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
+    {# SECTION 3 — Organisation territoriale #}
     {% if perms.courses.gerer_directions or perms.courses.gerer_regions %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Organisation territoriale</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -198,9 +192,7 @@
     </div>
     {% endif %}
 
-    {% comment %} ══════════════════════════════════════════════════════════════════════
-         SECTION 4 — Paramétrage
-    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
+    {# SECTION 4 — Paramétrage #}
     {% if perms.courses.gerer_frais or perms.courses.gerer_annees or perms.courses.gerer_equipe %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Paramétrage</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -244,9 +236,7 @@
     </div>
     {% endif %}
 
-    {% comment %} ══════════════════════════════════════════════════════════════════════
-         SECTION 5 — Ressources humaines (pleine largeur, mise en avant)
-    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
+    {# SECTION 5 — Ressources humaines (pleine largeur, mise en avant) #}
     {% if perms.accounts.gerer_agents or perms.accounts.gerer_eleves or perms.accounts.gerer_permissions or perms.accounts.voir_historique_connexion %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Ressources humaines</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -294,9 +284,7 @@
     </div>
     {% endif %}
 
-    {% comment %} ══════════════════════════════════════════════════════════════════════
-         SECTION 6 — Facturation et Prestation
-    ═══════════════════════════════════════════════════════════════════════ {% endcomment %}
+    {# SECTION 6 — Facturation et Prestation #}
     {% if perms.accounts.gerer_facturation or perms.accounts.encaisser_prestation %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Facturation et Prestation</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">

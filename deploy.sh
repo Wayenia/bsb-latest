@@ -3,10 +3,8 @@ clear
 
 echo "******* Déploiement en cours ... *********"
 
-# GÉNÉRATION AUTO DU .env (SI ABSENT)
-# Pour inclure un nom de domaine réel (servi en HTTPS via un proxy/LB externe,
-# cf. les règles de sécurité du projet - jamais de redirection HTTPS ici) :
-#   DOMAIN=mon-domaine.example ./deploy.sh
+# Generation automatique du .env s'il est absent.
+# Avec un domaine reel :  DOMAIN=mon-domaine.example ./deploy.sh
 if [ ! -f .env ]; then
     echo " .env manquant - génération automatique..."
 
@@ -60,17 +58,11 @@ REDIS_LOCATION_URL=redis://suudu_redis:6379/1
 CELERY_BROKER_URL=redis://suudu_redis:6379/0
 CELERY_RESULT_BACKEND=redis://suudu_redis:6379/0
 
-# --- URL publique ---
-# Utilisee pour les liens absolus des e-mails envoyes hors requete HTTP
-# (commande notifier_actualites). Laisser vide reconstruit https://<ALLOWED_HOSTS[0]>.
+# --- URL publique (liens absolus des e-mails hors requete HTTP) ---
 SITE_URL=${SITE_URL_VAL}
 
 # --- E-mail (SMTP) ---
-# Tant que EMAIL_HOST est vide, Django ecrit les messages sur la sortie
-# standard (donc dans les logs du conteneur, adresses des abonnes comprises).
-# Renseigner ces variables pour activer l'envoi reel — voir README.
-# Google Workspace : EMAIL_HOST_USER doit correspondre a l'adresse du
-# DEFAULT_FROM_EMAIL, sinon Gmail reecrit l'en-tete From.
+# EMAIL_HOST vide : les messages partent dans les logs du conteneur (README 9).
 EMAIL_HOST=
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
@@ -88,9 +80,11 @@ EOF
 fi
 
 echo "--- Nettoyage des anciens conteneurs ---"
-# Important : jamais de -v ici. Ce drapeau supprimerait les volumes nommés
-# (donc la base de données Postgres, pgAdmin et Redis) à chaque redéploiement.
+# Jamais de -v ici : ce drapeau supprimerait la base (README 8).
 sudo docker compose down --remove-orphans 2>/dev/null
+
+echo "--- Normalisation des droits de ./media et ./backups ---"
+./fix_perms.sh
 
 echo "--- Construction et démarrage ---"
 sudo docker compose up --build -d

@@ -26,9 +26,8 @@ class AbonnementForm(forms.Form):
 
 
 class ActualiteForm(forms.ModelForm):
-    # Classe partagee par les champs texte/select/date : charte BSB (focus rouge),
-    # reprise telle quelle sur chaque widget plutot que via un ancien ".form-control"
-    # qui n'existe pas dans le CSS compile (les champs s'affichaient donc sans style).
+    # Reprise sur chaque widget : « .form-control » n'existe pas dans le CSS
+    # compile, les champs s'affichaient donc sans style.
     _INPUT_CLASSES = ("w-full px-4 py-3 border border-gray-300 rounded-lg "
                        "focus:outline-none focus:ring-2 focus:ring-bsb-primary "
                        "focus:border-bsb-primary transition-colors")
@@ -43,9 +42,8 @@ class ActualiteForm(forms.ModelForm):
                 "placeholder": "Résumé accrocheur, affiché dans la liste et l'e-mail (300 caractères max)",
                 "maxlength": 300}),
             "contenu": forms.Textarea(attrs={"rows": 12, "placeholder": "Rédigez le corps de l'actualité..."}),
-            # Rendu en pilules dans le template (2 choix seulement) plutot qu'un
-            # <select> depliant : le statut est la decision la plus importante du
-            # formulaire, elle merite d'etre visible d'un coup d'oeil.
+            # Rendu en pilules : le statut est la decision principale du
+            # formulaire et doit rester visible d'un coup d'oeil.
             "statut": forms.RadioSelect(),
             "date_publication": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
             "date_fin_publication": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
@@ -55,9 +53,7 @@ class ActualiteForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for nom, champ in self.fields.items():
             if nom == "image":
-                # `accept` est un confort d'UI (filtre le selecteur de fichier),
-                # pas un controle de securite : clean_image() ci-dessus est la
-                # verification qui compte, cote serveur.
+                # Confort d'UI seulement : clean_image() est le controle reel.
                 champ.widget.attrs.setdefault("accept", "image/jpeg,image/png,image/webp")
                 champ.widget.attrs.setdefault(
                     "class",
@@ -74,20 +70,15 @@ class ActualiteForm(forms.ModelForm):
             self.fields[nom_date].input_formats = ["%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M:%S"]
             self.fields[nom_date].required = False
 
-    # Django (ImageField) verifie deja que le fichier est structurellement une
-    # image valide (Pillow ouvre et verifie le contenu, pas seulement le nom/
-    # l'extension) : un .php renomme en .jpg est deja rejete en amont. Ici on
-    # resserre en plus a une liste blanche de formats web courants et a une
-    # taille raisonnable pour une vignette d'actualite - defense en profondeur,
-    # pas un remplacement du controle Django.
+    # Defense en profondeur : ImageField valide deja le contenu du fichier, on
+    # resserre ici sur une liste blanche de formats et une taille de vignette.
     _IMAGE_TYPES_AUTORISES = {"image/jpeg", "image/png", "image/webp"}
     _IMAGE_TAILLE_MAX = 5 * 1024 * 1024  # 5 Mo
 
     def clean_image(self):
         image = self.cleaned_data.get("image")
-        # `content_type` n'existe que sur un fichier fraichement televerse
-        # (UploadedFile) : sur une modification sans nouveau fichier, `image`
-        # est le fichier deja stocke et ne doit pas etre re-valide a chaque edit.
+        # content_type n'existe que sur un fichier fraichement televerse : sans
+        # nouveau fichier, l'image stockee n'a pas a etre revalidee.
         type_mime = getattr(image, "content_type", None)
         if image and type_mime:
             if type_mime not in self._IMAGE_TYPES_AUTORISES:

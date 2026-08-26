@@ -1,14 +1,7 @@
 #!/bin/sh
-# Sauvegarde la base Postgres du conteneur suudu_db (format custom, pour pg_restore).
-#
-# Usage : ./db_dump.sh [--retention N]
-#
-#   --retention N   ne conserve que les N sauvegardes les plus recentes
-#                   (defaut : 14). Mettre 0 pour ne rien supprimer.
-#
-# Lancement automatique quotidien : voir le service `suudu_backup` de
-# docker-compose.yml, qui execute la meme commande pg_dump depuis le reseau
-# interne, sans dependre du binaire docker.
+# Sauvegarde Postgres au format custom.
+# Usage : ./db_dump.sh [--retention N]   (N sauvegardes conservees, 14 par defaut)
+# Le service suudu_backup fait la meme chose chaque jour (README 7).
 set -e
 
 RETENTION=14
@@ -24,9 +17,8 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-# `sed` et non `export $(... | xargs)` : xargs interprete guillemets et
-# antislashs, ce qui corrompait silencieusement un mot de passe genere
-# contenant ces caracteres.
+# sed et non xargs, qui interprete guillemets et antislashs et corrompt un mot
+# de passe en contenant.
 POSTGRES_USER=$(sed -n 's/^POSTGRES_USER=//p' .env | head -1)
 POSTGRES_DB=$(sed -n 's/^POSTGRES_DB=//p' .env | head -1)
 
@@ -45,8 +37,7 @@ docker exec suudu_db pg_dump -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -F c -f "
 docker cp "suudu_db:/tmp/${BACKUP_FILE}" "${BACKUP_DIR}/${BACKUP_FILE}"
 docker exec suudu_db rm -f "/tmp/${BACKUP_FILE}"
 
-# Purge : on garde les N plus recentes. `ls -1t` trie du plus recent au plus
-# ancien, `tail -n +N+1` isole donc tout ce qui depasse la retention.
+# ls -1t trie du plus recent au plus ancien : tail isole ce qui depasse.
 if [ "$RETENTION" -gt 0 ]; then
     A_SUPPRIMER=$(ls -1t "${BACKUP_DIR}"/suudu_db_*.dump 2>/dev/null | tail -n +$((RETENTION + 1)))
     if [ -n "$A_SUPPRIMER" ]; then

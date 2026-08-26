@@ -105,10 +105,6 @@ urlpatterns = [
     path('eleves/<int:id>/modifier', views_admin.eleve_update, name='eleve_update'),
     # GESTION DES PERMISSIONS (matrice rôle x action)
     path('rh/permissions', views_admin.permissions_matrix_view, name='permissions_matrix'),
-    # ─────────────────────────────────────────────
-# À ajouter dans urlpatterns de bsb_admin/urls.py
-# ─────────────────────────────────────────────
-
     # TYPE DE FRAIS
     path('type-frais',                       views_admin.type_frais_list,   name='type_frais_list'),
     path('type-frais/create',                views_admin.type_frais_create, name='type_frais_create'),
