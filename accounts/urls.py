@@ -6,6 +6,8 @@ app_name = "accounts"
 urlpatterns = [
     path('register', views.user_register, name='register'),
     path('login', views.user_login, name='login'),
+    path('login/verification', views.login_otp, name='login_otp'),
+    path('login/verification/renvoyer', views.login_otp_resend, name='login_otp_resend'),
     path('logout', views.user_logout, name='logout'),
 
     # ── Profil (self-service, tous rôles) ──────────────────────────────────
