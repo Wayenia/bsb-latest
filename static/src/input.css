@@ -483,3 +483,29 @@
   .bo-etat-puce   { @apply w-2.5 h-2.5 rounded-full shrink-0; }
   .bo-etat-texte  { @apply flex-1 min-w-0 text-sm font-semibold text-bsb-ink; }
 }
+
+/* ==========================================================================
+   Menu deroulant d'actions
+   --------------------------------------------------------------------------
+   Regroupe des actions de meme nature sous un seul bouton. Quatre exports
+   alignes cote a cote, chacun d'une couleur differente, se lisent comme quatre
+   actions concurrentes alors qu'il s'agit du meme geste sous quatre formats.
+   ========================================================================== */
+@layer components {
+  .bo-menu          { @apply relative inline-block; }
+  .bo-menu-panneau  {
+    @apply absolute right-0 z-30 mt-2 w-80 max-w-[90vw] origin-top-right
+           rounded-lg border-2 border-bsb-gold/40 bg-white shadow-lg p-1.5;
+  }
+  .bo-menu-entete   { @apply px-3 pt-2 pb-1 text-xs text-bsb-muted; }
+  .bo-menu-item     {
+    @apply flex items-start gap-3 rounded-md px-3 py-2.5 text-sm text-bsb-ink
+           hover:bg-bsb-cream transition-colors
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
+  }
+  .bo-menu-libelle  { @apply flex-1 min-w-0 font-medium; }
+  .bo-menu-aide     { @apply block text-xs font-normal text-bsb-muted; }
+  .bo-format        { @apply shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide; }
+  .bo-format-pdf    { @apply bg-bsb-red/10 text-bsb-red; }
+  .bo-format-excel  { @apply bg-bsb-green/10 text-bsb-green; }
+}

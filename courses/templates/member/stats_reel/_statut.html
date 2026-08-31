@@ -1,0 +1,5 @@
+{% comment %}Etat de saisie d'une formation. Parametre : f.{% endcomment %}
+{% if f.nb_inscrits == 0 %}<span class="bo-badge-neutral">Aucun inscrit</span>
+{% elif f.nb_mode_renseigne == f.nb_inscrits and f.nb_effectifs > 0 %}<span class="bo-badge-success">Complet</span>
+{% elif f.nb_mode_renseigne > 0 or f.nb_effectifs > 0 %}<span class="bo-badge-warning">Partiel</span>
+{% else %}<span class="bo-badge-danger">À saisir</span>{% endif %}

@@ -18,6 +18,7 @@ from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from .ui import gabarit
 from django.template.loader import render_to_string
 from django.utils import timezone
 
@@ -286,7 +287,7 @@ def stats_reel_dashboard(request):
 
     options = _filter_options(request.user)
 
-    return render(request, 'member/stats_reel/dashboard.html', {
+    return render(request, gabarit('member/stats_reel/dashboard.html'), {
         'formations': formations_page,
         'q': q,
         'scope': scope,

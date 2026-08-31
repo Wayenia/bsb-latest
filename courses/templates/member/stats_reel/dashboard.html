@@ -1,59 +1,68 @@
 {% extends 'base.html' %}
-{% block title %}Bilan des effectifs formés | BSB{% endblock %}
-
+{% block title %}Bilan des effectifs formés | Yupaan{% endblock %}
 {% block content %}
-<div class="max-w-7xl mx-auto py-10 space-y-6 px-4 sm:px-6 lg:px-8">
+<div class="bo-shell">
   {% include 'partials/messages.html' %}
 
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+  <nav class="bo-breadcrumb">
+    <a href="{% url 'courses:statistiques' %}">Statistiques</a>
+    <span class="bo-breadcrumb-sep">/</span>
+    <span class="text-gray-900">Bilan des effectifs formés</span>
+  </nav>
+
+  <div class="bo-header">
     <div>
-      <a href="{% url 'courses:statistiques' %}" class="text-sm text-gray-400 hover:text-gray-600">Statistiques</a>
-      <h1 class="text-3xl font-black text-gray-900 mt-1">Bilan des effectifs formés</h1>
-      <p class="mt-1 text-sm text-gray-500">
-        Effectifs formés et liste nominative des apprenants — données saisies manuellement
-        par formation (téléchargez le modèle, remplissez-le, puis importez-le).
-      </p>
+      <h1 class="bo-title">Bilan des effectifs formés</h1>
+      <p class="bo-subtitle">{{ formations.paginator.count }} formation{{ formations.paginator.count|pluralize }} dans votre périmètre</p>
     </div>
-    <div class="flex gap-3 flex-wrap">
-      {% url 'courses:stats_reel_export_nominatif' as export_nominatif_url %}
-      <a href="{{ export_nominatif_url }}?{{ request.GET.urlencode }}"
-         class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-all shadow-sm">
-        PDF liste nominative (résidentielle)
-      </a>
-      {% url 'courses:stats_reel_export_agrege' as export_agrege_url %}
-      <a href="{{ export_agrege_url }}?{{ request.GET.urlencode }}"
-         class="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow-600 text-white text-sm font-bold rounded-lg hover:bg-yellow-700 transition-all shadow-sm">
-        Excel situation des formés
-      </a>
-      {% url 'courses:stats_reel_export_certification' as export_certif_url %}
-      <a href="{{ export_certif_url }}?{{ request.GET.urlencode }}"
-         class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-800 text-white text-sm font-bold rounded-lg hover:bg-gray-700 transition-all shadow-sm">
-        PDF résultats aux examens
-      </a>
-      {% url 'courses:stats_reel_export_handicap' as export_handicap_url %}
-      <a href="{{ export_handicap_url }}?{{ request.GET.urlencode }}"
-         class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-700 text-white text-sm font-bold rounded-lg hover:bg-gray-800 transition-all shadow-sm">
-        PDF répartition handicap
-      </a>
+
+    {% comment %}Les quatre exports sont regroupes sous un seul bouton : alignes
+    et de couleurs differentes, ils se lisaient comme quatre actions concurrentes
+    alors que c'est le meme geste sous quatre formats. Le menu porte aussi
+    l'information qui occupait un paragraphe entier sous l'en-tete.{% endcomment %}
+    <div class="bo-menu" id="menu-exports">
+      <button type="button" class="bo-btn-primary" aria-expanded="false" aria-haspopup="true"
+              aria-controls="panneau-exports">
+        Exporter
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+      <div class="bo-menu-panneau hidden" id="panneau-exports" role="menu">
+        <p class="bo-menu-entete">Les exports suivent les filtres appliqués.</p>
+        <a href="{% url 'courses:stats_reel_export_nominatif' %}?{{ request.GET.urlencode }}" class="bo-menu-item" role="menuitem">
+          <span class="bo-format bo-format-pdf">PDF</span>
+          <span class="bo-menu-libelle">Liste nominative
+            <span class="bo-menu-aide">Apprenants en résidentielle, par direction</span></span>
+        </a>
+        <a href="{% url 'courses:stats_reel_export_agrege' %}?{{ request.GET.urlencode }}" class="bo-menu-item" role="menuitem">
+          <span class="bo-format bo-format-excel">Excel</span>
+          <span class="bo-menu-libelle">Situation des formés
+            <span class="bo-menu-aide">Effectifs agrégés par direction</span></span>
+        </a>
+        <a href="{% url 'courses:stats_reel_export_certification' %}?{{ request.GET.urlencode }}" class="bo-menu-item" role="menuitem">
+          <span class="bo-format bo-format-pdf">PDF</span>
+          <span class="bo-menu-libelle">Résultats aux examens
+            <span class="bo-menu-aide">Inscrits, présents et admis par titre</span></span>
+        </a>
+        <a href="{% url 'courses:stats_reel_export_handicap' %}?{{ request.GET.urlencode }}" class="bo-menu-item" role="menuitem">
+          <span class="bo-format bo-format-pdf">PDF</span>
+          <span class="bo-menu-libelle">Répartition handicap
+            <span class="bo-menu-aide">Par métier et par sexe</span></span>
+        </a>
+      </div>
     </div>
   </div>
-  <p class="text-xs text-gray-400 -mt-3">
-    Les 4 exports respectent les filtres ci-dessous (année, direction, centre, métier) — pense à les régler avant de télécharger.
-    Une formation (centre + métier) peut être relancée d'une année sur l'autre : les boutons « Modèle »/« Importer » de chaque
-    ligne utilisent l'année sélectionnée ci-dessous, ou à défaut la plus récente année ayant des inscrits pour cette formation.
-  </p>
 
-  <form method="get" class="bg-white px-4 py-4 border border-gray-200 rounded-xl shadow-sm flex flex-wrap gap-3 items-end">
-    <div class="flex-1 min-w-[200px]">
-      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Recherche</label>
-      <input type="text" name="q" value="{{ q|default:'' }}"
-             placeholder="Centre ou métier..."
-             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
-             autocomplete="off">
+  <form method="get" class="bo-filters">
+    <div class="bo-filter">
+      <label for="f-q" class="bo-label">Rechercher</label>
+      <input id="f-q" type="text" name="q" value="{{ q|default:'' }}" placeholder="Centre ou métier"
+             class="bo-input" autocomplete="off">
     </div>
-    <div>
-      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Année de formation</label>
-      <select name="annee" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+    <div class="bo-filter">
+      <label for="f-annee" class="bo-label">Année</label>
+      <select id="f-annee" name="annee" class="bo-select">
         <option value="">Toutes</option>
         {% for a in annees %}
         <option value="{{ a.id }}" {% if selected.annee_id == a.id|stringformat:'s' %}selected{% endif %}>{{ a.libelle_anne }}</option>
@@ -61,9 +70,9 @@
       </select>
     </div>
     {% if directions %}
-    <div>
-      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Direction</label>
-      <select name="direction" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+    <div class="bo-filter">
+      <label for="f-dir" class="bo-label">Direction</label>
+      <select id="f-dir" name="direction" class="bo-select">
         <option value="">Toutes</option>
         {% for d in directions %}
         <option value="{{ d.id }}" {% if selected.direction_id == d.id|stringformat:'s' %}selected{% endif %}>{{ d.nom_direction }}</option>
@@ -72,9 +81,9 @@
     </div>
     {% endif %}
     {% if centres %}
-    <div>
-      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Centre</label>
-      <select name="centre" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+    <div class="bo-filter">
+      <label for="f-centre" class="bo-label">Centre</label>
+      <select id="f-centre" name="centre" class="bo-select">
         <option value="">Tous</option>
         {% for c in centres %}
         <option value="{{ c.id }}" {% if selected.centre_id == c.id|stringformat:'s' %}selected{% endif %}>{{ c.nom_centre }}</option>
@@ -82,92 +91,114 @@
       </select>
     </div>
     {% endif %}
-    <div>
-      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Métier</label>
-      <select name="filiere" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+    <div class="bo-filter">
+      <label for="f-metier" class="bo-label">Métier</label>
+      <select id="f-metier" name="filiere" class="bo-select">
         <option value="">Tous</option>
         {% for f in filieres %}
         <option value="{{ f.id }}" {% if selected.filiere_id == f.id|stringformat:'s' %}selected{% endif %}>{{ f.nom_filiere }}</option>
         {% endfor %}
       </select>
     </div>
-    <button type="submit" class="px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition">
-      Filtrer
-    </button>
-    <a href="{% url 'courses:stats_reel_dashboard' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">
-      Réinitialiser
-    </a>
+    <div class="bo-actions">
+      <button type="submit" class="bo-btn-primary">Filtrer</button>
+      {% if q or selected.annee_id or selected.direction_id or selected.centre_id or selected.filiere_id %}
+      <a href="{% url 'courses:stats_reel_dashboard' %}" class="bo-btn-ghost">Réinitialiser</a>
+      {% endif %}
+    </div>
   </form>
 
-  <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-    {% if formations %}
-    <table class="min-w-full divide-y divide-gray-100">
-      <thead class="bg-gray-50">
+  {% if formations %}
+
+  {% comment %}Fiches en dessous de sm, tableau au-dela.{% endcomment %}
+  <div class="sm:hidden space-y-3">
+    {% for f in formations %}
+    <div class="bo-card p-4">
+      <p class="font-semibold text-bsb-ink">{{ f.centre.nom_centre }}</p>
+      <p class="text-sm text-bsb-muted">{{ f.filiere.nom_filiere }}</p>
+      <div class="mt-2 flex flex-wrap items-center gap-2">
+        {% include 'member/stats_reel/_statut.html' with f=f %}
+        <span class="text-xs text-bsb-muted">{{ f.nb_inscrits }} inscrit{{ f.nb_inscrits|pluralize }}</span>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        {% include 'member/stats_reel/_actions.html' with f=f selected=selected %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="hidden sm:block bo-table-wrap">
+    <table class="bo-table">
+      <thead>
         <tr>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Centre</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Métier</th>
-          <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Inscrits</th>
-          <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Statut saisie</th>
-          <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+          <th scope="col">Centre</th>
+          <th scope="col">Métier</th>
+          <th scope="col" class="text-right">Inscrits</th>
+          <th scope="col">Saisie</th>
+          <th scope="col" class="text-right">Actions</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody>
         {% for f in formations %}
-        <tr class="hover:bg-red-50 transition-colors">
-          <td class="px-6 py-3 text-sm font-bold text-gray-900">{{ f.centre.nom_centre }}</td>
-          <td class="px-6 py-3 text-sm text-gray-600">{{ f.filiere.nom_filiere }}</td>
-          <td class="px-6 py-3 text-sm text-center text-gray-700">{{ f.nb_inscrits }}</td>
-          <td class="px-6 py-3 text-center">
-            {% if f.nb_inscrits == 0 %}
-            <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-gray-100 text-gray-500">Aucun inscrit</span>
-            {% elif f.nb_mode_renseigne == f.nb_inscrits and f.nb_effectifs > 0 %}
-            <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-green-100 text-green-800">Complet</span>
-            {% elif f.nb_mode_renseigne > 0 or f.nb_effectifs > 0 %}
-            <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-yellow-100 text-yellow-800">Partiel</span>
-            {% else %}
-            <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-red-100 text-red-800">À saisir</span>
-            {% endif %}
-          </td>
-          <td class="px-6 py-3 text-right whitespace-nowrap">
-            {% url 'courses:stats_reel_formation_template' f.id as modele_url %}
-            <a href="{{ modele_url }}{% if selected.annee_id %}?annee={{ selected.annee_id }}{% endif %}"
-               class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-yellow-700 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-all mr-1">
-              Modèle
-            </a>
-            {% url 'courses:stats_reel_formation_upload' f.id as importer_url %}
-            <a href="{{ importer_url }}{% if selected.annee_id %}?annee={{ selected.annee_id }}{% endif %}"
-               class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-all">
-              Importer
-            </a>
+        <tr>
+          <td class="font-medium text-bsb-ink">{{ f.centre.nom_centre }}</td>
+          <td>{{ f.filiere.nom_filiere }}</td>
+          <td class="bo-num">{{ f.nb_inscrits }}</td>
+          <td>{% include 'member/stats_reel/_statut.html' with f=f %}</td>
+          <td class="bo-actions-cell">
+            <div class="inline-flex items-center gap-1">
+              {% include 'member/stats_reel/_actions.html' with f=f selected=selected %}
+            </div>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-
-    {% if formations.has_other_pages %}
-    <div class="flex items-center justify-between px-6 py-3 border-t border-gray-100">
-      <p class="text-sm text-gray-500">
-        Page <span class="font-semibold text-gray-800">{{ formations.number }}</span>
-        sur <span class="font-semibold text-gray-800">{{ formations.paginator.num_pages }}</span>
-      </p>
-      <div class="flex gap-2">
-        {% if formations.has_previous %}
-        <a href="?page={{ formations.previous_page_number }}&q={{ q }}" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">Précédent</a>
-        {% endif %}
-        {% if formations.has_next %}
-        <a href="?page={{ formations.next_page_number }}&q={{ q }}" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">Suivant</a>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
-
-    {% else %}
-    <div class="text-center py-16">
-      <h3 class="text-lg font-bold text-gray-800 mb-1">Aucune formation trouvée</h3>
-      <p class="text-sm text-gray-500 mt-1">Aucune formation (centre + métier) n'est visible dans votre périmètre.</p>
-    </div>
-    {% endif %}
   </div>
+
+  {% if formations.has_other_pages %}
+  <div class="bo-pagination">
+    <p class="bo-page-info">Page {{ formations.number }} sur {{ formations.paginator.num_pages }}</p>
+    <div class="flex gap-2">
+      {% if formations.has_previous %}
+      <a href="?{{ request.GET.urlencode }}&page={{ formations.previous_page_number }}" class="bo-page-link">Précédent</a>
+      {% endif %}
+      {% if formations.has_next %}
+      <a href="?{{ request.GET.urlencode }}&page={{ formations.next_page_number }}" class="bo-page-link">Suivant</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="bo-empty">
+    <p class="bo-empty-title">Aucune formation trouvée</p>
+    <p class="bo-empty-text">Aucune formation (centre et métier) n'est visible dans votre périmètre.</p>
+  </div>
+  {% endif %}
 </div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+    var menu = document.getElementById('menu-exports');
+    if (!menu) return;
+    var bouton = menu.querySelector('button');
+    var panneau = document.getElementById('panneau-exports');
+
+    function ouvrir(oui) {
+        panneau.classList.toggle('hidden', !oui);
+        bouton.setAttribute('aria-expanded', oui ? 'true' : 'false');
+    }
+    bouton.addEventListener('click', function (e) {
+        e.stopPropagation();
+        ouvrir(panneau.classList.contains('hidden'));
+    });
+    document.addEventListener('click', function (e) {
+        if (!menu.contains(e.target)) ouvrir(false);
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') ouvrir(false);
+    });
+})();
+</script>
 {% endblock %}

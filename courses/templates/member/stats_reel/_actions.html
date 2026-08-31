@@ -1,0 +1,7 @@
+{% comment %}Actions d'une formation. Parametres : f, selected.
+Le modele et l'import portent l'annee selectionnee ; a defaut, la vue retient la
+plus recente annee ayant des inscrits pour cette formation.{% endcomment %}
+<a href="{% url 'courses:stats_reel_formation_template' f.id %}{% if selected.annee_id %}?annee={{ selected.annee_id }}{% endif %}"
+   class="bo-btn-secondary bo-btn-sm">Modèle</a>
+<a href="{% url 'courses:stats_reel_formation_upload' f.id %}{% if selected.annee_id %}?annee={{ selected.annee_id }}{% endif %}"
+   class="bo-btn-primary bo-btn-sm">Importer</a>
