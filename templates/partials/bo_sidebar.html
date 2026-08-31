@@ -95,39 +95,44 @@ l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
     var vide = document.getElementById('bo-recherche-vide');
     if (!barre || !nav) return;
 
-    var CLE = 'bo-groupes-replies';
+    var CLE = 'bo-groupe-ouvert';
 
-    function replies() {
-        try { return JSON.parse(localStorage.getItem(CLE)) || []; }
-        catch (e) { return []; }   // navigation privee, stockage refuse
+    function memoriser(cle) {
+        try {
+            if (cle) localStorage.setItem(CLE, cle);
+            else localStorage.removeItem(CLE);
+        } catch (e) { /* navigation privee : sans effet */ }
     }
-    function memoriser(liste) {
-        try { localStorage.setItem(CLE, JSON.stringify(liste)); } catch (e) { /* sans effet */ }
+    function memorise() {
+        try { return localStorage.getItem(CLE); } catch (e) { return null; }
     }
 
-    // Etat retenu, sauf pour le groupe de l'ecran courant : le refermer
+    function afficher(groupe, ouvert) {
+        groupe.classList.toggle('bo-groupe-ouvert', ouvert);
+        groupe.querySelector('.bo-groupe-corps').classList.toggle('hidden', !ouvert);
+        groupe.querySelector('.bo-groupe-tete').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+    }
+
+    // Ouverture exclusive : un seul theme deplie a la fois. Tous ouverts, la
+    // barre s'allongeait au point de repousser le pied hors de l'ecran.
+    function ouvrirSeul(cle) {
+        nav.querySelectorAll('.bo-groupe').forEach(function (g) {
+            afficher(g, g.dataset.groupe === cle);
+        });
+    }
+
+    var courant = nav.querySelector('.bo-groupe.bo-groupe-ouvert');
+    // Le groupe de l'ecran courant prime sur l'etat retenu : le refermer
     // masquerait la page ou l'on se trouve.
-    var fermes = replies();
-    nav.querySelectorAll('.bo-groupe').forEach(function (groupe) {
-        if (groupe.classList.contains('bo-groupe-ouvert')) return;
-        if (fermes.indexOf(groupe.dataset.groupe) === -1) {
-            groupe.classList.add('bo-groupe-ouvert');
-            groupe.querySelector('.bo-groupe-corps').classList.remove('hidden');
-            groupe.querySelector('.bo-groupe-tete').setAttribute('aria-expanded', 'true');
-        }
-    });
+    ouvrirSeul(courant ? courant.dataset.groupe : memorise());
 
     nav.addEventListener('click', function (e) {
         var tete = e.target.closest('.bo-groupe-tete');
         if (!tete || tete.tagName !== 'BUTTON') return;
         var groupe = tete.closest('.bo-groupe');
-        var ouvert = groupe.classList.toggle('bo-groupe-ouvert');
-        groupe.querySelector('.bo-groupe-corps').classList.toggle('hidden', !ouvert);
-        tete.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
-
-        var liste = replies().filter(function (c) { return c !== groupe.dataset.groupe; });
-        if (!ouvert) liste.push(groupe.dataset.groupe);
-        memoriser(liste);
+        var deja = groupe.classList.contains('bo-groupe-ouvert');
+        ouvrirSeul(deja ? null : groupe.dataset.groupe);
+        memoriser(deja ? null : groupe.dataset.groupe);
     });
 
     if (recherche) {
@@ -142,7 +147,8 @@ l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
                     if (ok) visibles++;
                 });
                 groupe.classList.toggle('hidden', q !== '' && visibles === 0);
-                // Pendant une recherche on deplie, sinon les resultats resteraient caches.
+                // Pendant une recherche on deplie tout ce qui a un resultat,
+                // sinon l'ouverture exclusive les garderait caches.
                 if (q) groupe.querySelector('.bo-groupe-corps').classList.remove('hidden');
                 else groupe.querySelector('.bo-groupe-corps')
                           .classList.toggle('hidden', !groupe.classList.contains('bo-groupe-ouvert'));

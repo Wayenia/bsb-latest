@@ -263,6 +263,11 @@ SITE_URL = env('SITE_URL', default='')
 # modification de code — aucun gabarit ne code en dur l'une ou l'autre.
 BO_NAVIGATION = env('BO_NAVIGATION', default='sidebar')
 
+# Interface des ecrans refondus : 'nouveau' ou 'classique'. Chaque ecran repris
+# conserve son gabarit d'origine sous le suffixe _classique, que ce reglage
+# permet de reafficher sans toucher au code (voir courses/ui.py).
+BO_UI = env('BO_UI', default='nouveau')
+
 # --- Audit et surveillance (application `audit`) ---
 # Seuils de declenchement des alertes du rapport d'inspection. Les relever
 # reduit le bruit, les abaisser augmente la sensibilite (voir audit/README.md).

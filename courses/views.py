@@ -22,6 +22,7 @@ from .models import (CentreEtFiliere, Filiere, Inscription, PieceJointeInscripti
 from .forms import FiliereForm
 from .filters import CentreFormationFilter, FiliereFilter
 from .permissions import require_permission, require_role
+from .ui import gabarit
 from django.core.exceptions import PermissionDenied
 from accounts.models import Eleve, Utilisateur
 from django.urls import reverse
@@ -3404,6 +3405,8 @@ from courses.models import CentreFormation, Direction_reg
 @method_decorator(login_required, name='dispatch')
 @method_decorator(require_permission('courses.gerer_centres'), name='dispatch')
 class CenterListView(View):
+    # Choisi au rendu : la bascule ./bascule_ui.sh classique reaffiche le
+    # gabarit d'origine sans modification de code (voir courses/ui.py).
     template_name = 'admin/center/list.html'
 
     def get(self, request):
@@ -3459,7 +3462,7 @@ class CenterListView(View):
             .order_by('niveau_centre')
         )
 
-        return render(request, self.template_name, {
+        return render(request, gabarit(self.template_name), {
             'centers': centers,
             'q': q,
             'direction_id': direction_id,

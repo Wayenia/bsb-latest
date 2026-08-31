@@ -30,6 +30,7 @@ from .forms import (
 from accounts.models import Eleve,Formateur
 from .admin_filters import FormationFilter,FiliereFilter,SubscriptionFilter
 from django.db.models import Sum
+from datetime import datetime
 from django.urls import reverse
 from .views import _base_qs, _get_scope, _pdf_header_lines, _draw_pdf_watermark
 
@@ -875,6 +876,32 @@ def payment_delete(request, id):
 
 
 # == HISTORIQUE DES CONNEXIONS =================================================
+def _date_francaise(valeur):
+    """Convertit une date saisie en jj/mm/aaaa.
+
+    Le champ natif <input type="date"> affiche toujours la date selon la langue
+    du navigateur, jamais selon celle du site : sur un poste configure en
+    anglais, l'agent lisait mm/jj/aaaa. Le champ est donc un champ texte, et
+    c'est ici qu'on interprete ce qu'il contient. Le format ISO reste accepte,
+    pour que les liens deja partages continuent de fonctionner.
+    """
+    valeur = (valeur or '').strip()
+    if not valeur:
+        return None
+    for format_essaye in ('%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y'):
+        try:
+            return datetime.strptime(valeur, format_essaye).date()
+        except ValueError:
+            continue
+    return None
+
+
+def _format_francais(valeur):
+    """Reaffiche la valeur du filtre en jj/mm/aaaa, meme si l'URL portait de l'ISO."""
+    date = _date_francaise(valeur)
+    return date.strftime('%d/%m/%Y') if date else ''
+
+
 def _historique_connexion_filtered(request):
     centres_qs, _, scope = _get_scope(request.user)
     qs = HistoriqueConnexion.objects.select_related('utilisateur', 'centre').order_by('-date_evenement')
@@ -887,11 +914,11 @@ def _historique_connexion_filtered(request):
     if centre_id:
         qs = qs.filter(centre_id=centre_id)
 
-    date_debut = request.GET.get('date_debut', '').strip()
+    date_debut = _date_francaise(request.GET.get('date_debut', ''))
     if date_debut:
         qs = qs.filter(date_evenement__date__gte=date_debut)
 
-    date_fin = request.GET.get('date_fin', '').strip()
+    date_fin = _date_francaise(request.GET.get('date_fin', ''))
     if date_fin:
         qs = qs.filter(date_evenement__date__lte=date_fin)
 
@@ -945,8 +972,8 @@ def historique_connexion_list(request):
         'indicateurs': _historique_connexion_indicateurs(qs),
         'centres': centres_qs.order_by('nom_centre'),
         'centre_selectionne': request.GET.get('centre', ''),
-        'date_debut': request.GET.get('date_debut', ''),
-        'date_fin': request.GET.get('date_fin', ''),
+        'date_debut': _format_francais(request.GET.get('date_debut', '')),
+        'date_fin': _format_francais(request.GET.get('date_fin', '')),
         'type_utilisateur': request.GET.get('type_utilisateur', ''),
         'type_evenement': request.GET.get('type_evenement', ''),
         'q': request.GET.get('q', ''),
