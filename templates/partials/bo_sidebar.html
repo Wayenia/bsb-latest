@@ -30,11 +30,13 @@ l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
 
     <nav class="bo-sidebar-nav" id="bo-nav">
         <a href="{% url 'bsb_admin:admin_dashboard' %}"
-           class="bo-groupe-tete {% if request.path == '/bsb/dashboard' %}bg-slate-800 text-white{% endif %}"
+           class="bo-groupe-tete {% if request.path == '/bsb/dashboard' %}bg-bsb-cream{% endif %}"
            data-lien-libelle="tableau de bord">
-            <svg class="bo-groupe-icone text-amber-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-8 9 8M5 10v10h14V10"/>
-            </svg>
+            <span class="bo-groupe-puce bg-bsb-red/10 text-bsb-red">
+                <svg class="bo-groupe-icone" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-8 9 8M5 10v10h14V10"/>
+                </svg>
+            </span>
             <span class="bo-groupe-libelle">Tableau de bord</span>
         </a>
 
@@ -42,10 +44,12 @@ l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
         <div class="bo-groupe {% if groupe.actif %}bo-groupe-ouvert{% endif %}" data-groupe="{{ groupe.cle }}">
             <button type="button" class="bo-groupe-tete" aria-expanded="{{ groupe.actif|yesno:'true,false' }}"
                     aria-controls="groupe-{{ groupe.cle }}">
-                <svg class="bo-groupe-icone {{ groupe.couleur.texte }}" fill="none" stroke="currentColor"
-                     stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ groupe.icone }}"/>
-                </svg>
+                <span class="bo-groupe-puce {{ groupe.couleur.puce }}">
+                    <svg class="bo-groupe-icone" fill="none" stroke="currentColor"
+                         stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ groupe.icone }}"/>
+                    </svg>
+                </span>
                 <span class="bo-groupe-libelle">{{ groupe.titre }}</span>
                 <svg class="bo-groupe-chevron" fill="none" stroke="currentColor" stroke-width="2"
                      viewBox="0 0 24 24" aria-hidden="true">
@@ -55,7 +59,7 @@ l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
             <div class="bo-groupe-corps {% if not groupe.actif %}hidden{% endif %}" id="groupe-{{ groupe.cle }}">
                 {% for lien in groupe.liens %}
                 <a href="{{ lien.url }}" data-lien-libelle="{{ lien.libelle|lower }}"
-                   class="bo-sidebar-lien {% if lien.actif %}bo-sidebar-lien-actif {{ groupe.couleur.bord }}{% endif %}"
+                   class="bo-sidebar-lien {% if lien.actif %}bo-sidebar-lien-actif {{ groupe.couleur.bord }} {{ groupe.couleur.actif }}{% endif %}"
                    {% if lien.actif %}aria-current="page"{% endif %}>{{ lien.libelle }}</a>
                 {% endfor %}
             </div>
@@ -78,7 +82,7 @@ l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
     </button>
-    <span class="font-semibold text-gray-900 truncate">Yupaan — administration</span>
+    <span class="font-semibold text-bsb-ink truncate">Yupaan — espace de travail</span>
 </div>
 
 <script nonce="{{ csp_nonce }}">

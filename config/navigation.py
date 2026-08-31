@@ -10,22 +10,24 @@ les inscriptions et les encaissements plusieurs fois par jour, la decoupe
 territoriale une fois par an. Les intitules restent ceux du tableau de bord
 que le personnel connait deja.
 
-Chaque groupe porte une couleur propre. Elle n'est pas decorative : elle donne
-un repere stable, l'agent retrouvant « le vert » pour l'argent et « le rose »
-pour les comptes sans relire les intitules.
+Les couleurs sont celles de la charte Yupaan — rouge, or et vert — et non une
+palette inventee : l'espace de travail doit se reconnaitre comme la partie
+publique du site. Elles alternent d'un grand theme au suivant, ce qui donne un
+repere stable : on retrouve un groupe a sa couleur avant d'en relire le titre.
 """
 from django.urls import NoReverseMatch, reverse
 
 # Les classes sont ecrites en toutes lettres : tailwind.config.js balaie
 # ./**/*.py, une classe assemblee dynamiquement ne serait pas compilee.
 COULEURS = {
-    'ambre':   {'texte': 'text-amber-400',   'puce': 'bg-amber-400',   'bord': 'border-l-amber-400'},
-    'ciel':    {'texte': 'text-sky-400',     'puce': 'bg-sky-400',     'bord': 'border-l-sky-400'},
-    'emeraude': {'texte': 'text-emerald-400', 'puce': 'bg-emerald-400', 'bord': 'border-l-emerald-400'},
-    'violet':  {'texte': 'text-violet-400',  'puce': 'bg-violet-400',  'bord': 'border-l-violet-400'},
-    'rose':    {'texte': 'text-rose-400',    'puce': 'bg-rose-400',    'bord': 'border-l-rose-400'},
-    'cyan':    {'texte': 'text-cyan-400',    'puce': 'bg-cyan-400',    'bord': 'border-l-cyan-400'},
-    'ardoise': {'texte': 'text-slate-400',   'puce': 'bg-slate-400',   'bord': 'border-l-slate-400'},
+    'rouge':  {'puce': 'bg-bsb-red/10 text-bsb-red',
+               'bord': 'border-l-bsb-red',     'actif': 'bg-bsb-red/10 text-bsb-red'},
+    'or':     {'puce': 'bg-bsb-gold/10 text-bsb-gold',
+               'bord': 'border-l-bsb-gold',    'actif': 'bg-bsb-gold/10 text-bsb-gold'},
+    'vert':   {'puce': 'bg-bsb-green/10 text-bsb-green',
+               'bord': 'border-l-bsb-green',   'actif': 'bg-bsb-green/10 text-bsb-green'},
+    'grenat': {'puce': 'bg-bsb-dark/10 text-bsb-dark',
+               'bord': 'border-l-bsb-dark',    'actif': 'bg-bsb-dark/10 text-bsb-dark'},
 }
 
 # Traces d'icones (24x24, contour). Regroupees ici pour que le gabarit ne
@@ -53,21 +55,21 @@ def _lien(nom_url, libelle, permission=None, prefixe_actif=None, args=None):
 
 GROUPES = [
     {
-        'cle': 'pilotage', 'titre': 'Pilotage', 'couleur': 'ambre', 'icone': 'graphique',
+        'cle': 'pilotage', 'titre': 'Pilotage', 'couleur': 'rouge', 'icone': 'graphique',
         'liens': [
             _lien('courses:statistiques', 'Statistiques', 'courses.voir_statistiques', '/statistiques/stat-globaux'),
             _lien('courses:stats_reel_dashboard', 'Bilan des effectifs formés', 'courses.gerer_statistiques_reelles', '/statistiques-reelles'),
         ],
     },
     {
-        'cle': 'scolarite', 'titre': 'Scolarité', 'couleur': 'ciel', 'icone': 'dossier',
+        'cle': 'scolarite', 'titre': 'Scolarité', 'couleur': 'or', 'icone': 'dossier',
         'liens': [
             _lien('bsb_admin:subscription_list', 'Inscriptions', 'courses.voir_inscriptions', '/bsb/subscriptions'),
             _lien('bsb_admin:eleve_list', 'Apprenants', 'accounts.gerer_eleves', '/bsb/eleves'),
         ],
     },
     {
-        'cle': 'finances', 'titre': 'Encaissements et facturation', 'couleur': 'emeraude', 'icone': 'monnaie',
+        'cle': 'finances', 'titre': 'Encaissements et facturation', 'couleur': 'vert', 'icone': 'monnaie',
         'liens': [
             _lien('courses:paiement_list', 'Encaissements scolarité', 'courses.encaisser_paiement', '/membre/centre/paiement'),
             _lien('accounts:prestation_list', 'Prestations', 'accounts.gerer_facturation', '/accounts/facturation/prestations'),
@@ -76,7 +78,7 @@ GROUPES = [
         ],
     },
     {
-        'cle': 'offre', 'titre': 'Offre de formation', 'couleur': 'violet', 'icone': 'livre',
+        'cle': 'offre', 'titre': 'Offre de formation', 'couleur': 'grenat', 'icone': 'livre',
         'liens': [
             _lien('bsb_admin:programming_list', 'Programmations', 'courses.gerer_programmations', '/bsb/programmings'),
             _lien('bsb_admin:field_list', 'Métiers', 'courses.gerer_metiers', '/bsb/filiere'),
@@ -85,7 +87,7 @@ GROUPES = [
         ],
     },
     {
-        'cle': 'rh', 'titre': 'Ressources humaines', 'couleur': 'rose', 'icone': 'personnes',
+        'cle': 'rh', 'titre': 'Ressources humaines', 'couleur': 'rouge', 'icone': 'personnes',
         'liens': [
             _lien('bsb_admin:agent_list', 'Agents et formateurs', 'accounts.gerer_agents', '/bsb/rh/agents'),
             _lien('bsb_admin:permissions_matrix', 'Permissions', 'accounts.gerer_permissions', '/bsb/rh/permissions'),
@@ -93,27 +95,27 @@ GROUPES = [
         ],
     },
     {
-        'cle': 'communication', 'titre': 'Communication', 'couleur': 'cyan', 'icone': 'megaphone',
+        'cle': 'communication', 'titre': 'Communication', 'couleur': 'or', 'icone': 'megaphone',
         'liens': [
             _lien('bsb_actualites:actualite_list', 'Actualités', 'actualites.gerer_actualites', '/bsb/actualites'),
             _lien('bsb_actualites:abonne_list', 'Abonnés à la lettre', 'actualites.gerer_newsletter', '/bsb/actualites/abonnes'),
         ],
     },
     {
-        'cle': 'supervision', 'titre': 'Supervision', 'couleur': 'ardoise', 'icone': 'bouclier',
+        'cle': 'supervision', 'titre': 'Supervision', 'couleur': 'vert', 'icone': 'bouclier',
         'liens': [
             _lien('bsb_admin:historique_connexion_list', 'Historique des connexions', 'accounts.voir_historique_connexion', '/bsb/historique-connexions'),
         ],
     },
     {
-        'cle': 'territoire', 'titre': 'Territoire', 'couleur': 'ardoise', 'icone': 'carte',
+        'cle': 'territoire', 'titre': 'Territoire', 'couleur': 'grenat', 'icone': 'carte',
         'liens': [
             _lien('bsb_admin:direction_list', 'Directions inter-régionales', 'courses.gerer_directions', '/bsb/directions'),
             _lien('bsb_admin:region_list', 'Régions et provinces', 'courses.gerer_regions', '/bsb/regions'),
         ],
     },
     {
-        'cle': 'parametrage', 'titre': 'Paramétrage', 'couleur': 'ardoise', 'icone': 'reglages',
+        'cle': 'parametrage', 'titre': 'Paramétrage', 'couleur': 'rouge', 'icone': 'reglages',
         'liens': [
             _lien('bsb_admin:type_frais_list', 'Types de frais', 'courses.gerer_frais', '/bsb/type-frais'),
             _lien('bsb_admin:annee_list', 'Années de formation', 'courses.gerer_annees', '/bsb/annees'),

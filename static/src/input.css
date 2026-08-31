@@ -279,85 +279,86 @@
 }
 
 /* ==========================================================================
-   Navigation laterale du back-office
+   Navigation laterale de l'espace de travail
    --------------------------------------------------------------------------
-   Mobile d'abord : tiroir hors champ sur petit ecran, installee a demeure a
-   partir de lg. Les groupes se replient ; leur etat est retenu d'une page a
-   l'autre, et le groupe de l'ecran courant s'ouvre toujours.
+   Charte Yupaan : fond clair, en-tete au degrade rouge -> jaune de la page
+   d'accueil, pied creme. L'espace de travail doit se reconnaitre comme la
+   partie publique du site, pas comme un outil etranger colle a cote.
 
-   Chaque groupe porte une couleur propre, definie dans config/navigation.py.
-   Elle sert de repere : on retrouve « le vert » pour l'argent sans relire les
-   intitules.
+   Mobile d'abord : tiroir hors champ sur petit ecran, installee a demeure a
+   partir de lg. Les groupes se replient, leur etat est retenu, et celui de
+   l'ecran courant s'ouvre toujours.
    ========================================================================== */
 @layer components {
 
   .bo-topbar {
     @apply lg:hidden sticky top-0 z-30 flex items-center gap-3 h-14 px-4
-           bg-white border-b border-gray-200;
+           bg-white border-b border-bsb-gold/30;
   }
   .bo-burger {
     @apply inline-flex items-center justify-center w-10 h-10 -ml-2 rounded-lg
-           text-gray-600 hover:bg-gray-100
-           focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500;
+           text-bsb-ink hover:bg-bsb-cream
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
   }
 
-  .bo-voile { @apply lg:hidden fixed inset-0 z-40 bg-slate-900/60 transition-opacity; }
+  .bo-voile { @apply lg:hidden fixed inset-0 z-40 bg-bsb-ink/50 transition-opacity; }
 
   .bo-sidebar {
     @apply fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] flex flex-col
-           bg-slate-900 text-slate-300 overflow-y-auto overscroll-contain
+           bg-white text-bsb-ink border-r border-gray-200
+           overflow-y-auto overscroll-contain
            transition-transform duration-200 -translate-x-full
            lg:translate-x-0 lg:w-72;
   }
   .bo-sidebar-ouverte { @apply translate-x-0; }
 
+  /* En-tete au degrade signature de l'accueil. */
   .bo-sidebar-entete {
-    @apply flex items-center gap-3 px-4 h-16 shrink-0 border-b border-slate-800
-           sticky top-0 bg-slate-900 z-10;
+    @apply flex items-center gap-3 px-4 h-16 shrink-0 sticky top-0 z-10
+           bg-gradient-to-r from-bsb-red to-bsb-yellow;
   }
-  .bo-sidebar-marque { @apply text-white font-semibold tracking-tight leading-tight; }
-  .bo-sidebar-sous   { @apply text-[11px] uppercase tracking-widest text-slate-500; }
+  .bo-sidebar-marque { @apply text-white font-bold tracking-tight leading-tight; }
+  .bo-sidebar-sous   { @apply text-[11px] uppercase tracking-widest text-white/80; }
 
-  /* Filtre : avec une vingtaine d'entrees, chercher est plus rapide que
-     parcourir. */
+  /* Filtre : avec une vingtaine d'entrees, chercher va plus vite que parcourir. */
   .bo-recherche-zone { @apply px-3 pt-3; }
   .bo-recherche {
-    @apply w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm
-           text-slate-100 placeholder:text-slate-500
-           focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500;
+    @apply w-full rounded-lg bg-bsb-cream border border-bsb-gold/30 px-3 py-2 text-sm
+           text-bsb-ink placeholder:text-bsb-muted
+           focus:outline-none focus:border-bsb-red focus:ring-1 focus:ring-bsb-red;
   }
 
   .bo-sidebar-nav { @apply flex-1 px-2 py-3 space-y-0.5; }
 
-  /* En-tete de groupe : bouton d'ouverture ou de repli. */
   .bo-groupe-tete {
-    @apply w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left
-           text-[13px] font-medium text-slate-300
-           hover:bg-slate-800 hover:text-white transition-colors
-           focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500;
+    @apply w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-left
+           text-[13px] font-semibold text-bsb-ink
+           hover:bg-bsb-cream transition-colors
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
   }
-  .bo-groupe-icone   { @apply w-4 h-4 shrink-0; }
+  /* Pastille coloree : le repere se lit avant le titre. */
+  .bo-groupe-puce {
+    @apply inline-flex items-center justify-center w-7 h-7 rounded-lg shrink-0;
+  }
+  .bo-groupe-icone   { @apply w-4 h-4; }
   .bo-groupe-libelle { @apply flex-1 min-w-0 truncate; }
-  .bo-groupe-chevron { @apply w-4 h-4 shrink-0 text-slate-500 transition-transform duration-200; }
+  .bo-groupe-chevron { @apply w-4 h-4 shrink-0 text-bsb-muted transition-transform duration-200; }
   .bo-groupe-ouvert .bo-groupe-chevron { @apply rotate-90; }
-  .bo-groupe-corps   { @apply mt-0.5 mb-1 ml-[26px] pl-3 border-l border-slate-800 space-y-0.5; }
+  .bo-groupe-corps   { @apply mt-0.5 mb-1 ml-[22px] pl-3 border-l border-bsb-gold/25 space-y-0.5; }
 
   .bo-sidebar-lien {
-    @apply block px-3 py-1.5 rounded-md text-[13px] text-slate-400
-           hover:bg-slate-800 hover:text-white transition-colors
-           focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500;
+    @apply block px-3 py-1.5 rounded-md text-[13px] text-bsb-muted
+           hover:bg-bsb-cream hover:text-bsb-ink transition-colors
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
   }
-  /* L'ecran courant est marque par un liseré colore : la couleur seule se
-     repere mal dans une liste longue. */
-  .bo-sidebar-lien-actif {
-    @apply bg-slate-800 text-white font-medium border-l-2 -ml-[13px] pl-[11px];
-  }
+  /* Ecran courant : fond teinte et liseré de la couleur du groupe. */
+  .bo-sidebar-lien-actif { @apply font-semibold border-l-2 -ml-[13px] pl-[11px]; }
 
-  .bo-sidebar-pied { @apply shrink-0 border-t border-slate-800 p-3 sticky bottom-0 bg-slate-900; }
-  .bo-sidebar-compte { @apply px-3 pb-2 text-xs text-slate-500 truncate; }
+  .bo-sidebar-pied { @apply shrink-0 border-t border-bsb-gold/30 bg-bsb-cream p-3 sticky bottom-0; }
+  .bo-sidebar-compte { @apply px-3 pb-2 text-xs text-bsb-muted truncate; }
   .bo-sidebar-lien-pied {
-    @apply block px-3 py-1.5 rounded-md text-[13px] text-slate-400
-           hover:bg-slate-800 hover:text-white transition-colors;
+    @apply block px-3 py-1.5 rounded-md text-[13px] text-bsb-muted
+           hover:bg-white hover:text-bsb-ink transition-colors;
   }
 
   .bo-avec-sidebar { @apply lg:ml-72; }

@@ -1,26 +1,51 @@
 """Variables de gabarit communes.
 
-`navigation` decide quelle navigation le back-office affiche. Le choix est
-pilote par le reglage BO_NAVIGATION, lui-meme lu dans .env : basculer d'une
-navigation a l'autre ne demande aucune modification de code ni de gabarit,
-seulement une recreation du conteneur (voir ./bascule_ui.sh).
+`navigation` decide quelle navigation s'affiche. Le choix depend de deux
+conditions : le reglage BO_NAVIGATION, et le fait que l'on soit sur un ecran de
+travail d'agent. Les pages publiques et l'espace des apprenants gardent la
+barre horizontale et la charte publique.
 """
 from django.conf import settings
 
 from .navigation import construire_menu
 
-# Prefixes ou la sidebar remplace la barre horizontale. Les pages publiques
-# (accueil, a propos, actualites) gardent la charte BSB et n'en font pas partie.
-PREFIXES_BACK_OFFICE = ('/bsb/',)
+# Ecrans de travail des agents. Le back-office ne tient pas dans le seul
+# prefixe /bsb/ : les statistiques, les encaissements de scolarite, les centres
+# et tout le module de facturation sont montes ailleurs dans le routage.
+PREFIXES_ESPACE_AGENT = (
+    '/bsb/',
+    '/centres/',
+    '/statistiques/',
+    '/statistiques-reelles/',
+    '/membre/',
+    '/accounts/facturation/',
+    '/accounts/encaissement',
+    '/accounts/daf/',
+    '/accounts/mon-compte',
+    '/accounts/mon-profil',
+    '/accounts/changer-mot-de-passe',
+)
+
+
+def _est_agent(utilisateur):
+    """Un apprenant n'est pas un agent, meme sur une page partagee.
+
+    `/accounts/mon-compte` sert aux deux : sans ce test, un apprenant y verrait
+    la navigation d'administration.
+    """
+    if not utilisateur or not utilisateur.is_authenticated:
+        return False
+    if utilisateur.is_staff or utilisateur.is_superuser:
+        return True
+    return getattr(utilisateur, 'user_type', 'eleve') != 'eleve'
 
 
 def navigation(request):
     utilisateur = getattr(request, 'user', None)
     actif = (
         getattr(settings, 'BO_NAVIGATION', 'sidebar') == 'sidebar'
-        and utilisateur is not None
-        and utilisateur.is_authenticated
-        and request.path.startswith(PREFIXES_BACK_OFFICE)
+        and _est_agent(utilisateur)
+        and request.path.startswith(PREFIXES_ESPACE_AGENT)
     )
     if not actif:
         return {'bo_sidebar': False}
