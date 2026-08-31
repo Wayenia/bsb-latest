@@ -92,7 +92,7 @@
       <div id="t{{ t.pk }}" class="hidden">
         {% with tranches=t.tranches.all %}
         {% if tranches %}
-        <table class="min-w-full divide-y divide-gray-100">
+        <table class="bo-table-adaptable min-w-full divide-y divide-gray-100">
           <thead class="bg-gray-50">
             <tr>
               <th class="pl-16 pr-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tranche</th>
@@ -105,9 +105,9 @@
             {% for tr in tranches %}
             <tr class="hover:bg-gray-50 transition-colors">
               <td class="pl-16 pr-6 py-3.5 whitespace-nowrap text-sm font-semibold text-gray-800">{{ tr.libelle }}</td>
-              <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-600">{{ tr.ordre }}</td>
-              <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-600">{{ tr.pourcentage }}%</td>
-              <td class="px-6 py-3.5 whitespace-nowrap text-sm">
+              <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-600" data-label="Ordre">{{ tr.ordre }}</td>
+              <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-600" data-label="Pourcentage">{{ tr.pourcentage }}%</td>
+              <td class="px-6 py-3.5 whitespace-nowrap text-sm" data-label="Primordiale">
                 {% if tr.est_primordiale %}
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">Oui</span>
                 {% else %}

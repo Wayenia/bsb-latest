@@ -120,7 +120,7 @@
       <div id="r{{ region.pk }}" class="hidden">
         {% with provinces=region.provinces.all %}
         {% if provinces %}
-        <table class="min-w-full divide-y divide-gray-100">
+        <table class="bo-table-adaptable min-w-full divide-y divide-gray-100">
           <thead class="bg-gray-50">
             <tr>
               <th class="pl-16 pr-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Province</th>
@@ -138,8 +138,8 @@
                   <span class="text-sm font-semibold text-gray-800">{{ province.nom_province }}</span>
                 </div>
               </td>
-              <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-600">{{ province.chef_lieu }}</td>
-              <td class="px-6 py-3.5 whitespace-nowrap text-xs text-gray-400">
+              <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-600" data-label="Chef-lieu">{{ province.chef_lieu }}</td>
+              <td class="px-6 py-3.5 whitespace-nowrap text-xs text-gray-400" data-label="Créée le">
                 {{ province.date_creation|date:"d/m/Y" }}
               </td>
               <td class="px-6 py-3.5 whitespace-nowrap text-right">

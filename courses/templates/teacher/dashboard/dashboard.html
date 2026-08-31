@@ -215,7 +215,7 @@
     {% comment %} ── Formations actives de la direction ──────────────────────────────── {% endcomment %}
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Formations actives</p>
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-100 text-sm">
+      <table class="bo-table-adaptable min-w-full divide-y divide-gray-100 text-sm">
         <thead>
           <tr class="text-left text-gray-400 uppercase text-xs tracking-wider">
             <th class="px-6 py-3">Centre</th>
@@ -228,9 +228,9 @@
           {% for career in active_careers %}
           <tr>
             <td class="px-6 py-3 font-medium text-gray-800">{{ career.centre }}</td>
-            <td class="px-6 py-3 text-gray-600">{{ career.filiere }}</td>
-            <td class="px-6 py-3 text-gray-600">{{ career.date_lancement }}</td>
-            <td class="px-6 py-3 text-gray-600">{{ career.total_frais|default:"—" }}</td>
+            <td class="px-6 py-3 text-gray-600" data-label="Métier">{{ career.filiere }}</td>
+            <td class="px-6 py-3 text-gray-600" data-label="Date de lancement">{{ career.date_lancement }}</td>
+            <td class="px-6 py-3 text-gray-600" data-label="Frais total">{{ career.total_frais|default:"—" }}</td>
           </tr>
           {% empty %}
           <tr>

@@ -37,7 +37,7 @@
     <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
         {% if eleves %}
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-100">
+            <table class="bo-table-adaptable min-w-full divide-y divide-gray-100">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Apprenant</th>
@@ -60,8 +60,8 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ e.numero_identifiant|default:"—" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700" data-label="Identifiant">{{ e.numero_identifiant|default:"—" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700" data-label="Contact">
                             <div>{{ e.email|default:"—" }}</div>
                             <div class="text-xs text-gray-400">{{ e.tel|default:"—" }}</div>
                         </td>

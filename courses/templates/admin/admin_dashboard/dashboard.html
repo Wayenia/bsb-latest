@@ -119,7 +119,7 @@
         </div>
         {% if formations_recentes %}
         <div class="bo-table-wrap border-0 rounded-none">
-            <table class="bo-table">
+            <table class="bo-table-adaptable bo-table">
                 <thead>
                     <tr>
                         <th scope="col">Métier</th>
@@ -132,9 +132,9 @@
                     {% for f in formations_recentes %}
                     <tr>
                         <td class="font-medium text-gray-900">{{ f.filiere.nom_filiere }}</td>
-                        <td>{{ f.centre.nom_centre }}</td>
-                        <td class="whitespace-nowrap">{{ f.annee_prog|default:"—" }}</td>
-                        <td class="bo-num">{% if f.total_frais %}{{ f.total_frais|floatformat:0|intcomma }} FCFA{% else %}—{% endif %}</td>
+                        <td data-label="Centre">{{ f.centre.nom_centre }}</td>
+                        <td class="whitespace-nowrap" data-label="Année">{{ f.annee_prog|default:"—" }}</td>
+                        <td class="bo-num" data-label="Frais">{% if f.total_frais %}{{ f.total_frais|floatformat:0|intcomma }} FCFA{% else %}—{% endif %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

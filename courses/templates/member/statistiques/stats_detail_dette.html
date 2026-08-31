@@ -115,7 +115,7 @@
       Tranches de « {{ dette.frais_formation.type_frais.libelle }} »
     </div>
     <div class="overflow-x-auto">
-      <table class="w-full">
+      <table class="bo-table-adaptable w-full">
         <thead>
           <tr class="text-left text-sm text-gray-500 border-b border-gray-200">
             <th class="py-2">Tranche</th>
@@ -134,10 +134,10 @@
               {% if t.tranche.est_primordiale %}<span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 ml-1">Primordiale</span>{% endif %}
               {% if t.est_cible %}<span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 ml-1">À payer</span>{% endif %}
             </td>
-            <td class="py-2">{{ t.montant|floatformat:0|intcomma }} FCFA</td>
-            <td class="py-2 text-emerald-600">{{ t.paye|floatformat:0|intcomma }} FCFA</td>
-            <td class="py-2 text-red-600">{{ t.reste|floatformat:0|intcomma }} FCFA</td>
-            <td class="py-2">
+            <td class="py-2" data-label="Montant">{{ t.montant|floatformat:0|intcomma }} FCFA</td>
+            <td class="py-2 text-emerald-600" data-label="Payé">{{ t.paye|floatformat:0|intcomma }} FCFA</td>
+            <td class="py-2 text-red-600" data-label="Reste">{{ t.reste|floatformat:0|intcomma }} FCFA</td>
+            <td class="py-2" data-label="État">
               {% if t.soldee %}
                 <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Soldée</span>
               {% else %}
@@ -181,7 +181,7 @@
     </div>
 
     <div class="overflow-x-auto">
-      <table class="w-full">
+      <table class="bo-table-adaptable w-full">
         <thead>
           <tr class="text-left text-sm text-gray-500 border-b border-gray-200">
             <th class="py-2">Tranche</th>
@@ -202,8 +202,8 @@
               <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700" title="{{ p.motif_annulation }}">Annulé</span>
               {% endif %}
             </td>
-            <td class="py-2 font-semibold {% if p.annule %}text-gray-400 line-through{% else %}text-emerald-600{% endif %}">{{ p.montant_paiement|floatformat:0|intcomma }} FCFA</td>
-            <td class="py-2">
+            <td class="py-2 font-semibold {% if p.annule %}text-gray-400 line-through{% else %}text-emerald-600{% endif %}" data-label="Montant">{{ p.montant_paiement|floatformat:0|intcomma }} FCFA</td>
+            <td class="py-2" data-label="Mode">
               {% if p.mode_paiement == 'mobile' %}
                 <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Mobile Money</span>
               {% elif p.mode_paiement == 'espece' %}
@@ -212,9 +212,9 @@
                 <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Chèque</span>
               {% endif %}
             </td>
-            <td class="py-2 text-sm text-gray-500">{{ p.date_paiement|date:"d/m/Y H:i" }}</td>
-            <td class="py-2"><code class="text-sm">{{ p.numero_quittance }}</code></td>
-            <td class="py-2 text-sm">
+            <td class="py-2 text-sm text-gray-500" data-label="Date">{{ p.date_paiement|date:"d/m/Y H:i" }}</td>
+            <td class="py-2" data-label="N° Quittance"><code class="text-sm">{{ p.numero_quittance }}</code></td>
+            <td class="py-2 text-sm" data-label="Enregistré par">
               {% if p.cree_par %}
                 {{ p.cree_par.get_full_name|default:p.cree_par.username }}
               {% else %}

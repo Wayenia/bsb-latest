@@ -31,7 +31,7 @@
     {{ formset.management_form }}
 
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-      <table class="w-full text-sm" id="tranches-table">
+      <table class="bo-table-adaptable w-full text-sm" id="tranches-table">
         <thead>
           <tr class="border-b border-gray-100 bg-gray-50">
             <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Libellé</th>
@@ -49,18 +49,18 @@
               {{ form.libelle }}
               {% if form.libelle.errors %}<p class="text-xs text-red-600 mt-1">{{ form.libelle.errors.0 }}</p>{% endif %}
             </td>
-            <td class="px-4 py-3">
+            <td class="px-4 py-3" data-label="Ordre">
               {{ form.ordre }}
               {% if form.ordre.errors %}<p class="text-xs text-red-600 mt-1">{{ form.ordre.errors.0 }}</p>{% endif %}
             </td>
-            <td class="px-4 py-3">
+            <td class="px-4 py-3" data-label="Pourcentage">
               {{ form.pourcentage }}
               {% if form.pourcentage.errors %}<p class="text-xs text-red-600 mt-1">{{ form.pourcentage.errors.0 }}</p>{% endif %}
             </td>
-            <td class="px-4 py-3 text-center">
+            <td class="px-4 py-3 text-center" data-label="Primordiale">
               {{ form.est_primordiale }}
             </td>
-            <td class="px-4 py-3 text-center">
+            <td class="px-4 py-3 text-center" data-label="Retirer">
               {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
             </td>
           </tr>

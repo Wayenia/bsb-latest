@@ -37,7 +37,7 @@
     {% comment %} Lignes {% endcomment %}
     <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-100">
+            <table class="bo-table-adaptable min-w-full divide-y divide-gray-100">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Désignation</th>
@@ -54,9 +54,9 @@
                     {% for ligne in lignes %}
                     <tr>
                         <td class="px-6 py-3 text-sm font-semibold text-gray-800">{{ ligne.prestation.libelle }}</td>
-                        <td class="px-6 py-3 text-center text-sm text-gray-600">{{ ligne.quantite }}</td>
-                        <td class="px-6 py-3 text-right text-sm text-gray-600">{{ ligne.prix_unitaire|floatformat:0|intcomma }} FCFA</td>
-                        <td class="px-6 py-3 text-right text-sm font-bold text-gray-900">{{ ligne.montant|floatformat:0|intcomma }} FCFA</td>
+                        <td class="px-6 py-3 text-center text-sm text-gray-600" data-label="Quantité">{{ ligne.quantite }}</td>
+                        <td class="px-6 py-3 text-right text-sm text-gray-600" data-label="Coût unitaire">{{ ligne.prix_unitaire|floatformat:0|intcomma }} FCFA</td>
+                        <td class="px-6 py-3 text-right text-sm font-bold text-gray-900" data-label="Coût total">{{ ligne.montant|floatformat:0|intcomma }} FCFA</td>
                         {% if facture.type_facture == 'definitive' %}
                         <td class="px-6 py-3 text-right text-sm font-bold {% if ligne.reste > 0 %}text-red-700{% else %}text-gray-400{% endif %}">
                             {{ ligne.reste|floatformat:0|intcomma }} FCFA
@@ -106,7 +106,7 @@
             <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wide">Paiements encaissés</h2>
         </div>
         {% if paiements %}
-        <table class="min-w-full divide-y divide-gray-100">
+        <table class="bo-table-adaptable min-w-full divide-y divide-gray-100">
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">N° Reçu</th>
@@ -120,10 +120,10 @@
                 {% for p in paiements %}
                 <tr class="hover:bg-gray-50">
                     <td class="px-6 py-3 text-sm font-mono text-gray-700">{{ p.numero_recu }}</td>
-                    <td class="px-6 py-3 text-sm text-gray-600">{{ p.date_paiement|date:"d/m/Y H:i" }}</td>
-                    <td class="px-6 py-3 text-sm text-gray-600">{{ p.get_mode_paiement_display }}</td>
-                    <td class="px-6 py-3 text-right text-sm font-bold text-gray-900">{{ p.montant|floatformat:0|intcomma }} FCFA</td>
-                    <td class="px-6 py-3 text-right">
+                    <td class="px-6 py-3 text-sm text-gray-600" data-label="Date">{{ p.date_paiement|date:"d/m/Y H:i" }}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600" data-label="Mode">{{ p.get_mode_paiement_display }}</td>
+                    <td class="px-6 py-3 text-right text-sm font-bold text-gray-900" data-label="Montant">{{ p.montant|floatformat:0|intcomma }} FCFA</td>
+                    <td class="px-6 py-3 text-right" data-label="Reçu">
                         <a href="{% url 'accounts:prestation_recu_pdf' p.id %}" class="text-xs font-bold text-red-700 hover:underline">Télécharger</a>
                     </td>
                 </tr>

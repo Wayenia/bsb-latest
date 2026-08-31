@@ -101,7 +101,7 @@
                     {% if centre_ouvert.id == centre.id %}
                         {% if subscriptions %}
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
+                            <table class="bo-table-adaptable min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-100">
                                     <tr>
                                         <th scope="col" class="pl-16 pr-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Apprenant</th>
@@ -119,10 +119,10 @@
                                             {{ s.eleve.nom }} {{ s.eleve.prenom }}
                                             <div class="text-xs font-normal text-gray-400">{{ s.eleve.matricule|default:"—" }}</div>
                                         </td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm font-medium text-gray-900">{{ s.formation }}</td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900">{{ s.date_inscription }}</td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900">{{ s.annee_scolaire }}</td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm">
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm font-medium text-gray-900" data-label="Formation">{{ s.formation }}</td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900" data-label="Date d'Inscrition">{{ s.date_inscription }}</td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900" data-label="Année de formation">{{ s.annee_scolaire }}</td>
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm" data-label="Statut">
                                             {% if s.statut == "en_cours" %}
                                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">En cours</span>
                                             {% elif s.statut == "valide" %}
@@ -228,7 +228,7 @@
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {% if subscriptions %}
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table class="bo-table-adaptable min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -262,16 +262,16 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Formation">
                             <span class="text-sm font-medium text-gray-900">{{ s.formation}}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Date d'Inscrition">
                             <span class="text-sm font-medium text-gray-900">{{ s.date_inscription}}</span>
                         </td>
-                         <td class="px-6 py-4 whitespace-nowrap">
+                         <td class="px-6 py-4 whitespace-nowrap" data-label="Année de formation">
                             <span class="text-sm font-medium text-gray-900">{{ s.annee_scolaire}}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm 0">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm 0" data-label="statut">
                            {% if s.statut == "en_cours" %}
                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                 En cours

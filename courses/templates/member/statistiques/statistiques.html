@@ -601,7 +601,7 @@
       </div>
     </div>
     <div class="table-scroll">
-      <table class="bsb-table">
+      <table class="bo-table-adaptable bsb-table">
         <thead>
           <tr>
             <th>Centre</th>
@@ -617,12 +617,12 @@
           {% for r in recouvrement_centres %}
           <tr>
             <td class="font-semibold">{{ r.nom_centre }}</td>
-            {% if scope in "global direction" %}<td class="text-gray-500 text-sm">{{ r.direction }}</td>{% endif %}
-            <td class="text-right">{{ r.inscrits }}</td>
-            <td class="text-right text-sm"><span class="fmt-amount">{{ r.total_du|floatformat:0 }}</span> F</td>
-            <td class="text-right text-sm font-semibold text-[#16A34A]"><span class="fmt-amount">{{ r.encaisse|floatformat:0 }}</span> F</td>
-            <td class="text-right text-sm text-[var(--rouge)]"><span class="fmt-amount">{{ r.restant|floatformat:0 }}</span> F</td>
-            <td>
+            {% if scope in "global direction" %}<td class="text-gray-500 text-sm" data-label="Direction">{{ r.direction }}</td>{% endif %}
+            <td class="text-right" data-label="Inscrits">{{ r.inscrits }}</td>
+            <td class="text-right text-sm" data-label="Total dû"><span class="fmt-amount">{{ r.total_du|floatformat:0 }}</span> F</td>
+            <td class="text-right text-sm font-semibold text-[#16A34A]" data-label="Encaissé"><span class="fmt-amount">{{ r.encaisse|floatformat:0 }}</span> F</td>
+            <td class="text-right text-sm text-[var(--rouge)]" data-label="Restant"><span class="fmt-amount">{{ r.restant|floatformat:0 }}</span> F</td>
+            <td data-label="Taux de recouvrement">
               <div class="prog-wrap">
                 <div class="prog-bar-outer">
                   {# Largeur posee par JavaScript depuis data-largeur : un style= serait bloque par la CSP. #}
@@ -683,7 +683,7 @@
       </div>
     </div>
     <div class="table-scroll">
-      <table class="bsb-table">
+      <table class="bo-table-adaptable bsb-table">
         <thead>
           <tr>
             <th>#</th>
@@ -700,18 +700,18 @@
           {% for insc in dernieres_inscriptions %}
           <tr>
             <td class="text-gray-500 text-sm">{{ forloop.counter }}</td>
-            <td>
+            <td data-label="Apprenant">
               <div class="font-semibold text-sm">{{ insc.eleve.nom }} {{ insc.eleve.prenom }}</div>
               <div class="text-gray-500 text-[.72rem]">{{ insc.eleve.numero_identifiant }}</div>
             </td>
-            <td class="text-sm">{{ insc.formation.filiere.nom_filiere }}</td>
-            <td class="text-sm">{{ insc.formation.centre.nom_centre }}</td>
+            <td class="text-sm" data-label="Métier">{{ insc.formation.filiere.nom_filiere }}</td>
+            <td class="text-sm" data-label="Centre">{{ insc.formation.centre.nom_centre }}</td>
             {% if scope in "global direction" %}
-            <td class="text-sm text-gray-500">{{ insc.formation.centre.direction.nom_direction|default:"—" }}</td>
+            <td class="text-sm text-gray-500" data-label="Direction">{{ insc.formation.centre.direction.nom_direction|default:"—" }}</td>
             {% endif %}
-            <td class="text-sm">{{ insc.annee_scolaire.libelle_anne|default:"—" }}</td>
-            <td class="text-sm text-gray-500">{{ insc.date_inscription|date:"d/m/Y" }}</td>
-            <td>
+            <td class="text-sm" data-label="Année">{{ insc.annee_scolaire.libelle_anne|default:"—" }}</td>
+            <td class="text-sm text-gray-500" data-label="Date">{{ insc.date_inscription|date:"d/m/Y" }}</td>
+            <td data-label="Statut">
               {% if insc.statut == 'valide' or insc.statut == 'valide_paye' or insc.statut == 'Valide' %}
                 <span class="badge-stat badge-valide">Validé</span>
               {% elif insc.statut == 'en_cours' %}

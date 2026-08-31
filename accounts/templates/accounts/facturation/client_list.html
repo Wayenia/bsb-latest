@@ -31,7 +31,7 @@
 
     <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
         {% if clients %}
-        <table class="min-w-full divide-y divide-gray-100">
+        <table class="bo-table-adaptable min-w-full divide-y divide-gray-100">
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Client</th>
@@ -44,9 +44,9 @@
                 {% for c in clients %}
                 <tr class="hover:bg-red-50 transition-colors">
                     <td class="px-6 py-3 text-sm font-bold text-gray-900">{{ c }}</td>
-                    <td class="px-6 py-3 text-sm text-gray-600">{{ c.get_type_client_display }}</td>
-                    <td class="px-6 py-3 text-sm text-gray-600">{{ c.telephone|default:"—" }}</td>
-                    <td class="px-6 py-3 text-sm text-gray-600">{{ c.adresse|default:"—"|truncatechars:60 }}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600" data-label="Type">{{ c.get_type_client_display }}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600" data-label="Téléphone">{{ c.telephone|default:"—" }}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600" data-label="Adresse">{{ c.adresse|default:"—"|truncatechars:60 }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

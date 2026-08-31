@@ -51,7 +51,7 @@
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {% if fees %}
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table class="bo-table-adaptable min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -82,13 +82,13 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Métier">
                             <span class="text-sm font-medium text-gray-900">{{ f.formation.filiere.nom_filiere }}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Type de frais">
                             <span class="text-sm font-medium text-gray-900">{{f.type_frais}}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Montant">
                             <span class="text-sm font-medium text-gray-900">{{f.montant}}</span>
                         </td>
                       

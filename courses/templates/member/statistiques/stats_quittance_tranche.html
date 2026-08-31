@@ -107,7 +107,7 @@
 
         {% if paiements %}
         <div class="overflow-x-auto">
-          <table class="w-full">
+          <table class="bo-table-adaptable w-full">
             <thead>
               <tr class="text-left text-sm text-gray-500 border-b border-gray-200">
                 <th class="py-2">#</th>
@@ -122,14 +122,14 @@
               {% for p in paiements %}
               <tr class="border-b border-gray-100 hover:bg-gray-50 {% if p.annule %}opacity-50{% endif %}">
                 <td class="py-2 text-gray-500 text-sm">{{ forloop.counter }}</td>
-                <td class="py-2">
+                <td class="py-2" data-label="N° Quittance">
                   <code class="text-sm">{{ p.numero_quittance }}</code>
                   {% if p.annule %}
                   <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700" title="{{ p.motif_annulation }}">Annulé</span>
                   {% endif %}
                 </td>
-                <td class="py-2 font-semibold {% if p.annule %}text-gray-400 line-through{% else %}text-emerald-600{% endif %}">{{ p.montant_paiement|floatformat:0|intcomma }} FCFA</td>
-                <td class="py-2">
+                <td class="py-2 font-semibold {% if p.annule %}text-gray-400 line-through{% else %}text-emerald-600{% endif %}" data-label="Montant">{{ p.montant_paiement|floatformat:0|intcomma }} FCFA</td>
+                <td class="py-2" data-label="Mode">
                   {% if p.mode_paiement == 'mobile' %}
                     <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Mobile Money</span>
                   {% elif p.mode_paiement == 'espece' %}
@@ -138,8 +138,8 @@
                     <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Chèque</span>
                   {% endif %}
                 </td>
-                <td class="py-2 text-sm text-gray-500">{{ p.date_paiement|date:"d/m/Y à H:i" }}</td>
-                <td class="py-2 text-right">
+                <td class="py-2 text-sm text-gray-500" data-label="Date">{{ p.date_paiement|date:"d/m/Y à H:i" }}</td>
+                <td class="py-2 text-right" data-label="Télécharger">
                   {% if p.annule and est_apprenant %}
                   <span class="text-gray-300 text-sm cursor-not-allowed" title="Ce versement a été annulé, sa quittance n'est plus disponible">PDF</span>
                   {% else %}

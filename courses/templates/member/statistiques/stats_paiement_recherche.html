@@ -78,7 +78,7 @@
 
     {% if eleves %}
     <div class="overflow-x-auto">
-      <table class="w-full">
+      <table class="bo-table-adaptable w-full">
         <thead>
           <tr class="text-left text-sm text-gray-500 border-b border-gray-200">
             <th class="py-2">Apprenant</th>
@@ -95,9 +95,9 @@
               <div class="font-semibold">{{ eleve.nom }} {{ eleve.prenom }}</div>
               <div class="text-gray-500 text-sm">{{ eleve.email|default:"—" }}</div>
             </td>
-            <td class="py-2"><code class="text-sm">{{ eleve.numero_identifiant|default:"—" }}</code></td>
-            <td class="py-2">{{ eleve.tel|default:"—" }}</td>
-            <td class="py-2">
+            <td class="py-2" data-label="Identifiant"><code class="text-sm">{{ eleve.numero_identifiant|default:"—" }}</code></td>
+            <td class="py-2" data-label="Téléphone">{{ eleve.tel|default:"—" }}</td>
+            <td class="py-2" data-label="Inscriptions">
               <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold text-white bg-[#2563eb]">{{ eleve.nb_inscriptions }} formation{{ eleve.nb_inscriptions|pluralize }}</span>
             </td>
             <td class="py-2 text-right">

@@ -133,7 +133,7 @@
 
     {% comment %} Vue tableau (desktop) {% endcomment %}
     <div class="hidden md:block overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
+      <table class="bo-table-adaptable min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
             <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Métier</th>
@@ -156,7 +156,7 @@
             </td>
 
             {% comment %} Durée {% endcomment %}
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Durée">
               <span class="inline-flex items-center gap-1 font-medium text-gray-800 text-sm">
                 
                 {{ career.duree_display }}
@@ -164,7 +164,7 @@
             </td>
 
             {% comment %} Conditions d'accès {% endcomment %}
-            <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
+            <td class="px-6 py-4 text-sm text-gray-700 max-w-xs" data-label="Conditions d'accès">
               {% if career.filiere.niveau_diplome %}
                 <span class="text-sm text-gray-800">{{ career.filiere.niveau_diplome }}</span>
               {% else %}
@@ -173,7 +173,7 @@
             </td>
 
             {% comment %} Titre Professionnel {% endcomment %}
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Titre Professionnel">
               {% if career.filiere.titre_professionnel %}
                 <span class="px-2 py-1 bg-yellow-50 text-yellow-700 border border-yellow-200 text-xs font-bold rounded-full">
                   {{ career.filiere.get_titre_professionnel_display }}
@@ -184,14 +184,14 @@
             </td>
 
             {% comment %} Centre de Formation {% endcomment %}
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700" data-label="Centre de Formation">
               <span class="font-medium text-gray-900">{{ career.centre.nom_centre }}</span><br>
               <span class="text-xs text-gray-400">{{ career.centre.province.nom_province }}</span>
               <span class="text-xs text-gray-400">{{ career.centre.province.chef_lieu }}</span>
             </td>
 
             {% comment %} Frais de scolarité {% endcomment %}
-            <td class="px-6 py-4 whitespace-nowrap text-left">
+            <td class="px-6 py-4 whitespace-nowrap text-left" data-label="Frais de scolarité">
               {% if career.total_frais %}
                 <span class="px-2 py-1 bg-red-50 text-red-700 border border-red-200 text-xs font-bold rounded-full">
                   {{ career.total_frais|floatformat:0|intcomma }} FCFA
@@ -202,7 +202,7 @@
             </td>
 
             {% comment %} Communiqué {% endcomment %}
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
+            <td class="px-6 py-4 whitespace-nowrap text-sm" data-label="Communiqué">
               {% if career.communique %}
               <a href="{{ career.communique.url }}"
                  class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 text-xs font-medium hover:underline transition-colors"

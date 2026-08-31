@@ -92,7 +92,7 @@
     <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
         {% if filieres %}
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-100">
+            <table class="bo-table-adaptable min-w-full divide-y divide-gray-100">
                 <thead>
                     <tr class="bg-gray-50">
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Métier</th>
@@ -117,7 +117,7 @@
                         </td>
 
                         {% comment %} Titre professionnel {% endcomment %}
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Titre professionnel">
                             {% if field.filiere.titre_professionnel %}
                             <span class="px-3 py-1 inline-flex text-xs font-bold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">
                                 {{ field.filiere.titre_professionnel }}
@@ -128,12 +128,12 @@
                         </td>
 
                         {% comment %} Conditions d'accès (ex niveau_diplome) {% endcomment %}
-                        <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
+                        <td class="px-6 py-4 text-sm text-gray-700 max-w-xs" data-label="Conditions d'accès">
                             <span class="line-clamp-2">{{ field.filiere.niveau_diplome|default:"Non précisé" }}</span>
                         </td>
 
                         {% comment %} Disponible {% endcomment %}
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <td class="px-6 py-4 whitespace-nowrap text-center" data-label="Disponible">
                             {% if field.is_active %}
                             <span class="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-green-100 text-green-800">
                                  Oui

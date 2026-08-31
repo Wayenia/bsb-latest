@@ -40,7 +40,7 @@
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {% if paiements %}
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table class="bo-table-adaptable min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Apprenant</th>
@@ -64,26 +64,26 @@
                             <div class="text-xs font-normal text-gray-400">{{ pmt.dette.inscription.eleve.matricule|default:"—" }}</div>
                         </td>
                         {% if multi_centre %}
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" data-label="Centre">
                             {{ pmt.dette.inscription.formation.centre }}
                         </td>
                         {% endif %}
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Type de frais">
                             {{ pmt.dette.frais_formation.type_frais }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" data-label="Tranche">
                             {{ pmt.tranche_frais.libelle|default:"Tranche unique" }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Montant">
                             <span class="text-sm font-medium {% if pmt.annule %}bg-gray-400 line-through{% else %}bg-green-600{% endif %} text-white rounded-lg px-2 py-1">
                                 {{ pmt.montant_paiement|floatformat:0|intcomma }} FCFA
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ pmt.mode_paiement }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ pmt.date_paiement|date:"d/m/Y H:i" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ pmt.cree_par|default:"—" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-400 font-mono">{{ pmt.numero_quittance|default:"—" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" data-label="Mode">{{ pmt.mode_paiement }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" data-label="Date">{{ pmt.date_paiement|date:"d/m/Y H:i" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" data-label="Encaissé par">{{ pmt.cree_par|default:"—" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-400 font-mono" data-label="N° Quittance">{{ pmt.numero_quittance|default:"—" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Statut">
                             {% if pmt.annule %}
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">Annulé</span>
                             {% else %}

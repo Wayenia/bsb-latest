@@ -93,7 +93,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {% if page_obj %}
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-100">
+            <table class="bo-table-adaptable min-w-full divide-y divide-gray-100">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">N°</th>
@@ -113,7 +113,7 @@
                         <td class="px-4 py-3 text-sm text-gray-400 font-medium">
                             {{ forloop.counter }}
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3" data-label="Apprenant">
                             <div class="flex items-center gap-2">
                                 <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-xs text-white
                                     {% if item.eleve.sexe == 'm' %}bg-gray-500{% else %}bg-pink-500{% endif %}">
@@ -125,14 +125,14 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-4 py-3 text-xs text-gray-500 font-mono">
+                        <td class="px-4 py-3 text-xs text-gray-500 font-mono" data-label="Identifiant">
                             {{ item.eleve.numero_identifiant|default:"—" }}
                         </td>
-                        <td class="px-4 py-3 text-sm text-gray-600">
+                        <td class="px-4 py-3 text-sm text-gray-600" data-label="Contact">
                             <div>{{ item.eleve.email|default:"—" }}</div>
                             <div class="text-xs text-gray-400">{{ item.eleve.tel|default:"—" }}</div>
                         </td>
-                        <td class="px-4 py-3 text-center">
+                        <td class="px-4 py-3 text-center" data-label="Statut dossier">
                             {% with s=item.inscription.statut %}
                             {% if s == 'valide_paye' %}
                             <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">Validé & payé</span>
@@ -145,7 +145,7 @@
                             {% endif %}
                             {% endwith %}
                         </td>
-                        <td class="px-4 py-3 text-right text-sm text-gray-700 font-medium">
+                        <td class="px-4 py-3 text-right text-sm text-gray-700 font-medium" data-label="Total dû">
                             {% if item.total_du %}{{ item.total_du|floatformat:0|intcomma }} F{% else %}—{% endif %}
                         </td>
                         <td class="px-4 py-3 text-right text-sm font-medium {% if item.total_paye > 0 %}text-green-700{% else %}text-gray-400{% endif %}">
@@ -154,7 +154,7 @@
                         <td class="px-4 py-3 text-right text-sm font-medium {% if item.reste > 0 %}text-red-600{% else %}text-green-600{% endif %}">
                             {{ item.reste|floatformat:0|intcomma }} F
                         </td>
-                        <td class="px-4 py-3 text-center">
+                        <td class="px-4 py-3 text-center" data-label="Inscrit ?">
                             {% if item.a_paye %}
                             <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                 Oui

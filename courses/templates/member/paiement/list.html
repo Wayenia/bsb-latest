@@ -90,7 +90,7 @@
                     {% if centre_ouvert.id == centre.id %}
                         {% if inscriptions %}
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
+                            <table class="bo-table-adaptable min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-100">
                                     <tr>
                                         <th class="pl-16 pr-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Apprenant</th>
@@ -109,23 +109,23 @@
                                             {{ insc.eleve.nom }} {{ insc.eleve.prenom }}
                                             <div class="text-xs font-normal text-gray-400">{{ insc.eleve.matricule|default:"—" }}</div>
                                         </td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900" data-label="Métier">
                                             {{ insc.formation.filiere }}
                                         </td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900" data-label="Année de formation">
                                             {{ insc.annee_scolaire|default:"—" }}
                                         </td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap">
+                                        <td class="px-6 py-3.5 whitespace-nowrap" data-label="Total dû">
                                             <span class="text-sm font-medium bg-gray-700 text-white rounded-lg px-2 py-1">
                                                 {{ insc.total_du|floatformat:0|intcomma }} FCFA
                                             </span>
                                         </td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap">
+                                        <td class="px-6 py-3.5 whitespace-nowrap" data-label="Total payé">
                                             <span class="text-sm font-medium bg-green-600 text-white rounded-lg px-2 py-1">
                                                 {{ insc.total_paye|floatformat:0|intcomma }} FCFA
                                             </span>
                                         </td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap">
+                                        <td class="px-6 py-3.5 whitespace-nowrap" data-label="Reste à payer">
                                             <span class="text-sm font-medium bg-red-600 text-white rounded-lg px-2 py-1">
                                                 {{ insc.reste|floatformat:0|intcomma }} FCFA
                                             </span>
@@ -233,7 +233,7 @@
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {% if inscriptions %}
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table class="bo-table-adaptable min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Apprenant</th>
@@ -253,28 +253,28 @@
                             {{ insc.eleve.nom }} {{ insc.eleve.prenom }}
                             <div class="text-xs font-normal text-gray-400">{{ insc.eleve.matricule|default:"—" }}</div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Métier">
                             {{ insc.formation.filiere }}
                         </td>
                         {% if q %}
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" data-label="Centre">
                             {{ insc.formation.centre }}
                         </td>
                         {% endif %}
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Année de formation">
                             {{ insc.annee_scolaire|default:"—" }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Total dû">
                             <span class="text-sm font-medium bg-gray-700 text-white rounded-lg px-2 py-1">
                                 {{ insc.total_du|floatformat:0|intcomma }} FCFA
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Total payé">
                             <span class="text-sm font-medium bg-green-600 text-white rounded-lg px-2 py-1">
                                 {{ insc.total_paye|floatformat:0|intcomma }} FCFA
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Reste à payer">
                             <span class="text-sm font-medium bg-red-600 text-white rounded-lg px-2 py-1">
                                 {{ insc.reste|floatformat:0|intcomma }} FCFA
                             </span>
@@ -418,7 +418,7 @@
                 {% endif %}
 
                 {% if dette.paiements.all %}
-                <table class="min-w-full divide-y divide-gray-100 text-sm">
+                <table class="bo-table-adaptable min-w-full divide-y divide-gray-100 text-sm">
                     <thead>
                         <tr class="bg-white">
                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Tranche</th>
@@ -432,14 +432,14 @@
                         {% for pmt in dette.paiements.all %}
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-2 font-medium text-gray-800">{{ pmt.tranche_frais.libelle|default:"Tranche unique" }}</td>
-                            <td class="px-4 py-2">
+                            <td class="px-4 py-2" data-label="Montant payé">
                                 <span class="bg-green-600 text-white text-xs rounded-md px-2 py-0.5">
                                     {{ pmt.montant_paiement|floatformat:0|intcomma }} FCFA
                                 </span>
                             </td>
-                            <td class="px-4 py-2 text-gray-600">{{ pmt.date_paiement|date:"d/m/Y H:i" }}</td>
-                            <td class="px-4 py-2 text-gray-600">{{ pmt.mode_paiement }}</td>
-                            <td class="px-4 py-2 text-xs text-gray-400 font-mono">
+                            <td class="px-4 py-2 text-gray-600" data-label="Date">{{ pmt.date_paiement|date:"d/m/Y H:i" }}</td>
+                            <td class="px-4 py-2 text-gray-600" data-label="Mode">{{ pmt.mode_paiement }}</td>
+                            <td class="px-4 py-2 text-xs text-gray-400 font-mono" data-label="N° Quittance">
                                 {{ pmt.numero_quittance|default:"—" }}
                             </td>
                         </tr>

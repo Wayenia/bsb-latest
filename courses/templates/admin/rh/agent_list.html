@@ -46,7 +46,7 @@
 
     {% if agents %}
     <div class="bo-table-wrap">
-        <table class="bo-table">
+        <table class="bo-table-adaptable bo-table">
             <thead>
                 <tr>
                     <th scope="col">Agent</th>
@@ -72,12 +72,12 @@
                             </div>
                         </div>
                     </td>
-                    <td><span class="{{ agent.user_type|badge_role }}">{{ agent.get_user_type_display }}</span></td>
-                    <td>
+                    <td data-label="Rôle"><span class="{{ agent.user_type|badge_role }}">{{ agent.get_user_type_display }}</span></td>
+                    <td data-label="Contact">
                         <div>{{ agent.email|default:"—" }}</div>
                         <div class="text-xs text-gray-400">{{ agent.tel|default:"—" }}</div>
                     </td>
-                    <td>
+                    <td data-label="Structure ou direction">
                         {% if agent.user_type == 'formateur' %}
                             {{ agent.formateur.centre.nom_centre|default:"—" }}
                         {% elif agent.user_type == 'dir' %}
@@ -96,7 +96,7 @@
                     </td>
                     {% comment %}Etat du compte : on pouvait suspendre un agent sans jamais
                     voir lesquels l'etaient.{% endcomment %}
-                    <td>
+                    <td data-label="État">
                         {% if agent.is_active %}
                         <span class="bo-badge-success">Actif</span>
                         {% else %}

@@ -43,7 +43,7 @@
   <div class="bg-white rounded-xl shadow-lg overflow-hidden">
     {% if page_obj %}
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
+      <table class="bo-table-adaptable min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
             <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Métier</th>
@@ -62,25 +62,25 @@
               <span class="text-sm font-semibold text-gray-900">{{ cf.filiere.nom_filiere }}</span>
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Titre professionnel">
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                 {{ cf.filiere.get_titre_professionnel_display|default:"—" }}
               </span>
             </td>
 
-            <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
+            <td class="px-6 py-4 text-sm text-gray-700 max-w-xs" data-label="Conditions d'accès">
               <span class="line-clamp-2">{{ cf.filiere.niveau_diplome|default:"—" }}</span>
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Durée">
               <span class="text-sm text-gray-700">{{ cf.duree_display }}</span>
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Année de formation">
               <span class="text-sm text-gray-700">{{ cf.annee_prog|default:"—" }}</span>
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Statut">
               {% if cf.is_active %}
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                 Active

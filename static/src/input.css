@@ -509,3 +509,60 @@
   .bo-format-pdf    { @apply bg-bsb-red/10 text-bsb-red; }
   .bo-format-excel  { @apply bg-bsb-green/10 text-bsb-green; }
 }
+
+/* ==========================================================================
+   Tableau adaptable
+   --------------------------------------------------------------------------
+   En dessous de sm, chaque ligne devient une fiche : l'en-tete disparait et
+   chaque cellule affiche son intitule, lu dans son attribut data-label. Un
+   tableau a defilement horizontal est impraticable au telephone, et dupliquer
+   le balisage — une version fiches, une version tableau — obligerait a
+   corriger deux fois la moindre evolution.
+
+   Usage : classe .bo-table-adaptable sur le <table>, et data-label="Intitule"
+   sur chaque <td>. Une cellule sans data-label s'affiche pleine largeur, ce
+   qui convient aux colonnes d'actions.
+   ========================================================================== */
+@layer components {
+  @media (max-width: 639px) {
+    .bo-table-adaptable thead { @apply hidden; }
+    .bo-table-adaptable,
+    .bo-table-adaptable tbody,
+    .bo-table-adaptable tr,
+    .bo-table-adaptable td { @apply block w-full; }
+
+    .bo-table-adaptable tr {
+      @apply mb-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm;
+    }
+    .bo-table-adaptable tr:last-child { @apply mb-0; }
+
+    .bo-table-adaptable td {
+      @apply flex items-baseline justify-between gap-3 border-0 px-0 py-1.5 text-sm text-left;
+    }
+    .bo-table-adaptable td + td { @apply border-t border-gray-100; }
+
+    /* L'intitule de colonne devient l'etiquette de la cellule. */
+    .bo-table-adaptable td[data-label]::before {
+      content: attr(data-label);
+      @apply shrink-0 pr-3 text-xs font-semibold uppercase tracking-wide text-bsb-muted;
+    }
+    .bo-table-adaptable td[data-label] > * { @apply text-right; }
+
+    /* Cellules sans etiquette : titre de fiche et rangee d'actions. */
+    .bo-table-adaptable td:not([data-label]) { @apply justify-start; }
+    .bo-table-adaptable td.bo-actions-cell {
+      @apply mt-2 justify-start border-t border-gray-100 pt-3 text-left;
+    }
+    .bo-table-adaptable td.bo-num { @apply text-right; }
+
+    /* La premiere colonne fait office de titre de fiche. */
+    .bo-table-adaptable td:first-child {
+      @apply border-0 pb-2 text-base font-semibold text-bsb-ink;
+    }
+    .bo-table-adaptable td:first-child::before { @apply hidden; }
+
+    /* Plus de defilement ni de colonne figee : la fiche tient dans la largeur. */
+    .bo-table-wrap:has(.bo-table-adaptable) { @apply overflow-visible border-0 bg-transparent; }
+    .bo-table-adaptable .bo-col-fixe { @apply static; }
+  }
+}

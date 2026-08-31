@@ -48,7 +48,7 @@
     {% comment %} Table {% endcomment %}
     <div class="dashboard-card overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="table-admin data-table">
+            <table class="bo-table-adaptable table-admin data-table">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -64,7 +64,7 @@
                     {% for cours in course %}
                     <tr>
                         <td class="font-mono text-sm">{{ cours.id }}</td>
-                        <td>
+                        <td data-label="Cours">
                             <div class="flex items-center">
                                 <div class="h-8 w-8 rounded-lg bg-yellow-100 flex items-center justify-center mr-3">
                                     
@@ -74,8 +74,8 @@
                                 </div>
                             </div>
                         </td>
-                        <td>{{ cours.module.nom_module }}</td>
-                        <td>
+                        <td data-label="Module">{{ cours.module.nom_module }}</td>
+                        <td data-label="Métier">
                             {% for f in cours.module.filieres.all %}
                             <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
                                 {{ f.nom_filiere }}
@@ -84,8 +84,8 @@
                             <span class="text-gray-400 text-xs italic">—</span>
                             {% endfor %}
                         </td>
-                        <td>{{ cours.volume_h_cours }}h</td>
-                        <td>{{ cours.date_creation|date:"d/m/Y" }}</td>
+                        <td data-label="Volume Horaire">{{ cours.volume_h_cours }}h</td>
+                        <td data-label="Créé le">{{ cours.date_creation|date:"d/m/Y" }}</td>
                         <td>
                             <div class="flex space-x-2">
                                 <a href="{% url 'bsb_admin:course_update' cours.pk %}"

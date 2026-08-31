@@ -128,7 +128,7 @@
   </div>
 
   <div class="hidden sm:block bo-table-wrap">
-    <table class="bo-table">
+    <table class="bo-table-adaptable bo-table">
       <thead>
         <tr>
           <th scope="col">Centre</th>
@@ -142,9 +142,9 @@
         {% for f in formations %}
         <tr>
           <td class="font-medium text-bsb-ink">{{ f.centre.nom_centre }}</td>
-          <td>{{ f.filiere.nom_filiere }}</td>
-          <td class="bo-num">{{ f.nb_inscrits }}</td>
-          <td>{% include 'member/stats_reel/_statut.html' with f=f %}</td>
+          <td data-label="Métier">{{ f.filiere.nom_filiere }}</td>
+          <td class="bo-num" data-label="Inscrits">{{ f.nb_inscrits }}</td>
+          <td data-label="Saisie">{% include 'member/stats_reel/_statut.html' with f=f %}</td>
           <td class="bo-actions-cell">
             <div class="inline-flex items-center gap-1">
               {% include 'member/stats_reel/_actions.html' with f=f selected=selected %}

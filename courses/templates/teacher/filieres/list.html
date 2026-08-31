@@ -18,7 +18,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {% if formations %}
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-100">
+            <table class="bo-table-adaptable min-w-full divide-y divide-gray-100">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Métier</th>
@@ -41,19 +41,19 @@
                                 <p class="text-sm font-bold text-gray-900">{{ f.filiere.nom_filiere }}</p>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-600">
+                        <td class="px-6 py-4 text-sm text-gray-600" data-label="Titre professionnel">
                             <span class="px-2 py-0.5 bg-gray-50 text-gray-700 text-xs font-semibold rounded-full">
                                 {{ f.filiere.get_titre_professionnel_display|default:"—" }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-600 max-w-xs">
+                        <td class="px-6 py-4 text-sm text-gray-600 max-w-xs" data-label="Conditions d'accès">
                             <span class="line-clamp-2">{{ f.filiere.niveau_diplome|default:"—" }}</span>
                         </td>
-                        <td class="px-6 py-4 text-center text-sm text-gray-600">{{ f.annee_prog|default:"—" }}</td>
-                        <td class="px-6 py-4 text-center text-sm text-gray-600">
+                        <td class="px-6 py-4 text-center text-sm text-gray-600" data-label="Année">{{ f.annee_prog|default:"—" }}</td>
+                        <td class="px-6 py-4 text-center text-sm text-gray-600" data-label="Durée">
                             {{ f.duree_display }}
                         </td>
-                        <td class="px-6 py-4 text-center">
+                        <td class="px-6 py-4 text-center" data-label="Statut">
                             {% if f.is_active %}
                             <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">Active</span>
                             {% else %}
