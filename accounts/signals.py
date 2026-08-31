@@ -67,6 +67,34 @@ def on_user_logged_out(sender, request, user, **kwargs):
     _enregistrer(user, request, 'deconnexion')
 
 
+# Routes de connexion, seules sur lesquelles request.POST peut etre lu sans
+# risque : elles ne recoivent jamais de fichier. Doit rester aligne avec
+# CHEMINS_CONNEXION de config/middleware.py (duplique pour eviter un import
+# circulaire, le middleware important deja accounts.ratelimit).
+CHEMINS_CONNEXION = ('/accounts/login',)
+
+
+def _identifiant_saisi(request):
+    """Identifiant reellement saisi, quand `authenticate()` a ete appele a vide.
+
+    La vue de connexion appelle `authenticate(username='', ...)` lorsque
+    l'identifiant ne correspond a aucun compte, afin que la reponse mette le
+    meme temps qu'un mot de passe faux — sans quoi on enumererait les comptes
+    au chronometre. Le signal ne transporte donc pas l'identifiant essaye, et
+    le journal perdrait la trace des comptes sondes : c'est precisement ce
+    qu'une enumeration cherche a faire passer inapercu.
+
+    La lecture est restreinte aux routes de connexion : ailleurs, toucher a
+    request.POST consommerait le flux d'un envoi multipart avant les
+    gestionnaires d'upload de Django.
+    """
+    if request.method != 'POST':
+        return ''
+    if not request.path.startswith(CHEMINS_CONNEXION):
+        return ''
+    return request.POST.get('identifiant', '').strip()
+
+
 def _enregistrer_echec(username, request):
     """Journalise une tentative de connexion refusee.
 
@@ -102,4 +130,4 @@ def on_user_login_failed(sender, credentials, request=None, **kwargs):
         return
     username = (credentials or {}).get('username', '')
     ratelimit.enregistrer_echec(request, username)
-    _enregistrer_echec(username, request)
+    _enregistrer_echec(username or _identifiant_saisi(request), request)
