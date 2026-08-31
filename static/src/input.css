@@ -374,6 +374,9 @@
     @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full
            bg-gradient-to-br from-bsb-red to-bsb-yellow text-xs font-bold text-white;
   }
+  .bo-compte-photo {
+    @apply h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white;
+  }
   .bo-compte-nom  { @apply truncate text-[13px] font-semibold leading-tight text-bsb-ink; }
   .bo-compte-role { @apply truncate text-[11px] leading-tight text-bsb-muted; }
 

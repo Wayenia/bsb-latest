@@ -22,6 +22,12 @@ _BASE_CLASSES = (
     'focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all'
 )
 
+_CLASSES_FICHIER = (
+    'w-full text-sm text-gray-600 file:mr-4 file:rounded-lg file:border-0 '
+    'file:bg-red-700 file:px-4 file:py-2 file:text-sm file:font-semibold '
+    'file:text-white hover:file:bg-red-800 file:cursor-pointer'
+)
+
 
 class BaseFacturationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -181,8 +187,9 @@ class TelWidget(forms.TextInput):
 class ProfilForm(forms.ModelForm):
     class Meta:
         model = Utilisateur
-        fields = ['nom', 'prenom', 'sexe', 'date_naissance', 'tel', 'adresse', 'email']
+        fields = ['photo', 'nom', 'prenom', 'sexe', 'date_naissance', 'tel', 'adresse', 'email']
         labels = {
+            'photo': 'Photo de profil',
             'nom': 'Nom de famille',
             'prenom': 'Prénom',
             'sexe': 'Sexe',
@@ -192,6 +199,7 @@ class ProfilForm(forms.ModelForm):
             'email': 'Adresse email',
         }
         widgets = {
+            'photo': forms.ClearableFileInput(attrs={'class': _CLASSES_FICHIER, 'accept': 'image/*'}),
             'nom': forms.TextInput(attrs={'class': _BASE_CLASSES}),
             'prenom': forms.TextInput(attrs={'class': _BASE_CLASSES}),
             'sexe': forms.Select(attrs={'class': _BASE_CLASSES}),
@@ -207,6 +215,16 @@ class ProfilForm(forms.ModelForm):
         # La plupart des comptes sont crees sans adresse : la rendre obligatoire
         # ici bloquerait la sauvegarde de leur profil.
         self.fields['adresse'].required = False
+
+    # Le type reel est deja verifie par Pillow ; il reste a plafonner le poids,
+    # les postes des centres televersant parfois des photos d'appareil.
+    TAILLE_MAX_PHOTO = 2 * 1024 * 1024
+
+    def clean_photo(self):
+        photo = self.cleaned_data.get('photo')
+        if photo and getattr(photo, 'size', 0) > self.TAILLE_MAX_PHOTO:
+            raise forms.ValidationError("La photo ne doit pas dépasser 2 Mo.")
+        return photo
 
     def clean_email(self):
         # Le champ modele email a null=True : Django met alors empty_value=None

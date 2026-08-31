@@ -48,7 +48,7 @@ class NavigationTests(TestCase):
 
     def test_une_permission_ouvre_le_seul_groupe_correspondant(self):
         menu = construire_menu(self._agent('gerer_agents'), '/bsb/dashboard')
-        self.assertEqual([g['titre'] for g in menu], ['Ressources humaines'])
+        self.assertEqual([g['titre'] for g in menu], ['RH et Permissions'])
         self.assertEqual([l['libelle'] for l in menu[0]['liens']], ['Agents et formateurs'])
 
     def test_le_groupe_de_la_page_courante_est_marque(self):

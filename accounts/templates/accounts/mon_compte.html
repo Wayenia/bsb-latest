@@ -8,6 +8,10 @@
 
         <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <div class="relative flex-shrink-0">
+                {% if profil.photo %}
+                <img src="{{ profil.photo.url }}" alt="Photo de {{ profil.prenom }} {{ profil.nom }}"
+                     class="w-28 h-28 rounded-full object-cover shadow-md border-4 border-white">
+                {% else %}
                 <div class="w-28 h-28 rounded-full flex items-center justify-center shadow-md
                     {% if profil.sexe == 'f' %}bg-gradient-to-br from-rose-400 to-pink-600{% else %}bg-gradient-to-br from-blue-500 to-blue-700{% endif %}">
                     <svg viewBox="0 0 100 100" class="w-16 h-16" fill="white" aria-hidden="true">
@@ -21,6 +25,7 @@
                         <path d="M15,98 Q15,62 50,62 Q85,62 85,98 Z" />
                     </svg>
                 </div>
+                {% endif %}
                 <a href="{% url 'accounts:mon_profil' %}"
                    title="Modifier mes informations"
                    class="absolute -bottom-1 -right-1 w-9 h-9 flex items-center justify-center bg-yellow-600 hover:bg-yellow-700 text-white rounded-full shadow-md border-2 border-white transition-colors">

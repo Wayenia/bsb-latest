@@ -75,7 +75,11 @@ l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
     plus.{% endcomment %}
     <div class="bo-sidebar-pied">
         <div class="bo-compte">
+            {% if user.photo %}
+            <img src="{{ user.photo.url }}" alt="" class="bo-compte-photo">
+            {% else %}
             <span class="bo-compte-puce">{{ user.nom|first|upper }}{{ user.prenom|first|upper }}</span>
+            {% endif %}
             <div class="min-w-0">
                 <p class="bo-compte-nom">{{ user.prenom }} {{ user.nom }}</p>
                 <p class="bo-compte-role">{{ user.get_user_type_display }}</p>

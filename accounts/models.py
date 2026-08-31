@@ -43,6 +43,13 @@ class Utilisateur(AbstractUser):
     tel = models.CharField(max_length=25, verbose_name="Telephone",null=True,blank=True, validators=[phone_validator])
     sexe = models.CharField(max_length=2, choices=SEXE_CHOICE, default="m", verbose_name="Sexe")
     date_naissance = models.DateField(verbose_name="Date de naissance", null=True, blank=True)
+    # Affichee dans le profil et le pied de la barre laterale ; facultative,
+    # les initiales servent de repli (README 7).
+    photo = models.ImageField(
+        upload_to="profils/", null=True, blank=True,
+        validators=[FileExtensionValidator(["jpg", "jpeg", "png", "webp"])],
+        verbose_name="Photo de profil",
+        help_text="JPG, PNG ou WEBP, 2 Mo maximum")
     
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []

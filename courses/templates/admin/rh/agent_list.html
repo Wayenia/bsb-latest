@@ -62,10 +62,15 @@
                 <tr>
                     <td>
                         <div class="flex items-center gap-3">
+                            {% if agent.photo %}
+                            <img src="{{ agent.photo.url }}" alt=""
+                                 class="h-9 w-9 rounded-full object-cover shrink-0 ring-1 ring-gray-200">
+                            {% else %}
                             <div class="h-9 w-9 rounded-full flex items-center justify-center shrink-0
                                         text-xs font-bold text-white {{ agent.user_type|pastille_role }}">
                                 {{ agent.nom|first|upper }}{{ agent.prenom|first|upper }}
                             </div>
+                            {% endif %}
                             <div>
                                 <div class="font-medium text-gray-900">{{ agent.nom }} {{ agent.prenom }}</div>
                                 <div class="text-xs text-gray-400 font-mono">{{ agent.username }}</div>

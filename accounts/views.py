@@ -42,10 +42,6 @@ def user_register(request):
     return render(request, 'accounts/register.html')
 
 # LOGIN
-from django.contrib.auth import login, authenticate, logout
-from django.contrib import messages
-from django.shortcuts import render, redirect
-
 import logging
 
 from . import appareil, otp, ratelimit
@@ -273,7 +269,7 @@ def mon_profil(request):
         form_class = ProfilForm
 
     if request.method == 'POST':
-        form = form_class(request.POST, instance=instance)
+        form = form_class(request.POST, request.FILES, instance=instance)
         if form.is_valid():
             form.save()
             messages.success(request, "Vos informations ont été mises à jour avec succès.")

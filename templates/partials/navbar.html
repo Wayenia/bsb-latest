@@ -127,7 +127,12 @@
                     <a href="{% url 'courses:redirect_to_dashboard' %}" class="px-5 py-2.5 text-sm font-bold text-white border border-gray-100 bg-yellow-600 rounded-full hover:bg-green-600 transition-all transform hover:-translate-y-0.5">
                         Mon espace
                     </a>
-                    <a href="{% url 'accounts:mon_compte' %}" class="px-5 py-2.5 text-sm font-bold text-gray-700 border border-gray-300 rounded-full hover:bg-gray-100 transition-all transform hover:-translate-y-0.5">
+                    <a href="{% url 'accounts:mon_compte' %}" class="flex items-center gap-2 pl-2 pr-5 py-2.5 text-sm font-bold text-gray-700 border border-gray-300 rounded-full hover:bg-gray-100 transition-all transform hover:-translate-y-0.5">
+                        {% if user.photo %}
+                        <img src="{{ user.photo.url }}" alt="" class="h-7 w-7 rounded-full object-cover">
+                        {% else %}
+                        <span class="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-bsb-red to-bsb-gold text-[11px] font-bold text-white">{{ user.nom|first|upper }}{{ user.prenom|first|upper }}</span>
+                        {% endif %}
                         Mon profil
                     </a>
                     <a href="{% url 'accounts:logout' %}" class="px-5 py-2.5 text-sm font-bold text-white border border-gray-300 bg-bsb-gray rounded-full hover:bg-gray-600 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">

@@ -87,7 +87,7 @@ GROUPES = [
         ],
     },
     {
-        'cle': 'rh', 'titre': 'Ressources humaines', 'couleur': 'rouge', 'icone': 'personnes',
+        'cle': 'rh', 'titre': 'RH et Permissions', 'couleur': 'rouge', 'icone': 'personnes',
         'liens': [
             _lien('bsb_admin:agent_list', 'Agents et formateurs', 'accounts.gerer_agents', '/bsb/rh/agents'),
             _lien('bsb_admin:permissions_matrix', 'Permissions', 'accounts.gerer_permissions', '/bsb/rh/permissions'),
