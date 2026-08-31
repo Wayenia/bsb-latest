@@ -1,141 +1,168 @@
 {% extends 'base.html' %}
 {% block title %}Historique des connexions | BSB{% endblock %}
 {% block content %}
-<div class="max-w-7xl mx-auto py-10 space-y-6">
+<div class="bo-shell">
     {% include 'partials/messages.html' %}
 
-    {% comment %} En-tête {% endcomment %}
-    <div class="px-4 md:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="bo-header">
         <div>
-            <h1 class="text-3xl font-black text-gray-900">Historique des connexions</h1>
-            <p class="mt-1 text-sm text-gray-500">{{ historique.paginator.count }} événement{{ historique.paginator.count|pluralize }} enregistré{{ historique.paginator.count|pluralize }}</p>
+            <h1 class="bo-title">Historique des connexions</h1>
+            <p class="bo-subtitle">
+                {{ indicateurs.total }} événement{{ indicateurs.total|pluralize }} sur le périmètre affiché
+            </p>
         </div>
-        <div class="flex gap-2 flex-wrap">
-            <a href="{% url 'bsb_admin:historique_connexion_export' 'csv' %}?{{ request.GET.urlencode }}"
-               class="inline-flex items-center px-4 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-bold rounded-lg transition-all">
-                Exporter CSV
-            </a>
-            <a href="{% url 'bsb_admin:historique_connexion_export' 'xlsx' %}?{{ request.GET.urlencode }}"
-               class="inline-flex items-center px-4 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-bold rounded-lg transition-all">
-                Exporter Excel
-            </a>
-            <a href="{% url 'bsb_admin:historique_connexion_export' 'pdf' %}?{{ request.GET.urlencode }}"
-               class="inline-flex items-center px-4 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-bold rounded-lg transition-all">
-                Exporter PDF
-            </a>
+        <div class="bo-actions">
+            <a href="{% url 'bsb_admin:historique_connexion_export' 'csv' %}?{{ request.GET.urlencode }}" class="bo-btn-secondary bo-btn-sm">Exporter CSV</a>
+            <a href="{% url 'bsb_admin:historique_connexion_export' 'xlsx' %}?{{ request.GET.urlencode }}" class="bo-btn-secondary bo-btn-sm">Exporter Excel</a>
+            <a href="{% url 'bsb_admin:historique_connexion_export' 'pdf' %}?{{ request.GET.urlencode }}" class="bo-btn-secondary bo-btn-sm">Exporter PDF</a>
         </div>
     </div>
 
-    {% comment %} Filtres {% endcomment %}
-    <form method="get">
-        <div class="bg-white px-4 py-4 border border-gray-200 rounded-xl flex flex-col sm:flex-row flex-wrap gap-3 shadow-sm">
-            <div class="relative flex-1 min-w-[200px]">
-                <input type="text" name="q" value="{{ q }}"
-                       placeholder="Rechercher par nom ou identifiant..."
-                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
-            </div>
-            <div class="sm:w-64">
-                <select name="centre"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent cursor-pointer transition-all">
-                    <option value="">Tous les centres</option>
-                    {% for centre in centres %}
-                    <option value="{{ centre.id }}" {% if centre_selectionne == centre.id|stringformat:"s" %}selected{% endif %}>{{ centre.nom_centre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="sm:w-52">
-                <select name="type_utilisateur"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent cursor-pointer transition-all">
-                    <option value="">Apprenant et Autre</option>
-                    <option value="apprenant" {% if type_utilisateur == "apprenant" %}selected{% endif %}>Apprenant</option>
-                    <option value="autre" {% if type_utilisateur == "autre" %}selected{% endif %}>Autre</option>
-                </select>
-            </div>
-            <div class="flex items-center gap-2">
-                <input type="date" name="date_debut" value="{{ date_debut }}"
-                       class="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
-                <span class="text-gray-400 text-sm">à</span>
-                <input type="date" name="date_fin" value="{{ date_fin }}"
-                       class="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
-            </div>
-            <button type="submit"
-                    class="px-5 py-3 bg-gray-800 hover:bg-gray-900 text-white rounded-lg font-semibold transition-all">
-                Filtrer
-            </button>
-            {% if q or centre_selectionne or date_debut or date_fin or type_utilisateur %}
-            <a href="{% url 'bsb_admin:historique_connexion_list' %}"
-               class="px-5 py-3 border border-gray-300 text-gray-600 rounded-lg font-semibold hover:bg-gray-50 transition-all">
-                Réinitialiser
-            </a>
+    {# Indicateurs : lire l'anomalie avant de lire la liste. #}
+    <div class="bo-stats">
+        <div class="bo-stat">
+            <div class="bo-stat-label">Connexions réussies</div>
+            <div class="bo-stat-value">{{ indicateurs.connexions }}</div>
+        </div>
+        <div class="bo-stat {% if indicateurs.echecs %}bo-stat-alert{% else %}bo-stat-ok{% endif %}">
+            <div class="bo-stat-label">Échecs de connexion</div>
+            <div class="bo-stat-value">{{ indicateurs.echecs }}</div>
+            <div class="bo-stat-hint">tentatives refusées</div>
+        </div>
+        <div class="bo-stat {% if indicateurs.comptes_vises > 3 %}bo-stat-warn{% endif %}">
+            <div class="bo-stat-label">Comptes visés</div>
+            <div class="bo-stat-value">{{ indicateurs.comptes_vises }}</div>
+            <div class="bo-stat-hint">identifiants distincts en échec</div>
+        </div>
+        <div class="bo-stat {% if indicateurs.sources > 3 %}bo-stat-warn{% endif %}">
+            <div class="bo-stat-label">Sources</div>
+            <div class="bo-stat-value">{{ indicateurs.sources }}</div>
+            <div class="bo-stat-hint">adresses IP à l'origine d'échecs</div>
+        </div>
+    </div>
+
+    <form method="get" class="bo-filters">
+        <div class="bo-filter">
+            <label for="f-q" class="bo-label">Utilisateur</label>
+            <input id="f-q" type="text" name="q" value="{{ q }}" placeholder="Nom ou identifiant" class="bo-input">
+        </div>
+        <div class="bo-filter">
+            <label for="f-centre" class="bo-label">Centre</label>
+            <select id="f-centre" name="centre" class="bo-select">
+                <option value="">Tous les centres</option>
+                {% for centre in centres %}
+                <option value="{{ centre.id }}" {% if centre_selectionne == centre.id|stringformat:"s" %}selected{% endif %}>{{ centre.nom_centre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="bo-filter">
+            <label for="f-evt" class="bo-label">Événement</label>
+            <select id="f-evt" name="type_evenement" class="bo-select">
+                <option value="">Tous</option>
+                <option value="connexion" {% if type_evenement == "connexion" %}selected{% endif %}>Connexion</option>
+                <option value="deconnexion" {% if type_evenement == "deconnexion" %}selected{% endif %}>Déconnexion</option>
+                <option value="echec" {% if type_evenement == "echec" %}selected{% endif %}>Échec</option>
+            </select>
+        </div>
+        <div class="bo-filter">
+            <label for="f-profil" class="bo-label">Profil</label>
+            <select id="f-profil" name="type_utilisateur" class="bo-select">
+                <option value="">Tous les profils</option>
+                <option value="apprenant" {% if type_utilisateur == "apprenant" %}selected{% endif %}>Apprenant</option>
+                <option value="autre" {% if type_utilisateur == "autre" %}selected{% endif %}>Agent</option>
+            </select>
+        </div>
+        <div class="bo-filter">
+            <label for="f-debut" class="bo-label">Du</label>
+            <input id="f-debut" type="date" name="date_debut" value="{{ date_debut }}" class="bo-input">
+        </div>
+        <div class="bo-filter">
+            <label for="f-fin" class="bo-label">Au</label>
+            <input id="f-fin" type="date" name="date_fin" value="{{ date_fin }}" class="bo-input">
+        </div>
+        <div class="bo-actions">
+            <button type="submit" class="bo-btn-primary">Filtrer</button>
+            {% if filtres_actifs %}
+            <a href="{% url 'bsb_admin:historique_connexion_list' %}" class="bo-btn-ghost">Réinitialiser</a>
             {% endif %}
         </div>
     </form>
 
-    {% comment %} Tableau {% endcomment %}
-    <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-        {% if historique %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-100">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Utilisateur</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Événement</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Centre</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Date</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Adresse IP</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
-                    {% for h in historique %}
-                    <tr class="hover:bg-amber-50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-bold text-gray-900">{{ h.nom_complet|default:h.username }}</div>
-                            <div class="text-xs text-gray-400">{{ h.username|default:"—" }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% if h.est_apprenant %}
-                            <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800">Apprenant</span>
-                            {% else %}
-                            <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-purple-100 text-purple-800">Autre</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% if h.type_evenement == "connexion" %}
-                            <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-green-100 text-green-800">Connexion</span>
-                            {% else %}
-                            <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-700">Déconnexion</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ h.centre.nom_centre|default:"—" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ h.date_evenement|date:"d/m/Y H:i" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{{ h.adresse_ip|default:"—" }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    {% if historique %}
+    <div class="bo-table-wrap">
+        <table class="bo-table">
+            <thead>
+                <tr>
+                    <th scope="col">Utilisateur</th>
+                    <th scope="col">Profil</th>
+                    <th scope="col">Événement</th>
+                    <th scope="col">Centre</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Adresse IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in historique %}
+                <tr>
+                    <td>
+                        <div class="font-medium text-gray-900">{{ h.nom_complet|default:h.username|default:"—" }}</div>
+                        <div class="text-xs text-gray-400 font-mono">{{ h.username|default:"—" }}</div>
+                    </td>
+                    <td>
+                        {% if h.est_apprenant %}
+                        <span class="bo-badge-info">Apprenant</span>
+                        {% else %}
+                        <span class="bo-badge-neutral">Agent</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if h.type_evenement == "connexion" %}
+                        <span class="bo-badge-success">Connexion</span>
+                        {% elif h.type_evenement == "echec" %}
+                        <span class="bo-badge-danger">Échec</span>
+                        {% comment %}Un echec sans compte rattache vise un identifiant inexistant :
+                        motif caracteristique d'un sondage, pas d'un oubli de mot de passe.{% endcomment %}
+                        {% if not h.utilisateur_id %}
+                        <span class="bo-badge-warning" title="Cet identifiant ne correspond à aucun compte">compte inconnu</span>
+                        {% endif %}
+                        {% else %}
+                        <span class="bo-badge-neutral">Déconnexion</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ h.centre.nom_centre|default:"—" }}</td>
+                    <td class="whitespace-nowrap tabular-nums">{{ h.date_evenement|date:"d/m/Y H:i" }}</td>
+                    <td class="font-mono text-gray-500">{{ h.adresse_ip|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-        {% comment %} Pagination {% endcomment %}
-        {% if historique.has_other_pages %}
-        <div class="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-            <p class="text-sm text-gray-500">Page {{ historique.number }} / {{ historique.paginator.num_pages }}</p>
-            <div class="flex gap-2">
-                {% if historique.has_previous %}
-                <a href="?{{ request.GET.urlencode }}&page={{ historique.previous_page_number }}" class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Précédent</a>
-                {% endif %}
-                {% if historique.has_next %}
-                <a href="?{{ request.GET.urlencode }}&page={{ historique.next_page_number }}" class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Suivant</a>
-                {% endif %}
-            </div>
+    {% if historique.has_other_pages %}
+    <div class="bo-pagination">
+        <p class="bo-page-info">Page {{ historique.number }} sur {{ historique.paginator.num_pages }}</p>
+        <div class="flex gap-2">
+            {% if historique.has_previous %}
+            <a href="?{{ request.GET.urlencode }}&page={{ historique.previous_page_number }}" class="bo-page-link">Précédent</a>
+            {% endif %}
+            {% if historique.has_next %}
+            <a href="?{{ request.GET.urlencode }}&page={{ historique.next_page_number }}" class="bo-page-link">Suivant</a>
+            {% endif %}
         </div>
-        {% endif %}
+    </div>
+    {% endif %}
 
+    {% else %}
+    <div class="bo-empty">
+        {% if filtres_actifs %}
+        <p class="bo-empty-title">Aucun événement pour ces filtres</p>
+        <p class="bo-empty-text">Élargissez la période ou retirez un critère.</p>
+        <a href="{% url 'bsb_admin:historique_connexion_list' %}" class="bo-btn-secondary bo-btn-sm mt-4">Réinitialiser les filtres</a>
         {% else %}
-        <div class="text-center py-16">
-            <p class="text-gray-500 font-medium">Aucun événement de connexion trouvé</p>
-        </div>
+        <p class="bo-empty-title">Aucun événement enregistré</p>
+        <p class="bo-empty-text">Les connexions, déconnexions et tentatives refusées apparaîtront ici.</p>
         {% endif %}
     </div>
+    {% endif %}
 </div>
 {% endblock %}

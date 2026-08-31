@@ -1,7 +1,7 @@
 #!/bin/sh
 # Restaure un .dump dans suudu_db, qui doit deja tourner.
 # Usage : ./db_restore.sh chemin/vers/fichier.dump [--force]
-# --force saute la confirmation ; --clean detruit les objets existants (README 7).
+# --force saute la confirmation ; --clean detruit les objets existants .
 set -e
 
 DUMP_FILE=""

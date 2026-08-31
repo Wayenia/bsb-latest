@@ -649,6 +649,7 @@ class HistoriqueConnexion(models.Model):
     TYPE_EVENEMENT_CHOICES = [
         ("connexion", "Connexion"),
         ("deconnexion", "Déconnexion"),
+        ("echec", "Échec de connexion"),
     ]
 
     utilisateur = models.ForeignKey(

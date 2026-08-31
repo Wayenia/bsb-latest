@@ -1,7 +1,7 @@
 #!/bin/sh
 # Sauvegarde Postgres au format custom.
 # Usage : ./db_dump.sh [--retention N]   (N sauvegardes conservees, 14 par defaut)
-# Le service suudu_backup fait la meme chose chaque jour (README 7).
+# Le service suudu_backup fait la meme chose chaque jour.
 set -e
 
 RETENTION=14

@@ -835,22 +835,52 @@ def _historique_connexion_filtered(request):
     elif type_utilisateur == 'autre':
         qs = qs.filter(est_apprenant=False)
 
+    type_evenement = request.GET.get('type_evenement', '').strip()
+    if type_evenement in ('connexion', 'deconnexion', 'echec'):
+        qs = qs.filter(type_evenement=type_evenement)
+
     return qs, centres_qs
+
+
+def _historique_connexion_indicateurs(qs):
+    """Indicateurs de tete d'ecran, calcules sur le perimetre filtre.
+
+    `comptes_vises` compte les identifiants distincts ayant subi un echec et
+    `sources` les adresses IP distinctes en ayant produit : une seule adresse
+    visant beaucoup de comptes est le motif caracteristique d'un sondage."""
+    # order_by() vide : l'ordre du queryset entrerait sinon dans le GROUP BY et
+    # produirait une ligne par date au lieu d'une ligne par type d'evenement.
+    par_type = dict(qs.order_by().values_list('type_evenement').annotate(n=Count('id')))
+    echecs = qs.filter(type_evenement='echec')
+    return {
+        'total': qs.count(),
+        'connexions': par_type.get('connexion', 0),
+        'echecs': par_type.get('echec', 0),
+        'comptes_vises': echecs.values('username').distinct().count(),
+        'sources': echecs.exclude(adresse_ip__isnull=True)
+                         .values('adresse_ip').distinct().count(),
+    }
 
 
 @require_permission('accounts.voir_historique_connexion')
 def historique_connexion_list(request):
     qs, centres_qs = _historique_connexion_filtered(request)
-    paginator = Paginator(qs, 10)
+    paginator = Paginator(qs, 25)
     page = request.GET.get('page')
+    filtres_actifs = any(request.GET.get(c, '').strip() for c in
+                         ('q', 'centre', 'date_debut', 'date_fin',
+                          'type_utilisateur', 'type_evenement'))
     return render(request, 'admin/historique_connexion/list.html', {
         'historique': paginator.get_page(page),
+        'indicateurs': _historique_connexion_indicateurs(qs),
         'centres': centres_qs.order_by('nom_centre'),
         'centre_selectionne': request.GET.get('centre', ''),
         'date_debut': request.GET.get('date_debut', ''),
         'date_fin': request.GET.get('date_fin', ''),
         'type_utilisateur': request.GET.get('type_utilisateur', ''),
+        'type_evenement': request.GET.get('type_evenement', ''),
         'q': request.GET.get('q', ''),
+        'filtres_actifs': filtres_actifs,
     })
 
 

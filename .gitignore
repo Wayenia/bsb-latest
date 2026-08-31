@@ -12,7 +12,7 @@ config/__pycache__/
 accounts/__pycache__/
 load_and_create_users.py
 
-# Environnement virtuel Python (jamais deploye, reconstruit via requirements.txt)
+# Environnement virtuel Python 
 venv/
 .venv/
 
@@ -22,7 +22,7 @@ __pycache__/
 python
 Pipfile*
 
-# Fichiers uploades par les utilisateurs (montes en volume Docker, pas versionnes)
+# Fichiers uploades 
 media/
 
 # Logs applicatifs
@@ -34,7 +34,6 @@ CLAUDE.md
 .shot
 zzresources/
 
-# Sauvegardes de base de donnees : contiennent les donnees personnelles des
-# apprenants et les hachages de mots de passe. Jamais dans Git.
+# Sauvegardes de base de donnees  
 backups/
 *.dump

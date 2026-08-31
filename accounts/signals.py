@@ -4,7 +4,7 @@ from django.contrib.auth.signals import user_logged_in, user_logged_out, user_lo
 from django.dispatch import receiver
 
 from . import ratelimit
-from .models import HistoriqueConnexion
+from .models import HistoriqueConnexion, Utilisateur
 
 
 def _adresse_ip(request):
@@ -67,13 +67,39 @@ def on_user_logged_out(sender, request, user, **kwargs):
     _enregistrer(user, request, 'deconnexion')
 
 
+def _enregistrer_echec(username, request):
+    """Journalise une tentative de connexion refusee.
+
+    Le compte vise est rattache s'il existe : c'est ce qui permet de distinguer
+    un sondage de comptes inexistants d'une attaque ciblee sur un compte reel.
+    Le nom d'utilisateur est tronque a la largeur du champ — une saisie erronee
+    peut y deposer n'importe quoi, y compris un mot de passe."""
+    username = (username or '')[:150]
+    compte = Utilisateur.objects.filter(username=username).first() if username else None
+    HistoriqueConnexion.objects.create(
+        utilisateur=compte,
+        username=username,
+        nom_complet=f"{compte.nom} {compte.prenom}".strip() if compte else '',
+        est_apprenant=(compte.user_type == 'eleve') if compte else False,
+        type_evenement='echec',
+        centre=_centre_utilisateur(compte) if compte else None,
+        adresse_ip=_adresse_ip(request),
+    )
+
+
 @receiver(user_login_failed)
 def on_user_login_failed(sender, credentials, request=None, **kwargs):
-    """Comptabilise l'echec pour la limitation anti-force brute.
+    """Comptabilise l'echec pour la limitation anti-force brute et le journalise.
 
     `user_login_failed` est emis par `authenticate()` : brancher le compteur
-    ici couvre d'un seul geste la page de connexion applicative, l'admin
-    Django et l'API DRF, sans decorer chaque vue."""
+    ici couvre d'un seul geste la page de connexion applicative et l'API DRF,
+    sans decorer chaque vue.
+
+    Le compteur anti-force brute vit dans Redis et expire en 15 minutes : il
+    arrete une attaque en cours mais n'en garde aucune trace exploitable. La
+    ligne d'historique, elle, permet l'inspection a posteriori."""
     if request is None:
         return
-    ratelimit.enregistrer_echec(request, (credentials or {}).get('username', ''))
+    username = (credentials or {}).get('username', '')
+    ratelimit.enregistrer_echec(request, username)
+    _enregistrer_echec(username, request)
