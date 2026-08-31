@@ -663,3 +663,29 @@
     .bo-filigrane::before { @apply opacity-[0.06]; }
   }
 }
+
+/* ==========================================================================
+   Reduction de colonnes
+   --------------------------------------------------------------------------
+   Au-dela de trois colonnes, une ligne devient une bande a parcourir. Les
+   colonnes secondaires passent derriere un bouton qui deplie une fiche sous la
+   ligne. Le masquage est fait a l'execution par static/js/bo-tableau.js, qui
+   lit les intitules dans le <thead> : les gabarits n'ont qu'une classe a
+   porter.
+   ========================================================================== */
+@layer components {
+  .bo-oeil {
+    @apply mr-1 inline-flex h-7 w-7 items-center justify-center rounded-md align-middle
+           text-bsb-muted transition-colors hover:bg-bsb-cream hover:text-bsb-red
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
+  }
+  .bo-oeil svg { @apply h-4 w-4; }
+  .bo-oeil[aria-expanded="true"] { @apply bg-bsb-cream text-bsb-red; }
+
+  .bo-detail-ligne > td { @apply bg-bsb-cream/60 px-4 py-3; }
+  .bo-detail {
+    @apply grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-[auto_1fr] md:grid-cols-[auto_1fr_auto_1fr];
+  }
+  .bo-detail dt { @apply text-xs font-semibold uppercase tracking-wide text-bsb-muted; }
+  .bo-detail dd { @apply m-0 text-bsb-ink; }
+}
