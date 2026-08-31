@@ -29,14 +29,14 @@ ne sont pas responsives.
 |---|---|---|
 | **8** | `CLAUDE.md` exclu par `.gitignore` | Mes 293 lignes de corrections — dont celles retablissant des affirmations devenues fausses — ne partiront pas au push. Une ligne a retirer du `.gitignore`. |
 | **9** | Mots de passe de `populate_data.py` | 52 comptes avec mots de passe en dur dans un fichier versionne, affiches lors du peuplement (`admin / Admin@2024`). Seule leur rotation leve le risque. |
-| **10** | `rapport_audit_demo.xlsx` | Attend votre avis sur le rendu du classeur d'audit. |
-| **11** | Pousser les commits | 15 commits d'avance sur `origin/main`, rien n'est pousse. |
+| **10** | `rapport_audit_demo.xlsx` | **Réglé** : artefact de démonstration retiré du dépôt. Le classeur reste généré à la demande par l'app audit. |
+| **11** | Pousser les commits | 23 commits d'avance sur `origin/main`, rien n'est pousse. |
 
 ## C. Sujet ouvert, jamais repris
 
 | N° | Sujet | Etat |
 |---|---|---|
-| **12** | Connexion des agents par la page publique | Vous l'aviez releve au debut ; je devais y revenir et ne l'ai pas fait. La verification en deux etapes du collaborateur en couvre une partie — le personnel recoit un code — mais la page de connexion reste commune au public et aux agents. |
+| **12** | Connexion des agents par la page publique | **En grande partie reglee.** Le personnel franchit une verification en deux etapes (code par courriel), avec appareils reconnus 30 jours et avis de connexion (commits 29d5a37, a6550e6 ; README 9.2). Reste ouvert : la page de connexion demeure commune au public et aux agents, et `accounts/appareil.oublier()` n'est branche sur aucun bouton (pas d'ecran « oublier cet appareil »). |
 
 ---
 

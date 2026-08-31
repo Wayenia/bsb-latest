@@ -19,6 +19,13 @@ gabarit a sa vue (`render(...)` ou `template_name`) et sa vue a sa route
 Les tableaux les plus larges sont les plus urgents : au telephone, onze
 colonnes imposent un defilement horizontal qui rend la lecture impraticable.
 
+**Mise a jour.** Ces pages recoivent desormais un repli automatique des colonnes
+au-dela de la troisieme, dans une fiche depliable au telephone
+(`static/js/bo-tableau.js`), et leur conteneur occupe toute la largeur
+disponible sous la barre laterale (README 9.8). Le releve ci-dessous reste
+valable : il compte les `<th>` presents dans le balisage, que ce repli n'enleve
+pas mais masque selon la largeur de l'ecran. Il sert d'inventaire de suivi.
+
 ```
 37 PAGES WEB avec un tableau de plus de 3 colonnes
 (gabarits PDF et replis _classique exclus ; espace apprenant hors perimetre)

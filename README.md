@@ -25,7 +25,8 @@ maintenir le projet en bon état.
 9. [Points de vigilance techniques](#9-points-de-vigilance-techniques)
    - 9.1 Éléments présents mais non exploités · 9.2 Sécurité applicative ·
      9.3 Exécution en conteneur non privilégié · 9.4 Courrier électronique ·
-     9.5 Rapport d'inspection · 9.6 Peuplement initial · 9.7 Facturation
+     9.5 Rapport d'inspection · 9.6 Peuplement initial · 9.7 Facturation ·
+     9.8 Réversibilité de l'interface du back-office
 10. [Résolution des incidents courants](#10-résolution-des-incidents-courants)
 11. [Organisation des fichiers](#11-organisation-des-fichiers)
 
@@ -197,6 +198,12 @@ encaissement des paiements de scolarité, consultation des statistiques — le
 périmètre exact (un centre, une direction, ou l'ensemble du réseau) dépend du rôle
 et des permissions accordées.
 
+À la différence de l'élève, tout membre du personnel franchit une **vérification
+en deux étapes** à la première connexion depuis un appareil : après le mot de
+passe, un code à quatre chiffres reçu par courriel (section 9.2). L'appareil est
+ensuite reconnu pendant trente jours et le code n'est plus redemandé sur ce
+poste ; tout autre appareil reste soumis au code.
+
 ### 4.4 Direction (Administrateur, Directeur Général, Directeur inter-régional, DEPS)
 
 Utilisent le back-office `/bsb/` pour :
@@ -208,6 +215,14 @@ Utilisent le back-office `/bsb/` pour :
   **RH → Agents** ;
 - ajuster la matrice des permissions depuis **RH → Permissions** ;
 - suivre les statistiques et exporter les données (PDF, CSV, Excel).
+
+Le back-office présente une **barre latérale** regroupant les accès par thème
+(pilotage, scolarité, encaissements, offre de formation, RH et permissions,
+communication, supervision, territoire, paramétrage), chaque agent ne voyant que
+les rubriques ouvertes par ses permissions. Cette interface est **réversible**
+par une commande, sans redéploiement (section 9.8). Chaque compte peut porter une
+**photo de profil** (facultative), affichée dans la barre latérale, la liste des
+agents et la fiche du compte ; à défaut, les initiales servent de repli.
 
 ### 4.5 DAF — voir section 5.
 
@@ -378,6 +393,10 @@ existantes.
 - Les mots de passe sont validés par quatre règles Django (similarité avec le nom
   d'utilisateur, longueur minimale, mots de passe courants, mots de passe
   entièrement numériques) — ne pas les désactiver.
+- **Ne pas contourner la vérification en deux étapes du personnel** (code par
+  courriel depuis un appareil non reconnu, section 9.2). Elle suppose que chaque
+  compte d'agent porte une adresse de courriel valide : un compte sans adresse ne
+  peut pas se connecter et doit en recevoir une depuis **RH → Agents**.
 - Toute permission accordée à un rôle doit passer par l'écran **RH → Permissions**
   plutôt que par une modification de code, afin de garder une trace claire et
   réversible des accès accordés.
@@ -456,6 +475,23 @@ ces explications.
   seuil serait trois fois plus permissif. Si Redis devient indisponible, le
   verrou s'ouvre (`IGNORE_EXCEPTIONS`) : le site reste accessible et les erreurs
   sont journalisées, plutôt que de renvoyer une erreur 500 sur chaque page.
+- **Connexion du personnel en deux étapes.** Un élève se connecte directement ;
+  tout autre rôle passe par un code à quatre chiffres envoyé par courriel, valable
+  deux minutes, à usage unique. Le code n'est jamais stocké en clair — seul son
+  haché figure dans la session anonyme du visiteur, le temps de la vérification —
+  et il tolère cinq saisies puis quatre envois au maximum. Un appareil validé
+  reçoit un cookie signé (`appareil_connu`, `HttpOnly`, trente jours) qui dispense
+  du code sur ce seul poste. Le cookie est signé avec une empreinte du mot de
+  passe : **changer de mot de passe révoque d'un coup tous les appareils**, sans
+  écran ni procédure. Toute connexion depuis un appareil non reconnu envoie en
+  outre un **avis au titulaire** : c'est la seule alerte qui lui parvienne
+  directement, sans attendre le rapport d'inspection (section 9.5). L'échec
+  d'envoi de l'un ou l'autre courriel n'interrompt jamais la connexion.
+- **Photo de profil.** Le champ est facultatif et restreint aux formats JPG, PNG
+  et WEBP ; le contenu réel est vérifié par Pillow (un exécutable renommé en
+  `.png` est refusé) et le poids plafonné à deux mégaoctets. Les fichiers
+  déposés sont servis par Nginx en pièce jointe (`Content-Disposition: attachment`,
+  `X-Content-Type-Options: nosniff`), jamais rendus dans le navigateur.
 
 ### 9.3 Exécution en conteneur non privilégié
 
@@ -563,6 +599,36 @@ définitives confondues. Le compteur ne doit donc jamais être filtré par
 calculeraient alors le même numéro. Le numéro est régénéré chaque fois qu'il est
 remis à vide, ce qui correspond au passage d'une proforma à une facture
 définitive.
+
+### 9.8 Réversibilité de l'interface du back-office
+
+La refonte du back-office (barre latérale, écrans repris, tableaux adaptés au
+téléphone) est **réversible sans redéploiement**, en développement comme en
+production. Deux réglages, lus depuis `.env`, la commandent :
+
+- `BO_NAVIGATION` (`sidebar` par défaut, ou `navbar`) : forme de la navigation ;
+- `BO_UI` (`nouveau` par défaut, ou `classique`) : choix des écrans rendus.
+
+Toute refonte d'écran conserve son gabarit d'origine sous le même nom suffixé
+`_classique`. `courses/ui.py` décide lequel est rendu selon `BO_UI` ; un écran
+sans variante `_classique` est rendu tel quel, si bien que la bascule ne peut
+jamais provoquer d'erreur de gabarit introuvable.
+
+Le script `./bascule_ui.sh` écrit ces variables et recrée le conteneur (un simple
+`restart` ne relit pas le `.env`) :
+
+```bash
+./bascule_ui.sh              # affiche l'état courant
+./bascule_ui.sh nouveau      # interface refondue (barre latérale + écrans repris)
+./bascule_ui.sh classique    # retour intégral à l'interface d'origine
+./bascule_ui.sh sidebar      # bascule la seule navigation vers la barre latérale
+./bascule_ui.sh navbar       # bascule la seule navigation vers la barre horizontale
+```
+
+Sur les tableaux de plus de trois colonnes, l'excédent est replié dans une fiche
+dépliable au téléphone (`static/js/bo-tableau.js`), et les conteneurs de ces pages
+occupent toute la largeur disponible sous la barre latérale. L'inventaire de ces
+pages est tenu dans `docs_pages_responsives.md`.
 
 ---
 
