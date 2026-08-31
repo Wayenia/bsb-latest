@@ -174,3 +174,49 @@ class CommandeTests(BaseAudit):
     def test_periode_invalide_refusee(self):
         with self.assertRaises(CommandError):
             call_command('envoyer_rapport_audit', '--jours', '0', '--sans-envoi')
+
+
+class DestinataireTests(TestCase):
+    """Diffusion parametree depuis l'ecran plutot que depuis .env."""
+
+    def setUp(self):
+        from audit.models import DestinataireRapport
+        self.Modele = DestinataireRapport
+
+    def test_seules_les_adresses_actives_sont_retenues(self):
+        self.Modele.objects.create(email='actif@example.invalid', actif=True)
+        self.Modele.objects.create(email='suspendu@example.invalid', actif=False)
+        self.assertEqual(self.Modele.adresses_actives(), ['actif@example.invalid'])
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+                       AUDIT_DESTINATAIRES=[])
+    def test_la_commande_envoie_aux_destinataires_enregistres(self):
+        self.Modele.objects.create(email='inspection@example.invalid', actif=True)
+        mail.outbox = []
+        call_command('envoyer_rapport_audit', '--jours', '7')
+        self.assertEqual(mail.outbox[0].to, ['inspection@example.invalid'])
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+                       AUDIT_DESTINATAIRES=['fichier@example.invalid'])
+    def test_les_adresses_du_fichier_et_de_l_ecran_se_cumulent(self):
+        """Une installation deja configuree par .env ne perd pas ses destinataires."""
+        self.Modele.objects.create(email='ecran@example.invalid', actif=True)
+        mail.outbox = []
+        call_command('envoyer_rapport_audit', '--jours', '7')
+        self.assertEqual(sorted(mail.outbox[0].to),
+                         ['ecran@example.invalid', 'fichier@example.invalid'])
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+                       AUDIT_DESTINATAIRES=['fichier@example.invalid'])
+    def test_l_option_a_remplace_tout(self):
+        """Envoi ponctuel cible : il ne doit pas partir a toute la liste."""
+        self.Modele.objects.create(email='ecran@example.invalid', actif=True)
+        mail.outbox = []
+        call_command('envoyer_rapport_audit', '--jours', '7', '--a', 'ponctuel@example.invalid')
+        self.assertEqual(mail.outbox[0].to, ['ponctuel@example.invalid'])
+
+    @override_settings(AUDIT_DESTINATAIRES=[])
+    def test_aucun_destinataire_actif_la_commande_refuse(self):
+        self.Modele.objects.create(email='suspendu@example.invalid', actif=False)
+        with self.assertRaises(CommandError):
+            call_command('envoyer_rapport_audit')

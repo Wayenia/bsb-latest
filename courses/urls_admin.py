@@ -3,6 +3,7 @@ from django.urls import path
 from courses import views
 from . import views_admin
 from . import views_equipe
+from audit import views as vues_audit
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -81,6 +82,12 @@ urlpatterns = [
     # Export CSV retire : le classeur Excel porte l'en-tete et les filtres appliques,
     # un CSV brut circulait sans ce contexte.
     path('historique-connexions/export/<str:format>', views_admin.historique_connexion_export, name='historique_connexion_export'),
+    # Diffusion du rapport d'inspection (application audit)
+    path('historique-connexions/destinataires',                vues_audit.destinataire_list,            name='destinataire_audit_list'),
+    path('historique-connexions/destinataires/<int:pk>/etat',  vues_audit.destinataire_basculer,        name='destinataire_audit_basculer'),
+    path('historique-connexions/destinataires/<int:pk>/retirer', vues_audit.destinataire_supprimer,     name='destinataire_audit_supprimer'),
+    path('historique-connexions/destinataires/import/modele',  vues_audit.destinataire_import_template, name='destinataire_audit_import_template'),
+    path('historique-connexions/destinataires/import',         vues_audit.destinataire_import,          name='destinataire_audit_import'),
 
     #PROGRAMMING
     path('programmings',views_admin.programming_list,name='programming_list'),

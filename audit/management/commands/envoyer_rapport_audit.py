@@ -12,6 +12,7 @@ from django.utils import timezone
 
 from accounts.models import HistoriqueConnexion
 from audit import services
+from audit.models import DestinataireRapport
 from audit.classeur import construire_classeur
 
 PLAFOND_JOURNAL = 5000
@@ -37,11 +38,20 @@ class Command(BaseCommand):
         if jours < 1:
             raise CommandError("--jours doit valoir au moins 1.")
 
-        destinataires = o['a'] or list(getattr(settings, 'AUDIT_DESTINATAIRES', []))
+        # Les adresses de l'ecran de parametrage s'ajoutent a celles du .env :
+        # une installation deja configuree continue de fonctionner sans rien
+        # changer. --a, lui, remplace tout, pour un envoi ponctuel cible.
+        if o['a']:
+            destinataires = o['a']
+        else:
+            destinataires = sorted(set(
+                list(getattr(settings, 'AUDIT_DESTINATAIRES', []))
+                + DestinataireRapport.adresses_actives()))
         if not destinataires and not o['sans_envoi'] and not o['fichier']:
             raise CommandError(
-                "Aucun destinataire. Renseignez AUDIT_DESTINATAIRES dans .env, "
-                "passez --a adresse@example.org, ou utilisez --sans-envoi.")
+                "Aucun destinataire. Ajoutez-en depuis l'ecran « Destinataires du "
+                "rapport », renseignez AUDIT_DESTINATAIRES dans .env, passez "
+                "--a adresse@example.org, ou utilisez --sans-envoi.")
 
         rapport = services.construire_rapport(jours=jours)
         evenements = list(

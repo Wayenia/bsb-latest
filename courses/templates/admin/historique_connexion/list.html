@@ -12,6 +12,9 @@
             </p>
         </div>
         <div class="bo-actions">
+            {% if perms.audit.gerer_destinataires_audit %}
+            <a href="{% url 'bsb_admin:destinataire_audit_list' %}" class="bo-btn-secondary bo-btn-sm">Envoi du rapport</a>
+            {% endif %}
             <a href="{% url 'bsb_admin:historique_connexion_export' 'xlsx' %}?{{ request.GET.urlencode }}" class="bo-btn-secondary bo-btn-sm">Exporter Excel</a>
             <a href="{% url 'bsb_admin:historique_connexion_export' 'pdf' %}?{{ request.GET.urlencode }}" class="bo-btn-secondary bo-btn-sm">Exporter PDF</a>
         </div>

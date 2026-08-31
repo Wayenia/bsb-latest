@@ -39,7 +39,7 @@ docker compose exec suudu_backend python manage.py envoyer_rapport_audit \
 
 | Variable | Defaut | Role |
 |---|---|---|
-| `AUDIT_DESTINATAIRES` | vide | Adresses separees par des virgules |
+| `AUDIT_DESTINATAIRES` | vide | Adresses separees par des virgules. S'ajoutent a celles saisies dans l'ecran « Envoi du rapport » (`/bsb/historique-connexions/destinataires`). |
 | `AUDIT_PERIODE_JOURS` | 7 | Profondeur de la periode analysee |
 | `AUDIT_SEUIL_ECHECS_COMPTE` | 5 | Echecs sur un meme compte avant alerte |
 | `AUDIT_SEUIL_COMPTES_PAR_IP` | 3 | Comptes distincts vises depuis une IP avant alerte |
@@ -47,6 +47,12 @@ docker compose exec suudu_backend python manage.py envoyer_rapport_audit \
 | `AUDIT_HEURE_OUVREE_DEBUT` | 7 | Debut des heures ouvrees (UTC, cf. TIME_ZONE) |
 | `AUDIT_HEURE_OUVREE_FIN` | 19 | Fin des heures ouvrees |
 
-Sans `AUDIT_DESTINATAIRES` ni `--a`, la commande s'arrete sans rien envoyer.
+Les destinataires se gerent aussi depuis l'ecran **Envoi du rapport**, accessible
+depuis l'historique des connexions : ajout a l'unite, import d'un fichier Excel
+dont le modele est pre-rempli des adresses deja enregistrees, et suspension sans
+suppression — on garde trace de qui recevait le rapport. Les deux sources se
+cumulent ; `--a` les remplace, pour un envoi ponctuel cible.
+
+Sans aucun destinataire ni `--a`, la commande s'arrete sans rien envoyer.
 Rappel : tant que `EMAIL_HOST` est vide, Django ecrit les courriels dans les
 journaux du conteneur (voir README principal, section 9.4).
