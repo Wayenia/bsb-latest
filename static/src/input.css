@@ -281,10 +281,13 @@
 /* ==========================================================================
    Navigation laterale du back-office
    --------------------------------------------------------------------------
-   Concue mobile d'abord : sur petit ecran la barre est un tiroir hors champ,
-   ouvert par le bouton de la barre superieure ; a partir de lg elle est
-   installee a demeure et le contenu se decale. Les apprenants consultent la
-   plateforme au telephone, aucun ecran ne peut supposer une largeur de bureau.
+   Mobile d'abord : tiroir hors champ sur petit ecran, installee a demeure a
+   partir de lg. Les groupes se replient ; leur etat est retenu d'une page a
+   l'autre, et le groupe de l'ecran courant s'ouvre toujours.
+
+   Chaque groupe porte une couleur propre, definie dans config/navigation.py.
+   Elle sert de repere : on retrouve « le vert » pour l'argent sans relire les
+   intitules.
    ========================================================================== */
 @layer components {
 
@@ -298,43 +301,95 @@
            focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500;
   }
 
-  .bo-voile {
-    @apply lg:hidden fixed inset-0 z-40 bg-gray-900/50 transition-opacity;
-  }
+  .bo-voile { @apply lg:hidden fixed inset-0 z-40 bg-slate-900/60 transition-opacity; }
 
   .bo-sidebar {
     @apply fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] flex flex-col
-           bg-gray-800 text-gray-300 overflow-y-auto
+           bg-slate-900 text-slate-300 overflow-y-auto overscroll-contain
            transition-transform duration-200 -translate-x-full
-           lg:translate-x-0 lg:w-64;
+           lg:translate-x-0 lg:w-72;
   }
   .bo-sidebar-ouverte { @apply translate-x-0; }
 
   .bo-sidebar-entete {
-    @apply flex items-center gap-3 px-4 h-16 shrink-0 border-b border-gray-700;
+    @apply flex items-center gap-3 px-4 h-16 shrink-0 border-b border-slate-800
+           sticky top-0 bg-slate-900 z-10;
   }
-  .bo-sidebar-marque { @apply text-white font-bold tracking-tight leading-none; }
-  .bo-sidebar-sous    { @apply text-[11px] uppercase tracking-wider text-gray-400; }
+  .bo-sidebar-marque { @apply text-white font-semibold tracking-tight leading-tight; }
+  .bo-sidebar-sous   { @apply text-[11px] uppercase tracking-widest text-slate-500; }
 
-  .bo-sidebar-nav    { @apply flex-1 px-2 py-3; }
-  .bo-sidebar-groupe { @apply mb-4; }
-  .bo-sidebar-titre  {
-    @apply px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500;
+  /* Filtre : avec une vingtaine d'entrees, chercher est plus rapide que
+     parcourir. */
+  .bo-recherche-zone { @apply px-3 pt-3; }
+  .bo-recherche {
+    @apply w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm
+           text-slate-100 placeholder:text-slate-500
+           focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500;
   }
+
+  .bo-sidebar-nav { @apply flex-1 px-2 py-3 space-y-0.5; }
+
+  /* En-tete de groupe : bouton d'ouverture ou de repli. */
+  .bo-groupe-tete {
+    @apply w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left
+           text-[13px] font-medium text-slate-300
+           hover:bg-slate-800 hover:text-white transition-colors
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500;
+  }
+  .bo-groupe-icone   { @apply w-4 h-4 shrink-0; }
+  .bo-groupe-libelle { @apply flex-1 min-w-0 truncate; }
+  .bo-groupe-chevron { @apply w-4 h-4 shrink-0 text-slate-500 transition-transform duration-200; }
+  .bo-groupe-ouvert .bo-groupe-chevron { @apply rotate-90; }
+  .bo-groupe-corps   { @apply mt-0.5 mb-1 ml-[26px] pl-3 border-l border-slate-800 space-y-0.5; }
+
   .bo-sidebar-lien {
-    @apply flex items-center gap-2 px-3 py-2 rounded-lg text-sm
-           text-gray-300 hover:bg-gray-700 hover:text-white transition-colors
-           focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400;
+    @apply block px-3 py-1.5 rounded-md text-[13px] text-slate-400
+           hover:bg-slate-800 hover:text-white transition-colors
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500;
   }
-  /* L'ecran courant est marque par un liseré : sur une liste longue, la
-     couleur seule se repere mal. */
+  /* L'ecran courant est marque par un liseré colore : la couleur seule se
+     repere mal dans une liste longue. */
   .bo-sidebar-lien-actif {
-    @apply bg-gray-900 text-white font-medium border-l-2 border-l-amber-500 pl-[10px];
+    @apply bg-slate-800 text-white font-medium border-l-2 -ml-[13px] pl-[11px];
   }
 
-  .bo-sidebar-pied { @apply shrink-0 border-t border-gray-700 p-3; }
-  .bo-sidebar-compte { @apply px-3 pb-2 text-xs text-gray-400 truncate; }
+  .bo-sidebar-pied { @apply shrink-0 border-t border-slate-800 p-3 sticky bottom-0 bg-slate-900; }
+  .bo-sidebar-compte { @apply px-3 pb-2 text-xs text-slate-500 truncate; }
+  .bo-sidebar-lien-pied {
+    @apply block px-3 py-1.5 rounded-md text-[13px] text-slate-400
+           hover:bg-slate-800 hover:text-white transition-colors;
+  }
 
-  /* Decalage du contenu quand la barre est installee a demeure. */
-  .bo-avec-sidebar { @apply lg:ml-64; }
+  .bo-avec-sidebar { @apply lg:ml-72; }
+}
+
+/* ==========================================================================
+   Tableau de bord
+   ========================================================================== */
+@layer components {
+
+  /* Carte d'action : ce qui attend un geste. Cliquable en entier — viser un
+     petit lien au telephone est penible. */
+  .bo-action {
+    @apply bo-card p-4 flex items-start gap-3 border-l-4 transition-shadow
+           hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500;
+  }
+  .bo-action-alerte  { @apply border-l-red-500; }
+  .bo-action-garde   { @apply border-l-amber-500; }
+  .bo-action-attente { @apply border-l-sky-500; }
+  .bo-action-nombre  { @apply text-3xl font-semibold tabular-nums text-gray-900 leading-none; }
+  .bo-action-libelle { @apply mt-1 text-sm font-medium text-gray-900; }
+  .bo-action-aide    { @apply mt-0.5 text-xs text-gray-500; }
+
+  /* Jauge : la largeur est calculee, donc posee en JavaScript depuis
+     data-part — un attribut style= serait bloque par la CSP. */
+  .bo-jauge      { @apply h-2 w-full rounded-full bg-gray-200 overflow-hidden; }
+  .bo-jauge-part { @apply h-full rounded-full bg-emerald-500 transition-all duration-500; }
+
+  .bo-montant       { @apply text-2xl font-semibold tabular-nums text-gray-900; }
+  .bo-montant-unite { @apply ml-1 text-sm font-normal text-gray-500; }
+
+  .bo-mini       { @apply bo-card p-3; }
+  .bo-mini-valeur { @apply text-xl font-semibold tabular-nums text-gray-900; }
+  .bo-mini-label  { @apply mt-0.5 text-xs text-gray-500 leading-tight; }
 }

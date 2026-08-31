@@ -30,7 +30,8 @@ from .forms import (
 from accounts.models import Eleve,Formateur
 from .admin_filters import FormationFilter,FiliereFilter,SubscriptionFilter
 from django.db.models import Sum
-from .views import _get_scope, _pdf_header_lines, _draw_pdf_watermark
+from django.urls import reverse
+from .views import _base_qs, _get_scope, _pdf_header_lines, _draw_pdf_watermark
 
 
 def _filiere_modules_map():
@@ -58,27 +59,96 @@ def _agent_in_scope(agent, centres_qs):
 # DASHBOARD
 @require_permission('courses.voir_statistiques')
 def admin_dashboard(request):
-    stats = {
-        'total_centers': CentreFormation.objects.count(),
-        'total_fields': Filiere.objects.count(),
-        'total_subscriptions': Inscription.objects.count(),
-        'total_directions': Direction_reg.objects.count(),
-        'total_students':Eleve.objects.count(),
-        'total_teachers':Formateur.objects.count()
+    """Tableau de bord de direction.
+
+    Il repond a trois questions, dans cet ordre : qu'y a-t-il a traiter
+    aujourd'hui, ou en est le recouvrement, et de quoi l'offre est-elle faite.
+    Les volumes bruts viennent apres : un effectif ne se regarde qu'une fois
+    par mois, une pile de dossiers en attente tous les matins.
+    """
+    from datetime import timedelta
+    from django.db.models import Count
+    from accounts.models import HistoriqueConnexion
+    from actualites.models import Actualite
+
+    inscriptions, dettes, paiements = _base_qs(request.user)[:3]
+    maintenant = timezone.now()
+    depuis_7j = maintenant - timedelta(days=7)
+
+    du = dettes.aggregate(s=Sum('montant_total'))['s'] or 0
+    encaisse = paiements.aggregate(s=Sum('montant_paiement'))['s'] or 0
+
+    a_traiter = [
+        {
+            'libelle': "Inscriptions en attente de validation",
+            'valeur': inscriptions.filter(statut='en_cours').count(),
+            'url': reverse('bsb_admin:subscription_list') + '?statut=en_cours',
+            'ton': 'alerte',
+            'aide': "Dossiers deposes par des apprenants, sans decision du centre.",
+        },
+        {
+            'libelle': "Tentatives de connexion refusees (7 jours)",
+            'valeur': HistoriqueConnexion.objects.filter(
+                type_evenement='echec', date_evenement__gte=depuis_7j).count(),
+            'url': reverse('bsb_admin:historique_connexion_list') + '?type_evenement=echec',
+            'ton': 'garde',
+            'aide': "Un pic sans explication merite une inspection.",
+        },
+        {
+            'libelle': "Actualites en brouillon",
+            'valeur': Actualite.objects.filter(statut='brouillon').count(),
+            'url': reverse('bsb_actualites:actualite_list'),
+            'ton': 'attente',
+            'aide': "Redigees mais jamais publiees.",
+        },
+    ]
+
+    recouvrement = {
+        'du': du,
+        'encaisse': encaisse,
+        'reste': max(du - encaisse, 0),
+        'taux': round(100 * encaisse / du, 1) if du else 0,
+        'versements': paiements.count(),
     }
-    active_careers = (
+
+    volumes = [
+        {'libelle': 'Apprenants inscrits', 'valeur': inscriptions.values('eleve').distinct().count()},
+        {'libelle': 'Formations actives', 'valeur': CentreEtFiliere.objects.filter(is_active=True).count()},
+        {'libelle': 'Centres de formation', 'valeur': CentreFormation.objects.count()},
+        {'libelle': 'Metiers', 'valeur': Filiere.objects.count()},
+        {'libelle': 'Formateurs', 'valeur': Formateur.objects.count()},
+        {'libelle': 'Directions inter-regionales', 'valeur': Direction_reg.objects.count()},
+    ]
+
+    # Repartition des dossiers : lue d'un coup d'oeil, elle dit si la chaine
+    # de validation avance ou si les dossiers s'accumulent quelque part.
+    par_statut = list(
+        inscriptions.order_by().values('statut').annotate(n=Count('id')).order_by('-n')
+    )
+    libelles_statut = dict(Inscription.STATUT_CHOICE)
+    total_inscriptions = sum(l['n'] for l in par_statut) or 1
+    repartition = [{
+        'libelle': libelles_statut.get(l['statut'], l['statut']),
+        'nombre': l['n'],
+        'part': round(100 * l['n'] / total_inscriptions),
+    } for l in par_statut]
+
+    formations_recentes = (
         CentreEtFiliere.objects
         .filter(is_active=True)
         .select_related('centre', 'filiere', 'annee_prog')
-        .prefetch_related('frais_set')
         .annotate(total_frais=Sum('frais__montant'))
-        .order_by('-date_lancement')
+        .order_by('-date_lancement')[:8]
     )
-    context = {
-        'active_careers': active_careers,
-        'stats': stats,  # ← fusionné ici
-    }
-    return render(request, "admin/admin_dashboard/dashboard.html", context)
+
+    return render(request, "admin/admin_dashboard/dashboard.html", {
+        'a_traiter': a_traiter,
+        'recouvrement': recouvrement,
+        'volumes': volumes,
+        'repartition': repartition,
+        'total_inscriptions': sum(l['n'] for l in par_statut),
+        'formations_recentes': formations_recentes,
+    })
 
 
 #  DIRECTION CRUD

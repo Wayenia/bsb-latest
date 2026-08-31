@@ -1,161 +1,73 @@
 {% load static %}
 {% comment %}Navigation laterale du back-office.
 
-Les groupes et les intitules reprennent a l'identique les six sections du
-tableau de bord, que les agents connaissent deja : on change la forme de la
-navigation, pas le vocabulaire ni le classement. Les conditions de permission
-sont celles du tableau de bord, a la ligne pres — un agent ne voit donc ni plus
-ni moins qu'avant.
+Le contenu vient de config/navigation.py : ordre des groupes, couleurs et
+permissions y sont declares une seule fois. Ce gabarit n'est qu'une boucle.
 
-Mobile d'abord : tiroir hors champ ouvert par le bouton de la barre superieure,
-installe a demeure a partir de lg.{% endcomment %}
+Les groupes se replient et leur etat est retenu d'une page a l'autre ; celui de
+l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
 
 <div id="bo-voile" class="bo-voile hidden"></div>
 
 <aside id="bo-sidebar" class="bo-sidebar" aria-label="Navigation du back-office">
+
     <div class="bo-sidebar-entete">
-        <img src="{% static 'images/logo.png' %}" alt="" class="h-9 w-auto object-contain">
+        <img src="{% static 'images/logo.png' %}" alt="" class="h-9 w-auto object-contain shrink-0">
         <div class="min-w-0">
-            <div class="bo-sidebar-marque">BSB</div>
-            <div class="bo-sidebar-sous">Administration</div>
+            <div class="bo-sidebar-marque">Yupaan</div>
+            <div class="bo-sidebar-sous">Burkina Suudu Bawdè</div>
         </div>
     </div>
 
-    <nav class="bo-sidebar-nav">
-        <div class="bo-sidebar-groupe">
-            <a href="{% url 'bsb_admin:admin_dashboard' %}"
-               class="bo-sidebar-lien {% if request.path == '/bsb/dashboard' %}bo-sidebar-lien-actif{% endif %}">
-                Tableau de bord
-            </a>
-        </div>
+    <div class="bo-recherche-zone">
+        <label for="bo-recherche" class="sr-only">Filtrer les rubriques</label>
+        <input id="bo-recherche" type="search" class="bo-recherche"
+               placeholder="Filtrer les rubriques…" autocomplete="off">
+        <p id="bo-recherche-vide" class="hidden px-1 pt-2 text-xs text-slate-500">
+            Aucune rubrique ne correspond.
+        </p>
+    </div>
 
-        {% if perms.courses.voir_statistiques or perms.courses.gerer_statistiques_reelles or perms.courses.voir_inscriptions or perms.courses.gerer_paiements or perms.courses.encaisser_paiement %}
-        <div class="bo-sidebar-groupe">
-            <p class="bo-sidebar-titre">Pilotage</p>
-            {% if perms.courses.voir_statistiques %}
-            <a href="{% url 'courses:statistiques' %}" class="bo-sidebar-lien">Statistiques</a>
-            {% endif %}
-            {% if perms.courses.gerer_statistiques_reelles %}
-            <a href="{% url 'courses:stats_reel_dashboard' %}" class="bo-sidebar-lien">Bilan des effectifs formés</a>
-            {% endif %}
-            {% if perms.courses.voir_inscriptions %}
-            <a href="{% url 'bsb_admin:subscription_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/subscriptions' in request.path %}bo-sidebar-lien-actif{% endif %}">Inscriptions</a>
-            {% endif %}
-            {% if perms.courses.gerer_paiements or perms.courses.encaisser_paiement %}
-            <a href="{% url 'courses:paiement_list' %}" class="bo-sidebar-lien">Encaissements</a>
-            {% endif %}
-        </div>
-        {% endif %}
+    <nav class="bo-sidebar-nav" id="bo-nav">
+        <a href="{% url 'bsb_admin:admin_dashboard' %}"
+           class="bo-groupe-tete {% if request.path == '/bsb/dashboard' %}bg-slate-800 text-white{% endif %}"
+           data-lien-libelle="tableau de bord">
+            <svg class="bo-groupe-icone text-amber-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-8 9 8M5 10v10h14V10"/>
+            </svg>
+            <span class="bo-groupe-libelle">Tableau de bord</span>
+        </a>
 
-        {% if perms.courses.gerer_metiers or perms.courses.gerer_programmations or perms.courses.gerer_centres or perms.courses.gerer_modules %}
-        <div class="bo-sidebar-groupe">
-            <p class="bo-sidebar-titre">Offre de formation</p>
-            {% if perms.courses.gerer_modules %}
-            <a href="{% url 'bsb_admin:module_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/modules' in request.path %}bo-sidebar-lien-actif{% endif %}">Modules et cours</a>
-            {% endif %}
-            {% if perms.courses.gerer_metiers %}
-            <a href="{% url 'bsb_admin:field_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/filiere' in request.path %}bo-sidebar-lien-actif{% endif %}">Métiers</a>
-            {% endif %}
-            {% if perms.courses.gerer_programmations %}
-            <a href="{% url 'bsb_admin:programming_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/programmings' in request.path %}bo-sidebar-lien-actif{% endif %}">Programmations</a>
-            {% endif %}
-            {% if perms.courses.gerer_centres %}
-            <a href="{% url 'courses:center_list' %}" class="bo-sidebar-lien">Centres</a>
-            {% endif %}
+        {% for groupe in bo_menu %}
+        <div class="bo-groupe {% if groupe.actif %}bo-groupe-ouvert{% endif %}" data-groupe="{{ groupe.cle }}">
+            <button type="button" class="bo-groupe-tete" aria-expanded="{{ groupe.actif|yesno:'true,false' }}"
+                    aria-controls="groupe-{{ groupe.cle }}">
+                <svg class="bo-groupe-icone {{ groupe.couleur.texte }}" fill="none" stroke="currentColor"
+                     stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ groupe.icone }}"/>
+                </svg>
+                <span class="bo-groupe-libelle">{{ groupe.titre }}</span>
+                <svg class="bo-groupe-chevron" fill="none" stroke="currentColor" stroke-width="2"
+                     viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>
+            <div class="bo-groupe-corps {% if not groupe.actif %}hidden{% endif %}" id="groupe-{{ groupe.cle }}">
+                {% for lien in groupe.liens %}
+                <a href="{{ lien.url }}" data-lien-libelle="{{ lien.libelle|lower }}"
+                   class="bo-sidebar-lien {% if lien.actif %}bo-sidebar-lien-actif {{ groupe.couleur.bord }}{% endif %}"
+                   {% if lien.actif %}aria-current="page"{% endif %}>{{ lien.libelle }}</a>
+                {% endfor %}
+            </div>
         </div>
-        {% endif %}
-
-        {% if perms.courses.gerer_directions or perms.courses.gerer_regions %}
-        <div class="bo-sidebar-groupe">
-            <p class="bo-sidebar-titre">Organisation territoriale</p>
-            {% if perms.courses.gerer_directions %}
-            <a href="{% url 'bsb_admin:direction_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/directions' in request.path %}bo-sidebar-lien-actif{% endif %}">Directions inter-régionales</a>
-            {% endif %}
-            {% if perms.courses.gerer_regions %}
-            <a href="{% url 'bsb_admin:region_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/regions' in request.path %}bo-sidebar-lien-actif{% endif %}">Régions et provinces</a>
-            {% endif %}
-        </div>
-        {% endif %}
-
-        {% if perms.accounts.gerer_agents or perms.accounts.gerer_eleves or perms.accounts.gerer_permissions or perms.accounts.voir_historique_connexion %}
-        <div class="bo-sidebar-groupe">
-            <p class="bo-sidebar-titre">Ressources humaines</p>
-            {% if perms.accounts.gerer_agents %}
-            <a href="{% url 'bsb_admin:agent_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/rh/agents' in request.path %}bo-sidebar-lien-actif{% endif %}">Agents et formateurs</a>
-            {% endif %}
-            {% if perms.accounts.gerer_eleves %}
-            <a href="{% url 'bsb_admin:eleve_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/eleves' in request.path %}bo-sidebar-lien-actif{% endif %}">Apprenants</a>
-            {% endif %}
-            {% if perms.accounts.gerer_permissions %}
-            <a href="{% url 'bsb_admin:permissions_matrix' %}"
-               class="bo-sidebar-lien {% if '/bsb/rh/permissions' in request.path %}bo-sidebar-lien-actif{% endif %}">Permissions</a>
-            {% endif %}
-            {% if perms.accounts.voir_historique_connexion %}
-            <a href="{% url 'bsb_admin:historique_connexion_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/historique-connexions' in request.path %}bo-sidebar-lien-actif{% endif %}">Historique des connexions</a>
-            {% endif %}
-        </div>
-        {% endif %}
-
-        {% if perms.accounts.gerer_facturation or perms.accounts.encaisser_prestation %}
-        <div class="bo-sidebar-groupe">
-            <p class="bo-sidebar-titre">Facturation et prestation</p>
-            {% if perms.accounts.gerer_facturation %}
-            <a href="{% url 'accounts:prestation_list' %}" class="bo-sidebar-lien">Prestations</a>
-            <a href="{% url 'accounts:facture_proforma_list' %}" class="bo-sidebar-lien">Factures proforma</a>
-            {% endif %}
-            {% if perms.accounts.gerer_facturation or perms.accounts.encaisser_prestation %}
-            <a href="{% url 'accounts:facture_list' %}" class="bo-sidebar-lien">Encaissement</a>
-            {% endif %}
-        </div>
-        {% endif %}
-
-        {% if perms.actualites.gerer_actualites or perms.actualites.gerer_newsletter %}
-        <div class="bo-sidebar-groupe">
-            <p class="bo-sidebar-titre">Communication</p>
-            {% if perms.actualites.gerer_actualites %}
-            <a href="{% url 'bsb_actualites:actualite_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/actualites/' in request.path and 'abonnes' not in request.path %}bo-sidebar-lien-actif{% endif %}">Actualités</a>
-            {% endif %}
-            {% if perms.actualites.gerer_newsletter %}
-            <a href="{% url 'bsb_actualites:abonne_list' %}"
-               class="bo-sidebar-lien {% if 'abonnes' in request.path %}bo-sidebar-lien-actif{% endif %}">Abonnés à la lettre</a>
-            {% endif %}
-        </div>
-        {% endif %}
-
-        {% if perms.courses.gerer_frais or perms.courses.gerer_annees or perms.courses.gerer_equipe %}
-        <div class="bo-sidebar-groupe">
-            <p class="bo-sidebar-titre">Paramétrage</p>
-            {% if perms.courses.gerer_equipe %}
-            <a href="{% url 'bsb_admin:equipe_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/equipe' in request.path %}bo-sidebar-lien-actif{% endif %}">Équipe</a>
-            {% endif %}
-            {% if perms.courses.gerer_frais %}
-            <a href="{% url 'bsb_admin:type_frais_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/type-frais' in request.path %}bo-sidebar-lien-actif{% endif %}">Types de frais</a>
-            {% endif %}
-            {% if perms.courses.gerer_annees %}
-            <a href="{% url 'bsb_admin:annee_list' %}"
-               class="bo-sidebar-lien {% if '/bsb/annees' in request.path %}bo-sidebar-lien-actif{% endif %}">Années de formation</a>
-            {% endif %}
-        </div>
-        {% endif %}
+        {% endfor %}
     </nav>
 
     <div class="bo-sidebar-pied">
         <p class="bo-sidebar-compte">{{ user.prenom }} {{ user.nom }} — {{ user.get_user_type_display }}</p>
-        <a href="{% url 'courses:home' %}" class="bo-sidebar-lien">Site public</a>
-        <a href="{% url 'accounts:mon_compte' %}" class="bo-sidebar-lien">Mon profil</a>
-        <a href="{% url 'accounts:logout' %}" class="bo-sidebar-lien">Se déconnecter</a>
+        <a href="{% url 'courses:home' %}" class="bo-sidebar-lien-pied">Site public</a>
+        <a href="{% url 'accounts:mon_compte' %}" class="bo-sidebar-lien-pied">Mon profil</a>
+        <a href="{% url 'accounts:logout' %}" class="bo-sidebar-lien-pied">Se déconnecter</a>
     </div>
 </aside>
 
@@ -166,7 +78,7 @@ installe a demeure a partir de lg.{% endcomment %}
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
     </button>
-    <span class="font-semibold text-gray-900">Administration BSB</span>
+    <span class="font-semibold text-gray-900 truncate">Yupaan — administration</span>
 </div>
 
 <script nonce="{{ csp_nonce }}">
@@ -174,22 +86,82 @@ installe a demeure a partir de lg.{% endcomment %}
     var barre = document.getElementById('bo-sidebar');
     var voile = document.getElementById('bo-voile');
     var bouton = document.getElementById('bo-burger');
-    if (!barre || !voile || !bouton) return;
+    var nav = document.getElementById('bo-nav');
+    var recherche = document.getElementById('bo-recherche');
+    var vide = document.getElementById('bo-recherche-vide');
+    if (!barre || !nav) return;
 
-    function ouvrir(oui) {
-        barre.classList.toggle('bo-sidebar-ouverte', oui);
-        voile.classList.toggle('hidden', !oui);
-        bouton.setAttribute('aria-expanded', oui ? 'true' : 'false');
-        // Empeche le defilement de la page derriere le tiroir ouvert.
-        document.body.classList.toggle('overflow-hidden', oui);
+    var CLE = 'bo-groupes-replies';
+
+    function replies() {
+        try { return JSON.parse(localStorage.getItem(CLE)) || []; }
+        catch (e) { return []; }   // navigation privee, stockage refuse
+    }
+    function memoriser(liste) {
+        try { localStorage.setItem(CLE, JSON.stringify(liste)); } catch (e) { /* sans effet */ }
     }
 
-    bouton.addEventListener('click', function () {
-        ouvrir(!barre.classList.contains('bo-sidebar-ouverte'));
+    // Etat retenu, sauf pour le groupe de l'ecran courant : le refermer
+    // masquerait la page ou l'on se trouve.
+    var fermes = replies();
+    nav.querySelectorAll('.bo-groupe').forEach(function (groupe) {
+        if (groupe.classList.contains('bo-groupe-ouvert')) return;
+        if (fermes.indexOf(groupe.dataset.groupe) === -1) {
+            groupe.classList.add('bo-groupe-ouvert');
+            groupe.querySelector('.bo-groupe-corps').classList.remove('hidden');
+            groupe.querySelector('.bo-groupe-tete').setAttribute('aria-expanded', 'true');
+        }
     });
-    voile.addEventListener('click', function () { ouvrir(false); });
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') ouvrir(false);
+
+    nav.addEventListener('click', function (e) {
+        var tete = e.target.closest('.bo-groupe-tete');
+        if (!tete || tete.tagName !== 'BUTTON') return;
+        var groupe = tete.closest('.bo-groupe');
+        var ouvert = groupe.classList.toggle('bo-groupe-ouvert');
+        groupe.querySelector('.bo-groupe-corps').classList.toggle('hidden', !ouvert);
+        tete.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+
+        var liste = replies().filter(function (c) { return c !== groupe.dataset.groupe; });
+        if (!ouvert) liste.push(groupe.dataset.groupe);
+        memoriser(liste);
     });
+
+    if (recherche) {
+        recherche.addEventListener('input', function () {
+            var q = this.value.trim().toLowerCase();
+            var trouve = 0;
+            nav.querySelectorAll('.bo-groupe').forEach(function (groupe) {
+                var visibles = 0;
+                groupe.querySelectorAll('[data-lien-libelle]').forEach(function (lien) {
+                    var ok = !q || lien.dataset.lienLibelle.indexOf(q) !== -1;
+                    lien.classList.toggle('hidden', !ok);
+                    if (ok) visibles++;
+                });
+                groupe.classList.toggle('hidden', q !== '' && visibles === 0);
+                // Pendant une recherche on deplie, sinon les resultats resteraient caches.
+                if (q) groupe.querySelector('.bo-groupe-corps').classList.remove('hidden');
+                else groupe.querySelector('.bo-groupe-corps')
+                          .classList.toggle('hidden', !groupe.classList.contains('bo-groupe-ouvert'));
+                trouve += visibles;
+            });
+            if (vide) vide.classList.toggle('hidden', trouve !== 0 || q === '');
+        });
+    }
+
+    if (voile && bouton) {
+        function ouvrir(oui) {
+            barre.classList.toggle('bo-sidebar-ouverte', oui);
+            voile.classList.toggle('hidden', !oui);
+            bouton.setAttribute('aria-expanded', oui ? 'true' : 'false');
+            document.body.classList.toggle('overflow-hidden', oui);
+        }
+        bouton.addEventListener('click', function () {
+            ouvrir(!barre.classList.contains('bo-sidebar-ouverte'));
+        });
+        voile.addEventListener('click', function () { ouvrir(false); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') ouvrir(false);
+        });
+    }
 })();
 </script>

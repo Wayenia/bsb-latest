@@ -7,6 +7,8 @@ seulement une recreation du conteneur (voir ./bascule_ui.sh).
 """
 from django.conf import settings
 
+from .navigation import construire_menu
+
 # Prefixes ou la sidebar remplace la barre horizontale. Les pages publiques
 # (accueil, a propos, actualites) gardent la charte BSB et n'en font pas partie.
 PREFIXES_BACK_OFFICE = ('/bsb/',)
@@ -20,4 +22,9 @@ def navigation(request):
         and utilisateur.is_authenticated
         and request.path.startswith(PREFIXES_BACK_OFFICE)
     )
-    return {'bo_sidebar': actif}
+    if not actif:
+        return {'bo_sidebar': False}
+    return {
+        'bo_sidebar': True,
+        'bo_menu': construire_menu(utilisateur, request.path),
+    }
