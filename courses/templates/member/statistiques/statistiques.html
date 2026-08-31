@@ -45,16 +45,6 @@
     position: absolute; inset: 0;
     background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
-  .page-header .badge-scope {
-    background: rgba(255,255,255,0.2);
-    color: #fff;
-    border-radius: 20px;
-    padding: .3em .9em;
-    font-size: .75rem;
-    font-weight: 600;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-  }
 
   /* ── Filtres ──────────────────────────────────── */
   .filter-card {
@@ -174,7 +164,9 @@
 
   /* ── Table ────────────────────────────────────── */
   .bsb-table { border-collapse: separate; border-spacing: 0; width: 100%; }
-  .bsb-table thead tr { background: var(--rouge); }
+  /* Degrade de la charte plutot qu'un aplat rouge vif : sur des tableaux
+     longs, un bandeau rouge plein sature la lecture. */
+  .bsb-table thead tr { background: linear-gradient(135deg, var(--rouge) 0%, #fbc02d 160%); }
   .bsb-table thead th {
     color: #fff; font-weight: 600; font-size: .8rem;
     padding: .75rem 1rem; letter-spacing: .03em;
@@ -187,8 +179,11 @@
     border-bottom: 1px solid var(--gris-border);
     transition: background .15s;
   }
-  .bsb-table tbody tr:hover { background: #FFF7ED; }
+  .bsb-table tbody tr:hover { background: var(--or-soft); }
   .bsb-table tbody td { font-size: .83rem; padding: .7rem 1rem; vertical-align: middle; }
+  /* Une ligne sur deux : sur sept a onze colonnes, l'oeil perd sa ligne. */
+  .bsb-table tbody tr:nth-child(even) { background: #FCFCFD; }
+  .bsb-table tbody tr:nth-child(even):hover { background: var(--or-soft); }
   .bsb-table tbody tr:last-child td { border-bottom: none; }
 
   /* ── Progress bar ────────────────────────────── */
@@ -226,15 +221,6 @@
       <div class="flex items-center gap-2 mb-1">
         <h4 class="mb-0 font-bold text-lg">Tableau de bord statistique</h4>
       </div>
-      <span class="badge-scope">
-        {% if scope == "global" %}
-          Accès national — toutes les directions
-        {% elif scope == "direction" %}
-          Accès directionnel
-        {% elif scope == "centre" %}
-          Accès centre
-        {% endif %}
-      </span>
     </div>
   </div>
 </div>
@@ -793,7 +779,16 @@ const metiersData = lireDonnees('data-metiers-valeurs');
 // gardaient l'ancienne teinte et juraient avec les cartes.
 const ROUGE = '#e53935';
 const OR = '#ca8a04';
+const VERT = '#16a34a';
+const JAUNE = '#fbc02d';
 const GRIS = '#6B7280';
+
+// Palettes de la charte, choisies selon ce que le graphique doit montrer.
+// Un classement se lit dans une seule teinte degradee ; des categories sans
+// ordre demandent des teintes franchement distinctes ; une serie temporelle
+// n'a besoin que d'une couleur.
+const PALETTE_CATEGORIES = [OR, VERT, ROUGE, JAUNE, '#8B5CF6', GRIS];
+const DEGRADE_OR = ['#ca8a04', '#d69e2e', '#e0ad3a', '#eabb52', '#f2cd7a', '#f7dfa8'];
 
 Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
 
@@ -826,7 +821,9 @@ new Chart(document.getElementById('chartMetiers'), {
     datasets: [{
       label: 'Inscriptions',
       data: metiersData,
-      backgroundColor: metiersData.map((_, i) => i === 0 ? ROUGE : (i % 2 === 0 ? '#e5393599' : '#ca8a0499')),
+      // Classement : une seule teinte qui s'eclaircit du premier au dernier.
+      // L'alternance de deux couleurs suggerait une categorie, pas un rang.
+      backgroundColor: metiersData.map((_, i) => DEGRADE_OR[Math.min(i, DEGRADE_OR.length - 1)]),
       borderRadius: 6,
       maxBarThickness: 44,
     }]
@@ -849,10 +846,12 @@ new Chart(document.getElementById('chartEvol'), {
     datasets: [{
       label: 'Inscriptions',
       data: evolData,
-      borderColor: ROUGE,
-      backgroundColor: 'rgba(192,57,43,0.08)',
+      // Serie temporelle : une seule couleur suffit. L'or se lit sans alarmer,
+      // le rouge etant reserve aux refus et aux impayes.
+      borderColor: OR,
+      backgroundColor: 'rgba(202,138,4,0.10)',
       borderWidth: 2.5,
-      pointBackgroundColor: ROUGE,
+      pointBackgroundColor: OR,
       pointRadius: 4,
       tension: 0.35,
       fill: true,
@@ -875,7 +874,8 @@ new Chart(document.getElementById('chartModes'), {
     labels: modeLabels.length ? modeLabels : ['Aucun paiement'],
     datasets: [{
       data: modeData.length ? modeData : [1],
-      backgroundColor: [ROUGE, OR, '#9CA3AF', '#374151'],
+      // Modes de paiement : categories sans ordre, teintes distinctes.
+      backgroundColor: PALETTE_CATEGORIES,
       borderWidth: 0,
     }]
   },
