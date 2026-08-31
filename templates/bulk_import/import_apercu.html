@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Aperçu de l'import | Yupaan{% endblock %}
+{% block content %}
+<div class="bo-shell max-w-4xl">
+  <nav class="bo-breadcrumb">
+    <a href="{{ list_url }}">{{ spec.verbose_name }}</a>
+    <span class="bo-breadcrumb-sep">/</span>
+    <span class="text-gray-900">Aperçu de l'import</span>
+  </nav>
+
+  <div class="bo-header">
+    <div>
+      <h1 class="bo-title">Aperçu avant import</h1>
+      <p class="bo-subtitle">{{ nom_fichier }} — rien n'a encore été enregistré.</p>
+    </div>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-3 mb-6">
+    <div class="bo-action bo-action-attente">
+      <div class="bo-action-nombre">{{ creations|length }}</div>
+      <div class="bo-action-libelle">À créer</div>
+    </div>
+    <div class="bo-action bo-action-garde">
+      <div class="bo-action-nombre">{{ majs|length }}</div>
+      <div class="bo-action-libelle">À mettre à jour</div>
+    </div>
+    <div class="bo-action bo-action-alerte">
+      <div class="bo-action-nombre">{{ report.errors|length }}</div>
+      <div class="bo-action-libelle">Lignes refusées</div>
+    </div>
+  </div>
+
+  {% if report.errors %}
+  <div class="bo-card mb-6">
+    <div class="bo-card-header"><h2 class="bo-card-title">Lignes refusées</h2></div>
+    <div class="bo-table-wrap border-0 rounded-none">
+      <table class="bo-table">
+        <thead><tr><th scope="col">Ligne</th><th scope="col">Motif</th></tr></thead>
+        <tbody>
+          {% for err in report.errors %}
+          <tr>
+            <td class="font-medium text-gray-900">{{ err.row_number }}</td>
+            <td>{% for m in err.messages %}<div>{{ m }}</div>{% endfor %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if report.created %}
+  <div class="bo-card mb-6">
+    <div class="bo-card-header"><h2 class="bo-card-title">Lignes retenues</h2></div>
+    <div class="bo-table-wrap border-0 rounded-none max-h-80 overflow-y-auto">
+      <table class="bo-table">
+        <thead><tr><th scope="col">Ligne</th><th scope="col">Élément</th><th scope="col">Effet</th></tr></thead>
+        <tbody>
+          {% for c in report.created %}
+          <tr>
+            <td class="text-gray-500">{{ c.row_number }}</td>
+            <td class="font-medium text-gray-900">{{ c.label }}</td>
+            <td>
+              {% if c.extra.mise_a_jour %}<span class="bo-badge-warning">Mise à jour</span>
+              {% else %}<span class="bo-badge-success">Création</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="post" class="flex flex-wrap gap-3">
+    {% csrf_token %}
+    <input type="hidden" name="confirmer" value="{{ jeton }}">
+    {% if report.created %}
+    <button type="submit" class="bo-btn-primary">
+      Appliquer — {{ report.created|length }} ligne{{ report.created|length|pluralize }}
+    </button>
+    {% endif %}
+    <a href="{{ upload_url }}" class="bo-btn-secondary">Choisir un autre fichier</a>
+    <a href="{{ list_url }}" class="bo-btn-ghost">Abandonner</a>
+  </form>
+</div>
+{% endblock %}

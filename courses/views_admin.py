@@ -979,7 +979,21 @@ def historique_connexion_list(request):
         'type_evenement': request.GET.get('type_evenement', ''),
         'q': request.GET.get('q', ''),
         'filtres_actifs': filtres_actifs,
+        'onglets': _onglets_audit(request.user, actif='journal'),
     })
+
+
+def _onglets_audit(utilisateur, actif):
+    """Sous-onglets du domaine supervision. Le reglage d'envoi n'apparait
+    qu'aux comptes habilites a le modifier."""
+    onglets = [{'libelle': 'Journal des connexions',
+                'url': reverse('bsb_admin:historique_connexion_list'),
+                'actif': actif == 'journal'}]
+    if utilisateur.has_perm('audit.gerer_destinataires_audit'):
+        onglets.append({'libelle': "Réglage d'envoi",
+                        'url': reverse('bsb_admin:destinataire_audit_list'),
+                        'actif': actif == 'reglage'})
+    return onglets
 
 
 def _historique_connexion_resume_filtres(request, centres_qs):

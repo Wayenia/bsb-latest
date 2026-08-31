@@ -1,55 +1,51 @@
 {% extends 'base.html' %}
-{% block title %}Destinataires du rapport | Yupaan{% endblock %}
+{% block title %}Réglage d'envoi | Yupaan{% endblock %}
 {% block content %}
 <div class="bo-shell max-w-5xl">
   {% include 'partials/messages.html' %}
 
-  <nav class="bo-breadcrumb">
-    <a href="{% url 'bsb_admin:historique_connexion_list' %}">Historique des connexions</a>
-    <span class="bo-breadcrumb-sep">/</span>
-    <span class="text-gray-900">Destinataires du rapport</span>
-  </nav>
-
   <div class="bo-header">
     <div>
-      <h1 class="bo-title">Destinataires du rapport d'inspection</h1>
-      <p class="bo-subtitle max-w-2xl">
-        Ces personnes reçoivent le rapport périodique : indicateurs, anomalies détectées
-        et classeur Excel détaillé.
-      </p>
-    </div>
-    <div class="bo-actions">
-      {% url 'bsb_admin:destinataire_audit_import' as import_url %}
-      {% include 'partials/import_export_buttons.html' with upload_url=import_url label="Importer Excel" %}
+      <h1 class="bo-title">Historique des connexions</h1>
     </div>
   </div>
 
-  <div class="bo-note-info mb-6">
-    <p><strong>Comment l'envoi est déclenché.</strong> Le rapport n'est pas envoyé
-    automatiquement par l'application : il est produit par une commande, à programmer
-    sur le serveur, généralement une fois par semaine.</p>
-    <p class="mt-2 font-mono text-xs break-all">docker compose exec suudu_backend python manage.py envoyer_rapport_audit</p>
-    <p class="mt-2">
-      {% if nb_actifs %}Au prochain envoi, {{ nb_actifs }} destinataire{{ nb_actifs|pluralize }}
-      recevra{{ nb_actifs|pluralize:",ont" }} le rapport.
-      {% else %}Aucun destinataire actif : la commande s'arrêterait sans rien envoyer.{% endif %}
-    </p>
+  {% include 'partials/bo_onglets.html' %}
+
+  {% comment %}Etat lu d'un coup d'oeil et action au clic, plutot qu'un
+  paragraphe expliquant une commande serveur.{% endcomment %}
+  <div class="{% if nb_actifs %}bo-etat-actif{% else %}bo-etat-inerte{% endif %} mb-6">
+    <span class="bo-etat-puce {% if nb_actifs %}bg-bsb-green{% else %}bg-bsb-gold{% endif %}"></span>
+    <span class="bo-etat-texte">
+      {% if nb_actifs %}
+        {{ nb_actifs }} destinataire{{ nb_actifs|pluralize }} recevra{{ nb_actifs|pluralize:",ont" }} le rapport
+      {% else %}
+        Aucun destinataire actif
+      {% endif %}
+    </span>
+    {% if nb_actifs %}
+    <form method="post" action="{% url 'bsb_admin:destinataire_audit_envoyer' %}">
+      {% csrf_token %}
+      <button type="submit" class="bo-btn-success bo-btn-sm">Envoyer maintenant</button>
+    </form>
+    {% endif %}
+    {% url 'bsb_admin:destinataire_audit_import' as import_url %}
+    {% include 'partials/import_export_buttons.html' with upload_url=import_url label="Importer Excel" %}
   </div>
 
   <div class="grid gap-6 lg:grid-cols-3">
     <div class="bo-card lg:col-span-2">
       <div class="bo-card-header">
-        <h2 class="bo-card-title">Liste des destinataires</h2>
-        <span class="bo-badge-neutral">{{ nb_actifs }} actif{{ nb_actifs|pluralize }}</span>
+        <h2 class="bo-card-title">Destinataires</h2>
+        <span class="bo-badge-neutral">{{ destinataires|length }}</span>
       </div>
 
       {% if destinataires %}
-      {% comment %}Fiches en dessous de sm, tableau au-dela.{% endcomment %}
       <div class="sm:hidden divide-y divide-gray-100">
         {% for d in destinataires %}
         <div class="p-4">
-          <p class="font-medium text-gray-900 break-all">{{ d.email }}</p>
-          <p class="text-sm text-gray-500">{{ d.nom|default:"—" }}{% if d.fonction %} — {{ d.fonction }}{% endif %}</p>
+          <p class="font-medium text-bsb-ink break-all">{{ d.email }}</p>
+          <p class="text-sm text-bsb-muted">{{ d.nom|default:"—" }}{% if d.fonction %} — {{ d.fonction }}{% endif %}</p>
           <div class="mt-2 flex flex-wrap items-center gap-2">
             {% if d.actif %}<span class="bo-badge-success">Reçoit</span>
             {% else %}<span class="bo-badge-neutral">Suspendu</span>{% endif %}
@@ -77,10 +73,10 @@
           <tbody>
             {% for d in destinataires %}
             <tr>
-              <td class="font-medium text-gray-900 break-all">{{ d.email }}</td>
+              <td class="font-medium text-bsb-ink break-all">{{ d.email }}</td>
               <td>
                 <div>{{ d.nom|default:"—" }}</div>
-                {% if d.fonction %}<div class="text-xs text-gray-400">{{ d.fonction }}</div>{% endif %}
+                {% if d.fonction %}<div class="text-xs text-bsb-muted">{{ d.fonction }}</div>{% endif %}
               </td>
               <td>
                 {% if d.actif %}<span class="bo-badge-success">Reçoit</span>
@@ -102,28 +98,23 @@
         </table>
       </div>
       {% else %}
-      <div class="bo-card-body">
+      <div class="bo-card-body text-center py-10">
         <p class="bo-empty-title">Aucun destinataire</p>
-        <p class="bo-empty-text">
-          Ajoutez une adresse ci-contre, ou importez une liste depuis un fichier Excel.
-          Le modèle téléchargeable est pré-rempli des adresses déjà enregistrées.
-        </p>
+        <p class="bo-empty-text">Ajoutez une adresse ci-contre ou importez une liste.</p>
       </div>
       {% endif %}
     </div>
 
     <div class="bo-card self-start">
-      <div class="bo-card-header"><h2 class="bo-card-title">Ajouter une adresse</h2></div>
+      <div class="bo-card-header"><h2 class="bo-card-title">Ajouter</h2></div>
       <form method="post" class="bo-card-body">
         {% csrf_token %}
         {% if form.non_field_errors %}<div class="bo-note-danger mb-4">{{ form.non_field_errors }}</div>{% endif %}
         {% for field in form %}
-          {% if field.name != 'actif' %}
-          {% include 'partials/bo_champ.html' with champ=field %}
-          {% endif %}
+          {% if field.name != 'actif' %}{% include 'partials/bo_champ.html' with champ=field %}{% endif %}
         {% endfor %}
-        <label class="flex items-center gap-2 text-sm text-gray-700 mb-4">
-          {{ form.actif }} <span>Reçoit le rapport dès maintenant</span>
+        <label class="flex items-center gap-2 text-sm text-bsb-ink mb-4">
+          {{ form.actif }} <span>Reçoit dès maintenant</span>
         </label>
         <button type="submit" class="bo-btn-primary bo-btn-block">Ajouter</button>
       </form>

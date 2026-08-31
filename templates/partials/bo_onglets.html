@@ -1,0 +1,9 @@
+{% comment %}Barre de sous-onglets. Parametre : onglets, liste de dicts
+{libelle, url, actif}. Evite de repeter le balisage sur chaque ecran.{% endcomment %}
+<div class="bo-onglets" role="tablist">
+    {% for onglet in onglets %}
+    <a href="{{ onglet.url }}" role="tab"
+       class="bo-onglet {% if onglet.actif %}bo-onglet-actif{% endif %}"
+       {% if onglet.actif %}aria-selected="true"{% endif %}>{{ onglet.libelle }}</a>
+    {% endfor %}
+</div>

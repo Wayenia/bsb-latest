@@ -88,6 +88,7 @@ urlpatterns = [
     path('historique-connexions/destinataires/<int:pk>/retirer', vues_audit.destinataire_supprimer,     name='destinataire_audit_supprimer'),
     path('historique-connexions/destinataires/import/modele',  vues_audit.destinataire_import_template, name='destinataire_audit_import_template'),
     path('historique-connexions/destinataires/import',         vues_audit.destinataire_import,          name='destinataire_audit_import'),
+    path('historique-connexions/destinataires/envoyer',        vues_audit.destinataire_envoyer,         name='destinataire_audit_envoyer'),
 
     #PROGRAMMING
     path('programmings',views_admin.programming_list,name='programming_list'),

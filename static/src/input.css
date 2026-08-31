@@ -250,13 +250,13 @@
 
   /* ---------- Tuiles de suivi ---------- */
   .bo-stats      { @apply grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6; }
-  .bo-stat       { @apply bo-card p-4 border-l-4 border-l-gray-300; }
+  .bo-stat       { @apply bg-white rounded-lg border-2 border-gray-200 p-4 shadow-sm; }
   .bo-stat-label { @apply text-xs font-medium uppercase tracking-wide text-gray-500; }
   .bo-stat-value { @apply mt-1 text-2xl font-semibold tabular-nums text-gray-900; }
   .bo-stat-hint  { @apply mt-1 text-xs text-gray-500; }
-  .bo-stat-ok    { @apply border-l-green-500; }
-  .bo-stat-warn  { @apply border-l-amber-500; }
-  .bo-stat-alert { @apply border-l-red-500; }
+  .bo-stat-ok    { @apply border-bsb-green; }
+  .bo-stat-warn  { @apply border-bsb-gold; }
+  .bo-stat-alert { @apply border-bsb-red; }
 
   /* ---------- Etat vide ---------- */
   .bo-empty       { @apply bo-card px-6 py-12 text-center; }
@@ -272,10 +272,10 @@
   .bo-page-info       { @apply text-gray-500; }
 
   /* ---------- Encarts d'information ---------- */
-  .bo-note         { @apply rounded-lg border-l-4 p-4 text-sm; }
-  .bo-note-info    { @apply bo-note border-l-blue-500 bg-blue-50 text-blue-900; }
-  .bo-note-warning { @apply bo-note border-l-amber-500 bg-amber-50 text-amber-900; }
-  .bo-note-danger  { @apply bo-note border-l-red-500 bg-red-50 text-red-900; }
+  .bo-note         { @apply rounded-lg border-2 p-4 text-sm; }
+  .bo-note-info    { @apply bo-note border-bsb-gold/50 bg-bsb-cream text-bsb-ink; }
+  .bo-note-warning { @apply bo-note border-bsb-gold bg-bsb-cream text-bsb-ink; }
+  .bo-note-danger  { @apply bo-note border-bsb-red bg-bsb-red/5 text-bsb-dark; }
 }
 
 /* ==========================================================================
@@ -381,19 +381,30 @@
      petit lien au telephone est penible. Couleurs de la charte : le rouge
      pour ce qui presse, l'or pour ce qui demande vigilance, le vert pour ce
      qui informe. */
+  /* Bordure coloree sur les quatre cotes : un liseré uniquement a gauche
+     suivait l'arrondi et se cassait dans les angles. */
   .bo-action {
-    @apply bo-card p-4 border-l-4 transition-all
+    @apply block bg-white rounded-lg border-2 p-4 shadow-sm transition-all
            hover:shadow-md hover:-translate-y-0.5
-           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
   }
-  .bo-action-alerte  { @apply border-l-bsb-red; }
-  .bo-action-garde   { @apply border-l-bsb-gold; }
-  .bo-action-attente { @apply border-l-bsb-green; }
+  .bo-action-alerte  { @apply border-bsb-red   hover:bg-bsb-red/5   focus-visible:ring-bsb-red; }
+  .bo-action-garde   { @apply border-bsb-gold  hover:bg-bsb-gold/5  focus-visible:ring-bsb-gold; }
+  .bo-action-attente { @apply border-bsb-green hover:bg-bsb-green/5 focus-visible:ring-bsb-green; }
   .bo-action-nombre  { @apply text-3xl font-bold tabular-nums text-bsb-ink leading-none; }
   .bo-action-alerte  .bo-action-nombre { @apply text-bsb-red; }
   .bo-action-garde   .bo-action-nombre { @apply text-bsb-gold; }
   .bo-action-attente .bo-action-nombre { @apply text-bsb-green; }
-  .bo-action-libelle { @apply mt-1 text-sm font-semibold text-bsb-ink; }
+  /* Le libelle porte le lien : souligne au survol et colore comme la carte,
+     il annonce que la tuile entiere est cliquable. */
+  .bo-action-libelle { @apply mt-1 text-sm font-semibold underline decoration-2 underline-offset-4
+                              decoration-transparent transition-colors; }
+  .bo-action-alerte  .bo-action-libelle { @apply text-bsb-red; }
+  .bo-action-garde   .bo-action-libelle { @apply text-bsb-gold; }
+  .bo-action-attente .bo-action-libelle { @apply text-bsb-green; }
+  .bo-action:hover .bo-action-libelle,
+  .bo-action:focus-visible .bo-action-libelle { @apply decoration-current; }
+  .bo-action-fleche  { @apply mt-2 inline-flex items-center gap-1 text-xs font-medium; }
   .bo-action-aide    { @apply mt-0.5 text-xs text-bsb-muted; }
 
   /* Jauge : la largeur est calculee, donc posee en JavaScript depuis
@@ -404,9 +415,15 @@
   .bo-montant       { @apply text-2xl font-semibold tabular-nums text-gray-900; }
   .bo-montant-unite { @apply ml-1 text-sm font-normal text-gray-500; }
 
-  .bo-mini        { @apply bo-card p-3 border-t-2 border-t-bsb-gold/50; }
+  .bo-mini        { @apply bg-white rounded-lg border border-bsb-gold/40 p-3 shadow-sm; }
   .bo-mini-valeur { @apply text-xl font-bold tabular-nums text-bsb-ink; }
   .bo-mini-label  { @apply mt-0.5 text-xs text-bsb-muted leading-tight; }
+  /* Lien « voir la suite » : souligne, colore, avec un chevron. Un bouton
+     secondaire gris ne disait pas qu'il menait ailleurs. */
+  .bo-lien-suite  { @apply inline-flex items-center gap-1 text-sm font-semibold text-bsb-red
+                           underline decoration-2 underline-offset-4 decoration-bsb-red/40
+                           hover:decoration-bsb-red transition-colors
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red rounded; }
   .bo-section     { @apply text-sm font-semibold uppercase tracking-wide text-bsb-muted mb-3
                            flex items-center gap-2 before:content-[''] before:w-6 before:h-0.5
                            before:rounded-full before:bg-gradient-to-r before:from-bsb-red before:to-bsb-yellow; }
@@ -426,4 +443,43 @@
   .bo-theme-replie .bo-theme-chevron { @apply rotate-0; }
   .bo-theme-compte  { @apply hidden sm:inline text-xs font-normal text-bsb-muted; }
   .bo-theme-replie .bo-theme-ligne { @apply hidden; }
+}
+
+/* ==========================================================================
+   Champ de date : affichage francais et selection au calendrier
+   --------------------------------------------------------------------------
+   Le champ visible est un champ texte, le natif suivant la langue du
+   navigateur et non celle du site. Un champ date masque, ouvert par le bouton,
+   fournit le calendrier du systeme — indispensable au telephone.
+   ========================================================================== */
+@layer components {
+  .bo-date-groupe  { @apply relative; }
+  .bo-date-groupe .bo-date { @apply pr-10; }
+  .bo-date-source  { @apply absolute inset-y-0 right-0 w-10 opacity-0 pointer-events-none; }
+  .bo-date-bouton  {
+    @apply absolute inset-y-0 right-0 flex items-center justify-center w-10
+           text-bsb-muted hover:text-bsb-red transition-colors rounded-r-lg
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
+  }
+}
+
+/* ==========================================================================
+   Sous-onglets
+   ========================================================================== */
+@layer components {
+  .bo-onglets { @apply flex flex-wrap gap-1 border-b-2 border-bsb-gold/30 mb-6; }
+  .bo-onglet {
+    @apply px-4 py-2.5 -mb-0.5 text-sm font-semibold text-bsb-muted rounded-t-lg
+           border-b-2 border-transparent transition-colors
+           hover:text-bsb-ink hover:bg-bsb-cream
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
+  }
+  .bo-onglet-actif { @apply text-bsb-red border-b-bsb-red bg-bsb-cream; }
+
+  /* Etat de la diffusion : lu d'un coup d'oeil, sans paragraphe a lire. */
+  .bo-etat        { @apply flex flex-wrap items-center gap-3 rounded-lg border-2 p-4; }
+  .bo-etat-actif  { @apply bo-etat border-bsb-green bg-bsb-green/5; }
+  .bo-etat-inerte { @apply bo-etat border-bsb-gold bg-bsb-cream; }
+  .bo-etat-puce   { @apply w-2.5 h-2.5 rounded-full shrink-0; }
+  .bo-etat-texte  { @apply flex-1 min-w-0 text-sm font-semibold text-bsb-ink; }
 }
