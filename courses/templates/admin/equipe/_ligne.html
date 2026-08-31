@@ -1,0 +1,28 @@
+{% comment %}Une ligne d'equipe. Les URL sont resolues par l'appelant : les noms
+de route different entre le directeur general et les membres.
+Parametres : objet, url_modifier, url_supprimer, ordre (facultatif).{% endcomment %}
+<div class="flex items-center gap-4 px-5 py-3 border-t border-gray-100 first:border-t-0 hover:bg-slate-50 transition-colors">
+    {% if ordre %}
+    <span class="w-6 shrink-0 text-xs font-mono text-gray-400 tabular-nums">{{ objet.order }}</span>
+    {% endif %}
+    {% if objet.photo %}
+    <img src="{{ objet.photo.url }}" alt="{{ objet.full_name }}"
+         class="w-12 h-12 rounded-full object-cover border border-gray-200 shrink-0">
+    {% else %}
+    <div class="w-12 h-12 rounded-full bg-gray-200 shrink-0 flex items-center justify-center
+                text-xs font-semibold text-gray-500">{{ objet.full_name|first|upper }}</div>
+    {% endif %}
+    <div class="flex-1 min-w-0">
+        <p class="font-medium text-gray-900 truncate">{{ objet.full_name }}</p>
+        <p class="text-xs text-gray-500 truncate">{{ objet.position }}</p>
+    </div>
+    {% if objet.is_active %}
+    <span class="bo-badge-success">Actif</span>
+    {% else %}
+    <span class="bo-badge-neutral">Inactif</span>
+    {% endif %}
+    <div class="flex gap-1 shrink-0">
+        <a href="{{ url_modifier }}" class="bo-btn-secondary bo-btn-sm">Modifier</a>
+        <a href="{{ url_supprimer }}" class="bo-btn-danger bo-btn-sm">Supprimer</a>
+    </div>
+</div>

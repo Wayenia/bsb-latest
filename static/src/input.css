@@ -214,6 +214,14 @@
   .bo-table td.bo-num       { @apply text-right tabular-nums font-medium text-gray-900; }
   .bo-table td.bo-actions-cell { @apply text-right whitespace-nowrap; }
 
+  /* Premiere colonne figee : sur une matrice large, l'intitule de la ligne
+     doit rester lisible pendant le defilement horizontal. */
+  .bo-table .bo-col-fixe {
+    @apply sticky left-0 z-20 bg-white border-r border-gray-200;
+  }
+  .bo-table thead .bo-col-fixe { @apply bg-gray-50 z-30; }
+  .bo-table tbody tr:hover .bo-col-fixe { @apply bg-slate-50; }
+
   /* ---------- Pastilles d'etat ---------- */
   .bo-badge         { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap; }
   .bo-badge-neutral { @apply bo-badge bg-gray-100 text-gray-700; }

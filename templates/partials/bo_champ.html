@@ -1,0 +1,11 @@
+{% comment %}Un champ de formulaire du back-office : etiquette, controle, aide et erreurs.
+Evite de repeter huit lignes identiques par champ. Parametre : champ.
+Le controle lui-meme garde les classes posees par le formulaire Django.{% endcomment %}
+<div class="bo-field">
+    <label for="{{ champ.id_for_label }}" class="bo-label">
+        {{ champ.label }}{% if champ.field.required %}<span class="bo-req">*</span>{% endif %}
+    </label>
+    {{ champ }}
+    {% if champ.help_text %}<p class="bo-help">{{ champ.help_text }}</p>{% endif %}
+    {% for erreur in champ.errors %}<p class="bo-error">{{ erreur }}</p>{% endfor %}
+</div>

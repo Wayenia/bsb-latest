@@ -1,287 +1,107 @@
 {% extends 'base.html' %}
 {% block title %}{{ action }} Agent | BSB{% endblock %}
 {% block content %}
-<div class="max-w-4xl mx-auto py-10">
+<div class="bo-shell max-w-4xl">
     {% include 'partials/messages.html' %}
 
-    {% comment %} En-tête {% endcomment %}
-    <div class="mb-8 flex items-center gap-4">
-        <a href="{% url 'bsb_admin:agent_list' %}"
-           class="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-700 transition-all">Retour</a>
+    <nav class="bo-breadcrumb">
+        <a href="{% url 'bsb_admin:agent_list' %}">Ressources humaines</a>
+        <span class="bo-breadcrumb-sep">/</span>
+        <span class="text-gray-900">{{ action }} un agent</span>
+    </nav>
+
+    <div class="bo-header">
         <div>
-            <h1 class="text-3xl font-black text-gray-900">{{ action }} un agent</h1>
-            <p class="text-gray-500 mt-1 text-sm">Les champs spécifiques apparaissent selon le rôle choisi</p>
+            <h1 class="bo-title">{{ action }} un agent</h1>
+            <p class="bo-subtitle">Les champs propres au rôle apparaissent une fois celui-ci choisi.</p>
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-        <form method="POST" class="space-y-8" id="agent-form">
-            {% csrf_token %}
+    <form method="POST" id="agent-form">
+        {% csrf_token %}
 
-            {% if form.non_field_errors %}
-            <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 flex gap-3 items-start">
-                
-                <p class="text-sm text-red-700">{{ form.non_field_errors }}</p>
-            </div>
-            {% endif %}
+        {% if form.non_field_errors %}
+        <div class="bo-note-danger mb-5">{{ form.non_field_errors }}</div>
+        {% endif %}
 
-            {% comment %} ══ RÔLE ══════════════════════════════════════════════════════ {% endcomment %}
-            <div class="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-xl p-5">
-                <label for="{{ form.user_type.id_for_label }}"
-                       class="block text-sm font-bold text-gray-900 mb-2">
-                    
-                    {{ form.user_type.label }} <span class="text-red-600">*</span>
-                </label>
-                {{ form.user_type }}
-                {% if form.user_type.errors %}
-                <p class="mt-1 text-xs text-red-600">
-                    {{ form.user_type.errors.0 }}
+        {% comment %}Le role commande tout le reste du formulaire : il est isole en tete.{% endcomment %}
+        <div class="bo-card mb-5">
+            <div class="bo-card-body">
+                {% include 'partials/bo_champ.html' with champ=form.user_type %}
+                <p class="bo-help -mt-3">
+                    Détermine les rattachements à renseigner ci-dessous et les permissions du compte.
                 </p>
-                {% endif %}
             </div>
+        </div>
 
-            {% comment %} ══ IDENTITÉ ══════════════════════════════════════════════════ {% endcomment %}
-            <div>
-                <h2 class="text-base font-bold text-gray-800 border-b-2 border-yellow-400 pb-2 mb-5 flex items-center gap-2">
-                     Identité
-                </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                    <div>
-                        <label for="{{ form.nom.id_for_label }}"
-                               class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.nom.label }} <span class="text-red-600">*</span>
-                        </label>
-                        {{ form.nom }}
-                        {% if form.nom.errors %}<p class="mt-1 text-xs text-red-600">{{ form.nom.errors.0 }}</p>{% endif %}
-                    </div>
-
-                    <div>
-                        <label for="{{ form.prenom.id_for_label }}"
-                               class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.prenom.label }} <span class="text-red-600">*</span>
-                        </label>
-                        {{ form.prenom }}
-                        {% if form.prenom.errors %}<p class="mt-1 text-xs text-red-600">{{ form.prenom.errors.0 }}</p>{% endif %}
-                    </div>
-
-                    <div>
-                        <label for="{{ form.username.id_for_label }}"
-                               class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.username.label }} <span class="text-red-600">*</span>
-                        </label>
-                        {{ form.username }}
-                        {% if form.username.errors %}<p class="mt-1 text-xs text-red-600">{{ form.username.errors.0 }}</p>{% endif %}
-                    </div>
-
-                    <div>
-                        <label for="{{ form.email.id_for_label }}"
-                               class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.email.label }} <span class="text-red-600">*</span>
-                        </label>
-                        {{ form.email }}
-                        {% if form.email.errors %}<p class="mt-1 text-xs text-red-600">{{ form.email.errors.0 }}</p>{% endif %}
-                    </div>
-
-                    <div>
-                        <label for="{{ form.tel.id_for_label }}"
-                               class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.tel.label }}
-                        </label>
-                        {{ form.tel }}
-                        {% if form.tel.errors %}<p class="mt-1 text-xs text-red-600">{{ form.tel.errors.0 }}</p>{% endif %}
-                    </div>
-
-                    <div>
-                        <label for="{{ form.sexe.id_for_label }}"
-                               class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.sexe.label }}
-                        </label>
-                        {{ form.sexe }}
-                        {% if form.sexe.errors %}<p class="mt-1 text-xs text-red-600">{{ form.sexe.errors.0 }}</p>{% endif %}
-                    </div>
-
-                    <div>
-                        <label for="{{ form.date_naissance.id_for_label }}"
-                               class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.date_naissance.label }}
-                        </label>
-                        {{ form.date_naissance }}
-                        {% if form.date_naissance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.date_naissance.errors.0 }}</p>{% endif %}
-                    </div>
-
-                    <div>
-                        <label for="{{ form.password.id_for_label }}"
-                               class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.password.label }}
-                        </label>
-                        {{ form.password }}
-                        {% if form.password.errors %}<p class="mt-1 text-xs text-red-600">{{ form.password.errors.0 }}</p>{% endif %}
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label for="{{ form.adresse.id_for_label }}"
-                               class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.adresse.label }}
-                        </label>
-                        {{ form.adresse }}
-                        {% if form.adresse.errors %}<p class="mt-1 text-xs text-red-600">{{ form.adresse.errors.0 }}</p>{% endif %}
-                    </div>
-
+        <div class="bo-card mb-5">
+            <div class="bo-card-header"><h2 class="bo-card-title">Identité</h2></div>
+            <div class="bo-card-body grid grid-cols-1 md:grid-cols-2 gap-x-5">
+                {% include 'partials/bo_champ.html' with champ=form.nom %}
+                {% include 'partials/bo_champ.html' with champ=form.prenom %}
+                {% include 'partials/bo_champ.html' with champ=form.username %}
+                {% include 'partials/bo_champ.html' with champ=form.email %}
+                {% include 'partials/bo_champ.html' with champ=form.tel %}
+                {% include 'partials/bo_champ.html' with champ=form.sexe %}
+                {% include 'partials/bo_champ.html' with champ=form.date_naissance %}
+                {% include 'partials/bo_champ.html' with champ=form.password %}
+                <div class="md:col-span-2">
+                    {% include 'partials/bo_champ.html' with champ=form.adresse %}
                 </div>
             </div>
+        </div>
 
-            {% comment %} ══ SECTION FORMATEUR ═════════════════════════════════════════ {% endcomment %}
-            <div id="section-formateur" class="hidden role-section">
-                <h2 class="text-base font-bold text-gray-800 border-b-2 border-gray-400 pb-2 mb-5 flex items-center gap-2">
-                     Informations Formateur
-                </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.centre_formateur.label }} <span class="text-red-600">*</span>
-                        </label>
-                        {{ form.centre_formateur }}
-                        {% if form.centre_formateur.errors %}
-                        <p class="mt-1 text-xs text-red-600">{{ form.centre_formateur.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.date_integration_formateur.label }} <span class="text-red-600">*</span>
-                        </label>
-                        {{ form.date_integration_formateur }}
-                        {% if form.date_integration_formateur.errors %}
-                        <p class="mt-1 text-xs text-red-600">{{ form.date_integration_formateur.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.filiere.label }}
-                        </label>
-                        {{ form.filiere }}
-                        {% if form.filiere.errors %}
-                        <p class="mt-1 text-xs text-red-600">{{ form.filiere.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.module.label }}
-                        </label>
-                        {{ form.module }}
-                        <p class="mt-1 text-xs text-gray-400">
-                            Sélectionnez d'abord un métier pour voir ses modules.
-                        </p>
-                        {% if form.module.errors %}
-                        <p class="mt-1 text-xs text-red-600">{{ form.module.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                </div>
+        {% comment %}Sections par role. Les identifiants et la classe role-section sont
+        lus par le script en fin de page : ne pas les renommer.{% endcomment %}
+        <div id="section-formateur" class="hidden role-section bo-card mb-5">
+            <div class="bo-card-header"><h2 class="bo-card-title">Rattachement du formateur</h2></div>
+            <div class="bo-card-body grid grid-cols-1 md:grid-cols-2 gap-x-5">
+                {% include 'partials/bo_champ.html' with champ=form.centre_formateur %}
+                {% include 'partials/bo_champ.html' with champ=form.date_integration_formateur %}
+                {% include 'partials/bo_champ.html' with champ=form.filiere %}
+                {% include 'partials/bo_champ.html' with champ=form.module %}
             </div>
-
             {{ filiere_modules_json|json_script:"filiere-modules-data" }}
+        </div>
 
-            {% comment %} ══ SECTION DIRECTEUR INTER-RÉGIONAL ═════════════════════════ {% endcomment %}
-            <div id="section-dir" class="hidden role-section">
-                <h2 class="text-base font-bold text-gray-800 border-b-2 border-red-500 pb-2 mb-5 flex items-center gap-2">
-                     Directeur inter-régional
-                </h2>
-                <div class="grid grid-cols-1 gap-5">
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.direction_interreg.label }} <span class="text-red-600">*</span>
-                        </label>
-                        {{ form.direction_interreg }}
-                        {% if form.direction_interreg.errors %}
-                        <p class="mt-1 text-xs text-red-600">{{ form.direction_interreg.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                </div>
+        <div id="section-dir" class="hidden role-section bo-card mb-5">
+            <div class="bo-card-header"><h2 class="bo-card-title">Direction inter-régionale</h2></div>
+            <div class="bo-card-body">
+                {% include 'partials/bo_champ.html' with champ=form.direction_interreg %}
             </div>
+        </div>
 
-            {% comment %} ══ SECTION CENTRE (gestionnaire / comptable / caissier) ═════ {% endcomment %}
-            <div id="section-centre-role" class="hidden role-section">
-                <h2 class="text-base font-bold text-gray-800 border-b-2 border-yellow-500 pb-2 mb-5 flex items-center gap-2">
-                    
-                    <span id="titre-centre-role">Rattachement au centre</span>
-                </h2>
-                <div class="grid grid-cols-1 gap-5">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.centre_role.label }} <span class="text-red-600">*</span>
-                        </label>
-                        {{ form.centre_role }}
-                        {% if form.centre_role.errors %}
-                        <p class="mt-1 text-xs text-red-600">{{ form.centre_role.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                </div>
+        <div id="section-centre-role" class="hidden role-section bo-card mb-5">
+            <div class="bo-card-header">
+                <h2 class="bo-card-title"><span id="titre-centre-role">Rattachement au centre</span></h2>
             </div>
-
-            {% comment %} ══ SECTION ADMIN ══════════════════════════════════════════════ {% endcomment %}
-            <div id="section-admin" class="hidden role-section">
-                <h2 class="text-base font-bold text-gray-800 border-b-2 border-gray-400 pb-2 mb-5 flex items-center gap-2">
-                     Administrateur
-                </h2>
-                <div class="grid grid-cols-1 gap-5">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.centre_admin.label }}
-                            <span class="text-xs font-normal text-gray-400">(optionnel)</span>
-                        </label>
-                        {{ form.centre_admin }}
-                        {% if form.centre_admin.errors %}
-                        <p class="mt-1 text-xs text-red-600">{{ form.centre_admin.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                </div>
+            <div class="bo-card-body">
+                {% include 'partials/bo_champ.html' with champ=form.centre_role %}
             </div>
+        </div>
 
-            {% comment %} ══ SECTION MEMBRE DE L'ADMINISTRATION (fonction libre) ═════════ {% endcomment %}
-            <div id="section-membre" class="hidden role-section">
-                <h2 class="text-base font-bold text-gray-800 border-b-2 border-gray-400 pb-2 mb-5 flex items-center gap-2">
-                     Membre de l'administration
-                </h2>
-                <div class="grid grid-cols-1 gap-5">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">
-                            {{ form.emploi_libre.label }} <span class="text-red-600">*</span>
-                        </label>
-                        {{ form.emploi_libre }}
-                        {% if form.emploi_libre.errors %}
-                        <p class="mt-1 text-xs text-red-600">{{ form.emploi_libre.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                </div>
+        <div id="section-admin" class="hidden role-section bo-card mb-5">
+            <div class="bo-card-header"><h2 class="bo-card-title">Rattachement administratif</h2></div>
+            <div class="bo-card-body">
+                {% include 'partials/bo_champ.html' with champ=form.centre_admin %}
             </div>
+        </div>
 
-            {% comment %} deps : aucune section supplémentaire — le rôle seul suffit {% endcomment %}
-
-            {% comment %} ══ BOUTONS ════════════════════════════════════════════════════ {% endcomment %}
-            <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
-                <a href="{% url 'bsb_admin:agent_list' %}"
-                   class="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-semibold
-                          hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-all">
-                    Annuler
-                </a>
-                <button type="submit"
-                        class="px-8 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-xl
-                               shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
-                    {{ action }}
-                </button>
+        <div id="section-membre" class="hidden role-section bo-card mb-5">
+            <div class="bo-card-header"><h2 class="bo-card-title">Fonction</h2></div>
+            <div class="bo-card-body">
+                {% include 'partials/bo_champ.html' with champ=form.emploi_libre %}
             </div>
+        </div>
 
-        </form>
-    </div>
+        {% comment %}deps : aucune section supplementaire, le role seul suffit.{% endcomment %}
+
+        <div class="flex flex-wrap gap-3">
+            <button type="submit" class="bo-btn-primary">{{ action }}</button>
+            <a href="{% url 'bsb_admin:agent_list' %}" class="bo-btn-secondary">Annuler</a>
+        </div>
+    </form>
 </div>
-
 <script nonce="{{ csp_nonce }}">
 (function () {
     /*

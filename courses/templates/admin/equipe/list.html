@@ -1,120 +1,57 @@
 {% extends 'base.html' %}
-
 {% block title %}Équipe | BSB{% endblock %}
-
 {% block content %}
-<div class="max-w-6xl mx-auto py-10 space-y-8">
+<div class="bo-shell max-w-5xl">
     {% include 'partials/messages.html' %}
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="bo-header">
         <div>
-            <h1 class="text-3xl font-black text-gray-900">Équipe</h1>
-            <p class="mt-2 text-sm text-gray-600">
-                Directeur Général et membres de l'administration affichés sur la page publique
-                « À propos ».
+            <h1 class="bo-title">Équipe</h1>
+            <p class="bo-subtitle max-w-2xl">
+                Directeur Général et membres de l'administration affichés sur la page
+                publique « À propos ». Un membre inactif reste enregistré mais n'y figure plus.
             </p>
         </div>
     </div>
 
-    {% comment %} ── Directeur Général ───────────────────────────────────── {% endcomment %}
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 class="text-lg font-bold text-gray-900">Directeur Général</h2>
-            <a href="{% url 'bsb_admin:dg_create' %}"
-               class="px-4 py-2 bg-bsb-primary text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition">
-                Ajouter
-            </a>
+    <div class="bo-card mb-6">
+        <div class="bo-card-header">
+            <h2 class="bo-card-title">Directeur Général</h2>
+            <a href="{% url 'bsb_admin:dg_create' %}" class="bo-btn-primary bo-btn-sm">Ajouter</a>
         </div>
-
         {% if dgs %}
-        <div class="divide-y divide-gray-100">
-            {% for dg in dgs %}
-            <div class="flex items-center gap-4 px-6 py-4">
-                {% if dg.photo %}
-                <img src="{{ dg.photo.url }}" alt="{{ dg.full_name }}"
-                     class="w-14 h-14 rounded-full object-cover border border-gray-200">
-                {% endif %}
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-gray-900 truncate">{{ dg.full_name }}</p>
-                    <p class="text-xs text-gray-500">{{ dg.position }}</p>
-                </div>
-                {% if dg.is_active %}
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">
-                    Actif
-                </span>
-                {% else %}
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
-                    Ancien
-                </span>
-                {% endif %}
-                <div class="flex gap-2">
-                    <a href="{% url 'bsb_admin:dg_update' dg.pk %}"
-                       class="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition">
-                        Modifier
-                    </a>
-                    <a href="{% url 'bsb_admin:dg_delete' dg.pk %}"
-                       class="px-3 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded hover:bg-red-200 transition">
-                        Supprimer
-                    </a>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+        {% for dg in dgs %}
+            {% url 'bsb_admin:dg_update' dg.pk as url_modifier %}
+            {% url 'bsb_admin:dg_delete' dg.pk as url_supprimer %}
+            {% include 'admin/equipe/_ligne.html' with objet=dg %}
+        {% endfor %}
         {% else %}
-        <p class="px-6 py-8 text-sm text-gray-500 text-center">
-            Aucun Directeur Général enregistré.
-        </p>
+        <div class="px-5 py-10 text-center">
+            <p class="bo-empty-title">Aucun Directeur Général enregistré</p>
+            <p class="bo-empty-text">La page « À propos » n'affichera pas cette section.</p>
+        </div>
         {% endif %}
     </div>
 
-    {% comment %} ── Membres ─────────────────────────────────────────────── {% endcomment %}
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 class="text-lg font-bold text-gray-900">
+    <div class="bo-card">
+        <div class="bo-card-header">
+            <h2 class="bo-card-title">
                 Membres de l'administration
-                <span class="ml-2 text-sm font-normal text-gray-500">({{ membres|length }})</span>
+                <span class="ml-1 font-normal text-gray-500">({{ membres|length }})</span>
             </h2>
-            <a href="{% url 'bsb_admin:membre_create' %}"
-               class="px-4 py-2 bg-bsb-primary text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition">
-                Ajouter
-            </a>
+            <a href="{% url 'bsb_admin:membre_create' %}" class="bo-btn-primary bo-btn-sm">Ajouter</a>
         </div>
-
         {% if membres %}
-        <div class="divide-y divide-gray-100">
-            {% for membre in membres %}
-            <div class="flex items-center gap-4 px-6 py-4">
-                <span class="w-8 text-xs font-mono text-gray-400">{{ membre.order }}</span>
-                {% if membre.photo %}
-                <img src="{{ membre.photo.url }}" alt="{{ membre.full_name }}"
-                     class="w-12 h-12 rounded-full object-cover border border-gray-200">
-                {% endif %}
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-gray-900 truncate">{{ membre.full_name }}</p>
-                    <p class="text-xs text-gray-500 truncate">{{ membre.position }}</p>
-                </div>
-                {% if not membre.is_active %}
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
-                    Inactif
-                </span>
-                {% endif %}
-                <div class="flex gap-2">
-                    <a href="{% url 'bsb_admin:membre_update' membre.pk %}"
-                       class="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition">
-                        Modifier
-                    </a>
-                    <a href="{% url 'bsb_admin:membre_delete' membre.pk %}"
-                       class="px-3 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded hover:bg-red-200 transition">
-                        Supprimer
-                    </a>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+        {% for membre in membres %}
+            {% url 'bsb_admin:membre_update' membre.pk as url_modifier %}
+            {% url 'bsb_admin:membre_delete' membre.pk as url_supprimer %}
+            {% include 'admin/equipe/_ligne.html' with objet=membre ordre=True %}
+        {% endfor %}
         {% else %}
-        <p class="px-6 py-8 text-sm text-gray-500 text-center">
-            Aucun membre enregistré.
-        </p>
+        <div class="px-5 py-10 text-center">
+            <p class="bo-empty-title">Aucun membre enregistré</p>
+            <p class="bo-empty-text">Ajoutez les membres à afficher sur la page « À propos ».</p>
+        </div>
         {% endif %}
     </div>
 </div>
