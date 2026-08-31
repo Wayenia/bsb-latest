@@ -62,15 +62,19 @@ CELERY_RESULT_BACKEND=redis://suudu_redis:6379/0
 SITE_URL=${SITE_URL_VAL}
 
 # --- E-mail (SMTP) ---
-# EMAIL_HOST vide : les messages partent dans les logs du conteneur (README 9).
-EMAIL_HOST=
+# Requis pour l'envoi du code de verification a 4 chiffres a la connexion du
+# personnel. EMAIL_HOST vide : les messages partent dans les logs du conteneur
+# (README 9) et la connexion du personnel echouera faute de code recu.
+# Gmail : EMAIL_HOST_PASSWORD est un « mot de passe d'application », pas le mot
+# de passe du compte.
+EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
-EMAIL_HOST_USER=
-EMAIL_HOST_PASSWORD=
+EMAIL_HOST_USER=CHANGEME@gmail.com
+EMAIL_HOST_PASSWORD=CHANGEME_mot_de_passe_application
 EMAIL_TIMEOUT=20
-DEFAULT_FROM_EMAIL=
-SERVER_EMAIL=
+DEFAULT_FROM_EMAIL=Burkina Suudu Bawde <CHANGEME@gmail.com>
+SERVER_EMAIL=CHANGEME@gmail.com
 EOF
 
     echo " .env généré avec valeurs sécurisées"

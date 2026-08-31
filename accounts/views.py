@@ -45,38 +45,186 @@ def user_register(request):
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.shortcuts import render, redirect
+
+import logging
+
+from . import otp, ratelimit
+
+logger = logging.getLogger('django.security')
+
+
+def _est_apprenant(user):
+    """Seul l'apprenant se connecte en une étape. Tout compte du personnel
+    (rôle explicite, ou droit staff/superuser) passe par la vérification
+    e-mail, même si son `user_type` est resté à la valeur par défaut."""
+    return user.user_type == 'eleve' and not user.is_staff and not user.is_superuser
+
+
 def user_login(request):
+    from .models import Utilisateur
 
-    # ── Déjà connecté → rediriger directement ────────────────────────────
+    # ── Déjà connecté → tableau de bord ───────────────────────────────────
     if request.user.is_authenticated:
-        return redirect('courses:redirect_to_dashboard')  # ← une seule ligne, ta vue gère tout
+        return redirect('courses:redirect_to_dashboard')
 
-    # ── Pas encore connecté ───────────────────────────────────────────────
+    # Repartir de zéro depuis la page « code » (lien « utiliser un autre compte »).
+    if request.GET.get('reset'):
+        otp.annuler(request)
+
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
-        password = request.POST.get('password', '').strip()
+        identifiant = request.POST.get('identifiant', '').strip()
+        password = request.POST.get('password', '')
 
-        if not username or not password:
+        if not identifiant or not password:
             messages.error(request, "Veuillez renseigner tous les champs.")
-            return render(request, 'accounts/login.html', {'username': username})
+            return render(request, 'accounts/login.html', {'identifiant': identifiant})
 
-        user = authenticate(request, username=username, password=password)
+        par_email = '@' in identifiant
+        if par_email:
+            compte = Utilisateur.objects.filter(email__iexact=identifiant).first()
+            msg_incorrect = "Email ou mot de passe incorrect."
+        else:
+            compte = Utilisateur.objects.filter(username=identifiant).first()
+            msg_incorrect = "Nom d'utilisateur ou mot de passe incorrect."
+
+        # Verrou anti-force brute par compte (le verrou par IP est posé en amont
+        # par LimitationConnexionMiddleware).
+        if compte is not None and ratelimit.est_verrouille(request, compte.username):
+            messages.error(request, "Trop de tentatives de connexion. Réessayez dans quelques minutes.")
+            return render(request, 'accounts/login.html', {'identifiant': identifiant})
+
+        user = None
+        if compte is not None:
+            user = authenticate(request, username=compte.username, password=password)
+        else:
+            # Exécute quand même le hachage : sans cela, un e-mail inconnu
+            # répondrait nettement plus vite qu'un mot de passe faux, ce qui
+            # permettrait d'énumérer les comptes existants au chronomètre.
+            authenticate(request, username='', password=password)
 
         if user is None:
-            messages.error(request, "Nom d'utilisateur ou mot de passe incorrect.")
-            return render(request, 'accounts/login.html', {'username': username})
+            messages.error(request, msg_incorrect)
+            return render(request, 'accounts/login.html', {'identifiant': identifiant})
 
         if not user.is_active:
             messages.error(request, "Votre compte est désactivé. Contactez l'administrateur.")
-            return render(request, 'accounts/login.html', {'username': username})
+            return render(request, 'accounts/login.html', {'identifiant': identifiant})
 
-        # Authentification réussie
-        login(request, user)
-        messages.success(request, f"Bienvenue {user.prenom} {user.nom} !")
+        # ── Apprenant : connexion directe ────────────────────────────────
+        if _est_apprenant(user):
+            login(request, user)
+            messages.success(request, f"Bienvenue {user.prenom} {user.nom} !")
+            return redirect('courses:redirect_to_dashboard')
 
-        return redirect('courses:redirect_to_dashboard')  # ← ta vue gère tout
+        # ── Personnel : envoi d'un code de vérification par e-mail ───────
+        if not user.email:
+            messages.error(request, "Aucune adresse e-mail n'est associée à ce compte. Contactez l'administrateur.")
+            return render(request, 'accounts/login.html', {'identifiant': identifiant})
+
+        try:
+            otp.envoyer_code(request, user, premier_envoi=True)
+        except Exception:
+            otp.annuler(request)
+            logger.exception("Echec d'envoi du code OTP a %s", user.email)
+            messages.error(request, "Impossible d'envoyer le code de connexion pour le moment. Réessayez plus tard.")
+            return render(request, 'accounts/login.html', {'identifiant': identifiant})
+
+        return redirect('accounts:login_otp')
 
     return render(request, 'accounts/login.html')
+
+
+def _masquer_email(email):
+    if not email or '@' not in email:
+        return email or ''
+    local, domaine = email.split('@', 1)
+    if len(local) <= 2:
+        local_masque = local[0] + '•'
+    else:
+        local_masque = local[0] + '•' * (len(local) - 2) + local[-1]
+    return f"{local_masque}@{domaine}"
+
+
+def _contexte_otp(request):
+    donnees = otp.etat(request)
+    return {
+        'email_masque': _masquer_email(donnees['email']) if donnees else '',
+        'secondes_restantes': otp.secondes_restantes(donnees) if donnees else 0,
+        'delai_renvoi': otp.DELAI_RENVOI,
+    }
+
+
+def login_otp(request):
+    """Deuxième étape : saisie du code à 4 chiffres reçu par e-mail."""
+    from .models import Utilisateur
+
+    if request.user.is_authenticated:
+        return redirect('courses:redirect_to_dashboard')
+
+    donnees = otp.etat(request)
+    if not donnees:
+        messages.error(request, "Session expirée. Veuillez vous reconnecter.")
+        return redirect('accounts:login')
+
+    if request.method == 'POST':
+        code = request.POST.get('code', '').strip()
+        if not code:
+            code = ''.join(request.POST.get(f'code_{i}', '') for i in range(4))
+
+        # L'identifiant du compte est lu maintenant : en cas de succès,
+        # otp.verifier() purge l'entrée de session.
+        user_id = donnees['user_id']
+        ok, erreur = otp.verifier(request, code)
+
+        if ok:
+            user = Utilisateur.objects.filter(pk=user_id, is_active=True).first()
+            if user is None:
+                messages.error(request, "Compte introuvable. Reconnectez-vous.")
+                return redirect('accounts:login')
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
+            login(request, user)
+            messages.success(request, f"Bienvenue {user.prenom} {user.nom} !")
+            return redirect('courses:redirect_to_dashboard')
+
+        messages.error(request, erreur)
+        if not otp.etat(request):
+            return redirect('accounts:login')
+
+    return render(request, 'accounts/otp.html', _contexte_otp(request))
+
+
+def login_otp_resend(request):
+    from .models import Utilisateur
+
+    if request.method != 'POST':
+        return redirect('accounts:login_otp')
+
+    donnees = otp.etat(request)
+    if not donnees:
+        messages.error(request, "Session expirée. Veuillez vous reconnecter.")
+        return redirect('accounts:login')
+
+    ok, erreur = otp.peut_renvoyer(donnees)
+    if not ok:
+        messages.error(request, erreur)
+        return redirect('accounts:login_otp')
+
+    user = Utilisateur.objects.filter(pk=donnees['user_id'], is_active=True).first()
+    if user is None:
+        otp.annuler(request)
+        messages.error(request, "Compte introuvable. Reconnectez-vous.")
+        return redirect('accounts:login')
+
+    try:
+        otp.envoyer_code(request, user, premier_envoi=False)
+    except Exception:
+        logger.exception("Echec de renvoi du code OTP a %s", user.email)
+        messages.error(request, "Impossible d'envoyer le code pour le moment. Réessayez plus tard.")
+        return redirect('accounts:login_otp')
+
+    messages.success(request, "Un nouveau code vous a été envoyé.")
+    return redirect('accounts:login_otp')
+
 
 # LOGOUT
 def user_logout(request):
