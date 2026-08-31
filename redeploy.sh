@@ -6,6 +6,10 @@ echo "=== 1. Recuperation du code ==="
 git pull
 
 echo ""
+echo "=== 1 bis. Migration PostgreSQL si necessaire (non destructif, README 7.5) ==="
+./pg_migrate.sh
+
+echo ""
 echo "=== 2. Arret propre (AUCUN volume supprime) ==="
 docker compose down
 

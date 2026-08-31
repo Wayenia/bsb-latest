@@ -365,6 +365,49 @@ Cette commande demande une confirmation explicite et est **irréversible** : à
 n'utiliser que si l'on est certain de vouloir supprimer toutes les données
 existantes.
 
+### 7.5 Mise à niveau majeure de PostgreSQL
+
+Les répertoires de données PostgreSQL ne sont pas compatibles d'une version
+majeure à l'autre : démarrer une nouvelle version majeure sur le volume d'une
+ancienne échoue au lancement (« database files are incompatible with server »).
+Le serveur ne corrompt donc rien de lui-même — le risque de perte vient d'une
+suppression de volume faite dans la précipitation. La voie sûre est la
+sauvegarde logique (`pg_dump` puis `pg_restore`), qui traverse n'importe quel
+écart de version.
+
+**Cette bascule est automatique et intégrée à `redeploy.sh`.** Après le
+`git pull`, le script `pg_migrate.sh` est appelé ; il n'agit que si une bascule
+est réellement nécessaire :
+
+- si le cluster de la version cible tourne déjà, il ne fait rien ;
+- s'il n'existe aucune donnée antérieure (première installation), il ne fait
+  rien et laisse l'initialisation normale opérer ;
+- sinon, il sauvegarde l'ancien cluster au moyen d'un conteneur temporaire à
+  l'ancienne version (dans `./backups/premigration_pg<ancienne>_<horodatage>.dump`),
+  initialise le cluster de la version cible sur un **nouveau volume**
+  (`suudu_postgres_data_18`) et y restaure les données.
+
+L'opération est **non destructive** : l'ancien volume
+(`suudu_postgres_data`) est conservé intact et sert de point de retour. Pour
+revenir en arrière, il suffit de rétablir dans `docker-compose.yml` l'ancienne
+image et l'ancien nom de volume, puis `docker compose up -d`. Une fois la
+migration validée en production, l'ancien volume peut être supprimé
+manuellement (`docker volume rm <projet>_suudu_postgres_data`).
+
+Deux points à respecter pour le versionnage du dépôt :
+
+- **Les deux services PostgreSQL** (`suudu_db` et `suudu_backup`) portent le
+  même tag d'image : un `pg_dump` d'une version antérieure ne peut pas
+  sauvegarder un serveur plus récent.
+- PostgreSQL 18 range par défaut ses données dans un sous-dossier par version
+  sous `/var/lib/postgresql`. La variable `PGDATA: /var/lib/postgresql/data`
+  du service `suudu_db` conserve l'emplacement classique, si bien que le volume
+  et les scripts `db_dump.sh` / `db_restore.sh` restent inchangés.
+
+Le déploiement d'une nouvelle version majeure se résume donc, côté serveur, à
+un `git pull` puis `./redeploy.sh` — la bascule est prise en charge une seule
+fois, automatiquement, et les exécutions suivantes ne la rejouent pas.
+
 ---
 
 ## 8. Sécurité — règles à respecter
