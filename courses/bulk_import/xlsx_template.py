@@ -81,6 +81,34 @@ def build_template_workbook(spec):
                     valeur = "oui" if valeur else "non"
                 ws.cell(row=ligne_idx, column=col_idx, value=valeur)
 
+    # Feuille d'exemple : montre le format sur des donnees fictives, sans
+    # risque puisqu'elle n'est pas lue a l'import. Toujours presente, meme
+    # quand la feuille d'import est deja remplie.
+    if spec.exemples:
+        exemple = wb.create_sheet("Exemple")
+        note = exemple.cell(row=1, column=1,
+                            value="Feuille de demonstration : elle n'est PAS importee. "
+                                  "Saisissez vos donnees sur la feuille « %s »." % spec.sheet_name)
+        note.font = Font(bold=True, color="9C6500")
+        note.fill = PatternFill("solid", fgColor="FFF4CE")
+        exemple.merge_cells(start_row=1, start_column=1,
+                            end_row=1, end_column=max(1, len(spec.columns)))
+        exemple.row_dimensions[1].height = 26
+        for col_idx, col in enumerate(spec.columns, start=1):
+            cellule = exemple.cell(row=2, column=col_idx, value=col.header)
+            cellule.fill = rouge_fill
+            cellule.font = header_font
+            cellule.alignment = center_align
+            exemple.column_dimensions[get_column_letter(col_idx)].width = \
+                max(16, min(40, len(col.header) + 4))
+        for ligne_idx, valeurs in enumerate(spec.exemples, start=3):
+            for col_idx, col in enumerate(spec.columns, start=1):
+                valeur = valeurs.get(col.field_name)
+                if isinstance(valeur, bool):
+                    valeur = "oui" if valeur else "non"
+                exemple.cell(row=ligne_idx, column=col_idx, value=valeur)
+        exemple.freeze_panes = "A3"
+
     instructions = wb.create_sheet("Instructions")
     or_fill = PatternFill("solid", fgColor=OR)
     entetes = ["Colonne", "Obligatoire", "Type", "Valeurs autorisées / format"]

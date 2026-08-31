@@ -2200,7 +2200,7 @@ def statistiques_view(request):
         "top_filieres_noms":  [f["nom"] for f in top_filieres],
         "top_filieres_count": [f["count"] for f in top_filieres],
     }
-    return render(request, "member/statistiques/statistiques.html", context)
+    return render(request, gabarit("member/statistiques/statistiques.html"), context)
 
 
 # ─── Export CSV ───────────────────────────────────────────────────────────────

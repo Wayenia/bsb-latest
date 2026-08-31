@@ -5,16 +5,16 @@
 <div class="bo-shell">
     {% include 'partials/messages.html' %}
 
-    <div class="bo-header">
-        <div>
-            <h1 class="bo-title">Tableau de bord</h1>
-            <p class="bo-subtitle">Bonjour {{ user.prenom }} — vue d'ensemble de votre périmètre.</p>
-        </div>
+    {% comment %}Bandeau au degrade de la page d'accueil : l'espace de travail
+    se reconnait comme le site public.{% endcomment %}
+    <div class="bo-hero">
+        <h1 class="bo-hero-titre">Bonjour {{ user.prenom }}</h1>
+        <p class="bo-hero-sous">Vue d'ensemble de votre périmètre — {{ user.get_user_type_display }}</p>
     </div>
 
     {% comment %}D'abord ce qui attend un geste. Un responsable ouvre cet ecran
     pour savoir quoi faire, pas pour contempler des totaux.{% endcomment %}
-    <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">À traiter</h2>
+    <h2 class="bo-section">À traiter</h2>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         {% for item in a_traiter %}
         <a href="{{ item.url }}" class="bo-action bo-action-{{ item.ton }}">
@@ -42,11 +42,11 @@
                     </div>
                     <div>
                         <div class="bo-stat-label">Encaissé</div>
-                        <div class="bo-montant text-emerald-700">{{ recouvrement.encaisse|floatformat:0|intcomma }}<span class="bo-montant-unite">FCFA</span></div>
+                        <div class="bo-montant text-bsb-green">{{ recouvrement.encaisse|floatformat:0|intcomma }}<span class="bo-montant-unite">FCFA</span></div>
                     </div>
                     <div>
                         <div class="bo-stat-label">Reste à recouvrer</div>
-                        <div class="bo-montant text-red-700">{{ recouvrement.reste|floatformat:0|intcomma }}<span class="bo-montant-unite">FCFA</span></div>
+                        <div class="bo-montant text-bsb-red">{{ recouvrement.reste|floatformat:0|intcomma }}<span class="bo-montant-unite">FCFA</span></div>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -79,7 +79,7 @@
                         <span class="font-medium tabular-nums text-gray-900">{{ ligne.nombre }}</span>
                     </div>
                     <div class="bo-jauge mt-1">
-                        <div class="bo-jauge-part bg-sky-500" data-part="{{ ligne.part }}"></div>
+                        <div class="bo-jauge-part bg-bsb-gold" data-part="{{ ligne.part }}"></div>
                     </div>
                 </div>
                 {% endfor %}
@@ -91,7 +91,7 @@
         </div>
     </div>
 
-    <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">Volumes</h2>
+    <h2 class="bo-section">Volumes</h2>
     <div class="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 mb-8">
         {% for v in volumes %}
         <div class="bo-mini">

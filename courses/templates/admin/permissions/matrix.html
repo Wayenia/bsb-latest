@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Gestion des permissions | BSB{% endblock %}
+{% block title %}Gestion des permissions | Yupaan{% endblock %}
 {% block content %}
 <div class="bo-shell">
     {% include 'partials/messages.html' %}
@@ -7,9 +7,10 @@
     <div class="bo-header">
         <div>
             <h1 class="bo-title">Gestion des permissions</h1>
-            <p class="bo-subtitle max-w-2xl">
+            <p class="bo-subtitle max-w-3xl">
                 Une case activée autorise le rôle à effectuer l'action. La désactiver retire
                 immédiatement ce droit à tous les comptes portant ce rôle.
+                {{ total_permissions }} permissions réparties en {{ groupes|length }} thèmes.
             </p>
         </div>
         <div class="bo-actions">
@@ -21,8 +22,11 @@
 
     <form method="POST" id="permissions-matrix-form">
         {% csrf_token %}
-        <div class="bo-table-wrap max-h-[65vh] overflow-y-auto">
-            <table class="bo-table">
+        {% comment %}Un seul tableau, un corps par theme : les colonnes de roles
+        restent alignees d'un theme a l'autre, ce que des tableaux separes
+        perdraient. Les cases a cocher sont inchangees.{% endcomment %}
+        <div class="bo-table-wrap max-h-[70vh] overflow-y-auto">
+            <table class="bo-table" id="matrice">
                 <thead>
                     <tr>
                         <th scope="col" class="bo-col-fixe">Permission</th>
@@ -31,24 +35,36 @@
                         {% endfor %}
                     </tr>
                 </thead>
-                <tbody>
-                    {% for row in rows %}
-                    <tr>
-                        <th scope="row" class="bo-col-fixe px-4 py-3 text-left font-medium text-gray-900">
-                            {{ row.perm.name }}
+
+                {% for groupe in groupes %}
+                <tbody class="bo-theme" data-theme="{{ groupe.cle }}">
+                    <tr class="bo-theme-tete">
+                        <th scope="colgroup" colspan="{{ roles|length|add:1 }}" class="p-0">
+                            <button type="button" class="bo-theme-bouton" aria-expanded="true"
+                                    aria-controls="{{ groupe.cle }}">
+                                <svg class="bo-theme-chevron" fill="none" stroke="currentColor"
+                                     stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                                </svg>
+                                <span class="flex-1 text-left">{{ groupe.titre }}</span>
+                                <span class="bo-badge-neutral">{{ groupe.lignes|length }}</span>
+                                <span class="bo-theme-compte">{{ groupe.accordees }} case{{ groupe.accordees|pluralize }} cochée{{ groupe.accordees|pluralize }}</span>
+                            </button>
                         </th>
-                        {% for group, checked in row.cells %}
+                    </tr>
+                    {% for ligne in groupe.lignes %}
+                    <tr class="bo-theme-ligne" data-corps="{{ groupe.cle }}">
+                        <th scope="row" class="bo-col-fixe px-4 py-3 text-left font-normal text-gray-700">
+                            {{ ligne.libelle }}
+                        </th>
+                        {% for group, checked in ligne.cells %}
                         <td class="text-center">
-                            {% comment %}Le curseur n'est pas un frere de la case (il est
-                            imbrique dans la piste) : peer-checked: ne l'atteint pas, d'ou
-                            le script en fin de page. La couleur de piste, elle, est bien
-                            posee par la CSS.{% endcomment %}
                             <label class="inline-flex items-center cursor-pointer">
-                                <input type="checkbox" name="cell" value="{{ row.perm.id }}:{{ group.id }}"
+                                <input type="checkbox" name="cell" value="{{ ligne.perm.id }}:{{ group.id }}"
                                        {% if checked %}checked{% endif %}
-                                       aria-label="{{ row.perm.name }} — {{ group.name }}"
+                                       aria-label="{{ ligne.libelle }} — {{ group.name }}"
                                        class="sr-only peer">
-                                <span class="w-11 h-6 flex items-center rounded-full bg-gray-300 peer-checked:bg-green-600 transition-colors relative peer-focus-visible:ring-2 peer-focus-visible:ring-gray-500 peer-focus-visible:ring-offset-2">
+                                <span class="w-11 h-6 flex items-center rounded-full bg-gray-300 peer-checked:bg-bsb-green transition-colors relative peer-focus-visible:ring-2 peer-focus-visible:ring-bsb-red peer-focus-visible:ring-offset-2">
                                     <span class="w-4 h-4 bg-white rounded-full shadow absolute left-1 transition-all"></span>
                                 </span>
                             </label>
@@ -57,6 +73,7 @@
                     </tr>
                     {% endfor %}
                 </tbody>
+                {% endfor %}
             </table>
         </div>
 
@@ -68,15 +85,28 @@
 
 <script nonce="{{ csp_nonce }}">
 (function () {
+    var table = document.getElementById('matrice');
+    if (!table) return;
+
     // Position du curseur : el.style.left reste autorise par la CSP, contrairement
     // a setAttribute("style", ...). La couleur de piste est geree par peer-checked:.
     function placer(input) {
-        var piste = input.closest('label').querySelector('span');
-        piste.querySelector('span').style.left = input.checked ? '1.5rem' : '0.25rem';
+        input.closest('label').querySelector('span span').style.left =
+            input.checked ? '1.5rem' : '0.25rem';
     }
-    document.querySelectorAll('input[name="cell"]').forEach(function (input) {
+    table.querySelectorAll('input[name="cell"]').forEach(function (input) {
         placer(input);
         input.addEventListener('change', function () { placer(this); });
+    });
+
+    // Repli par theme. Non exclusif ici, contrairement a la barre laterale :
+    // comparer deux themes cote a cote est le geste courant sur cet ecran.
+    table.addEventListener('click', function (e) {
+        var bouton = e.target.closest('.bo-theme-bouton');
+        if (!bouton) return;
+        var corps = bouton.closest('.bo-theme');
+        var ouvert = !corps.classList.toggle('bo-theme-replie');
+        bouton.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
     });
 })();
 </script>

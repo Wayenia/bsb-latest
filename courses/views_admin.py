@@ -17,6 +17,7 @@ from courses.models import TypeFrais, TrancheFrais
 from courses.forms import TypeFraisForm, TrancheFraisFormSet
 from django.utils import timezone
 from .permissions import require_permission
+from .ui import gabarit
 from .models import (
     Direction_reg, Filiere, CentreFormation, Module, 
     Frais, Cours, Inscription, Paiement, CentreEtFiliere,PieceJointeInscription,
@@ -1444,35 +1445,39 @@ def eleve_update(request, id):
 
 # Liste curatee : les permissions Django auto-generees (add/change/delete/view)
 # n'ont aucun sens pour un utilisateur non technique.
+# Quatrieme element : le theme de regroupement. Les themes sont affiches par
+# ordre alphabetique, et les permissions par ordre alphabetique de libelle a
+# l'interieur de chacun — un classement previsible vaut mieux qu'un ordre
+# metier que seul son auteur connait.
 MATRIX_PERMISSIONS = [
-    ('gerer_regions', "Créer/modifier/supprimer une région ou province", 'courses'),
-    ('gerer_directions', "Créer/modifier/supprimer une direction inter-régionale", 'courses'),
-    ('gerer_centres', "Créer/modifier/supprimer un centre de formation", 'courses'),
-    ('gerer_metiers', "Créer/modifier/supprimer un métier", 'courses'),
-    ('gerer_programmations', "Gérer les associations centre-métier", 'courses'),
-    ('gerer_modules', "Gérer les modules et cours", 'courses'),
-    ('gerer_frais', "Gérer les frais et types de frais", 'courses'),
-    ('gerer_annees', "Gérer les années de formation", 'courses'),
-    ('gerer_equipe', "Gérer le Directeur Général et l'équipe (page « À propos »)", 'courses'),
-    ('gerer_agents', "Gérer les comptes utilisateurs", 'accounts'),
-    ('gerer_eleves', "Gérer les comptes apprenants", 'accounts'),
-    ('gerer_permissions', "Gérer les permissions", 'accounts'),
-    ('voir_historique_connexion', "Voir l'historique des connexions", 'accounts'),
-    ('voir_inscriptions', "Voir les candidatures", 'courses'),
-    ('valider_inscription', "Valider une candidature", 'courses'),
-    ('rejeter_inscription', "Rejeter une candidature", 'courses'),
-    ('encaisser_paiement', "Encaisser un paiement", 'courses'),
-    ('gerer_paiements', "Modifier/supprimer un paiement", 'courses'),
-    ('rechercher_tous_centres', "Rechercher un apprenant dans tous les centres (paiements)", 'courses'),
-    ('telecharger_pieces', "Télécharger les pièces jointes des candidats", 'courses'),
-    ('voir_statistiques', "Voir les statistiques", 'courses'),
-    ('gerer_statistiques_reelles', "Gérer le bilan des effectifs formés (saisie manuelle)", 'courses'),
-    ('exporter_donnees', "Exporter des données (CSV/Excel/PDF)", 'courses'),
-    ('gerer_facturation', "Créer/gérer les factures de prestation", 'accounts'),
-    ('valider_facture_prestation', "Valider une facture proforma en définitive", 'accounts'),
-    ('encaisser_prestation', "Encaisser un paiement de prestation", 'accounts'),
+    ('gerer_regions', "Créer/modifier/supprimer une région ou province", 'courses', 'Découpage territorial'),
+    ('gerer_directions', "Créer/modifier/supprimer une direction inter-régionale", 'courses', 'Découpage territorial'),
+    ('gerer_centres', "Créer/modifier/supprimer un centre de formation", 'courses', "Configuration de l'offre"),
+    ('gerer_metiers', "Créer/modifier/supprimer un métier", 'courses', "Configuration de l'offre"),
+    ('gerer_programmations', "Gérer les associations centre-métier", 'courses', "Configuration de l'offre"),
+    ('gerer_modules', "Gérer les modules et cours", 'courses', "Configuration de l'offre"),
+    ('gerer_frais', "Gérer les frais et types de frais", 'courses', "Configuration de l'offre"),
+    ('gerer_annees', "Gérer les années de formation", 'courses', "Configuration de l'offre"),
+    ('gerer_equipe', "Gérer le Directeur Général et l'équipe (page « À propos »)", 'courses', 'Site public'),
+    ('gerer_agents', "Gérer les comptes utilisateurs", 'accounts', 'Comptes et accès'),
+    ('gerer_eleves', "Gérer les comptes apprenants", 'accounts', 'Comptes et accès'),
+    ('gerer_permissions', "Gérer les permissions", 'accounts', 'Comptes et accès'),
+    ('voir_historique_connexion', "Voir l'historique des connexions", 'accounts', 'Comptes et accès'),
+    ('voir_inscriptions', "Voir les candidatures", 'courses', 'Inscriptions'),
+    ('valider_inscription', "Valider une candidature", 'courses', 'Inscriptions'),
+    ('rejeter_inscription', "Rejeter une candidature", 'courses', 'Inscriptions'),
+    ('encaisser_paiement', "Encaisser un paiement", 'courses', 'Paiements de scolarité'),
+    ('gerer_paiements', "Modifier/supprimer un paiement", 'courses', 'Paiements de scolarité'),
+    ('rechercher_tous_centres', "Rechercher un apprenant dans tous les centres (paiements)", 'courses', 'Paiements de scolarité'),
+    ('telecharger_pieces', "Télécharger les pièces jointes des candidats", 'courses', 'Inscriptions'),
+    ('voir_statistiques', "Voir les statistiques", 'courses', 'Statistiques et exports'),
+    ('gerer_statistiques_reelles', "Gérer le bilan des effectifs formés (saisie manuelle)", 'courses', 'Statistiques et exports'),
+    ('exporter_donnees', "Exporter des données (CSV/Excel/PDF)", 'courses', 'Statistiques et exports'),
+    ('gerer_facturation', "Créer/gérer les factures de prestation", 'accounts', 'Facturation de prestations'),
+    ('valider_facture_prestation', "Valider une facture proforma en définitive", 'accounts', 'Facturation de prestations'),
+    ('encaisser_prestation', "Encaisser un paiement de prestation", 'accounts', 'Facturation de prestations'),
 ]
-MATRIX_CODENAMES = [codename for codename, _, _ in MATRIX_PERMISSIONS]
+MATRIX_CODENAMES = [codename for codename, _, _, _ in MATRIX_PERMISSIONS]
 
 # Ordre d'affichage des colonnes (rôle = groupe Django), aligné sur
 # accounts.Utilisateur.ROLE_GROUPS.
@@ -1510,25 +1515,43 @@ def permissions_matrix_view(request):
     )
     # garder l'ordre métier défini ci-dessus plutôt que l'ordre alphabétique de la BD
     perm_by_codename = {p.codename: p for p in permissions}
-    ordered_permissions = [perm_by_codename[c] for c, _, _ in MATRIX_PERMISSIONS if c in perm_by_codename]
+    ordered_permissions = [perm_by_codename[c] for c, _, _, _ in MATRIX_PERMISSIONS if c in perm_by_codename]
 
     group_perm_ids = {
         group.id: set(group.permissions.filter(codename__in=MATRIX_CODENAMES).values_list('id', flat=True))
         for group in groups
     }
 
-    rows = []
+    # Regroupement par theme. Les libelles metier de MATRIX_PERMISSIONS priment
+    # sur Permission.name : c'est ce que l'agent lit a l'ecran, et il doit
+    # correspondre au vocabulaire du projet.
+    libelles = {c: (libelle, theme) for c, libelle, _, theme in MATRIX_PERMISSIONS}
+    par_theme = {}
     for perm in ordered_permissions:
-        rows.append({
+        libelle, theme = libelles[perm.codename]
+        par_theme.setdefault(theme, []).append({
             'perm': perm,
+            'libelle': libelle,
             'cells': [(group, perm.id in group_perm_ids[group.id]) for group in groups],
         })
 
-    context = {
+    # Themes par ordre alphabetique, permissions par ordre alphabetique de
+    # libelle : un classement previsible se retrouve sans le connaitre.
+    groupes = [
+        {
+            'cle': 'theme-%d' % i,
+            'titre': theme,
+            'lignes': sorted(lignes, key=lambda l: l['libelle'].lower()),
+            'accordees': sum(1 for l in lignes for _, coche in l['cells'] if coche),
+        }
+        for i, (theme, lignes) in enumerate(sorted(par_theme.items(), key=lambda kv: kv[0].lower()))
+    ]
+
+    return render(request, gabarit('admin/permissions/matrix.html'), {
         'roles': groups,
-        'rows': rows,
-    }
-    return render(request, 'admin/permissions/matrix.html', context)
+        'groupes': groupes,
+        'total_permissions': len(ordered_permissions),
+    })
 
 
 @require_permission('accounts.gerer_agents')

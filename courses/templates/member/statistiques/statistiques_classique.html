@@ -1,0 +1,878 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord | BSB{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+  :root {
+    --rouge: #C0392B;
+    --rouge-dark: #922B21;
+    --rouge-soft: #FADBD8;
+    --or: #D4A017;
+    --or-dark: #B8860B;
+    --or-soft: #FEF3C7;
+    --gris: #6B7280;
+    --gris-light: #F3F4F6;
+    --gris-border:#E5E7EB;
+    --text-dark: #111827;
+    --text-mid: #374151;
+  }
+
+  body { background: var(--gris-light); font-family: 'Segoe UI', system-ui, sans-serif; color: var(--text-mid); }
+
+  /* ── Topbar de page ───────────────────────────── */
+  .page-header {
+    background: linear-gradient(135deg, var(--or-dark) 0%, var(--or) 300%, #E74C3C 100%);
+    color: #fff;
+    border-radius: 0 0 20px 20px;
+    padding: 1.5rem 2rem 2.5rem;
+    margin-bottom: -1.2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .page-header .badge-scope {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 20px;
+    padding: .3em .9em;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  /* ── Filtres ──────────────────────────────────── */
+  .filter-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 2;
+  }
+  .filter-card .form-select, .filter-card .form-control {
+    display: block;
+    width: 100%;
+    background: #fff;
+    border: 1.5px solid var(--gris-border);
+    border-radius: 10px;
+    font-size: .85rem;
+    color: var(--text-dark);
+    padding: .375rem .75rem;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .filter-card .form-select:focus, .filter-card .form-control:focus {
+    border-color: var(--or);
+    box-shadow: 0 0 0 3px rgba(212,160,23,.15);
+    outline: none;
+  }
+  .btn-filter {
+    background: var(--rouge);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: .85rem;
+    padding: .5rem 1.2rem;
+    transition: background .2s, transform .15s;
+  }
+  .btn-filter:hover { background: var(--rouge-dark); transform: translateY(-1px); color: #fff; }
+  .btn-reset {
+    background: var(--or);
+    color: #fff;
+    border: 1.5px solid var(--or);
+    border-radius: 10px;
+    font-size: .85rem;
+    font-weight: 600;
+    padding: .5rem .9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    transition: background .2s, transform .15s;
+  }
+  .btn-reset:hover { background: var(--or-dark); color: #fff; transform: translateY(-1px); }
+
+  a { text-decoration: none; }
+
+  /* ── Export buttons ───────────────────────────── */
+  .btn-export-group { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .btn-exp {
+    border-radius: 8px;
+    font-size: .78rem;
+    font-weight: 600;
+    padding: .38rem .85rem;
+    border: none;
+    transition: opacity .2s, transform .15s;
+    cursor: pointer;
+  }
+  .btn-exp:hover { opacity: .85; transform: translateY(-1px); }
+  .btn-exp-pdf { background: #EF4444; color: #fff; }
+  .btn-exp-excel { background: #16A34A; color: #fff; }
+  .btn-exp-csv { background: var(--gris); color: #fff; }
+
+  /* ── KPI Cards ────────────────────────────────── */
+  .kpi-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    padding: 1.1rem 1.25rem;
+    border-left: 4px solid transparent;
+    transition: transform .2s, box-shadow .2s;
+    height: 100%;
+  }
+  .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
+  .kpi-card.rouge { border-color: var(--rouge); }
+  .kpi-card.or { border-color: var(--or); }
+  .kpi-card.vert { border-color: #16A34A; }
+  .kpi-card.gris { border-color: #6b7280; }
+  .kpi-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; flex-shrink: 0;
+  }
+  .kpi-value { font-size: 1.55rem; font-weight: 800; line-height: 1.1; }
+  .kpi-label { font-size: .75rem; color: var(--gris); margin-top: .15rem; }
+
+  /* ── Section cards ────────────────────────────── */
+  .section-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    padding: 1.4rem;
+    height: 100%;
+  }
+  .section-title {
+    font-weight: 700;
+    font-size: .95rem;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1rem;
+  }
+  .section-title .icon-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* ── Table ────────────────────────────────────── */
+  .bsb-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+  .bsb-table thead tr { background: var(--rouge); }
+  .bsb-table thead th {
+    color: #fff; font-weight: 600; font-size: .8rem;
+    padding: .75rem 1rem; letter-spacing: .03em;
+    border: none;
+    text-align: left;
+  }
+  .bsb-table thead th:first-child { border-radius: 10px 0 0 0; }
+  .bsb-table thead th:last-child { border-radius: 0 10px 0 0; }
+  .bsb-table tbody tr {
+    border-bottom: 1px solid var(--gris-border);
+    transition: background .15s;
+  }
+  .bsb-table tbody tr:hover { background: #FFF7ED; }
+  .bsb-table tbody td { font-size: .83rem; padding: .7rem 1rem; vertical-align: middle; }
+  .bsb-table tbody tr:last-child td { border-bottom: none; }
+
+  /* ── Progress bar ────────────────────────────── */
+  .prog-wrap { display: flex; align-items: center; gap: .6rem; }
+  .prog-bar-outer { flex: 1; height: 8px; background: var(--gris-light); border-radius: 4px; overflow: hidden; }
+  .prog-bar-inner { height: 100%; border-radius: 4px; transition: width .6s ease; }
+
+  /* ── Badges ───────────────────────────────────── */
+  .badge-stat {
+    font-size: .72rem; padding: .3em .75em;
+    border-radius: 20px; font-weight: 700; display: inline-block;
+  }
+  .badge-valide { background: #D1FAE5; color: #065F46; }
+  .badge-en-cours { background: var(--or-soft); color: #92400E; }
+  .badge-rejete { background: var(--rouge-soft); color: var(--rouge-dark); }
+
+  /* ── Scrollable table container ─────────────── */
+  .table-scroll { overflow-x: auto; border-radius: 10px; }
+
+  /* ── Responsive ──────────────────────────────── */
+  @media (max-width: 767px) {
+    .page-header { padding: 1.2rem 1rem 2rem; }
+    .kpi-value { font-size: 1.25rem; }
+    .filter-card { padding: .9rem 1rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% comment %} ══ EN-TÊTE ═══════════════════════════════════════════════════════════════ {% endcomment %}
+<div class="page-header">
+  <div class="flex flex-wrap justify-between items-start gap-3">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <h4 class="mb-0 font-bold text-lg">Tableau de bord statistique</h4>
+      </div>
+      <span class="badge-scope">
+        {% if scope == "global" %}
+          Accès national — toutes les directions
+        {% elif scope == "direction" %}
+          Accès directionnel
+        {% elif scope == "centre" %}
+          Accès centre
+        {% endif %}
+      </span>
+    </div>
+  </div>
+</div>
+
+<div class="w-full px-3 md:px-6 py-3">
+
+  {% comment %} ══ FILTRES ═══════════════════════════════════════════════════════════════ {% endcomment %}
+  <div class="filter-card">
+    <form method="get" id="filterForm">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 items-end">
+
+        {% if scope == "global" %}
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Direction</label>
+          <select name="direction" class="form-select" data-auto-submit>
+            <option value="">— Toutes —</option>
+            {% for d in directions %}
+              <option value="{{ d.id }}" {% if f_direction == d.id|stringformat:"s" %}selected{% endif %}>{{ d.nom_direction }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        {% if scope in "global direction" %}
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Centre</label>
+          <select name="centre" class="form-select" data-auto-submit>
+            <option value="">— Tous les centres —</option>
+            {% for c in centres %}
+              <option value="{{ c.id }}" {% if f_centre == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nom_centre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Métier</label>
+          <select name="filiere" class="form-select">
+            <option value="">— Tous les métiers —</option>
+            {% for f in filieres %}
+              <option value="{{ f.id }}" {% if f_filiere == f.id|stringformat:"s" %}selected{% endif %}>{{ f.nom_filiere }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Année de formation</label>
+          <select name="annee" class="form-select">
+            <option value="">— Toutes —</option>
+            {% for a in annees %}
+              <option value="{{ a.id }}" {% if f_annee == a.id|stringformat:"s" %}selected{% endif %}>{{ a.libelle_anne }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Statut inscription</label>
+          <select name="statut" class="form-select">
+            <option value="">— Tous —</option>
+            <option value="en_cours" {% if f_statut == "en_cours" %}selected{% endif %}>En attente</option>
+            <option value="valide" {% if f_statut == "valide" %}selected{% endif %}>Validé</option>
+            <option value="valide_paye"{% if f_statut == "valide_paye" %}selected{% endif %}>Validé et payé</option>
+            <option value="rejete" {% if f_statut == "rejete" %}selected{% endif %}>Rejeté</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Région</label>
+          <select name="region" class="form-select">
+            <option value="">— Toutes —</option>
+            {% for r in regions %}
+              <option value="{{ r.id }}" {% if f_region == r.id|stringformat:"s" %}selected{% endif %}>{{ r.nom_region }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Statut de paiement</label>
+          <select name="statut_paiement" class="form-select">
+            <option value="">— Tous —</option>
+            <option value="totalement" {% if f_statut_paiement == "totalement" %}selected{% endif %}>Totalement réglé</option>
+            <option value="partiellement" {% if f_statut_paiement == "partiellement" %}selected{% endif %}>Partiellement réglé</option>
+            <option value="aucun" {% if f_statut_paiement == "aucun" %}selected{% endif %}>Rien n'est réglé</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Genre</label>
+          <select name="genre" class="form-select">
+            <option value="">— Tous —</option>
+            {% for code, label in genres %}
+              <option value="{{ code }}" {% if f_genre == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Du</label>
+          <input type="date" name="date_debut" value="{{ f_date_debut|default:'' }}" class="form-control">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Au</label>
+          <input type="date" name="date_fin" value="{{ f_date_fin|default:'' }}" class="form-control">
+        </div>
+
+        <div class="flex gap-2">
+          <button type="submit" class="btn-filter flex-1">
+            Filtrer
+          </button>
+          <a href="{% url 'courses:statistiques' %}" class="btn-reset" title="Réinitialiser les filtres">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-[16px] h-[16px]" aria-hidden="true">
+              <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clip-rule="evenodd" />
+            </svg>
+            Réinitialiser
+          </a>
+        </div>
+
+      </div>
+    </form>
+
+    {% comment %} Exports {% endcomment %}
+    <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-200">
+      <span class="text-sm font-semibold text-[var(--gris)]">
+        Exporter :
+      </span>
+      <div class="btn-export-group">
+        <span class="text-sm font-semibold text-[var(--gris)]">Inscriptions :</span>
+        <a href="?{% if f_centre %}centre={{ f_centre }}&{% endif %}{% if f_filiere %}filiere={{ f_filiere }}&{% endif %}{% if f_annee %}annee={{ f_annee }}&{% endif %}type=inscriptions"
+           data-action="exporter" data-export-type="inscriptions" data-export-format="pdf" class="btn-exp btn-exp-pdf">
+          PDF
+        </a>
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="excel" class="btn-exp btn-exp-excel">
+          Excel
+        </a>
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="csv" class="btn-exp btn-exp-csv">
+          CSV
+        </a>
+      </div>
+      <div class="btn-export-group">
+        <span class="text-sm font-semibold text-[var(--gris)]">Recouvrement :</span>
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="pdf" class="btn-exp btn-exp-pdf">
+          PDF
+        </a>
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="excel" class="btn-exp btn-exp-excel">
+          Excel
+        </a>
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="csv" class="btn-exp btn-exp-csv">
+          CSV
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% comment %} ══ KPI ═══════════════════════════════════════════════════════════════════ {% endcomment %}
+  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+
+    {% comment %} Apprenants {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
+        <div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.total_eleves }}</div>
+          <div class="kpi-label">Apprenants inscrits</div>
+        </div>
+      </div>
+    </div>
+
+    {% comment %} Validées {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
+        <div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.inscriptions_validees }}</div>
+          <div class="kpi-label">Inscriptions validées</div>
+        </div>
+      </div>
+    </div>
+
+    {% comment %} En attente {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
+        <div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.inscriptions_en_cours }}</div>
+          <div class="kpi-label">En attente de traitement</div>
+        </div>
+      </div>
+    </div>
+
+    {% comment %} Rejetées {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
+        <div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.inscriptions_rejetees }}</div>
+          <div class="kpi-label">Inscriptions rejetées</div>
+        </div>
+      </div>
+    </div>
+
+    {% comment %} Encaissé {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
+        <div>
+          <div class="kpi-value small-kpi text-[var(--or-dark)]" data-amount="{{ stats.total_encaisse }}">—</div>
+          <div class="kpi-label">FCFA encaissés</div>
+        </div>
+      </div>
+    </div>
+
+    {% comment %} Restant {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
+        <div>
+          <div class="kpi-value small-kpi text-[var(--or-dark)]" data-amount="{{ stats.total_restant }}">—</div>
+          <div class="kpi-label">FCFA restants à payer</div>
+        </div>
+      </div>
+    </div>
+
+    {% comment %} Taux recouvrement {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
+        <div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.taux_global }}%</div>
+          <div class="kpi-label">Taux de recouvrement</div>
+        </div>
+      </div>
+    </div>
+
+    {% comment %} Centres {% endcomment %}
+    <div class="kpi-card or">
+      <div class="flex items-center gap-3">
+        <div class="kpi-icon bg-[var(--or-soft)]"></div>
+        <div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.total_centres }}</div>
+          <div class="kpi-label">Centres{% if scope == "global" %} / {{ stats.total_directions }} directions{% endif %}</div>
+        </div>
+      </div>
+    </div>
+
+  </div>{% comment %} /grid KPI {% endcomment %}
+
+  {% comment %} ══ GRAPHIQUES ════════════════════════════════════════════════════════════ {% endcomment %}
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+
+    {% comment %} Donut statuts {% endcomment %}
+    <div class="lg:col-span-4">
+      <div class="section-card">
+        <div class="section-title">
+          <span class="icon-dot bg-[var(--rouge)]"></span>
+          Inscriptions par statut
+        </div>
+        <div class="h-[230px] relative">
+          <canvas id="chartStatut"></canvas>
+        </div>
+        {% comment %} Légende custom {% endcomment %}
+        <div class="flex flex-wrap gap-3 justify-center mt-4">
+          <span class="flex items-center gap-1 text-sm">
+            <span class="w-[12px] h-[12px] bg-[#16A34A] rounded-[3px] inline-block"></span>
+            Validées <strong class="ml-1">{{ stats.inscriptions_validees }}</strong>
+          </span>
+          <span class="flex items-center gap-1 text-sm">
+            <span class="w-[12px] h-[12px] bg-[var(--or)] rounded-[3px] inline-block"></span>
+            En attente <strong class="ml-1">{{ stats.inscriptions_en_cours }}</strong>
+          </span>
+          <span class="flex items-center gap-1 text-sm">
+            <span class="w-[12px] h-[12px] bg-[var(--rouge)] rounded-[3px] inline-block"></span>
+            Rejetées <strong class="ml-1">{{ stats.inscriptions_rejetees }}</strong>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    {% comment %} Bar chart top métiers {% endcomment %}
+    <div class="lg:col-span-8">
+      <div class="section-card">
+        <div class="section-title">
+          <span class="icon-dot bg-[var(--or)]"></span>
+          Top métiers par inscriptions
+        </div>
+        <div class="h-[230px] relative">
+          <canvas id="chartMetiers"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+    {% comment %} Évolution mensuelle {% endcomment %}
+    <div class="lg:col-span-7">
+      <div class="section-card">
+        <div class="section-title">
+          <span class="icon-dot bg-[var(--rouge)]"></span>
+          Évolution mensuelle des inscriptions
+        </div>
+        <div class="h-[220px] relative">
+          <canvas id="chartEvol"></canvas>
+        </div>
+      </div>
+    </div>
+
+    {% comment %} Paiements par mode {% endcomment %}
+    <div class="lg:col-span-5">
+      <div class="section-card">
+        <div class="section-title">
+          <span class="icon-dot bg-[var(--or)]"></span>
+          Paiements par mode
+        </div>
+        <div class="h-[220px] relative">
+          <canvas id="chartModes"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% comment %} ══ RECOUVREMENT PAR CENTRE ══════════════════════════════════════════════ {% endcomment %}
+  <div class="section-card mb-6">
+    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+      <div class="section-title mb-0">
+        <span class="icon-dot bg-[var(--rouge)]"></span>
+        Taux de recouvrement par centre
+      </div>
+      <div class="btn-export-group">
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="pdf" class="btn-exp btn-exp-pdf">
+          PDF
+        </a>
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="excel" class="btn-exp btn-exp-excel">
+          Excel
+        </a>
+        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="csv" class="btn-exp btn-exp-csv">
+          CSV
+        </a>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="bsb-table">
+        <thead>
+          <tr>
+            <th>Centre</th>
+            {% if scope in "global direction" %}<th>Direction</th>{% endif %}
+            <th class="text-right">Inscrits</th>
+            <th class="text-right">Total dû</th>
+            <th class="text-right">Encaissé</th>
+            <th class="text-right">Restant</th>
+            <th class="min-w-[160px]">Taux de recouvrement</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in recouvrement_centres %}
+          <tr>
+            <td class="font-semibold">{{ r.nom_centre }}</td>
+            {% if scope in "global direction" %}<td class="text-gray-500 text-sm">{{ r.direction }}</td>{% endif %}
+            <td class="text-right">{{ r.inscrits }}</td>
+            <td class="text-right text-sm"><span class="fmt-amount">{{ r.total_du|floatformat:0 }}</span> F</td>
+            <td class="text-right text-sm font-semibold text-[#16A34A]"><span class="fmt-amount">{{ r.encaisse|floatformat:0 }}</span> F</td>
+            <td class="text-right text-sm text-[var(--rouge)]"><span class="fmt-amount">{{ r.restant|floatformat:0 }}</span> F</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar-outer">
+                  {# Largeur posee par JavaScript depuis data-largeur : un style= serait bloque par la CSP. #}
+                  <div class="prog-bar-inner {% if r.taux >= 80 %}bg-[#16A34A]{% elif r.taux >= 50 %}bg-[var(--or)]{% else %}bg-[var(--rouge)]{% endif %}"
+                    data-largeur="{{ r.taux|floatformat:2 }}">
+                  </div>
+                </div>
+                <span class="text-sm font-bold min-w-[36px] text-right">{{ r.taux }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-5 text-gray-500">
+              Aucune donnée disponible
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if recouvrement_centres.has_other_pages %}
+    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+      <p class="text-sm text-gray-500">
+        Page {{ recouvrement_centres.number }} / {{ recouvrement_centres.paginator.num_pages }}
+      </p>
+      <div class="flex gap-2">
+        {% if recouvrement_centres.has_previous %}
+        <a href="?{{ querystring_recouvrement }}&rpage={{ recouvrement_centres.previous_page_number }}"
+           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Précédent</a>
+        {% endif %}
+        {% if recouvrement_centres.has_next %}
+        <a href="?{{ querystring_recouvrement }}&rpage={{ recouvrement_centres.next_page_number }}"
+           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Suivant</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% comment %} ══ HISTORIQUE DES INSCRIPTIONS ═══════════════════════════════════════════ {% endcomment %}
+  <div class="section-card mb-6">
+    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+      <div class="section-title mb-0">
+        <span class="icon-dot bg-[var(--or)]"></span>
+        Historique des inscriptions
+      </div>
+      <div class="btn-export-group">
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="pdf" class="btn-exp btn-exp-pdf">
+          PDF
+        </a>
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="excel" class="btn-exp btn-exp-excel">
+          Excel
+        </a>
+        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="csv" class="btn-exp btn-exp-csv">
+          CSV
+        </a>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="bsb-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Apprenant</th>
+            <th>Métier</th>
+            <th>Centre</th>
+            {% if scope in "global direction" %}<th>Direction</th>{% endif %}
+            <th>Année</th>
+            <th>Date</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for insc in dernieres_inscriptions %}
+          <tr>
+            <td class="text-gray-500 text-sm">{{ forloop.counter }}</td>
+            <td>
+              <div class="font-semibold text-sm">{{ insc.eleve.nom }} {{ insc.eleve.prenom }}</div>
+              <div class="text-gray-500 text-[.72rem]">{{ insc.eleve.numero_identifiant }}</div>
+            </td>
+            <td class="text-sm">{{ insc.formation.filiere.nom_filiere }}</td>
+            <td class="text-sm">{{ insc.formation.centre.nom_centre }}</td>
+            {% if scope in "global direction" %}
+            <td class="text-sm text-gray-500">{{ insc.formation.centre.direction.nom_direction|default:"—" }}</td>
+            {% endif %}
+            <td class="text-sm">{{ insc.annee_scolaire.libelle_anne|default:"—" }}</td>
+            <td class="text-sm text-gray-500">{{ insc.date_inscription|date:"d/m/Y" }}</td>
+            <td>
+              {% if insc.statut == 'valide' or insc.statut == 'valide_paye' or insc.statut == 'Valide' %}
+                <span class="badge-stat badge-valide">Validé</span>
+              {% elif insc.statut == 'en_cours' %}
+                <span class="badge-stat badge-en-cours">En attente</span>
+              {% else %}
+                <span class="badge-stat badge-rejete">Rejeté</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="text-center py-5 text-gray-500">
+              Aucune inscription trouvée
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if dernieres_inscriptions.has_other_pages %}
+    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+      <p class="text-sm text-gray-500">
+        Page {{ dernieres_inscriptions.number }} / {{ dernieres_inscriptions.paginator.num_pages }}
+      </p>
+      <div class="flex gap-2">
+        {% if dernieres_inscriptions.has_previous %}
+        <a href="?{{ querystring_inscriptions }}&ipage={{ dernieres_inscriptions.previous_page_number }}"
+           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Précédent</a>
+        {% endif %}
+        {% if dernieres_inscriptions.has_next %}
+        <a href="?{{ querystring_inscriptions }}&ipage={{ dernieres_inscriptions.next_page_number }}"
+           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Suivant</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>{% comment %} /container {% endcomment %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+
+{# json_script echappe <, > et & : un nom de metier ne peut pas fermer le bloc <script>. #}
+{{ evol_labels|json_script:"data-evol-labels" }}
+{{ evol_data|json_script:"data-evol-valeurs" }}
+{{ mode_labels|json_script:"data-mode-labels" }}
+{{ mode_data|json_script:"data-mode-valeurs" }}
+{{ top_filieres_noms|json_script:"data-metiers-labels" }}
+{{ top_filieres_count|json_script:"data-metiers-valeurs" }}
+
+<script nonce="{{ csp_nonce }}">
+// ── Data depuis Django ─────────────────────────────────────────────────────
+const lireDonnees = (id) => JSON.parse(document.getElementById(id).textContent);
+
+const evolLabels = lireDonnees('data-evol-labels');
+const evolData = lireDonnees('data-evol-valeurs');
+const modeLabels = lireDonnees('data-mode-labels');
+const modeData = lireDonnees('data-mode-valeurs');
+const metiersLabels = lireDonnees('data-metiers-labels');
+const metiersData = lireDonnees('data-metiers-valeurs');
+
+const ROUGE = '#C0392B';
+const OR = '#D4A017';
+const GRIS = '#6B7280';
+
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+
+// ── Donut statuts ──────────────────────────────────────────────────────────
+new Chart(document.getElementById('chartStatut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Validées', 'En attente', 'Rejetées'],
+    datasets: [{
+      data: [{{ stats.inscriptions_validees }}, {{ stats.inscriptions_en_cours }}, {{ stats.inscriptions_rejetees }}],
+      backgroundColor: ['#16A34A', OR, ROUGE],
+      borderWidth: 0,
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: {
+      label: ctx => ` ${ctx.label}: ${ctx.parsed} inscription${ctx.parsed > 1 ? 's' : ''}`
+    }}},
+    cutout: '68%',
+  }
+});
+
+// ── Bar top métiers ────────────────────────────────────────────────────────
+new Chart(document.getElementById('chartMetiers'), {
+  type: 'bar',
+  data: {
+    labels: metiersLabels,
+    datasets: [{
+      label: 'Inscriptions',
+      data: metiersData,
+      backgroundColor: metiersData.map((_, i) => i === 0 ? ROUGE : (i % 2 === 0 ? '#C0392B99' : '#D4A01799')),
+      borderRadius: 6,
+      maxBarThickness: 44,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#F3F4F6' }, ticks: { stepSize: 1, font: { size: 11 } } },
+      x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 30 } }
+    }
+  }
+});
+
+// ── Ligne évolution ────────────────────────────────────────────────────────
+new Chart(document.getElementById('chartEvol'), {
+  type: 'line',
+  data: {
+    labels: evolLabels,
+    datasets: [{
+      label: 'Inscriptions',
+      data: evolData,
+      borderColor: ROUGE,
+      backgroundColor: 'rgba(192,57,43,0.08)',
+      borderWidth: 2.5,
+      pointBackgroundColor: ROUGE,
+      pointRadius: 4,
+      tension: 0.35,
+      fill: true,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#F3F4F6' }, ticks: { font: { size: 11 } } },
+      x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+
+// ── Pie modes de paiement ──────────────────────────────────────────────────
+new Chart(document.getElementById('chartModes'), {
+  type: 'pie',
+  data: {
+    labels: modeLabels.length ? modeLabels : ['Aucun paiement'],
+    datasets: [{
+      data: modeData.length ? modeData : [1],
+      backgroundColor: [ROUGE, OR, '#9CA3AF', '#374151'],
+      borderWidth: 0,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 14, font: { size: 11 } } },
+      tooltip: { callbacks: {
+        label: ctx => {
+          const val = ctx.parsed;
+          const fmt = val >= 1000 ? (val/1000).toFixed(1) + ' K FCFA' : val + ' FCFA';
+          return ` ${ctx.label}: ${fmt}`;
+        }
+      }}
+    }
+  }
+});
+
+// ── Format montants ────────────────────────────────────────────────────────
+document.querySelectorAll('.fmt-amount, [data-amount]').forEach(el => {
+  const src = el.dataset.amount !== undefined ? parseFloat(el.dataset.amount) : parseFloat(el.textContent.replace(/\s/g, '').replace(',', '.'));
+  if (!isNaN(src)) {
+    const fmt = src.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+    el.textContent = fmt;
+  }
+});
+
+// ── Export URLs ────────────────────────────────────────────────────────────
+function buildExportUrl(dataType, format) {
+  const params = new URLSearchParams(window.location.search);
+  params.set('type', dataType);
+  const baseMap = {
+    'pdf': '{% url "courses:export_pdf" %}',
+    'excel': '{% url "courses:export_excel" %}',
+    'csv': '{% url "courses:export_csv" %}',
+  };
+  return baseMap[format] + '?' + params.toString();
+}
+
+// Délégation : les attributs onclick= inline sont bloqués par la CSP
+// (script-src 'self' 'nonce-...'). Les liens portent href="#" ou une URL de
+// repli ; buildExportUrl() recalcule la destination avec les filtres courants.
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var el = e.target.closest('[data-action="exporter"]');
+  if (!el) return;
+  e.preventDefault();
+  window.location.href = buildExportUrl(el.dataset.exportType, el.dataset.exportFormat);
+});
+</script>
+{% endblock %}

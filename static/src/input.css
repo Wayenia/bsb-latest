@@ -369,28 +369,61 @@
    ========================================================================== */
 @layer components {
 
-  /* Carte d'action : ce qui attend un geste. Cliquable en entier — viser un
-     petit lien au telephone est penible. */
-  .bo-action {
-    @apply bo-card p-4 flex items-start gap-3 border-l-4 transition-shadow
-           hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500;
+  /* Bandeau d'accueil au degrade signature de la page publique. */
+  .bo-hero {
+    @apply rounded-lg px-5 py-6 mb-6 text-white
+           bg-gradient-to-r from-bsb-red to-bsb-yellow;
   }
-  .bo-action-alerte  { @apply border-l-red-500; }
-  .bo-action-garde   { @apply border-l-amber-500; }
-  .bo-action-attente { @apply border-l-sky-500; }
-  .bo-action-nombre  { @apply text-3xl font-semibold tabular-nums text-gray-900 leading-none; }
-  .bo-action-libelle { @apply mt-1 text-sm font-medium text-gray-900; }
-  .bo-action-aide    { @apply mt-0.5 text-xs text-gray-500; }
+  .bo-hero-titre { @apply text-2xl font-bold tracking-tight; }
+  .bo-hero-sous  { @apply mt-1 text-sm text-white/90; }
+
+  /* Carte d'action : ce qui attend un geste. Cliquable en entier — viser un
+     petit lien au telephone est penible. Couleurs de la charte : le rouge
+     pour ce qui presse, l'or pour ce qui demande vigilance, le vert pour ce
+     qui informe. */
+  .bo-action {
+    @apply bo-card p-4 border-l-4 transition-all
+           hover:shadow-md hover:-translate-y-0.5
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
+  }
+  .bo-action-alerte  { @apply border-l-bsb-red; }
+  .bo-action-garde   { @apply border-l-bsb-gold; }
+  .bo-action-attente { @apply border-l-bsb-green; }
+  .bo-action-nombre  { @apply text-3xl font-bold tabular-nums text-bsb-ink leading-none; }
+  .bo-action-alerte  .bo-action-nombre { @apply text-bsb-red; }
+  .bo-action-garde   .bo-action-nombre { @apply text-bsb-gold; }
+  .bo-action-attente .bo-action-nombre { @apply text-bsb-green; }
+  .bo-action-libelle { @apply mt-1 text-sm font-semibold text-bsb-ink; }
+  .bo-action-aide    { @apply mt-0.5 text-xs text-bsb-muted; }
 
   /* Jauge : la largeur est calculee, donc posee en JavaScript depuis
      data-part — un attribut style= serait bloque par la CSP. */
-  .bo-jauge      { @apply h-2 w-full rounded-full bg-gray-200 overflow-hidden; }
-  .bo-jauge-part { @apply h-full rounded-full bg-emerald-500 transition-all duration-500; }
+  .bo-jauge      { @apply h-2.5 w-full rounded-full bg-bsb-cream overflow-hidden; }
+  .bo-jauge-part { @apply h-full rounded-full bg-bsb-green transition-all duration-500; }
 
   .bo-montant       { @apply text-2xl font-semibold tabular-nums text-gray-900; }
   .bo-montant-unite { @apply ml-1 text-sm font-normal text-gray-500; }
 
-  .bo-mini       { @apply bo-card p-3; }
-  .bo-mini-valeur { @apply text-xl font-semibold tabular-nums text-gray-900; }
-  .bo-mini-label  { @apply mt-0.5 text-xs text-gray-500 leading-tight; }
+  .bo-mini        { @apply bo-card p-3 border-t-2 border-t-bsb-gold/50; }
+  .bo-mini-valeur { @apply text-xl font-bold tabular-nums text-bsb-ink; }
+  .bo-mini-label  { @apply mt-0.5 text-xs text-bsb-muted leading-tight; }
+  .bo-section     { @apply text-sm font-semibold uppercase tracking-wide text-bsb-muted mb-3
+                           flex items-center gap-2 before:content-[''] before:w-6 before:h-0.5
+                           before:rounded-full before:bg-gradient-to-r before:from-bsb-red before:to-bsb-yellow; }
+}
+
+/* ==========================================================================
+   Matrice des permissions
+   ========================================================================== */
+@layer components {
+  .bo-theme-tete th { @apply p-0 bg-bsb-cream border-y border-bsb-gold/30; }
+  .bo-theme-bouton {
+    @apply w-full flex items-center gap-3 px-4 py-2.5 text-left
+           text-sm font-semibold text-bsb-ink hover:bg-bsb-gold/10 transition-colors
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
+  }
+  .bo-theme-chevron { @apply w-4 h-4 shrink-0 text-bsb-muted transition-transform duration-200 rotate-90; }
+  .bo-theme-replie .bo-theme-chevron { @apply rotate-0; }
+  .bo-theme-compte  { @apply hidden sm:inline text-xs font-normal text-bsb-muted; }
+  .bo-theme-replie .bo-theme-ligne { @apply hidden; }
 }

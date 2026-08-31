@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Gestion des permissions | BSB{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto py-10 space-y-6">
+    {% include 'partials/messages.html' %}
+
+    <div class="px-4 md:px-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Gestion des permissions</h1>
+            <p class="mt-1 text-sm text-gray-500">
+                Une case cochée = le rôle peut effectuer l'action. Décochez pour retirer immédiatement ce droit à tous les comptes de ce rôle.
+            </p>
+        </div>
+        <button type="submit" form="permissions-matrix-form"
+                class="inline-flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all whitespace-nowrap">
+            Enregistrer les permissions
+        </button>
+    </div>
+
+    <form method="POST" id="permissions-matrix-form">
+        {% csrf_token %}
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+            <div class="overflow-x-auto overflow-y-auto max-h-[65vh]">
+                <table class="min-w-full divide-y divide-gray-100">
+                    <thead class="bg-bsb-red sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">Permission</th>
+                            {% for role in roles %}
+                            <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">{{ role.name }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        {% for row in rows %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 text-sm font-semibold text-gray-800 whitespace-nowrap">{{ row.perm.name }}</td>
+                            {% for group, checked in row.cells %}
+                            <td class="px-4 py-4 text-center">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="cell" value="{{ row.perm.id }}:{{ group.id }}"
+                                           {% if checked %}checked{% endif %}
+                                           class="sr-only peer">
+                                    <span class="w-11 h-6 flex items-center rounded-full bg-gray-300 peer-checked:bg-bsb-green transition-colors relative">
+                                        {# left-1 et peer-checked:left-6 remplacent l'ancien style= et suivent la case sans rechargement. #}
+                                        <span class="w-4 h-4 bg-white rounded-full shadow absolute left-1 peer-checked:left-6 transition-all"></span>
+                                    </span>
+                                </label>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="flex justify-end mt-6">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                 Enregistrer les permissions
+            </button>
+        </div>
+    </form>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+  // Bascule visuelle du curseur du "switch" au clic (la case reste sr-only).
+  document.querySelectorAll('input[name="cell"]').forEach(function (input) {
+      input.addEventListener('change', function () {
+          var knob = this.closest('label').querySelector('span span');
+          knob.style.left = this.checked ? '1.5rem' : '0.25rem';
+          var track = this.closest('label').querySelector('span');
+          track.classList.toggle('bg-bsb-green', this.checked);
+          track.classList.toggle('bg-gray-300', !this.checked);
+      });
+  });
+</script>
+{% endblock %}

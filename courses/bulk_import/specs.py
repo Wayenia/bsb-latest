@@ -55,6 +55,11 @@ class ImportSpec:
     # contrainte d'unicite. Indispensable des lors que le modele telecharge est
     # pre-rempli : on renvoie le fichier corrige, pas un fichier vierge.
     instance_lookup_fn: Optional[Callable[[dict], Any]] = None
+    # Lignes d'exemple, ecrites sur une feuille dediee et jamais sur la feuille
+    # d'import : y placer de fausses donnees les ferait creer au premier
+    # renvoi du fichier. La feuille montre le format attendu quand il n'y a
+    # encore rien a pre-remplir.
+    exemples: Optional[list] = None
 
     # Résolution des URLs pour les liens générés par les templates génériques
     # (bouton "Télécharger le modèle", "Retour à la liste"...).
