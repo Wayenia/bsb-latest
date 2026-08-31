@@ -167,7 +167,16 @@
 
   /* ---------- Ossature de page ---------- */
   .bo-page     { @apply bg-slate-50 min-h-screen; }
+  /* Plafonne quand la page est seule, pleine largeur quand la barre laterale
+     encadre deja le contenu : sinon on perd trois cents pixels a droite et le
+     tableau se comprime sans raison. */
   .bo-shell    { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6; }
+  .bo-avec-sidebar .bo-shell { @apply max-w-none; }
+
+  /* Meme regle pour les ecrans encore sur l'ancien balisage : la classe
+     remplace leur `max-w-7xl` et suit le meme comportement. */
+  .bo-large    { @apply max-w-7xl; }
+  .bo-avec-sidebar .bo-large { @apply max-w-none; }
   .bo-header   { @apply flex flex-wrap items-start justify-between gap-4 mb-6; }
   .bo-title    { @apply text-2xl font-semibold tracking-tight text-gray-900; }
   .bo-subtitle { @apply mt-1 text-sm text-gray-500; }
