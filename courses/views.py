@@ -1039,7 +1039,7 @@ def member_dashboard(request):
             'filieres': Filiere.objects.distinct().count(),
             'etudiants': Eleve.objects.distinct().count(),
         }
-        return render(request, 'member/member_dashboard/dashboard.html', {
+        return render(request, gabarit('member/member_dashboard/dashboard.html'), {
             'active_careers': active_careers,
             'stats': stats,
             'membre': None,
@@ -1067,7 +1067,7 @@ def member_dashboard(request):
             'filieres': Filiere.objects.filter(centreetfiliere__centre__direction=direction).distinct().count(),
             'etudiants': Eleve.objects.filter(inscription__formation__centre__direction=direction).distinct().count(),
         }
-        return render(request, 'member/member_dashboard/dashboard.html', {
+        return render(request, gabarit('member/member_dashboard/dashboard.html'), {
             'active_careers': active_careers.filter(centre__direction=direction),
             'stats': stats,
             'membre': None,
@@ -1097,7 +1097,7 @@ def member_dashboard(request):
     centres_visibles = membre.get_centres_visibles()
     centres_visibles_ids = [c.id for c in centres_visibles]
 
-    return render(request, 'member/member_dashboard/dashboard.html', {
+    return render(request, gabarit('member/member_dashboard/dashboard.html'), {
         'centre': structure,
         'membre': membre,
         'stats': stats,

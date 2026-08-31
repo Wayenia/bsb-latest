@@ -566,3 +566,28 @@
     .bo-table-adaptable .bo-col-fixe { @apply static; }
   }
 }
+
+/* ==========================================================================
+   Carte d'acces d'un espace de travail
+   --------------------------------------------------------------------------
+   Quatorze cartes identiques alignees formaient un mur ou rien ne se
+   distinguait. Regroupees par theme et teintees comme la barre laterale, elles
+   se retrouvent a la couleur avant d'etre relues.
+   ========================================================================== */
+@layer components {
+  .bo-acces {
+    @apply flex items-center justify-between gap-2 rounded-lg border-2 bg-white
+           px-4 py-3 text-sm font-semibold shadow-sm transition-all
+           hover:shadow-md hover:-translate-y-0.5
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+  }
+  .bo-acces::after {
+    content: '\203A';
+    @apply text-lg leading-none opacity-50;
+  }
+  .bo-acces-rouge   { @apply border-bsb-red/40   text-bsb-red   hover:bg-bsb-red/5   focus-visible:ring-bsb-red; }
+  .bo-acces-or      { @apply border-bsb-gold/40  text-bsb-gold  hover:bg-bsb-gold/5  focus-visible:ring-bsb-gold; }
+  .bo-acces-vert    { @apply border-bsb-green/40 text-bsb-green hover:bg-bsb-green/5 focus-visible:ring-bsb-green; }
+  .bo-acces-grenat  { @apply border-bsb-dark/40  text-bsb-dark  hover:bg-bsb-dark/5  focus-visible:ring-bsb-dark; }
+  .bo-acces-ardoise { @apply border-gray-300     text-bsb-ink   hover:bg-bsb-cream   focus-visible:ring-gray-400; }
+}
