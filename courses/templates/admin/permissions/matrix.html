@@ -20,13 +20,25 @@
         </div>
     </div>
 
+    {% comment %}Selecteur de role : sur telephone, dix colonnes ne tiennent pas.
+    On regle un role a la fois, la ligne se reduisant a l'intitule et son
+    interrupteur.{% endcomment %}
+    <div class="bo-role-choix">
+        <label for="role-visible" class="bo-label">Rôle à régler</label>
+        <select id="role-visible" class="bo-select">
+            {% for role in roles %}
+            <option value="{{ role.id }}">{{ role.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
     <form method="POST" id="permissions-matrix-form">
         {% csrf_token %}
         {% comment %}Un seul tableau, un corps par theme : les colonnes de roles
         restent alignees d'un theme a l'autre, ce que des tableaux separes
         perdraient. Les cases a cocher sont inchangees.{% endcomment %}
         <div class="bo-table-wrap max-h-[70vh] overflow-y-auto">
-            <table class="bo-table" id="matrice">
+            <table class="bo-table bo-matrice" id="matrice">
                 <thead>
                     <tr>
                         <th scope="col" class="bo-col-fixe">Permission</th>
@@ -37,10 +49,10 @@
                 </thead>
 
                 {% for groupe in groupes %}
-                <tbody class="bo-theme" data-theme="{{ groupe.cle }}">
+                <tbody class="bo-theme {% if not groupe.ouvert %}bo-theme-replie{% endif %}" data-theme="{{ groupe.cle }}">
                     <tr class="bo-theme-tete">
                         <th scope="colgroup" colspan="{{ roles|length|add:1 }}" class="p-0">
-                            <button type="button" class="bo-theme-bouton" aria-expanded="true"
+                            <button type="button" class="bo-theme-bouton" aria-expanded="{{ groupe.ouvert|yesno:'true,false' }}"
                                     aria-controls="{{ groupe.cle }}">
                                 <svg class="bo-theme-chevron" fill="none" stroke="currentColor"
                                      stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
@@ -58,7 +70,7 @@
                             {{ ligne.libelle }}
                         </th>
                         {% for group, checked in ligne.cells %}
-                        <td class="text-center">
+                        <td class="text-center" data-role="{{ group.id }}">
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="checkbox" name="cell" value="{{ ligne.perm.id }}:{{ group.id }}"
                                        {% if checked %}checked{% endif %}
@@ -99,15 +111,32 @@
         input.addEventListener('change', function () { placer(this); });
     });
 
-    // Repli par theme. Non exclusif ici, contrairement a la barre laterale :
-    // comparer deux themes cote a cote est le geste courant sur cet ecran.
+    // Ouverture exclusive, comme la barre laterale : vingt-six permissions sur
+    // dix roles remplissent l'ecran des que deux themes sont deplies.
+    function afficher(corps, ouvert) {
+        corps.classList.toggle('bo-theme-replie', !ouvert);
+        corps.querySelector('.bo-theme-bouton').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+    }
     table.addEventListener('click', function (e) {
         var bouton = e.target.closest('.bo-theme-bouton');
         if (!bouton) return;
         var corps = bouton.closest('.bo-theme');
-        var ouvert = !corps.classList.toggle('bo-theme-replie');
-        bouton.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+        var deja = !corps.classList.contains('bo-theme-replie');
+        table.querySelectorAll('.bo-theme').forEach(function (t) { afficher(t, false); });
+        if (!deja) afficher(corps, true);
     });
+
+    // Colonne de role affichee sur petit ecran.
+    var choix = document.getElementById('role-visible');
+    if (choix) {
+        function montrer(idRole) {
+            table.querySelectorAll('td[data-role]').forEach(function (cel) {
+                cel.classList.toggle('bo-role-visible', cel.dataset.role === idRole);
+            });
+        }
+        montrer(choix.value);
+        choix.addEventListener('change', function () { montrer(this.value); });
+    }
 })();
 </script>
 {% endblock %}

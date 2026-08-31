@@ -6,11 +6,6 @@
 #   ./bascule_ui.sh sidebar     bascule la seule navigation vers la barre laterale
 #   ./bascule_ui.sh navbar      bascule la seule navigation vers la barre horizontale
 #   ./bascule_ui.sh             affiche l'etat courant
-#
-# Fonctionne a l'identique en developpement et en production : les reglages
-# vivent dans .env, aucun gabarit ne code en dur l'une ou l'autre interface.
-# Aucune donnee n'est touchee, aucune migration n'est jouee : la bascule est
-# sans risque et se refait autant de fois que voulu.
 set -e
 
 RACINE="$(cd "$(dirname "$0")" && pwd)"

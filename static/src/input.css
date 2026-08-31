@@ -354,12 +354,29 @@
   /* Ecran courant : fond teinte et liseré de la couleur du groupe. */
   .bo-sidebar-lien-actif { @apply font-semibold border-l-2 -ml-[13px] pl-[11px]; }
 
-  .bo-sidebar-pied { @apply shrink-0 border-t border-bsb-gold/30 bg-bsb-cream p-3 sticky bottom-0; }
-  .bo-sidebar-compte { @apply px-3 pb-2 text-xs text-bsb-muted truncate; }
-  .bo-sidebar-lien-pied {
-    @apply block px-3 py-1.5 rounded-md text-[13px] text-bsb-muted
-           hover:bg-white hover:text-bsb-ink transition-colors;
+  /* Pied de barre : identite puis actions. Trois liens empiles sous une ligne
+     de texte se lisaient comme une quatrieme rubrique de navigation, alors
+     qu'il s'agit du compte. La carte les separe nettement du menu. */
+  .bo-sidebar-pied {
+    @apply shrink-0 sticky bottom-0 border-t border-bsb-gold/30 bg-bsb-cream p-2.5;
   }
+  .bo-compte      { @apply flex items-center gap-2.5 rounded-lg bg-white border border-bsb-gold/30 p-2.5; }
+  .bo-compte-puce {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full
+           bg-gradient-to-br from-bsb-red to-bsb-yellow text-xs font-bold text-white;
+  }
+  .bo-compte-nom  { @apply truncate text-[13px] font-semibold leading-tight text-bsb-ink; }
+  .bo-compte-role { @apply truncate text-[11px] leading-tight text-bsb-muted; }
+
+  .bo-compte-actions { @apply mt-2 grid grid-cols-3 gap-1.5; }
+  .bo-compte-action  {
+    @apply flex flex-col items-center gap-1 rounded-lg border border-transparent
+           px-1 py-2 text-[11px] font-medium text-bsb-muted
+           hover:border-bsb-gold/30 hover:bg-white hover:text-bsb-ink transition-colors
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
+  }
+  .bo-compte-action svg { @apply h-4 w-4; }
+  .bo-compte-quitter { @apply hover:text-bsb-red hover:border-bsb-red/30; }
 
   .bo-avec-sidebar { @apply lg:ml-72; }
 }
@@ -443,6 +460,31 @@
   .bo-theme-replie .bo-theme-chevron { @apply rotate-0; }
   .bo-theme-compte  { @apply hidden sm:inline text-xs font-normal text-bsb-muted; }
   .bo-theme-replie .bo-theme-ligne { @apply hidden; }
+
+  /* --- Matrice sur petit ecran ------------------------------------------
+     Dix colonnes de roles ne tiennent pas dans un telephone, et un
+     defilement horizontal fait perdre l'intitule de la permission. On montre
+     donc un role a la fois, choisi dans une liste : chaque ligne devient
+     « intitule + interrupteur ». Aucun balisage duplique, seule la colonne
+     retenue reste visible. */
+  .bo-role-choix { @apply sm:hidden mb-4; }
+
+  @media (max-width: 639px) {
+    .bo-matrice thead { @apply hidden; }
+    .bo-matrice, .bo-matrice tbody, .bo-matrice tr, .bo-matrice th, .bo-matrice td { @apply block w-full; }
+
+    .bo-matrice .bo-theme-tete th { @apply p-0; }
+    .bo-matrice .bo-theme-ligne {
+      @apply flex items-center justify-between gap-3 border-b border-gray-100 px-1 py-2;
+    }
+    .bo-matrice .bo-theme-ligne > th {
+      @apply flex-1 min-w-0 border-0 px-0 py-0 text-left text-sm font-normal text-bsb-ink;
+    }
+    /* Seule la colonne du role choisi reste affichee. */
+    .bo-matrice td[data-role] { @apply hidden w-auto shrink-0 px-0 py-0; }
+    .bo-matrice td[data-role].bo-role-visible { @apply block; }
+    .bo-matrice .bo-col-fixe { @apply static; }
+  }
 }
 
 /* ==========================================================================

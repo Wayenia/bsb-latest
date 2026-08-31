@@ -67,11 +67,40 @@ l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
         {% endfor %}
     </nav>
 
+    {% comment %}Le compte et ses actions sont detaches du menu : empiles comme
+    de simples liens, ils se lisaient comme une rubrique de navigation de
+    plus.{% endcomment %}
     <div class="bo-sidebar-pied">
-        <p class="bo-sidebar-compte">{{ user.prenom }} {{ user.nom }} — {{ user.get_user_type_display }}</p>
-        <a href="{% url 'courses:home' %}" class="bo-sidebar-lien-pied">Site public</a>
-        <a href="{% url 'accounts:mon_compte' %}" class="bo-sidebar-lien-pied">Mon profil</a>
-        <a href="{% url 'accounts:logout' %}" class="bo-sidebar-lien-pied">Se déconnecter</a>
+        <div class="bo-compte">
+            <span class="bo-compte-puce">{{ user.nom|first|upper }}{{ user.prenom|first|upper }}</span>
+            <div class="min-w-0">
+                <p class="bo-compte-nom">{{ user.prenom }} {{ user.nom }}</p>
+                <p class="bo-compte-role">{{ user.get_user_type_display }}</p>
+            </div>
+        </div>
+        <div class="bo-compte-actions">
+            <a href="{% url 'accounts:mon_compte' %}" class="bo-compte-action">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM4 21v-1a6 6 0 0116 0v1"/>
+                </svg>
+                Profil
+            </a>
+            <a href="{% url 'courses:home' %}" class="bo-compte-action">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
+                </svg>
+                Site
+            </a>
+            <a href="{% url 'accounts:logout' %}" class="bo-compte-action bo-compte-quitter">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M15 16l4-4m0 0l-4-4m4 4H9m1 8H6a2 2 0 01-2-2V6a2 2 0 012-2h4"/>
+                </svg>
+                Quitter
+            </a>
+        </div>
     </div>
 </aside>
 
