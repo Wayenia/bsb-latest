@@ -29,9 +29,12 @@ l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
     </div>
 
     <nav class="bo-sidebar-nav" id="bo-nav">
-        <a href="{% url 'bsb_admin:admin_dashboard' %}"
-           class="bo-groupe-tete {% if request.path == '/bsb/dashboard' %}bg-bsb-cream{% endif %}"
-           data-lien-libelle="tableau de bord">
+        {% comment %}Point d'entree commun et non /bsb/dashboard : ce dernier exige
+        `voir_statistiques` et renvoyait 403 aux caissiers et aux membres, soit
+        seize comptes. `redirect_to_dashboard` conduit chaque role au sien.{% endcomment %}
+        <a href="{% url 'courses:redirect_to_dashboard' %}"
+           class="bo-groupe-tete {% if request.path == '/bsb/dashboard' or request.path == '/membre/dashboard' %}bg-bsb-cream{% endif %}"
+           data-lien-libelle="tableau de bord mon espace">
             <span class="bo-groupe-puce bg-bsb-red/10 text-bsb-red">
                 <svg class="bo-groupe-icone" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-8 9 8M5 10v10h14V10"/>

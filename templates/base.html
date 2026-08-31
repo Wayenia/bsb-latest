@@ -170,7 +170,9 @@
     {% endif %}
 
     {% comment %} Contenu principal {% endcomment %}
-    <main class="{% if bo_sidebar %}bo-avec-sidebar{% endif %}">
+    {% comment %}Filigrane du logo sur les espaces de travail seulement : les
+    pages publiques ont leur propre traitement graphique.{% endcomment %}
+    <main class="{% if bo_sidebar %}bo-avec-sidebar bo-filigrane{% endif %}">
         {% block content %}{% endblock %}
     </main>
 

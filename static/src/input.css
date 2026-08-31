@@ -633,3 +633,33 @@
   .bo-acces-grenat  { @apply border-bsb-dark/40  text-bsb-dark  hover:bg-bsb-dark/5  focus-visible:ring-bsb-dark; }
   .bo-acces-ardoise { @apply border-gray-300     text-bsb-ink   hover:bg-bsb-cream   focus-visible:ring-gray-400; }
 }
+
+/* ==========================================================================
+   Filigrane
+   --------------------------------------------------------------------------
+   Le logo en fond des espaces de travail : il marque l'appartenance des ecrans
+   et des captures qui en sont faites. Pose en pseudo-element fixe, derriere le
+   contenu et sans interception du pointeur, avec une opacite assez basse pour
+   ne jamais gener la lecture d'un tableau.
+
+   Le chemin est ecrit en dur : STATIC_URL vaut '/static/' et ne varie pas
+   selon l'environnement. Une image servie depuis le site respecte la
+   directive img-src 'self' de la CSP.
+   ========================================================================== */
+@layer components {
+  .bo-filigrane { @apply relative; }
+  .bo-filigrane::before {
+    content: '';
+    background-image: url('/static/images/logo.png');
+    @apply pointer-events-none fixed inset-0 -z-10 bg-center bg-no-repeat opacity-[0.035];
+    background-size: min(46vw, 26rem);
+  }
+  /* Ecran etroit : le filigrane est reduit, un logo trop large derriere une
+     fiche nuirait au contraste. */
+  @media (max-width: 639px) {
+    .bo-filigrane::before { background-size: 60vw; @apply opacity-[0.025]; }
+  }
+  @media print {
+    .bo-filigrane::before { @apply opacity-[0.06]; }
+  }
+}

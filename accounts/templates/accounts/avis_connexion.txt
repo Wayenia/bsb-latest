@@ -1,0 +1,16 @@
+Bonjour {{ utilisateur.prenom }} {{ utilisateur.nom }},
+
+Une connexion à votre compte Yupaan vient d'avoir lieu depuis un appareil que
+nous ne connaissions pas.
+
+  Date    : {{ date|date:"d/m/Y à H:i" }}
+  Adresse : {{ adresse }}
+
+Si c'était vous, il n'y a rien à faire : cet appareil est désormais reconnu et
+ne redemandera plus de code de vérification pendant 30 jours.
+
+Si ce n'était pas vous, votre mot de passe est peut-être connu de quelqu'un
+d'autre. Prévenez l'administration et faites-le changer sans attendre.
+
+--
+Message automatique. Ne pas répondre.

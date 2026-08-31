@@ -48,7 +48,7 @@ from django.shortcuts import render, redirect
 
 import logging
 
-from . import otp, ratelimit
+from . import appareil, otp, ratelimit
 
 logger = logging.getLogger('django.security')
 
@@ -112,6 +112,14 @@ def user_login(request):
 
         # ── Apprenant : connexion directe ────────────────────────────────
         if _est_apprenant(user):
+            login(request, user)
+            messages.success(request, f"Bienvenue {user.prenom} {user.nom} !")
+            return redirect('courses:redirect_to_dashboard')
+
+        # ── Personnel : appareil deja reconnu, le code n'est pas redemande ──
+        # L'agent qui travaille depuis son poste habituel n'a plus a saisir de
+        # code a chaque connexion ; tout autre appareil reste barre par le code.
+        if appareil.est_reconnu(request, user):
             login(request, user)
             messages.success(request, f"Bienvenue {user.prenom} {user.nom} !")
             return redirect('courses:redirect_to_dashboard')
@@ -184,7 +192,12 @@ def login_otp(request):
             user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
             messages.success(request, f"Bienvenue {user.prenom} {user.nom} !")
-            return redirect('courses:redirect_to_dashboard')
+            # L'appareil devient reconnu pour trente jours, et le titulaire est
+            # averti : c'est la seule alerte qui lui parvienne directement, sans
+            # attendre un rapport periodique.
+            appareil.avertir(user, request)
+            reponse = redirect('courses:redirect_to_dashboard')
+            return appareil.marquer_reconnu(reponse, user)
 
         messages.error(request, erreur)
         if not otp.etat(request):
