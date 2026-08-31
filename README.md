@@ -25,7 +25,7 @@ maintenir le projet en bon état.
 9. [Points de vigilance techniques](#9-points-de-vigilance-techniques)
    - 9.1 Éléments présents mais non exploités · 9.2 Sécurité applicative ·
      9.3 Exécution en conteneur non privilégié · 9.4 Courrier électronique ·
-     9.5 Peuplement initial · 9.6 Facturation
+     9.5 Rapport d'inspection · 9.6 Peuplement initial · 9.7 Facturation
 10. [Résolution des incidents courants](#10-résolution-des-incidents-courants)
 11. [Organisation des fichiers](#11-organisation-des-fichiers)
 
@@ -506,7 +506,28 @@ que Docker ne résout pas seul.
 - `EMAIL_TIMEOUT` est indispensable : sans délai d'attente, un serveur SMTP qui
   ne répond pas immobilise un processus `gunicorn` pendant 120 secondes.
 
-### 9.5 Peuplement initial des données
+### 9.5 Rapport d'inspection des connexions
+
+L'application `audit` produit un classeur Excel — indicateurs, alertes, graphiques et
+journal détaillé — et l'envoie par courrier électronique. Elle est prévue pour une
+exécution planifiée :
+
+```bash
+docker compose exec suudu_backend python manage.py envoyer_rapport_audit
+```
+
+Les seuils de déclenchement des alertes et les destinataires se règlent dans `.env`
+(`AUDIT_DESTINATAIRES`, `AUDIT_PERIODE_JOURS`, `AUDIT_SEUIL_*`). Le détail figure dans
+[audit/README.md](audit/README.md).
+
+Point de vigilance : ce rapport n'a de valeur que si les **échecs** de connexion sont
+journalisés. Ils le sont dans `HistoriqueConnexion` avec le type `echec` — le compteur
+Redis anti-force brute, lui, expire au bout de quinze minutes et ne laisse aucune trace
+exploitable a posteriori.
+
+---
+
+### 9.6 Peuplement initial des données
 
 `populate_data.py` n'est plus exécuté au démarrage du conteneur ; la ligne
 correspondante de `entrypoint.sh` est volontairement commentée. Ce script crée un
@@ -534,7 +555,7 @@ Deux précisions sur les données transcrites, à ne pas « corriger » de nouve
   défaut du modèle s'applique à tous. Ces valeurs sont à corriger par chaque
   titulaire via l'écran « Mon profil ».
 
-### 9.6 Facturation
+### 9.7 Facturation
 
 Le numéro de facture est unique sur l'ensemble de la table, factures proforma et
 définitives confondues. Le compteur ne doit donc jamais être filtré par

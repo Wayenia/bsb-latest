@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'apis', 
     'courses.apps.DetteConfig',
     'actualites',
+    'audit',
    
 
     # third party for erd
@@ -255,6 +256,17 @@ DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@burkinasuudu.com
 # Liens absolus des e-mails envoyes hors requete HTTP ; vide, le repli produit
 # un lien en http:// (README 9).
 SITE_URL = env('SITE_URL', default='')
+
+# --- Audit et surveillance (application `audit`) ---
+# Seuils de declenchement des alertes du rapport d'inspection. Les relever
+# reduit le bruit, les abaisser augmente la sensibilite (voir audit/README.md).
+AUDIT_DESTINATAIRES = env.list('AUDIT_DESTINATAIRES', default=[])
+AUDIT_PERIODE_JOURS = env.int('AUDIT_PERIODE_JOURS', default=7)
+AUDIT_SEUIL_ECHECS_COMPTE = env.int('AUDIT_SEUIL_ECHECS_COMPTE', default=5)
+AUDIT_SEUIL_COMPTES_PAR_IP = env.int('AUDIT_SEUIL_COMPTES_PAR_IP', default=3)
+AUDIT_SEUIL_IP_PAR_COMPTE = env.int('AUDIT_SEUIL_IP_PAR_COMPTE', default=3)
+AUDIT_HEURE_OUVREE_DEBUT = env.int('AUDIT_HEURE_OUVREE_DEBUT', default=7)
+AUDIT_HEURE_OUVREE_FIN = env.int('AUDIT_HEURE_OUVREE_FIN', default=19)
 
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',

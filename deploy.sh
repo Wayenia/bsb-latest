@@ -61,6 +61,12 @@ CELERY_RESULT_BACKEND=redis://suudu_redis:6379/0
 # --- URL publique (liens absolus des e-mails hors requete HTTP) ---
 SITE_URL=${SITE_URL_VAL}
 
+# --- Audit et surveillance ---
+# Destinataires du rapport d'inspection des connexions (separes par des virgules).
+# Vide : la commande envoyer_rapport_audit refuse de s'executer sans --a.
+AUDIT_DESTINATAIRES=
+AUDIT_PERIODE_JOURS=7
+
 # --- E-mail (SMTP) ---
 # Requis pour l'envoi du code de verification a 4 chiffres a la connexion du
 # personnel. EMAIL_HOST vide : les messages partent dans les logs du conteneur

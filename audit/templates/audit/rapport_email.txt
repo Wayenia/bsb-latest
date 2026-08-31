@@ -1,0 +1,24 @@
+INSPECTION DES CONNEXIONS — BURKINA SUUDU BAWDE
+Periode du {{ r.debut|date:"d/m/Y H:i" }} au {{ r.fin|date:"d/m/Y H:i" }} ({{ r.jours }} jour{{ r.jours|pluralize }})
+
+CHIFFRES
+  Evenements enregistres ....... {{ r.total }}
+  Connexions reussies .......... {{ r.connexions }}
+  Tentatives refusees .......... {{ r.echecs }} ({{ r.taux_echec }} % des tentatives)
+  Comptes vises par un echec ... {{ r.comptes_vises }}
+  dont identifiants inexistants  {{ r.echecs_compte_inconnu }}
+  Adresses a l'origine d'echecs  {{ r.sources_echec }}
+
+ALERTES : {{ r.alertes|length }}{% if r.alertes_critiques %} dont {{ r.alertes_critiques|length }} critique(s){% endif %}
+{% for a in r.alertes %}
+[{{ a.severite|upper }}] {{ a.motif }} — {{ a.cible }}
+   Constat  : {{ a.detail }}
+   Conduite : {{ a.conduite }}
+{% empty %}
+Aucune anomalie detectee sur la periode.
+{% endfor %}
+Le detail complet ({{ nb_evenements }} evenement(s)) et les graphiques figurent
+dans le classeur joint.
+
+--
+Message automatique. Ne pas repondre.
