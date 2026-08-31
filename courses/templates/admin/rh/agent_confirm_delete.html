@@ -1,37 +1,31 @@
 {% extends 'base.html' %}
 {% block title %}Supprimer un agent | BSB{% endblock %}
 {% block content %}
-<div class="min-h-[70vh] flex items-center justify-center py-10">
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 text-center max-w-md w-full mx-4">
+<div class="bo-shell max-w-xl">
+    {% include 'partials/messages.html' %}
 
-        <div class="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-5">
-            
+    <div class="bo-card">
+        <div class="bo-card-header">
+            <h1 class="bo-card-title">Confirmer la suppression</h1>
         </div>
+        <div class="bo-card-body">
+            <p class="text-sm text-gray-500">Vous êtes sur le point de supprimer l'agent :</p>
+            <p class="mt-1 text-lg font-semibold text-gray-900">{{ object.nom }} {{ object.prenom }}</p>
+            <p class="mt-1"><span class="bo-badge-neutral">{{ object.get_user_type_display }}</span></p>
 
-        <h2 class="text-xl font-black text-gray-900 mb-2">Confirmer la suppression</h2>
-        <p class="text-gray-500 text-sm mb-1">Vous êtes sur le point de supprimer l'agent :</p>
-        <p class="text-lg font-bold text-gray-800 mb-1">{{ object.nom }} {{ object.prenom }}</p>
-        <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600 mb-6">
-            {{ object.get_user_type_display }}
-        </span>
+            <div class="bo-note-danger mt-5">
+                Cette action est <strong>irréversible</strong>. Toutes les données associées
+                à ce compte seront perdues.
+            </div>
 
-        <div class="bg-red-50 border border-red-200 rounded-xl p-3 mb-8 text-sm text-red-700">
-            
-            Cette action est <strong>irréversible</strong>. Toutes les données associées seront perdues.
+            {% comment %}Annuler en premier et de meme poids : sur une confirmation
+            destructrice, la sortie de secours ne doit pas etre la cible secondaire.{% endcomment %}
+            <form method="POST" class="flex flex-wrap gap-3 mt-6">
+                {% csrf_token %}
+                <a href="{% url 'bsb_admin:agent_list' %}" class="bo-btn-secondary">Annuler</a>
+                <button type="submit" class="bo-btn-danger">Supprimer définitivement</button>
+            </form>
         </div>
-
-        <form method="POST" class="flex justify-center gap-3">
-            {% csrf_token %}
-            <a href="{% url 'bsb_admin:agent_list' %}"
-               class="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-all">
-                Annuler
-            </a>
-            <button type="submit"
-                    class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
-                Supprimer
-            </button>
-        </form>
-
     </div>
 </div>
 {% endblock %}
