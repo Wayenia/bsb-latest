@@ -78,6 +78,8 @@ urlpatterns = [
 
     # HISTORIQUE DES CONNEXIONS
     path('historique-connexions', views_admin.historique_connexion_list, name='historique_connexion_list'),
+    # Export CSV retire : le classeur Excel porte l'en-tete et les filtres appliques,
+    # un CSV brut circulait sans ce contexte.
     path('historique-connexions/export/<str:format>', views_admin.historique_connexion_export, name='historique_connexion_export'),
 
     #PROGRAMMING
@@ -145,6 +147,8 @@ urlpatterns = [
     path("equipe/membre/creer/",             views_equipe.membre_create,  name="membre_create"),
     path("equipe/membre/<int:pk>/modifier/", views_equipe.membre_update,  name="membre_update"),
     path("equipe/membre/<int:pk>/supprimer/", views_equipe.membre_delete, name="membre_delete"),
+    path("equipe/membres/import/modele",     views_admin.membre_import_template, name="membre_import_template"),
+    path("equipe/membres/import",            views_admin.membre_import,          name="membre_import"),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

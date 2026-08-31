@@ -131,7 +131,15 @@
 {% block body %}
 
     {% if not request.path|slice:"0:7" == "/admin/" %}
-        {% include 'partials/navbar.html' %}
+        {% comment %}Navigation du back-office : laterale ou horizontale selon
+        BO_NAVIGATION, expose par config.context_processors.navigation. Aucun
+        ecran ne code en dur l'une ou l'autre, la bascule est donc totale et
+        reversible par ./bascule_ui.sh.{% endcomment %}
+        {% if bo_sidebar %}
+            {% include 'partials/bo_sidebar.html' %}
+        {% else %}
+            {% include 'partials/navbar.html' %}
+        {% endif %}
 
         {% comment %} Messages Django globaux {% endcomment %}
         {% if messages %}
@@ -162,11 +170,11 @@
     {% endif %}
 
     {% comment %} Contenu principal {% endcomment %}
-    <main>
+    <main class="{% if bo_sidebar %}bo-avec-sidebar{% endif %}">
         {% block content %}{% endblock %}
     </main>
 
-    {% if not request.path|slice:"0:7" == "/admin/" %}
+    {% if not request.path|slice:"0:7" == "/admin/" and not bo_sidebar %}
         {% include 'partials/footer.html' %}
     {% endif %}
 

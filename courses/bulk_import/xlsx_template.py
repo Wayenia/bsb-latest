@@ -70,6 +70,17 @@ def build_template_workbook(spec):
     ws.freeze_panes = "A2"
     ws.row_dimensions[1].height = 32
 
+    # Lignes deja remplies : on livre l'existant plutot qu'une feuille vide, ce
+    # qui evite une ressaisie integrale et montre le format attendu sur de
+    # vraies donnees. La base n'est pas modifiee par ce telechargement.
+    if spec.prefill_fn:
+        for ligne_idx, valeurs in enumerate(spec.prefill_fn(), start=2):
+            for col_idx, col in enumerate(spec.columns, start=1):
+                valeur = valeurs.get(col.field_name)
+                if isinstance(valeur, bool):
+                    valeur = "oui" if valeur else "non"
+                ws.cell(row=ligne_idx, column=col_idx, value=valeur)
+
     instructions = wb.create_sheet("Instructions")
     or_fill = PatternFill("solid", fgColor=OR)
     entetes = ["Colonne", "Obligatoire", "Type", "Valeurs autorisées / format"]

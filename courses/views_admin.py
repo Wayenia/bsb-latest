@@ -3,7 +3,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.conf import settings
 import qrcode
 import csv
@@ -924,21 +924,10 @@ def historique_connexion_export(request, format):
 
     headers = ['Date connexion/déconnexion', 'Utilisateur', "Nom d'utilisateur", 'Type', 'Événement', 'Centre', 'Adresse IP']
 
-    if format == 'csv':
-        response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-        response['Content-Disposition'] = 'attachment; filename="historique_connexions.csv"'
-        writer = csv.writer(response)
-        writer.writerow(["Historique des connexions — BSB"])
-        writer.writerow([f"Généré le {timezone.now().strftime('%d/%m/%Y %H:%M')}"])
-        writer.writerow([f"Filtres : {resume_filtres}"])
-        writer.writerow([f"{len(rows)} événement(s)"])
-        writer.writerow([])
-        dict_writer = csv.DictWriter(response, fieldnames=headers)
-        dict_writer.writeheader()
-        dict_writer.writerows(rows)
-        return response
+    if format not in ('xlsx', 'pdf'):
+        raise Http404("Format d'export inconnu.")
 
-    elif format == 'xlsx':
+    if format == 'xlsx':
         import openpyxl
         from openpyxl.styles import Font, PatternFill, Alignment
         from openpyxl.cell.cell import MergedCell
@@ -1617,3 +1606,17 @@ def annee_delete(request, id):
         messages.success(request, f'Année "{libelle}" supprimée avec succès!')
         return redirect('bsb_admin:annee_list')
     return render(request, 'admin/annee/annee_confirm_delete.html', {'object': annee})
+
+# == IMPORT DES MEMBRES DE L'EQUIPE ============================================
+@require_permission('courses.gerer_equipe')
+def membre_import_template(request):
+    from .bulk_import_registry import SPEC_MEMBRE_EQUIPE
+    from .bulk_import.views_helpers import render_import_template
+    return render_import_template(request, SPEC_MEMBRE_EQUIPE)
+
+
+@require_permission('courses.gerer_equipe')
+def membre_import(request):
+    from .bulk_import_registry import SPEC_MEMBRE_EQUIPE
+    from .bulk_import.views_helpers import handle_import_upload
+    return handle_import_upload(request, SPEC_MEMBRE_EQUIPE)

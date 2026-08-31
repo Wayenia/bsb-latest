@@ -277,3 +277,64 @@
   .bo-note-warning { @apply bo-note border-l-amber-500 bg-amber-50 text-amber-900; }
   .bo-note-danger  { @apply bo-note border-l-red-500 bg-red-50 text-red-900; }
 }
+
+/* ==========================================================================
+   Navigation laterale du back-office
+   --------------------------------------------------------------------------
+   Concue mobile d'abord : sur petit ecran la barre est un tiroir hors champ,
+   ouvert par le bouton de la barre superieure ; a partir de lg elle est
+   installee a demeure et le contenu se decale. Les apprenants consultent la
+   plateforme au telephone, aucun ecran ne peut supposer une largeur de bureau.
+   ========================================================================== */
+@layer components {
+
+  .bo-topbar {
+    @apply lg:hidden sticky top-0 z-30 flex items-center gap-3 h-14 px-4
+           bg-white border-b border-gray-200;
+  }
+  .bo-burger {
+    @apply inline-flex items-center justify-center w-10 h-10 -ml-2 rounded-lg
+           text-gray-600 hover:bg-gray-100
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500;
+  }
+
+  .bo-voile {
+    @apply lg:hidden fixed inset-0 z-40 bg-gray-900/50 transition-opacity;
+  }
+
+  .bo-sidebar {
+    @apply fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] flex flex-col
+           bg-gray-800 text-gray-300 overflow-y-auto
+           transition-transform duration-200 -translate-x-full
+           lg:translate-x-0 lg:w-64;
+  }
+  .bo-sidebar-ouverte { @apply translate-x-0; }
+
+  .bo-sidebar-entete {
+    @apply flex items-center gap-3 px-4 h-16 shrink-0 border-b border-gray-700;
+  }
+  .bo-sidebar-marque { @apply text-white font-bold tracking-tight leading-none; }
+  .bo-sidebar-sous    { @apply text-[11px] uppercase tracking-wider text-gray-400; }
+
+  .bo-sidebar-nav    { @apply flex-1 px-2 py-3; }
+  .bo-sidebar-groupe { @apply mb-4; }
+  .bo-sidebar-titre  {
+    @apply px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500;
+  }
+  .bo-sidebar-lien {
+    @apply flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+           text-gray-300 hover:bg-gray-700 hover:text-white transition-colors
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400;
+  }
+  /* L'ecran courant est marque par un liseré : sur une liste longue, la
+     couleur seule se repere mal. */
+  .bo-sidebar-lien-actif {
+    @apply bg-gray-900 text-white font-medium border-l-2 border-l-amber-500 pl-[10px];
+  }
+
+  .bo-sidebar-pied { @apply shrink-0 border-t border-gray-700 p-3; }
+  .bo-sidebar-compte { @apply px-3 pb-2 text-xs text-gray-400 truncate; }
+
+  /* Decalage du contenu quand la barre est installee a demeure. */
+  .bo-avec-sidebar { @apply lg:ml-64; }
+}

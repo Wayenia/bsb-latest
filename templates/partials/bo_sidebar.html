@@ -1,0 +1,195 @@
+{% load static %}
+{% comment %}Navigation laterale du back-office.
+
+Les groupes et les intitules reprennent a l'identique les six sections du
+tableau de bord, que les agents connaissent deja : on change la forme de la
+navigation, pas le vocabulaire ni le classement. Les conditions de permission
+sont celles du tableau de bord, a la ligne pres — un agent ne voit donc ni plus
+ni moins qu'avant.
+
+Mobile d'abord : tiroir hors champ ouvert par le bouton de la barre superieure,
+installe a demeure a partir de lg.{% endcomment %}
+
+<div id="bo-voile" class="bo-voile hidden"></div>
+
+<aside id="bo-sidebar" class="bo-sidebar" aria-label="Navigation du back-office">
+    <div class="bo-sidebar-entete">
+        <img src="{% static 'images/logo.png' %}" alt="" class="h-9 w-auto object-contain">
+        <div class="min-w-0">
+            <div class="bo-sidebar-marque">BSB</div>
+            <div class="bo-sidebar-sous">Administration</div>
+        </div>
+    </div>
+
+    <nav class="bo-sidebar-nav">
+        <div class="bo-sidebar-groupe">
+            <a href="{% url 'bsb_admin:admin_dashboard' %}"
+               class="bo-sidebar-lien {% if request.path == '/bsb/dashboard' %}bo-sidebar-lien-actif{% endif %}">
+                Tableau de bord
+            </a>
+        </div>
+
+        {% if perms.courses.voir_statistiques or perms.courses.gerer_statistiques_reelles or perms.courses.voir_inscriptions or perms.courses.gerer_paiements or perms.courses.encaisser_paiement %}
+        <div class="bo-sidebar-groupe">
+            <p class="bo-sidebar-titre">Pilotage</p>
+            {% if perms.courses.voir_statistiques %}
+            <a href="{% url 'courses:statistiques' %}" class="bo-sidebar-lien">Statistiques</a>
+            {% endif %}
+            {% if perms.courses.gerer_statistiques_reelles %}
+            <a href="{% url 'courses:stats_reel_dashboard' %}" class="bo-sidebar-lien">Bilan des effectifs formés</a>
+            {% endif %}
+            {% if perms.courses.voir_inscriptions %}
+            <a href="{% url 'bsb_admin:subscription_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/subscriptions' in request.path %}bo-sidebar-lien-actif{% endif %}">Inscriptions</a>
+            {% endif %}
+            {% if perms.courses.gerer_paiements or perms.courses.encaisser_paiement %}
+            <a href="{% url 'courses:paiement_list' %}" class="bo-sidebar-lien">Encaissements</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if perms.courses.gerer_metiers or perms.courses.gerer_programmations or perms.courses.gerer_centres or perms.courses.gerer_modules %}
+        <div class="bo-sidebar-groupe">
+            <p class="bo-sidebar-titre">Offre de formation</p>
+            {% if perms.courses.gerer_modules %}
+            <a href="{% url 'bsb_admin:module_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/modules' in request.path %}bo-sidebar-lien-actif{% endif %}">Modules et cours</a>
+            {% endif %}
+            {% if perms.courses.gerer_metiers %}
+            <a href="{% url 'bsb_admin:field_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/filiere' in request.path %}bo-sidebar-lien-actif{% endif %}">Métiers</a>
+            {% endif %}
+            {% if perms.courses.gerer_programmations %}
+            <a href="{% url 'bsb_admin:programming_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/programmings' in request.path %}bo-sidebar-lien-actif{% endif %}">Programmations</a>
+            {% endif %}
+            {% if perms.courses.gerer_centres %}
+            <a href="{% url 'courses:center_list' %}" class="bo-sidebar-lien">Centres</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if perms.courses.gerer_directions or perms.courses.gerer_regions %}
+        <div class="bo-sidebar-groupe">
+            <p class="bo-sidebar-titre">Organisation territoriale</p>
+            {% if perms.courses.gerer_directions %}
+            <a href="{% url 'bsb_admin:direction_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/directions' in request.path %}bo-sidebar-lien-actif{% endif %}">Directions inter-régionales</a>
+            {% endif %}
+            {% if perms.courses.gerer_regions %}
+            <a href="{% url 'bsb_admin:region_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/regions' in request.path %}bo-sidebar-lien-actif{% endif %}">Régions et provinces</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if perms.accounts.gerer_agents or perms.accounts.gerer_eleves or perms.accounts.gerer_permissions or perms.accounts.voir_historique_connexion %}
+        <div class="bo-sidebar-groupe">
+            <p class="bo-sidebar-titre">Ressources humaines</p>
+            {% if perms.accounts.gerer_agents %}
+            <a href="{% url 'bsb_admin:agent_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/rh/agents' in request.path %}bo-sidebar-lien-actif{% endif %}">Agents et formateurs</a>
+            {% endif %}
+            {% if perms.accounts.gerer_eleves %}
+            <a href="{% url 'bsb_admin:eleve_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/eleves' in request.path %}bo-sidebar-lien-actif{% endif %}">Apprenants</a>
+            {% endif %}
+            {% if perms.accounts.gerer_permissions %}
+            <a href="{% url 'bsb_admin:permissions_matrix' %}"
+               class="bo-sidebar-lien {% if '/bsb/rh/permissions' in request.path %}bo-sidebar-lien-actif{% endif %}">Permissions</a>
+            {% endif %}
+            {% if perms.accounts.voir_historique_connexion %}
+            <a href="{% url 'bsb_admin:historique_connexion_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/historique-connexions' in request.path %}bo-sidebar-lien-actif{% endif %}">Historique des connexions</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if perms.accounts.gerer_facturation or perms.accounts.encaisser_prestation %}
+        <div class="bo-sidebar-groupe">
+            <p class="bo-sidebar-titre">Facturation et prestation</p>
+            {% if perms.accounts.gerer_facturation %}
+            <a href="{% url 'accounts:prestation_list' %}" class="bo-sidebar-lien">Prestations</a>
+            <a href="{% url 'accounts:facture_proforma_list' %}" class="bo-sidebar-lien">Factures proforma</a>
+            {% endif %}
+            {% if perms.accounts.gerer_facturation or perms.accounts.encaisser_prestation %}
+            <a href="{% url 'accounts:facture_list' %}" class="bo-sidebar-lien">Encaissement</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if perms.actualites.gerer_actualites or perms.actualites.gerer_newsletter %}
+        <div class="bo-sidebar-groupe">
+            <p class="bo-sidebar-titre">Communication</p>
+            {% if perms.actualites.gerer_actualites %}
+            <a href="{% url 'bsb_actualites:actualite_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/actualites/' in request.path and 'abonnes' not in request.path %}bo-sidebar-lien-actif{% endif %}">Actualités</a>
+            {% endif %}
+            {% if perms.actualites.gerer_newsletter %}
+            <a href="{% url 'bsb_actualites:abonne_list' %}"
+               class="bo-sidebar-lien {% if 'abonnes' in request.path %}bo-sidebar-lien-actif{% endif %}">Abonnés à la lettre</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if perms.courses.gerer_frais or perms.courses.gerer_annees or perms.courses.gerer_equipe %}
+        <div class="bo-sidebar-groupe">
+            <p class="bo-sidebar-titre">Paramétrage</p>
+            {% if perms.courses.gerer_equipe %}
+            <a href="{% url 'bsb_admin:equipe_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/equipe' in request.path %}bo-sidebar-lien-actif{% endif %}">Équipe</a>
+            {% endif %}
+            {% if perms.courses.gerer_frais %}
+            <a href="{% url 'bsb_admin:type_frais_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/type-frais' in request.path %}bo-sidebar-lien-actif{% endif %}">Types de frais</a>
+            {% endif %}
+            {% if perms.courses.gerer_annees %}
+            <a href="{% url 'bsb_admin:annee_list' %}"
+               class="bo-sidebar-lien {% if '/bsb/annees' in request.path %}bo-sidebar-lien-actif{% endif %}">Années de formation</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </nav>
+
+    <div class="bo-sidebar-pied">
+        <p class="bo-sidebar-compte">{{ user.prenom }} {{ user.nom }} — {{ user.get_user_type_display }}</p>
+        <a href="{% url 'courses:home' %}" class="bo-sidebar-lien">Site public</a>
+        <a href="{% url 'accounts:mon_compte' %}" class="bo-sidebar-lien">Mon profil</a>
+        <a href="{% url 'accounts:logout' %}" class="bo-sidebar-lien">Se déconnecter</a>
+    </div>
+</aside>
+
+<div class="bo-topbar">
+    <button type="button" id="bo-burger" class="bo-burger"
+            aria-controls="bo-sidebar" aria-expanded="false" aria-label="Ouvrir le menu">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+    </button>
+    <span class="font-semibold text-gray-900">Administration BSB</span>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+    var barre = document.getElementById('bo-sidebar');
+    var voile = document.getElementById('bo-voile');
+    var bouton = document.getElementById('bo-burger');
+    if (!barre || !voile || !bouton) return;
+
+    function ouvrir(oui) {
+        barre.classList.toggle('bo-sidebar-ouverte', oui);
+        voile.classList.toggle('hidden', !oui);
+        bouton.setAttribute('aria-expanded', oui ? 'true' : 'false');
+        // Empeche le defilement de la page derriere le tiroir ouvert.
+        document.body.classList.toggle('overflow-hidden', oui);
+    }
+
+    bouton.addEventListener('click', function () {
+        ouvrir(!barre.classList.contains('bo-sidebar-ouverte'));
+    });
+    voile.addEventListener('click', function () { ouvrir(false); });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') ouvrir(false);
+    });
+})();
+</script>

@@ -1466,3 +1466,17 @@ class MembreEquipeForm(forms.ModelForm):
 
     def clean_photo(self):
         return _valider_photo(self.cleaned_data.get('photo'))
+
+class MembreEquipeImportForm(MembreEquipeForm):
+    """Variante d'import : identique au formulaire d'ecran, sans la photo.
+
+    Une image ne se transporte pas dans une cellule Excel, et `photo` est
+    obligatoire sur le modele : sans cette variante, toute ligne importee
+    echouerait a la validation. Le membre est donc cree sans photo, qu'on
+    depose ensuite depuis l'ecran de modification. Toutes les autres regles
+    restent celles du formulaire d'ecran, dont il herite.
+    """
+
+    class Meta(MembreEquipeForm.Meta):
+        fields = ['full_name', 'position', 'description', 'order', 'is_active']
+

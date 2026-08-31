@@ -13,12 +13,13 @@ from accounts.models import Utilisateur
 
 from courses.models import (
     AnneeScolaire, CentreEtFiliere, CentreFormation, Cours, Direction_reg,
-    Filiere, Frais, Module, Province, Region, TITRE_PROFESSIONNEL_CHOICE,
+    Filiere, Frais, Membre, Module, Province, Region, TITRE_PROFESSIONNEL_CHOICE,
     TYPE_FORMATION_CHOICE, TypeFrais,
 )
 from courses.forms import (
     AgentForm, AnneeScolaireForm, CentreFormationForm, CoursForm,
-    DirectionRegForm, FiliereForm, ModuleForm, TypeFraisForm, USER_TYPE_CHOICES,
+    DirectionRegForm, FiliereForm, MembreEquipeImportForm, ModuleForm, TypeFraisForm,
+    USER_TYPE_CHOICES,
 )
 
 from .bulk_import.specs import ColumnSpec, ImportSpec
@@ -469,4 +470,59 @@ SPEC_PROGRAMMATION = ImportSpec(
     template_url_name="programming_import_template",
     upload_url_name="programming_import",
     list_url_name="programming_list",
+)
+
+
+# ── Membre de l'equipe (page publique « A propos ») ──────────────────────────
+# Le modele telecharge est pre-rempli avec les membres deja enregistres : on
+# corrige et on complete un existant plutot que de tout ressaisir, et le format
+# attendu se lit sur de vraies donnees. La photo reste hors import, un fichier
+# ne se transportant pas dans une cellule — elle se depose ecran par ecran.
+def _membres_existants():
+    return [
+        {
+            'full_name': m.full_name,
+            'position': m.position,
+            'description': m.description,
+            'order': m.order,
+            'is_active': m.is_active,
+        }
+        for m in Membre.objects.all().order_by('order', 'full_name')
+    ]
+
+
+def _membre_existant(resolved):
+    """Le nom complet fait office de cle : une ligne portant un nom deja
+    enregistre met la fiche a jour au lieu d'echouer sur l'unicite. C'est ce
+    qui rend le modele pre-rempli exploitable — on le renvoie corrige."""
+    nom = (resolved.get('full_name') or '').strip()
+    return Membre.objects.filter(full_name__iexact=nom).first() if nom else None
+
+
+SPEC_MEMBRE_EQUIPE = ImportSpec(
+    slug="membre_equipe",
+    verbose_name="Membre de l'équipe",
+    model=Membre,
+    mode="form",
+    form_class=MembreEquipeImportForm,
+    columns=[
+        ColumnSpec("Nom complet", "full_name", required=True, kind="text",
+                   help_text="Doit être unique : un nom déjà présent fait échouer la ligne."),
+        ColumnSpec("Fonction", "position", required=True, kind="text",
+                   help_text="Intitulé affiché sous le nom sur la page « À propos »."),
+        ColumnSpec("Description", "description", required=True, kind="text",
+                   help_text="Obligatoire : ce texte accompagne le membre sur la page publique."),
+        ColumnSpec("Ordre d'affichage", "order", required=False, kind="int",
+                   help_text="Nombre entier croissant. À valeur égale, le classement se fait par date de création."),
+        ColumnSpec("Actif", "is_active", required=False, kind="bool",
+                   help_text="oui / non. Un membre inactif reste enregistré mais disparaît de la page publique."),
+    ],
+    prefill_fn=_membres_existants,
+    instance_lookup_fn=_membre_existant,
+    sheet_name="Membres",
+    intro="Une ligne par membre de l'administration affiché sur la page publique « À propos ».",
+    url_namespace="bsb_admin",
+    template_url_name="membre_import_template",
+    upload_url_name="membre_import",
+    list_url_name="equipe_list",
 )

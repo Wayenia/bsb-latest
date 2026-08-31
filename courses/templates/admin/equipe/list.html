@@ -39,7 +39,11 @@
                 Membres de l'administration
                 <span class="ml-1 font-normal text-gray-500">({{ membres|length }})</span>
             </h2>
-            <a href="{% url 'bsb_admin:membre_create' %}" class="bo-btn-primary bo-btn-sm">Ajouter</a>
+            <div class="bo-actions">
+                {% url 'bsb_admin:membre_import' as membre_import_url %}
+                {% include 'partials/import_export_buttons.html' with upload_url=membre_import_url label="Importer Excel" %}
+                <a href="{% url 'bsb_admin:membre_create' %}" class="bo-btn-primary bo-btn-sm">Ajouter</a>
+            </div>
         </div>
         {% if membres %}
         {% for membre in membres %}

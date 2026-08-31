@@ -127,7 +127,9 @@
                 </details>
 
                 <div class="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-bsb-muted">
-                    <span>{{ actu.auteur.get_full_name|default:actu.auteur.username|default:"—" }}</span>
+                    {% comment %}auteur est SET_NULL : passe en argument de filtre, un auteur
+                    supprime leve VariableDoesNotExist au lieu d'etre ignore silencieusement.{% endcomment %}
+                    <span>{% if actu.auteur %}{{ actu.auteur.get_full_name|default:actu.auteur.username }}{% else %}—{% endif %}</span>
                     <span>{{ actu.date_publication|date:"d/m/Y"|default:"Non publiée" }}</span>
                 </div>
                 {% if actu.date_fin_publication %}

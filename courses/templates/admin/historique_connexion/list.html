@@ -12,7 +12,6 @@
             </p>
         </div>
         <div class="bo-actions">
-            <a href="{% url 'bsb_admin:historique_connexion_export' 'csv' %}?{{ request.GET.urlencode }}" class="bo-btn-secondary bo-btn-sm">Exporter CSV</a>
             <a href="{% url 'bsb_admin:historique_connexion_export' 'xlsx' %}?{{ request.GET.urlencode }}" class="bo-btn-secondary bo-btn-sm">Exporter Excel</a>
             <a href="{% url 'bsb_admin:historique_connexion_export' 'pdf' %}?{{ request.GET.urlencode }}" class="bo-btn-secondary bo-btn-sm">Exporter PDF</a>
         </div>
@@ -72,13 +71,17 @@
                 <option value="autre" {% if type_utilisateur == "autre" %}selected{% endif %}>Agent</option>
             </select>
         </div>
+        {% comment %}Champ date natif : indispensable au telephone, ou il ouvre le
+        selecteur du systeme. Son affichage suit la langue du navigateur ; lang="fr"
+        oriente ceux qui la respectent, et le repere jj/mm/aaaa leve le doute pour
+        les autres.{% endcomment %}
         <div class="bo-filter">
-            <label for="f-debut" class="bo-label">Du</label>
-            <input id="f-debut" type="date" name="date_debut" value="{{ date_debut }}" class="bo-input">
+            <label for="f-debut" class="bo-label">Du <span class="font-normal text-gray-400">(jj/mm/aaaa)</span></label>
+            <input id="f-debut" type="date" lang="fr" name="date_debut" value="{{ date_debut }}" class="bo-input">
         </div>
         <div class="bo-filter">
-            <label for="f-fin" class="bo-label">Au</label>
-            <input id="f-fin" type="date" name="date_fin" value="{{ date_fin }}" class="bo-input">
+            <label for="f-fin" class="bo-label">Au <span class="font-normal text-gray-400">(jj/mm/aaaa)</span></label>
+            <input id="f-fin" type="date" lang="fr" name="date_fin" value="{{ date_fin }}" class="bo-input">
         </div>
         <div class="bo-actions">
             <button type="submit" class="bo-btn-primary">Filtrer</button>

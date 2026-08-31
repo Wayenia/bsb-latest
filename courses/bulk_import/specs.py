@@ -46,6 +46,15 @@ class ImportSpec:
     label_fn: Optional[Callable[[Any], str]] = None
     sheet_name: str = "Import"
     intro: str = ""
+    # Retourne une liste de dicts {field_name: valeur} ecrits sous les en-tetes
+    # du modele telecharge. Sert a livrer un fichier deja rempli des donnees
+    # existantes, que l'on corrige plutot que de tout ressaisir.
+    prefill_fn: Optional[Callable[[], list]] = None
+    # (resolved) -> instance existante | None. Fourni, une ligne qui designe un
+    # enregistrement deja present le met a jour au lieu d'echouer sur une
+    # contrainte d'unicite. Indispensable des lors que le modele telecharge est
+    # pre-rempli : on renvoie le fichier corrige, pas un fichier vierge.
+    instance_lookup_fn: Optional[Callable[[dict], Any]] = None
 
     # Résolution des URLs pour les liens générés par les templates génériques
     # (bouton "Télécharger le modèle", "Retour à la liste"...).

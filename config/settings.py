@@ -82,6 +82,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.csp',
+                'config.context_processors.navigation',
             ],
         },
     },
@@ -256,6 +257,11 @@ DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@burkinasuudu.com
 # Liens absolus des e-mails envoyes hors requete HTTP ; vide, le repli produit
 # un lien en http:// (README 9).
 SITE_URL = env('SITE_URL', default='')
+
+# Navigation du back-office : 'sidebar' (nouvelle) ou 'navbar' (ancienne barre
+# horizontale). Bascule reversible a tout moment par ./bascule_ui.sh, sans
+# modification de code — aucun gabarit ne code en dur l'une ou l'autre.
+BO_NAVIGATION = env('BO_NAVIGATION', default='sidebar')
 
 # --- Audit et surveillance (application `audit`) ---
 # Seuils de declenchement des alertes du rapport d'inspection. Les relever

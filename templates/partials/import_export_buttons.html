@@ -1,5 +1,3 @@
 {# Bouton « Importer Excel » pour une page de liste. Parametres : upload_url, label (facultatif). #}
-<a href="{{ upload_url }}"
-   class="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow-500 text-white text-sm font-bold rounded-lg hover:bg-yellow-600 transition-all shadow-sm">
-  {{ label|default:"Importer Excel" }}
-</a>
+{# Action secondaire : l'action principale de la page reste la creation. #}
+<a href="{{ upload_url }}" class="bo-btn-secondary bo-btn-sm">{{ label|default:"Importer Excel" }}</a>

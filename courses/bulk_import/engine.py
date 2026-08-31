@@ -195,7 +195,11 @@ def run_import(spec, uploaded_file):
                     if not ok:
                         raise RowValidationError(errs)
                 else:
-                    form = spec.form_class(data=to_querydict(resolved, spec.columns))
+                    # Instance existante : la ligne met a jour au lieu de creer.
+                    existant = (spec.instance_lookup_fn(resolved)
+                                if spec.instance_lookup_fn else None)
+                    form = spec.form_class(data=to_querydict(resolved, spec.columns),
+                                           instance=existant)
                     if not form.is_valid():
                         errs = []
                         for field_name, field_errors in form.errors.items():
@@ -205,6 +209,8 @@ def run_import(spec, uploaded_file):
                     obj = form.save()
 
                 extra = spec.post_save_hook(obj, resolved) if spec.post_save_hook else None
+                if spec.mode != "manual" and existant is not None:
+                    extra = dict(extra or {}, mise_a_jour=True)
                 label = spec.label_fn(obj) if spec.label_fn else str(obj)
             report.created.append(RowSuccess(row_number, label, extra))
         except RowValidationError as e:
