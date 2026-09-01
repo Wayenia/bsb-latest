@@ -25,14 +25,15 @@
     {% empty %}<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-semibold">Aucun domaine autorisé</span>{% endfor %}
   </div>
 
-  <div id="fil" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 min-h-[320px] space-y-3 mb-4"></div>
+  <div id="fil" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 h-[55vh] overflow-y-auto space-y-3 mb-4"></div>
 
   <form id="form-ia" class="flex items-end gap-3">
     {% csrf_token %}
     <textarea id="question" rows="2" placeholder="Posez votre question…"
       class="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold resize-none"></textarea>
     <button type="submit" id="envoyer"
-      class="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-bsb-red to-bsb-dark hover:brightness-110 transition-all">
+      class="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white bg-bsb-ink hover:bg-slate-700 transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
       Envoyer
     </button>
   </form>
@@ -48,7 +49,7 @@
   function bulle(texte, moi) {
     const d = document.createElement('div');
     d.className = moi
-      ? 'ml-auto max-w-[85%] bg-bsb-red text-white rounded-2xl px-4 py-2.5 text-sm'
+      ? 'ml-auto max-w-[85%] bg-bsb-ink text-white rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap'
       : 'mr-auto max-w-[85%] bg-slate-100 text-bsb-ink rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap';
     d.textContent = texte;
     fil.appendChild(d);

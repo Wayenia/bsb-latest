@@ -369,6 +369,50 @@
     });
     </script>
 
+    {% if assistant_dispo %}
+    {% comment %} Bouton flottant de l'assistant : present partout, deplacable, sans masquer le contenu. {% endcomment %}
+    <a id="fab-assistant" href="{% url 'assistant:accueil' %}" title="Assistant IA — glissez pour déplacer"
+       class="fixed z-50 bottom-6 right-6 w-14 h-14 rounded-full bg-bsb-ink text-white shadow-lg hover:shadow-xl flex items-center justify-center cursor-grab select-none">
+      <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 01-13.5 7.8L3 21l1.2-4.5A9 9 0 1121 12z"/></svg>
+    </a>
+    <script nonce="{{ csp_nonce }}">
+    (function () {
+      var fab = document.getElementById('fab-assistant');
+      if (!fab) return;
+      function place(x, y) {
+        x = Math.max(8, Math.min(x, window.innerWidth - fab.offsetWidth - 8));
+        y = Math.max(8, Math.min(y, window.innerHeight - fab.offsetHeight - 8));
+        fab.style.left = x + 'px'; fab.style.top = y + 'px';
+        fab.style.right = 'auto'; fab.style.bottom = 'auto';
+      }
+      try {
+        var pos = JSON.parse(localStorage.getItem('fabAssistantPos') || 'null');
+        if (pos) place(pos.x, pos.y);
+      } catch (e) {}
+      var drag = false, moved = false, sx, sy, ox, oy;
+      fab.addEventListener('pointerdown', function (e) {
+        drag = true; moved = false; sx = e.clientX; sy = e.clientY;
+        var r = fab.getBoundingClientRect(); ox = r.left; oy = r.top;
+        fab.setPointerCapture(e.pointerId);
+      });
+      fab.addEventListener('pointermove', function (e) {
+        if (!drag) return;
+        var dx = e.clientX - sx, dy = e.clientY - sy;
+        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+        place(ox + dx, oy + dy);
+      });
+      fab.addEventListener('pointerup', function () {
+        drag = false;
+        if (moved) {
+          var r = fab.getBoundingClientRect();
+          try { localStorage.setItem('fabAssistantPos', JSON.stringify({ x: r.left, y: r.top })); } catch (e) {}
+        }
+      });
+      fab.addEventListener('click', function (e) { if (moved) e.preventDefault(); });
+    })();
+    </script>
+    {% endif %}
+
 {% endblock body %}
 </body>
 </html>

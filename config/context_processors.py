@@ -41,16 +41,27 @@ def _est_agent(utilisateur):
     return getattr(utilisateur, 'user_type', 'eleve') != 'eleve'
 
 
+def _assistant_dispo(utilisateur):
+    # Bouton flottant de l'assistant : module actif + utilisateur autorise.
+    return (
+        getattr(settings, 'AI_MODULE', 'off') == 'on'
+        and getattr(utilisateur, 'is_authenticated', False)
+        and utilisateur.has_perm('assistant.utiliser_assistant_ia')
+    )
+
+
 def navigation(request):
     utilisateur = getattr(request, 'user', None)
+    dispo = _assistant_dispo(utilisateur)
     actif = (
         getattr(settings, 'BO_NAVIGATION', 'sidebar') == 'sidebar'
         and _est_agent(utilisateur)
         and request.path.startswith(PREFIXES_ESPACE_AGENT)
     )
     if not actif:
-        return {'bo_sidebar': False}
+        return {'bo_sidebar': False, 'assistant_dispo': dispo}
     return {
         'bo_sidebar': True,
         'bo_menu': construire_menu(utilisateur, request.path),
+        'assistant_dispo': dispo,
     }
