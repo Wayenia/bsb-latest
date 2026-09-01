@@ -99,3 +99,69 @@ class SeparationLoginAdmin(TestCase):
 def reverse_lazy_verification():
     from django.urls import reverse
     return reverse('accounts:login_otp')
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+                   SESSION_COOKIE_SECURE=False)
+class DispenseOtpAdmin(TestCase):
+    """Dispense d'OTP réglable de l'espace d'administration (5 h par défaut)."""
+
+    def setUp(self):
+        self.admin = Utilisateur.objects.create_user(
+            username='chef', password='Passe#2026', nom='C', prenom='H',
+            email='chef@example.invalid', user_type='admin')
+
+    def _valider_otp(self):
+        from django.contrib.auth.hashers import make_password
+        session = self.client.session
+        donnees = session[otp.CLE_SESSION]
+        donnees['code_hache'] = make_password('1234')
+        session[otp.CLE_SESSION] = donnees
+        session.save()
+        return self.client.post('/accounts/login/verification', {'code': '1234'})
+
+    def test_defaut_cinq_heures(self):
+        from accounts import dispense_admin
+        self.assertEqual(dispense_admin.minutes_reglees(self.admin),
+                         dispense_admin.DEFAUT_MINUTES)
+
+    def test_reglage_du_jour_puis_reset_le_lendemain(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        from accounts import dispense_admin
+        self.admin.admin_otp_grace_minutes = 720
+        self.admin.admin_otp_grace_jour = timezone.localdate()
+        self.assertEqual(dispense_admin.minutes_reglees(self.admin), 720)
+        self.admin.admin_otp_grace_jour = timezone.localdate() - timedelta(days=1)
+        self.assertEqual(dispense_admin.minutes_reglees(self.admin),
+                         dispense_admin.DEFAUT_MINUTES)
+
+    def test_reglage_plafonne_a_24h(self):
+        self.client.force_login(self.admin)
+        self.client.post('/accounts/mon-compte/dispense', {'minutes': '5000'})
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.admin_otp_grace_minutes, 1440)
+
+    def test_dispense_evite_l_otp_a_la_connexion_suivante(self):
+        from accounts import dispense_admin
+        chemin = CHEMIN
+        # 1re connexion : OTP puis dispense posée.
+        self.client.post(chemin, {'identifiant': 'chef', 'password': 'Passe#2026'})
+        self._valider_otp()
+        self.assertIn(dispense_admin.COOKIE, self.client.cookies)
+        jeton = self.client.cookies[dispense_admin.COOKIE].value
+        # 2e connexion avec la dispense : aucun code envoyé.
+        c2 = self.client_class()
+        c2.cookies[dispense_admin.COOKIE] = jeton
+        mail.outbox = []
+        c2.post(chemin, {'identifiant': 'chef', 'password': 'Passe#2026'})
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertIn('_auth_user_id', c2.session)
+
+    def test_agent_n_a_pas_le_reglage(self):
+        agent = Utilisateur.objects.create_user(
+            username='caisse', password='Passe#2026', nom='A', prenom='G',
+            email='caisse@example.invalid', user_type='caissier')
+        self.client.force_login(agent)
+        page = self.client.get('/accounts/mon-compte')
+        self.assertNotContains(page, "Connexion à l'administration")

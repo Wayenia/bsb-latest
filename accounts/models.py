@@ -50,7 +50,16 @@ class Utilisateur(AbstractUser):
         validators=[FileExtensionValidator(["jpg", "jpeg", "png", "webp"])],
         verbose_name="Photo de profil",
         help_text="JPG, PNG ou WEBP, 2 Mo maximum")
-    
+
+    # Dispense d'OTP de l'espace d'administration technique : duree, en minutes,
+    # pendant laquelle le code n'est pas redemande apres une verification reussie.
+    # Reglable par l'admin pour lui-meme (defaut 5 h, plafond 24 h) et remise au
+    # defaut chaque jour (le champ jour porte la date du dernier reglage). README 9.2.
+    admin_otp_grace_minutes = models.PositiveSmallIntegerField(
+        default=300, verbose_name="Dispense OTP (minutes)")
+    admin_otp_grace_jour = models.DateField(
+        null=True, blank=True, verbose_name="Jour du dernier reglage de dispense")
+
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
 

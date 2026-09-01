@@ -14,6 +14,7 @@ urlpatterns = [
     path('mon-compte', views.mon_compte, name='mon_compte'),
     path('mon-profil', views.mon_profil, name='mon_profil'),
     path('mon-profil/mot-de-passe', views.changer_mot_de_passe, name='changer_mot_de_passe'),
+    path('mon-compte/dispense', views.reglage_dispense_admin, name='reglage_dispense_admin'),
 
     # ── Module Facturation et Prestation (DAF) ─────────────────────────────
     path('daf/dashboard', views.daf_dashboard, name='daf_dashboard'),

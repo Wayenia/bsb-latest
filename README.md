@@ -546,7 +546,13 @@ ces explications.
   (défaut) désactive ce filtrage. Le **Directeur Général** fait exception et peut
   se connecter par les deux portes. L'obscurité du chemin n'est qu'un filtre de
   bruit ; la sécurité réelle tient à la fermeture de la page publique, au code
-  e-mail systématique et, le cas échéant, au filtrage par adresse.
+  e-mail et, le cas échéant, au filtrage par adresse.
+  Le code n'est pas exigé à *chaque* connexion : après une vérification
+  réussie, l'admin bénéficie d'une **dispense** de 5 h par défaut sur son
+  appareil, qu'il peut porter jusqu'à 24 h **pour la journée** depuis « mon
+  compte » (réglage propre à lui seul). La dispense ne franchit jamais minuit
+  et le réglage revient à 5 h chaque jour. Elle repose sur un cookie signé
+  avec l'empreinte du mot de passe, donc révoqué au changement de mot de passe.
 - **Photo de profil.** Le champ est facultatif et restreint aux formats JPG, PNG
   et WEBP ; le contenu réel est vérifié par Pillow (un exécutable renommé en
   `.png` est refusé) et le poids plafonné à deux mégaoctets. Les fichiers

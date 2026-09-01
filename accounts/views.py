@@ -44,7 +44,7 @@ def user_register(request):
 # LOGIN
 import logging
 
-from . import appareil, otp, ratelimit
+from . import appareil, dispense_admin, otp, ratelimit
 
 logger = logging.getLogger('django.security')
 
@@ -237,6 +237,12 @@ def admin_login(request):
             messages.error(request, msg_incorrect)
             return render(request, 'accounts/admin_login.html', {'identifiant': identifiant})
 
+        # Dispense en cours sur cet appareil : le code n'est pas redemande.
+        if dispense_admin.est_dispense(request, user):
+            login(request, user)
+            messages.success(request, f"Bienvenue {user.prenom} {user.nom} !")
+            return redirect('courses:redirect_to_dashboard')
+
         if not user.email:
             messages.error(request, "Aucune adresse e-mail n'est associée à ce compte. Contactez l'administrateur.")
             return render(request, 'accounts/admin_login.html', {'identifiant': identifiant})
@@ -309,11 +315,12 @@ def login_otp(request):
             # directement, sans attendre un rapport periodique.
             appareil.avertir(user, request)
             reponse = redirect('courses:redirect_to_dashboard')
-            # Espace d'administration : jamais de dispense d'appareil, le code
-            # est redemande a chaque connexion. Les autres profils gardent la
-            # reconnaissance d'appareil pendant trente jours.
+            # Espace d'administration : pas de reconnaissance d'appareil de
+            # trente jours, mais une dispense d'OTP courte et reglable (5 h par
+            # defaut, 24 h max, coupee a minuit). Les autres profils gardent la
+            # reconnaissance d'appareil.
             if mode_admin:
-                return reponse
+                return dispense_admin.poser(reponse, request, user)
             return appareil.marquer_reconnu(reponse, user)
 
         messages.error(request, erreur)
@@ -374,7 +381,35 @@ def mon_compte(request):
     else:
         profil = request.user
 
-    return render(request, 'accounts/mon_compte.html', {'profil': profil})
+    contexte = {'profil': profil}
+    # Réglage de la dispense d'OTP, réservé aux comptes d'administration technique.
+    if _est_compte_admin(request.user):
+        contexte['dispense_admin'] = True
+        contexte['dispense_minutes'] = dispense_admin.minutes_reglees(request.user)
+        contexte['dispense_choix'] = [
+            (60, "1 heure"), (300, "5 heures (défaut)"), (600, "10 heures"),
+            (720, "12 heures"), (1440, "24 heures (maximum)"),
+        ]
+    return render(request, 'accounts/mon_compte.html', contexte)
+
+
+@login_required
+def reglage_dispense_admin(request):
+    """L'admin règle, pour lui seul, la durée de dispense d'OTP du jour."""
+    if request.method != 'POST' or not _est_compte_admin(request.user):
+        return redirect('accounts:mon_compte')
+    try:
+        minutes = int(request.POST.get('minutes', dispense_admin.DEFAUT_MINUTES))
+    except (TypeError, ValueError):
+        minutes = dispense_admin.DEFAUT_MINUTES
+    minutes = max(1, min(minutes, dispense_admin.MAX_MINUTES))
+    from django.utils import timezone
+    request.user.admin_otp_grace_minutes = minutes
+    request.user.admin_otp_grace_jour = timezone.localdate()
+    request.user.save(update_fields=['admin_otp_grace_minutes', 'admin_otp_grace_jour'])
+    heures = minutes / 60
+    messages.success(request, f"Dispense de connexion réglée sur {heures:g} h pour aujourd'hui.")
+    return redirect('accounts:mon_compte')
 
 
 @login_required
