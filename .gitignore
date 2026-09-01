@@ -37,3 +37,9 @@ zzresources/
 # Sauvegardes de base de donnees  
 backups/
 *.dump
+
+# Fichiers temporaires bureautiques (LibreOffice) et brouillons locaux non versionnes
+.~*
+zzzzdocs/
+current_context.txt
+rapport_audit_demo.xlsx

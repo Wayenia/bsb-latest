@@ -26,7 +26,8 @@ maintenir le projet en bon état.
    - 9.1 Éléments présents mais non exploités · 9.2 Sécurité applicative ·
      9.3 Exécution en conteneur non privilégié · 9.4 Courrier électronique ·
      9.5 Rapport d'inspection · 9.6 Peuplement initial · 9.7 Facturation ·
-     9.8 Réversibilité de l'interface du back-office
+     9.8 Réversibilité de l'interface · 9.9 Réversibilité du format des documents ·
+     9.10 Pages d'erreur personnalisées
 10. [Résolution des incidents courants](#10-résolution-des-incidents-courants)
 11. [Organisation des fichiers](#11-organisation-des-fichiers)
 
@@ -714,6 +715,38 @@ Sur les tableaux de plus de trois colonnes, l'excédent est replié dans une fic
 dépliable au téléphone (`static/js/bo-tableau.js`), et les conteneurs de ces pages
 occupent toute la largeur disponible sous la barre latérale. L'inventaire de ces
 pages est tenu dans `docs_pages_responsives.md`.
+
+### 9.9 Réversibilité du format des documents générés
+
+Les pièces PDF (quittances élève et caissier, récépissé, attestation, facture DAF,
+reçu de prestation) sont rendues au **format officiel** calqué sur la quittance de la
+DGI : en-tête *Burkina Faso / MESFPT / Burkina Suudu Bawdè*, fond marbré grisâtre,
+tableau transparent, code QR de vérification et pied de page normalisé. Le gabarit
+unique est `templates/documents/quittance_officielle.html`, alimenté dynamiquement par
+un contexte (titre, parties, colonnes, total, mentions) construit dans les vues.
+
+Ce format est **réversible sans redéploiement**, comme le back-office. Le réglage
+`DOC_MODELE` (lu depuis `.env`, `officiel` par défaut, ou `classique`) commande le
+rendu ; chaque vue teste ce réglage et retombe sur son ancien tracé (ReportLab A5 pour
+les quittances, WeasyPrint d'origine pour les autres) quand il vaut `classique`.
+
+```bash
+./bascule_doc.sh             # affiche l'état courant
+./bascule_doc.sh officiel    # format officiel (défaut)
+./bascule_doc.sh classique   # retour intégral aux anciens tracés
+```
+
+La police du rendu officiel est **Liberation Sans** (métrique Arial), installée dans
+l'image applicative via `fonts-liberation` (Dockerfile). Le fond marbré et le filigrane
+gris sont générés une fois par Pillow puis mémoïsés, sans fichier image à embarquer.
+
+### 9.10 Pages d'erreur personnalisées
+
+Les pages d'erreur portent la charte Yupaan. Django rend `templates/40*.html` et
+`templates/500.html` (400, 403, 403 CSRF, 404, 429, 500) ; les pages 500 et CSRF sont
+autonomes car leurs gestionnaires n'ont pas de contexte de requête. Nginx sert lui-même
+`nginx/errors/429.html` (dépassement de débit) et `nginx/errors/50x.html` (backend
+injoignable), bakées dans son image, sans intercepter les erreurs applicatives de Django.
 
 ---
 
