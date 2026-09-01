@@ -35,8 +35,8 @@
     background: linear-gradient(135deg, var(--rouge) 0%, #fbc02d 100%);
     color: #fff;
     border-radius: 0 0 20px 20px;
-    padding: 1.5rem 2rem 2.5rem;
-    margin-bottom: -1.2rem;
+    padding: 1.5rem 2rem 1.75rem;
+    margin-bottom: 0;
     position: relative;
     overflow: hidden;
   }
@@ -101,37 +101,72 @@
 
   a { text-decoration: none; }
 
-  /* ── Export buttons ───────────────────────────── */
+  /* ── Export : zone dediee ─────────────────────── */
+  .export-zone { }
+  .export-head {
+    display: flex; align-items: center; gap: .5rem;
+    font-weight: 700; font-size: .9rem; color: var(--text-dark);
+    margin-bottom: .85rem;
+  }
+  .export-head svg { width: 18px; height: 18px; color: var(--or); }
+  .export-grid { display: grid; grid-template-columns: 1fr; gap: .85rem; }
+  @media (min-width: 640px) { .export-grid { grid-template-columns: 1fr 1fr; } }
+  .export-panel {
+    border: 1px solid var(--gris-border);
+    border-radius: 14px;
+    padding: .85rem 1rem;
+    background: #fff;
+  }
+  .export-panel-title {
+    display: flex; align-items: center; gap: .5rem;
+    font-weight: 600; font-size: .82rem; color: var(--text-mid);
+    margin-bottom: .65rem;
+  }
+  .export-dot { width: 9px; height: 9px; border-radius: 9999px; flex: none; }
+  .export-panel-insc  .export-dot { background: var(--rouge); }
+  .export-panel-recouv .export-dot { background: var(--vert); }
+  .export-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+  /* Boutons d'export : fond doux + liseré teinté, remplissage au survol. */
   .btn-export-group { display: flex; gap: .5rem; flex-wrap: wrap; }
   .btn-exp {
-    border-radius: 8px;
+    display: inline-flex; align-items: center; gap: .35rem;
+    border-radius: 9px;
     font-size: .78rem;
     font-weight: 600;
-    padding: .38rem .85rem;
-    border: none;
-    transition: opacity .2s, transform .15s;
+    padding: .4rem .9rem;
+    border: 1.5px solid transparent;
+    background: #fff;
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
     cursor: pointer;
   }
-  .btn-exp:hover { opacity: .85; transform: translateY(-1px); }
-  .btn-exp-pdf { background: #EF4444; color: #fff; }
-  .btn-exp-excel { background: #16A34A; color: #fff; }
-  .btn-exp-csv { background: var(--gris); color: #fff; }
+  .btn-exp svg { width: 14px; height: 14px; }
+  .btn-exp:hover { transform: translateY(-1px); }
+  .btn-exp-pdf   { color: var(--rouge-dark); background: var(--rouge-soft); border-color: #f3c9c6; }
+  .btn-exp-pdf:hover   { background: var(--rouge); color: #fff; border-color: var(--rouge); }
+  .btn-exp-excel { color: #166534; background: #e9f8ef; border-color: #bbe7c9; }
+  .btn-exp-excel:hover { background: var(--vert); color: #fff; border-color: var(--vert); }
+  .btn-exp-csv   { color: var(--or-dark); background: var(--or-soft); border-color: #f2e2b0; }
+  .btn-exp-csv:hover   { background: var(--or); color: #fff; border-color: var(--or); }
 
   /* ── KPI Cards ────────────────────────────────── */
   .kpi-card {
     background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 2px 12px rgba(0,0,0,.06);
-    padding: 1.1rem 1.25rem;
+    /* Meme arrondi et meme liseré que les cartes du tableau de bord (rounded-lg
+       + bordure fine), en conservant l'accent lateral colore propre a cet ecran. */
+    border: 1px solid var(--gris-border);
     border-left: 4px solid transparent;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    padding: 1.1rem 1.25rem;
     transition: transform .2s, box-shadow .2s;
     height: 100%;
   }
   .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
-  .kpi-card.rouge { border-color: var(--rouge); }
-  .kpi-card.or { border-color: var(--or); }
-  .kpi-card.vert { border-color: #16A34A; }
-  .kpi-card.gris { border-color: #6b7280; }
+  .kpi-card.rouge { border-left-color: var(--rouge); }
+  .kpi-card.or { border-left-color: var(--or); }
+  .kpi-card.vert { border-left-color: #16A34A; }
+  .kpi-card.gris { border-left-color: #6b7280; }
   .kpi-icon {
     width: 48px; height: 48px; border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
@@ -225,7 +260,7 @@
   </div>
 </div>
 
-<div class="w-full px-3 md:px-6 py-3">
+<div class="w-full px-3 md:px-6 pt-6 pb-3">
 
   {% comment %} ══ FILTRES ═══════════════════════════════════════════════════════════════ {% endcomment %}
   <div class="filter-card">
@@ -342,35 +377,35 @@
       </div>
     </form>
 
-    {% comment %} Exports {% endcomment %}
-    <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-200">
-      <span class="text-sm font-semibold text-[var(--gris)]">
-        Exporter :
-      </span>
-      <div class="btn-export-group">
-        <span class="text-sm font-semibold text-[var(--gris)]">Inscriptions :</span>
-        <a href="?{% if f_centre %}centre={{ f_centre }}&{% endif %}{% if f_filiere %}filiere={{ f_filiere }}&{% endif %}{% if f_annee %}annee={{ f_annee }}&{% endif %}type=inscriptions"
-           data-action="exporter" data-export-type="inscriptions" data-export-format="pdf" class="btn-exp btn-exp-pdf">
-          PDF
-        </a>
-        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="excel" class="btn-exp btn-exp-excel">
-          Excel
-        </a>
-        <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="csv" class="btn-exp btn-exp-csv">
-          CSV
-        </a>
+    {% comment %} ══ EXPORT ══ zone dediee, un panneau par jeu de donnees {% endcomment %}
+    <div class="export-zone mt-4 pt-4 border-t border-gray-200">
+      <div class="export-head">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg>
+        Exporter les données
       </div>
-      <div class="btn-export-group">
-        <span class="text-sm font-semibold text-[var(--gris)]">Recouvrement :</span>
-        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="pdf" class="btn-exp btn-exp-pdf">
-          PDF
-        </a>
-        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="excel" class="btn-exp btn-exp-excel">
-          Excel
-        </a>
-        <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="csv" class="btn-exp btn-exp-csv">
-          CSV
-        </a>
+      <div class="export-grid">
+
+        <div class="export-panel export-panel-insc">
+          <div class="export-panel-title"><span class="export-dot"></span> Inscriptions</div>
+          <div class="export-actions">
+            <a href="?{% if f_centre %}centre={{ f_centre }}&{% endif %}{% if f_filiere %}filiere={{ f_filiere }}&{% endif %}{% if f_annee %}annee={{ f_annee }}&{% endif %}type=inscriptions"
+               data-action="exporter" data-export-type="inscriptions" data-export-format="pdf" class="btn-exp btn-exp-pdf">PDF</a>
+            <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="excel" class="btn-exp btn-exp-excel">Excel</a>
+            <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="csv" class="btn-exp btn-exp-csv">CSV</a>
+          </div>
+        </div>
+
+        <div class="export-panel export-panel-recouv">
+          <div class="export-panel-title"><span class="export-dot"></span> Recouvrement</div>
+          <div class="export-actions">
+            <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="pdf" class="btn-exp btn-exp-pdf">PDF</a>
+            <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="excel" class="btn-exp btn-exp-excel">Excel</a>
+            <a href="#" data-action="exporter" data-export-type="recouvrement" data-export-format="csv" class="btn-exp btn-exp-csv">CSV</a>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

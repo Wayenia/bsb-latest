@@ -7,7 +7,6 @@ from django.views.decorators.http import require_POST
 
 from courses.bulk_import.views_helpers import handle_import_upload, render_import_template
 from courses.permissions import require_permission
-from courses.views_admin import _onglets_audit
 
 from .bulk_import_registry import SPEC_DESTINATAIRE_AUDIT
 from .forms import DestinataireRapportForm
@@ -33,7 +32,6 @@ def destinataire_list(request):
         'destinataires': destinataires,
         'form': form,
         'nb_actifs': destinataires.filter(actif=True).count(),
-        'onglets': _onglets_audit(request.user, actif='reglage'),
     })
 
 

@@ -231,6 +231,12 @@
   .bo-table thead .bo-col-fixe { @apply bg-gray-50 z-30; }
   .bo-table tbody tr:hover .bo-col-fixe { @apply bg-slate-50; }
 
+  /* Variante charte Yupaan : en-tete creme souligne d'or et alternance de
+     lignes en creme tres clair. Teinte chaude unique, jamais melangee. */
+  .bo-table-yupaan thead th { @apply bg-bsb-cream text-bsb-ink border-b-2 border-bsb-gold/40; }
+  .bo-table-yupaan tbody tr:nth-child(even) { @apply bg-bsb-cream/40; }
+  .bo-table-yupaan tbody tr:hover { @apply bg-bsb-gold/10; }
+
   /* ---------- Pastilles d'etat ---------- */
   .bo-badge         { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap; }
   .bo-badge-neutral { @apply bo-badge bg-gray-100 text-gray-700; }

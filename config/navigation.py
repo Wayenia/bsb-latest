@@ -66,12 +66,12 @@ GROUPES = [
         'liens': [
             _lien('bsb_admin:subscription_list', 'Inscriptions', 'courses.voir_inscriptions', '/bsb/subscriptions'),
             _lien('bsb_admin:eleve_list', 'Apprenants', 'accounts.gerer_eleves', '/bsb/eleves'),
+            _lien('courses:paiement_list', 'Encaissements scolarité', 'courses.encaisser_paiement', '/membre/centre/paiement'),
         ],
     },
     {
-        'cle': 'finances', 'titre': 'Encaissements et facturation', 'couleur': 'vert', 'icone': 'monnaie',
+        'cle': 'finances', 'titre': 'Prestation et facturation', 'couleur': 'vert', 'icone': 'monnaie',
         'liens': [
-            _lien('courses:paiement_list', 'Encaissements scolarité', 'courses.encaisser_paiement', '/membre/centre/paiement'),
             _lien('accounts:prestation_list', 'Prestations', 'accounts.gerer_facturation', '/accounts/facturation/prestations'),
             _lien('accounts:facture_proforma_list', 'Factures proforma', 'accounts.gerer_facturation', '/accounts/facturation/proforma'),
             _lien('accounts:facture_list', 'Encaissement prestations', 'accounts.encaisser_prestation', '/accounts/encaissement'),
@@ -105,6 +105,7 @@ GROUPES = [
         'cle': 'supervision', 'titre': 'Supervision', 'couleur': 'vert', 'icone': 'bouclier',
         'liens': [
             _lien('bsb_admin:historique_connexion_list', 'Historique des connexions', 'accounts.voir_historique_connexion', '/bsb/historique-connexions'),
+            _lien('bsb_admin:destinataire_audit_list', "Réglage d'envoi", 'audit.gerer_destinataires_audit', '/bsb/historique-connexions/destinataires'),
         ],
     },
     {
@@ -144,9 +145,18 @@ def construire_menu(utilisateur, chemin):
                 continue
             prefixe = lien['prefixe_actif'] or url
             liens.append({'libelle': lien['libelle'], 'url': url,
-                          'actif': chemin.startswith(prefixe)})
+                          'prefixe': prefixe, 'actif': chemin.startswith(prefixe)})
         if not liens:
             continue
+        # Un seul lien actif par groupe : celui dont le prefixe est le plus
+        # specifique (ex. .../destinataires l'emporte sur .../historique-connexions).
+        actifs = [l for l in liens if l['actif']]
+        if len(actifs) > 1:
+            gagnant = max(actifs, key=lambda l: len(l['prefixe']))
+            for l in actifs:
+                l['actif'] = l is gagnant
+        for l in liens:
+            del l['prefixe']
         menu.append({
             'cle': groupe['cle'],
             'titre': groupe['titre'],
