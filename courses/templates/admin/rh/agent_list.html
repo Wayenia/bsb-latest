@@ -51,7 +51,6 @@
                 <tr>
                     <th scope="col">Agent</th>
                     <th scope="col">Rôle</th>
-                    <th scope="col">Contact</th>
                     <th scope="col">Structure ou direction</th>
                     <th scope="col">État</th>
                     <th scope="col" class="text-right">Actions</th>
@@ -71,17 +70,16 @@
                                 {{ agent.nom|first|upper }}{{ agent.prenom|first|upper }}
                             </div>
                             {% endif %}
-                            <div>
+                            <div class="min-w-0">
                                 <div class="font-medium text-gray-900">{{ agent.nom }} {{ agent.prenom }}</div>
-                                <div class="text-xs text-gray-400 font-mono">{{ agent.username }}</div>
+                                <div class="text-xs text-gray-400 font-mono truncate">{{ agent.username }}</div>
+                                {% comment %}Contact rapproché de l'identité plutôt qu'en colonne
+                                séparée : une colonne de moins, contact toujours visible.{% endcomment %}
+                                <div class="text-xs text-gray-500 truncate">{{ agent.email|default:"—" }}{% if agent.tel %} · {{ agent.tel }}{% endif %}</div>
                             </div>
                         </div>
                     </td>
                     <td data-label="Rôle"><span class="{{ agent.user_type|badge_role }}">{{ agent.get_user_type_display }}</span></td>
-                    <td data-label="Contact">
-                        <div>{{ agent.email|default:"—" }}</div>
-                        <div class="text-xs text-gray-400">{{ agent.tel|default:"—" }}</div>
-                    </td>
                     <td data-label="Structure ou direction">
                         {% if agent.user_type == 'formateur' %}
                             {{ agent.formateur.centre.nom_centre|default:"—" }}

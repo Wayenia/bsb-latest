@@ -176,9 +176,14 @@
                                 <p class="text-sm font-bold text-gray-800">{{ form.is_active.label }}</p>
                                 <p class="text-xs text-gray-500">Activer cette programmation</p>
                             </div>
+                            {% comment %}Interrupteur : l'input porte « sr-only peer » pour
+                            que seule la pastille s'affiche (sans lui, la case brute doublait
+                            le rendu).{% endcomment %}
                             <label for="{{ form.is_active.id_for_label }}" class="relative inline-flex items-center cursor-pointer">
-                                {{ form.is_active }}
-                                <div class="w-11 h-6 bg-gray-300 peer-checked:bg-red-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-red-300 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                                <input type="checkbox" name="{{ form.is_active.html_name }}"
+                                       id="{{ form.is_active.id_for_label }}" class="sr-only peer"
+                                       {% if form.is_active.value %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-300 peer-checked:bg-red-600 rounded-full peer-focus:ring-2 peer-focus:ring-red-300 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
                             </label>
                         </div>
                     </div>

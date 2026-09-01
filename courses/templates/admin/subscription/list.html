@@ -115,14 +115,14 @@
                                 <tbody class="bg-white divide-y divide-gray-100">
                                     {% for s in subscriptions %}
                                     <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="pl-16 pr-6 py-3.5 whitespace-nowrap text-sm font-bold text-gray-900">
+                                        <td class="pl-16 pr-6 py-3.5 text-sm font-bold text-gray-900">
                                             {{ s.eleve.nom }} {{ s.eleve.prenom }}
                                             <div class="text-xs font-normal text-gray-400">{{ s.eleve.matricule|default:"—" }}</div>
                                         </td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm font-medium text-gray-900" data-label="Formation">{{ s.formation }}</td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900" data-label="Date d'Inscrition">{{ s.date_inscription }}</td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm text-gray-900" data-label="Année de formation">{{ s.annee_scolaire }}</td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap text-sm" data-label="Statut">
+                                        <td class="px-6 py-3.5 text-sm font-medium text-gray-900" data-label="Formation">{{ s.formation }}</td>
+                                        <td class="px-6 py-3.5 text-sm text-gray-900" data-label="Date d'Inscrition">{{ s.date_inscription }}</td>
+                                        <td class="px-6 py-3.5 text-sm text-gray-900" data-label="Année de formation">{{ s.annee_scolaire }}</td>
+                                        <td class="px-6 py-3.5 text-sm" data-label="Statut">
                                             {% if s.statut == "en_cours" %}
                                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">En cours</span>
                                             {% elif s.statut == "valide" %}
@@ -131,9 +131,14 @@
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Rejeté</span>
                                             {% endif %}
                                         </td>
-                                        <td class="px-6 py-3.5 whitespace-nowrap text-right text-sm font-medium">
+                                        <td class="px-6 py-3.5 text-right text-sm font-medium">
                                             <div class="flex items-center justify-end gap-1">
-                                                {% if s.statut == "en_cours" or s.statut == "rejete" %}
+                                                {% comment %}La caissière consulte mais ne modifie pas les
+                                                inscriptions : on masque les actions plutôt que d'afficher
+                                                des boutons qui renvoient un refus.{% endcomment %}
+                                                {% if user.user_type == 'caissier' %}
+                                                <span class="text-xs text-gray-400 italic">Consultation</span>
+                                                {% elif s.statut == "en_cours" or s.statut == "rejete" %}
                                                 <a href="{% url 'bsb_admin:subscription_update' s.id %}"
                                                    class="inline-flex items-center gap-1 p-1.5 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
                                                    title="Modifier">{% include 'partials/icon_edit.html' %}</a>
@@ -254,7 +259,7 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for s in subscriptions %}
                     <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4">
                             <div class="flex items-center">
                                 <div class="ml-4">
                                     <div class="text-sm font-bold text-gray-900">{{ s.eleve.nom}} {{s.eleve.prenom}}</div>
@@ -262,16 +267,16 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap" data-label="Formation">
+                        <td class="px-6 py-4" data-label="Formation">
                             <span class="text-sm font-medium text-gray-900">{{ s.formation}}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap" data-label="Date d'Inscrition">
+                        <td class="px-6 py-4" data-label="Date d'Inscrition">
                             <span class="text-sm font-medium text-gray-900">{{ s.date_inscription}}</span>
                         </td>
-                         <td class="px-6 py-4 whitespace-nowrap" data-label="Année de formation">
+                         <td class="px-6 py-4" data-label="Année de formation">
                             <span class="text-sm font-medium text-gray-900">{{ s.annee_scolaire}}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm 0" data-label="statut">
+                        <td class="px-6 py-4 text-sm 0" data-label="statut">
                            {% if s.statut == "en_cours" %}
                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                 En cours
@@ -288,14 +293,18 @@
                             {%endif%}
                         </td>
                       
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td class="px-6 py-4 text-right text-sm font-medium">
                             <div class="flex items-center justify-end space-x-2">
+                                {% if user.user_type == 'caissier' %}
+                                <span class="text-xs text-gray-400 italic">Consultation</span>
+                                {% else %}
                                 <a href="{% url 'bsb_admin:subscription_update' s.id %}"
                                    class="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-50 rounded-lg transition-all"
                                    title="Modifier">{% include 'partials/icon_edit.html' %} Modifier</a>
                                 <a href="{% url 'bsb_admin:subscription_delete' s.id %}"
                                    class="inline-flex items-center gap-1 text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-all"
                                    title="Supprimer">{% include 'partials/icon_delete.html' %} Supprimer</a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
