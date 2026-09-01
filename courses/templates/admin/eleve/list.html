@@ -37,37 +37,35 @@
     <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
         {% if eleves %}
         <div class="overflow-x-auto">
-            <table class="bo-table-compacte bo-table-adaptable min-w-full divide-y divide-gray-100">
-                <thead class="bg-gray-50">
+            <table class="bo-table-compacte bo-table-adaptable bo-table-yupaan min-w-full divide-y divide-gray-100">
+                <thead>
                     <tr>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Apprenant</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Identifiant</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Contact</th>
-                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider">Apprenant</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider">Contact</th>
+                        <th class="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
                     {% for e in eleves %}
                     <tr class="hover:bg-amber-50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-4 py-3">
                             <div class="flex items-center gap-3">
-                                <div class="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center shrink-0 font-bold text-sm text-white">
+                                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-bsb-red to-bsb-gold flex items-center justify-center shrink-0 font-bold text-sm text-white">
                                     {{ e.nom|first|upper }}{{ e.prenom|first|upper }}
                                 </div>
-                                <div>
+                                <div class="min-w-0">
                                     <div class="text-sm font-bold text-gray-900">{{ e.nom }} {{ e.prenom }}</div>
-                                    <div class="text-xs text-gray-400">@{{ e.username }}</div>
+                                    <div class="text-xs text-gray-400 truncate">@{{ e.username }}{% if e.numero_identifiant %} · {{ e.numero_identifiant }}{% endif %}</div>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700" data-label="Identifiant">{{ e.numero_identifiant|default:"—" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700" data-label="Contact">
+                        <td class="px-4 py-3 text-sm text-gray-700" data-label="Contact">
                             <div>{{ e.email|default:"—" }}</div>
                             <div class="text-xs text-gray-400">{{ e.tel|default:"—" }}</div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                        <td class="px-4 py-3 text-right bo-actions-cell">
                             <a href="{% url 'bsb_admin:eleve_update' e.id %}"
-                               class="inline-flex items-center gap-1 p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-all"
+                               class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-bsb-red/10 text-bsb-red hover:bg-bsb-red hover:text-white transition-colors"
                                title="Modifier">{% include 'partials/icon_edit.html' %} Modifier</a>
                         </td>
                     </tr>

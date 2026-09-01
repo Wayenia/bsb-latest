@@ -106,8 +106,6 @@
                                     <tr>
                                         <th scope="col" class="pl-16 pr-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Apprenant</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Formation</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date d'Inscrition</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Année de formation</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Statut</th>
                                         <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                                     </tr>
@@ -119,9 +117,10 @@
                                             {{ s.eleve.nom }} {{ s.eleve.prenom }}
                                             <div class="text-xs font-normal text-gray-400">{{ s.eleve.matricule|default:"—" }}</div>
                                         </td>
-                                        <td class="px-6 py-3.5 text-sm font-medium text-gray-900" data-label="Formation">{{ s.formation }}</td>
-                                        <td class="px-6 py-3.5 text-sm text-gray-900" data-label="Date d'Inscrition">{{ s.date_inscription }}</td>
-                                        <td class="px-6 py-3.5 text-sm text-gray-900" data-label="Année de formation">{{ s.annee_scolaire }}</td>
+                                        <td class="px-6 py-3.5 text-sm font-medium text-gray-900" data-label="Formation">
+                                            <span class="break-words">{{ s.formation }}</span>
+                                            <span class="block text-xs text-gray-400 mt-0.5">{{ s.date_inscription|date:"d/m/Y" }}{% if s.annee_scolaire %} · {{ s.annee_scolaire }}{% endif %}</span>
+                                        </td>
                                         <td class="px-6 py-3.5 text-sm" data-label="Statut">
                                             {% if s.statut == "en_cours" %}
                                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">En cours</span>
@@ -243,12 +242,6 @@
                             Formation
                         </th>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                            Date d'Inscrition
-                        </th>
-                       <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                           Année de formation
-                        </th>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                           statut
                         </th>
                         <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -268,13 +261,8 @@
                             </div>
                         </td>
                         <td class="px-6 py-4" data-label="Formation">
-                            <span class="text-sm font-medium text-gray-900">{{ s.formation}}</span>
-                        </td>
-                        <td class="px-6 py-4" data-label="Date d'Inscrition">
-                            <span class="text-sm font-medium text-gray-900">{{ s.date_inscription}}</span>
-                        </td>
-                         <td class="px-6 py-4" data-label="Année de formation">
-                            <span class="text-sm font-medium text-gray-900">{{ s.annee_scolaire}}</span>
+                            <span class="text-sm font-medium text-gray-900 break-words">{{ s.formation}}</span>
+                            <span class="block text-xs text-gray-400 mt-0.5">{{ s.date_inscription|date:"d/m/Y" }}{% if s.annee_scolaire %} · {{ s.annee_scolaire }}{% endif %}</span>
                         </td>
                         <td class="px-6 py-4 text-sm 0" data-label="statut">
                            {% if s.statut == "en_cours" %}

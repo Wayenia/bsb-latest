@@ -1596,9 +1596,10 @@ def permissions_matrix_view(request):
     # libelle : un classement previsible se retrouve sans le connaitre.
     groupes = [
         {
-            # Seul le premier theme est deplie : vingt-six permissions sur dix
-            # roles remplissaient l'ecran avant meme de commencer a lire.
-            'ouvert': i == 0,
+            # Tous les themes replies par defaut : vingt-six permissions sur dix
+            # roles remplissaient l'ecran avant meme de commencer a lire ;
+            # l'admin deplie le theme qu'il veut regler.
+            'ouvert': False,
             'cle': 'theme-%d' % i,
             'titre': theme,
             'lignes': sorted(lignes, key=lambda l: l['libelle'].lower()),

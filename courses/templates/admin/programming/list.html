@@ -50,23 +50,23 @@
             <table class="bo-table-compacte bo-table-adaptable min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        <th scope="col" class="px-4 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">
                            Centre
                         </th>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        <th scope="col" class="px-4 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">
                            Type de formation
                         </th>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        <th scope="col" class="px-4 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">
                             Métier
                         </th>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        <th scope="col" class="px-4 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">
                             Disponibilité
                         </th>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        <th scope="col" class="px-4 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">
                             Durée
                         </th>
                        
-                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        <th scope="col" class="px-4 py-3 text-right text-[11px] font-bold text-gray-700 uppercase tracking-wider">
                             Actions
                         </th>
                     </tr>
@@ -74,7 +74,7 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for p in programs %}
                     <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-4 py-3">
                             <div class="flex items-center">
                                 <div class="ml-4">
                                     <div class="text-sm font-bold text-gray-900">{{ p.centre.nom_centre }}</div>
@@ -82,13 +82,13 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap" data-label="Type de formation">
+                        <td class="px-4 py-3" data-label="Type de formation">
                             <span class="text-sm font-medium text-gray-900">{{ p.get_type_formation_display }}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap" data-label="Métier">
+                        <td class="px-4 py-3" data-label="Métier">
                             <span class="text-sm font-medium text-gray-900">{{ p.filiere.nom_filiere}}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm 0" data-label="Disponibilité">
+                        <td class="px-4 py-3 text-sm 0" data-label="Disponibilité">
                            {% if p.is_active %}
                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                 oui
@@ -100,13 +100,13 @@
                             {%endif%}
 
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700" data-label="Durée">
+                        <td class="px-4 py-3 text-sm text-gray-700" data-label="Durée">
                             <span class="inline-flex items-center gap-1 font-medium text-gray-800">
                                 
                                 {{ p.duree_display }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td class="px-4 py-3 text-right text-sm font-medium">
                             <div class="flex items-center justify-end space-x-2">
                                 <a href="{% url 'bsb_admin:programming_update' p.id %}"
                                    class="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-50 rounded-lg transition-all"
