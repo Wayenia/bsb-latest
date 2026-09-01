@@ -334,13 +334,15 @@
   }
   .bo-sidebar-entete:hover { @apply brightness-[1.06]; }
   .bo-sidebar-entete:focus-visible { @apply outline-none ring-2 ring-inset ring-white/70; }
-  .bo-sidebar-entete:hover .bo-sidebar-retour { @apply bg-white/30; }
+  .bo-sidebar-entete:hover .bo-sidebar-retour { @apply bg-white shadow; }
   .bo-sidebar-marque { @apply text-white font-bold tracking-tight leading-tight; }
   .bo-sidebar-sous   { @apply text-[11px] uppercase tracking-widest text-white/80; }
+  /* Pastille blanche opaque a texte rouge : lisible sur tout le degrade
+     rouge->jaune de l'entete, contrairement a un fond translucide clair. */
   .bo-sidebar-retour {
-    @apply ml-auto flex shrink-0 items-center gap-1 rounded-full bg-white/15
-           px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white
-           transition-colors;
+    @apply ml-auto flex shrink-0 items-center gap-1 rounded-full bg-white/95
+           px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-bsb-red
+           shadow-sm transition-colors;
   }
   .bo-sidebar-retour svg { @apply h-3.5 w-3.5; }
 

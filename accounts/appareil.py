@@ -24,7 +24,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 COOKIE = 'appareil_connu'
-DUREE_JOURS = 30
+DUREE_JOURS = 14
 SEL = 'accounts.appareil'
 
 

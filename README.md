@@ -201,7 +201,7 @@ et des permissions accordées.
 À la différence de l'élève, tout membre du personnel franchit une **vérification
 en deux étapes** à la première connexion depuis un appareil : après le mot de
 passe, un code à quatre chiffres reçu par courriel (section 9.2). L'appareil est
-ensuite reconnu pendant trente jours et le code n'est plus redemandé sur ce
+ensuite reconnu pendant quatorze jours et le code n'est plus redemandé sur ce
 poste ; tout autre appareil reste soumis au code.
 
 ### 4.4 Direction (Administrateur, Directeur Général, Directeur inter-régional, DEPS)
@@ -523,7 +523,7 @@ ces explications.
   deux minutes, à usage unique. Le code n'est jamais stocké en clair — seul son
   haché figure dans la session anonyme du visiteur, le temps de la vérification —
   et il tolère cinq saisies puis quatre envois au maximum. Un appareil validé
-  reçoit un cookie signé (`appareil_connu`, `HttpOnly`, trente jours) qui dispense
+  reçoit un cookie signé (`appareil_connu`, `HttpOnly`, quatorze jours) qui dispense
   du code sur ce seul poste. Le cookie est signé avec une empreinte du mot de
   passe : **changer de mot de passe révoque d'un coup tous les appareils**, sans
   écran ni procédure. Toute connexion depuis un appareil non reconnu envoie en

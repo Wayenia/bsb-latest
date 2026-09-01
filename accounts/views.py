@@ -316,7 +316,7 @@ def login_otp(request):
             appareil.avertir(user, request)
             reponse = redirect('courses:redirect_to_dashboard')
             # Espace d'administration : pas de reconnaissance d'appareil de
-            # trente jours, mais une dispense d'OTP courte et reglable (5 h par
+            # quatorze jours, mais une dispense d'OTP courte et reglable (5 h par
             # defaut, 24 h max, coupee a minuit). Les autres profils gardent la
             # reconnaissance d'appareil.
             if mode_admin:
