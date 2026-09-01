@@ -1,172 +1,111 @@
 {% load static %}
 <footer class="relative mt-auto bg-gray-600">
-    {% comment %} Decorative Top Border {% endcomment %}
+    {% comment %} Liseré tricolore {% endcomment %}
     <div class="h-1 bg-gradient-to-r from-yellow-400 via-red-500 to-green-500"></div>
-    
+
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {% comment %} Main Footer Content {% endcomment %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-            
-            {% comment %} About Section {% endcomment %}
+        {% comment %} Bloc principal : identité + liens + coordonnées {% endcomment %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+
+            {% comment %} Identité {% endcomment %}
             <div class="space-y-4">
-                <div class="flex items-center gap-3 mb-4">
-                    <img src="{% static 'images/logo.png' %}" alt="BSB Logo" class="h-12 w-auto">
+                <div class="flex items-center gap-3">
+                    <img src="{% static 'images/logo.png' %}" alt="Burkina Suudu Bawdè" class="h-12 w-auto">
                     <div>
                         <span class="block text-sm font-bold text-white leading-tight">BURKINA</span>
                         <span class="text-xs font-semibold text-yellow-400 tracking-wider">SUUDU BAWDE</span>
                     </div>
                 </div>
-                <p class="text-sm text-gray-200 leading-relaxed">
-                    La maison des compétences du Burkina
+                <p class="text-sm text-gray-200 leading-relaxed">La maison des compétences du Burkina.</p>
+                <p class="flex items-start gap-2 text-sm text-gray-200">
+                    <svg class="w-4 h-4 mt-0.5 shrink-0 text-yellow-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    1504 Avenue Dimdolobsom — Secteur 11, Dapoya 1<br>01 BP 6181 Ouagadougou 01
                 </p>
-                <div class="flex gap-3 pt-2">
-                    <a href="#" class="w-9 h-9 bg-gray-700 hover:bg-yellow-500 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200">
-                        
-                    </a>
-                    <a href="#" class="w-9 h-9 bg-gray-700 hover:bg-yellow-500 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200">
-                        
-                    </a>
-                    <a href="#" class="w-9 h-9 bg-gray-700 hover:bg-yellow-500 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200">
-                        
-                    </a>
-                </div>
             </div>
 
-            {% comment %} Quick Links {% endcomment %}
+            {% comment %} Liens rapides {% endcomment %}
             <div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                    
-                    Liens rapides
-                </h3>
-                <ul class="space-y-3">
-                    <li>
-                        <a href="/" class="text-gray-200 hover:text-yellow-400 transition-colors text-sm flex items-center gap-2 group">
-                            
-                            Accueil
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="text-gray-200 hover:text-yellow-400 transition-colors text-sm flex items-center gap-2 group">
-                            
-                            Nos formations
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="text-gray-200 hover:text-yellow-400 transition-colors text-sm flex items-center gap-2 group">
-                            
-                            Centres de formation
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="text-gray-200 hover:text-yellow-400 transition-colors text-sm flex items-center gap-2 group">
-                            
-                            Devenir formateur
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="text-gray-200 hover:text-yellow-400 transition-colors text-sm flex items-center gap-2 group">
-                            
-                            FAQ
-                        </a>
-                    </li>
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4">Liens rapides</h3>
+                <ul class="space-y-3 text-sm">
+                    <li><a href="/" class="text-gray-200 hover:text-yellow-400 transition-colors">Accueil</a></li>
+                    <li><a href="/#formations" class="text-gray-200 hover:text-yellow-400 transition-colors">Nos formations</a></li>
+                    <li><a href="/#centres" class="text-gray-200 hover:text-yellow-400 transition-colors">Centres de formation</a></li>
+                    <li><a href="/#contact" class="text-gray-200 hover:text-yellow-400 transition-colors">Nous contacter</a></li>
+                    <li><a href="/about" class="text-gray-200 hover:text-yellow-400 transition-colors">À propos</a></li>
                 </ul>
             </div>
 
-            {% comment %} Resources {% endcomment %}
+            {% comment %} Ressources {% endcomment %}
             <div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                    
-                    Ressources
-                </h3>
-                <ul class="space-y-3">
-                    <li>
-                        <a href="#" class="text-gray-200 hover:text-yellow-400 transition-colors text-sm flex items-center gap-2 group">
-                            
-                            Documentation
-                        </a>
-                    </li>
-                    <li>
-                        <a href="https://formationpro.gov.bf/" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-yellow-400 transition-colors text-sm flex items-center gap-2 group">
-
-                            MESFPT
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="text-gray-200 hover:text-yellow-400 transition-colors text-sm flex items-center gap-2 group">
-                            
-                            Aide & Support
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="text-gray-200 hover:text-yellow-400 transition-colors text-sm flex items-center gap-2 group">
-                            
-                            Conditions d'utilisation
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="text-gray-200 hover:text-yellow-400 transition-colors text-sm flex items-center gap-2 group">
-                            
-                            Politique de confidentialité
-                        </a>
-                    </li>
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4">Ressources</h3>
+                <ul class="space-y-3 text-sm">
+                    <li><a href="https://formationpro.gov.bf/" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-yellow-400 transition-colors">MESFPT</a></li>
+                    <li><a href="/#formations" class="text-gray-200 hover:text-yellow-400 transition-colors">Offre de formation</a></li>
+                    <li><a href="/#contact" class="text-gray-200 hover:text-yellow-400 transition-colors">Aide &amp; support</a></li>
                 </ul>
             </div>
 
-            {% comment %} Contact Info {% endcomment %}
+            {% comment %} Coordonnées (présentées comme sur l'accueil) {% endcomment %}
             <div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                    
-                    Contact
-                </h3>
-                <ul class="space-y-4">
-                    
-                    <li class="flex items-start gap-3 text-gray-200 text-sm">
-
-                        <span>Service de la communication et des relations presses : +226 70 32 60 68</span>
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4">Coordonnées</h3>
+                <ul class="space-y-3 text-sm text-gray-200">
+                    <li class="flex items-center gap-3">
+                        <svg class="w-4 h-4 shrink-0 text-yellow-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        <span>
+                            <a href="tel:+22625301875" class="hover:text-yellow-400 transition-colors">+226 25 30 18 75</a> ·
+                            <a href="tel:+22625301876" class="hover:text-yellow-400 transition-colors">+226 25 30 18 76</a>
+                        </span>
                     </li>
-                    <li class="flex items-start gap-3 text-gray-200 text-sm">
-
-                        <span>Direction de l'information et l'orientation professionnelle : +226 73 01 97 97</span>
-                    </li>
-                    <li class="flex items-start gap-3 text-gray-200 text-sm">
-
-                        <span>Direction inter-régionale N° 1 (Ouagadougou) : +226 73 07 36 36</span>
-                    </li>
-                    <li class="flex items-start gap-3 text-gray-200 text-sm">
-
-                        <span>Direction inter-régionale N° 2 (Bobo-Dioulasso) : +226 73 48 91 91</span>
-                    </li>
-                    <li class="flex items-start gap-3 text-gray-200 text-sm">
-
-                        <span>Direction inter-régionale N° 3 (Ziniaré) : +226 73 51 23 23</span>
-                    </li>
-                    <li class="flex items-center gap-3 text-gray-200 text-sm">
-                        
+                    <li class="flex items-center gap-3">
+                        <svg class="w-4 h-4 shrink-0 text-yellow-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                         <a href="mailto:info@bsb.gov.bf" class="hover:text-yellow-400 transition-colors">info@bsb.gov.bf</a>
                     </li>
-                    <li class="flex items-center gap-3 text-gray-200 text-sm">
-                        
-                        <span>Lun - Jeu: 7h30 - 16h00
-                            et Ven: 7h30 - 16h30
-                        </span>
+                    <li class="flex items-start gap-3">
+                        <svg class="w-4 h-4 mt-0.5 shrink-0 text-yellow-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Lun — Jeu : 7h30 à 16h00<br>Vendredi : 7h30 à 16h30</span>
                     </li>
                 </ul>
             </div>
         </div>
 
-        {% comment %} Bottom Bar {% endcomment %}
-        <div class="border-t border-gray-400 pt-8 mt-8">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-2 text-sm text-gray-200">
-                    
-                    <span>&copy; {% now "Y" %} <span class="font-semibold text-white">BURKINA SUUDU BAWDE</span> | Burkina Faso</span>
+        {% comment %} Contacts directs (mêmes numéros que l'accueil, avec liens d'appel) {% endcomment %}
+        <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5 sm:p-6 mb-8">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                Contacts directs
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-sm">
+                    <span class="text-gray-200">Communication et relations presses</span>
+                    <a href="tel:+22670326068" class="font-bold text-yellow-400 hover:text-white whitespace-nowrap">+226 70 32 60 68</a>
                 </div>
-                
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-sm">
+                    <span class="text-gray-200">Information et orientation professionnelle</span>
+                    <a href="tel:+22673019797" class="font-bold text-yellow-400 hover:text-white whitespace-nowrap">+226 73 01 97 97</a>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-sm">
+                    <span class="text-gray-200">Direction inter-régionale N° 1 (Ouagadougou)</span>
+                    <a href="tel:+22673073636" class="font-bold text-yellow-400 hover:text-white whitespace-nowrap">+226 73 07 36 36</a>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-sm">
+                    <span class="text-gray-200">Direction inter-régionale N° 2 (Bobo-Dioulasso)</span>
+                    <a href="tel:+22673489191" class="font-bold text-yellow-400 hover:text-white whitespace-nowrap">+226 73 48 91 91</a>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-sm">
+                    <span class="text-gray-200">Direction inter-régionale N° 3 (Ziniaré)</span>
+                    <a href="tel:+22673512323" class="font-bold text-yellow-400 hover:text-white whitespace-nowrap">+226 73 51 23 23</a>
+                </div>
             </div>
+        </div>
+
+        {% comment %} Bas de page {% endcomment %}
+        <div class="border-t border-gray-400 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-sm text-gray-200">
+            <span>&copy; {% now "Y" %} <span class="font-semibold text-white">BURKINA SUUDU BAWDE</span> — Burkina Faso</span>
+            <span>Ministère de l'Enseignement Secondaire, de la Formation Professionnelle et Technique</span>
         </div>
     </div>
 
-    {% comment %} Decorative Elements {% endcomment %}
+    {% comment %} Halos décoratifs {% endcomment %}
     <div class="absolute top-10 right-10 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute bottom-10 left-10 w-48 h-48 bg-red-500/5 rounded-full blur-3xl pointer-events-none"></div>
 </footer>

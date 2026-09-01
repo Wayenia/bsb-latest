@@ -58,7 +58,11 @@ def demander(request):
     question = (request.POST.get("question") or "").strip()
     if not question:
         return JsonResponse({"ok": False, "message": "Posez une question."}, status=400)
-    contexte = services.contexte_lecture_seule(request.user, domaines_autorises(request.user))
+    domaines = domaines_autorises(request.user)
+    # Aucun domaine autorise : refus professionnel, sans solliciter le modele.
+    if not domaines:
+        return JsonResponse({"ok": True, "message": services.REFUS})
+    contexte = services.contexte_lecture_seule(request.user, domaines)
     ok, reponse = services.demander(question, contexte)
     return JsonResponse({"ok": ok, "message": reponse})
 
