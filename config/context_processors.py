@@ -14,6 +14,7 @@ from .navigation import construire_menu
 # et tout le module de facturation sont montes ailleurs dans le routage.
 PREFIXES_ESPACE_AGENT = (
     '/bsb/',
+    '/aide',
     '/centres/',
     '/statistiques/',
     '/statistiques-reelles/',

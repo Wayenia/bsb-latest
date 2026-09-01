@@ -75,6 +75,23 @@ l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
             </div>
         </div>
         {% endfor %}
+
+        {% comment %}Volet « Aides » : volontairement distinct des rubriques de
+        gestion — c'est un accompagnement, pas une liste de plus.{% endcomment %}
+        <a href="{% url 'courses:aide' %}"
+           class="bo-aide {% if request.path == '/aide' %}bo-aide-actif{% endif %}"
+           {% if request.path == '/aide' %}aria-current="page"{% endif %}>
+            <span class="bo-aide-icone">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M12 3a9 9 0 100 18 9 9 0 000-18zm0 5a4 4 0 100 8 4 4 0 000-8zM5.6 5.6l3.2 3.2M18.4 5.6l-3.2 3.2M18.4 18.4l-3.2-3.2M5.6 18.4l3.2-3.2"/>
+                </svg>
+            </span>
+            <span class="min-w-0">
+                <span class="bo-aide-titre">Aides</span>
+                <span class="bo-aide-sous">Guide pas à pas &amp; support</span>
+            </span>
+        </a>
     </nav>
 
     {% comment %}Le compte et ses actions sont detaches du menu : empiles comme

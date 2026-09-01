@@ -354,6 +354,23 @@
 
   .bo-sidebar-nav { @apply flex-1 px-2 py-3 space-y-0.5; }
 
+  /* Volet « Aides » : distinct des rubriques (degrade + liseré + pastille). */
+  .bo-aide {
+    @apply mt-3 mx-1 flex items-center gap-3 rounded-xl px-3 py-2.5
+           bg-gradient-to-r from-bsb-red/10 to-bsb-gold/10
+           border border-bsb-gold/40 text-bsb-ink transition-colors
+           hover:from-bsb-red/15 hover:to-bsb-gold/20 hover:border-bsb-gold
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
+  }
+  .bo-aide-actif { @apply from-bsb-red/20 to-bsb-gold/20 border-bsb-red; }
+  .bo-aide-icone {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg
+           bg-gradient-to-br from-bsb-red to-bsb-gold text-white;
+  }
+  .bo-aide-icone svg { @apply h-5 w-5; }
+  .bo-aide-titre { @apply block text-sm font-bold leading-tight; }
+  .bo-aide-sous  { @apply block text-[11px] text-bsb-muted leading-tight truncate; }
+
   .bo-groupe-tete {
     @apply w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-left
            text-[13px] font-semibold text-bsb-ink

@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% block title %}Aides | Yupaan{% endblock %}
+{% block content %}
+<div class="bo-shell bo-large">
+
+  {% comment %}En-tete distinctif : cet ecran n'est pas une liste de gestion,
+  c'est un accompagnement. D'ou un traitement plus chaleureux.{% endcomment %}
+  <div class="rounded-2xl overflow-hidden shadow-sm mb-6 bg-gradient-to-r from-bsb-red to-bsb-yellow">
+    <div class="p-6 md:p-8 text-white">
+      <div class="flex items-center gap-2 text-white/90 text-xs font-bold uppercase tracking-widest mb-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.4-2.9 8.5-7 9.8-4.1-1.3-7-5.4-7-9.8V6l7-3z"/>
+        </svg>
+        Aides &amp; accompagnement
+      </div>
+      <h1 class="text-2xl md:text-3xl font-black leading-tight">Comment utiliser la plateforme, pas à pas</h1>
+      <p class="mt-2 text-white/90 max-w-2xl text-sm md:text-base">
+        Un guide illustré, adapté à votre rôle
+        {% if role_libelle %}(<strong>{{ role_libelle }}</strong>){% endif %},
+        qui reprend chaque étape dans l'ordre — de l'ouverture du site jusqu'à votre espace de travail.
+      </p>
+    </div>
+  </div>
+
+  {% if roles_disponibles %}
+  {% comment %}Apercu reserve aux comptes qui voient tout : relire le guide d'un
+  autre role avant sa mise en service.{% endcomment %}
+  <div class="bo-note-info mb-6">
+    <p class="font-semibold mb-2">Aperçu par rôle (réservé à l'administration)</p>
+    <div class="flex flex-wrap gap-2">
+      {% for code, libelle in roles_disponibles %}
+      <a href="?role={{ code }}"
+         class="px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors
+                {% if apercu == code %}bg-bsb-red text-white border-bsb-red{% else %}bg-white text-bsb-ink border-gray-300 hover:border-bsb-red{% endif %}">
+        {{ libelle }}
+      </a>
+      {% endfor %}
+    </div>
+    {% if apercu %}<p class="mt-2 text-xs text-bsb-muted">Vous prévisualisez le guide « {{ role_libelle }} ».</p>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if guide %}
+  <div class="bo-card mb-8">
+    <div class="bo-card-body">
+      <h2 class="text-lg font-black text-bsb-ink">{{ guide.titre }}</h2>
+      <p class="text-sm text-bsb-muted mt-1">{{ guide.resume }}</p>
+    </div>
+  </div>
+
+  <ol class="aide-etapes">
+    {% for e in guide.etapes %}
+    <li class="aide-etape">
+      <div class="aide-num">{{ e.numero }}</div>
+      <div class="aide-corps">
+        <h3 class="aide-titre">{{ e.titre }}</h3>
+        <p class="aide-texte">{{ e.texte }}</p>
+
+        {% if e.image_url %}
+        <div class="aide-capture">
+          <div class="aide-capture-barre"><span></span><span></span><span></span></div>
+          <img src="{{ e.image_url }}" alt="Capture : {{ e.titre }}" loading="lazy">
+        </div>
+        {% else %}
+        <div class="aide-capture-absente">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h3l2-2h4l2 2h3a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+            <circle cx="12" cy="13" r="3.2"/>
+          </svg>
+          <span>Capture à venir</span>
+        </div>
+        {% endif %}
+
+        {% if e.astuce %}
+        <div class="aide-astuce">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3a6 6 0 00-3.6 10.8c.4.3.6.7.6 1.2v.5h6v-.5c0-.5.2-.9.6-1.2A6 6 0 0012 3zM9 19h6M10 21h4"/>
+          </svg>
+          <span>{{ e.astuce }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <div class="bo-card mb-8">
+    <div class="bo-card-body text-center py-10">
+      <p class="bo-empty-title">Guide en préparation</p>
+      <p class="bo-empty-text">Le guide illustré de votre rôle est en cours de rédaction. En attendant, le support reste à votre disposition ci-dessous.</p>
+    </div>
+  </div>
+  {% endif %}
+
+  {% comment %}Second temps : joindre une personne quand le guide ne suffit pas.{% endcomment %}
+  <div class="bo-card">
+    <div class="bo-card-header"><h2 class="bo-card-title">Besoin d'aide ? Contactez le support</h2></div>
+    <div class="bo-card-body">
+      <p class="text-sm text-bsb-ink font-semibold">{{ support.organisation }}</p>
+      <div class="grid gap-4 sm:grid-cols-2 mt-4">
+        <div class="flex items-center gap-3">
+          <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-bsb-red/10 text-bsb-red shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l9 6 9-6M3 8v8a2 2 0 002 2h14a2 2 0 002-2V8M3 8l2-2h14l2 2"/>
+            </svg>
+          </span>
+          <div>
+            <div class="text-xs uppercase tracking-wide text-bsb-muted">Courriel</div>
+            {% if support.email %}<a href="mailto:{{ support.email }}" class="text-sm font-semibold text-bsb-ink">{{ support.email }}</a>
+            {% else %}<div class="text-sm text-bsb-muted italic">à compléter par l'administration</div>{% endif %}
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-bsb-green/10 text-bsb-green shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h2l2 5-2 1a12 12 0 006 6l1-2 5 2v2a2 2 0 01-2 2A16 16 0 013 5z"/>
+            </svg>
+          </span>
+          <div>
+            <div class="text-xs uppercase tracking-wide text-bsb-muted">Téléphone</div>
+            {% if support.telephone %}<a href="tel:{{ support.telephone }}" class="text-sm font-semibold text-bsb-ink">{{ support.telephone }}</a>
+            {% else %}<div class="text-sm text-bsb-muted italic">à compléter par l'administration</div>{% endif %}
+          </div>
+        </div>
+      </div>
+      {% if support.horaires %}<p class="mt-4 text-xs text-bsb-muted">{{ support.horaires }}</p>{% endif %}
+    </div>
+  </div>
+
+</div>
+
+<style nonce="{{ csp_nonce }}">
+  .aide-etapes { list-style: none; margin: 0; padding: 0; position: relative; }
+  .aide-etape { position: relative; display: flex; gap: 1rem; padding-bottom: 1.5rem; }
+  /* Ligne verticale reliant les etapes. */
+  .aide-etape:not(:last-child)::before {
+    content: ''; position: absolute; left: 17px; top: 40px; bottom: 0;
+    width: 2px; background: #e5e7eb;
+  }
+  .aide-num {
+    flex: none; z-index: 1; width: 36px; height: 36px; border-radius: 9999px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: .95rem; color: #fff;
+    background: linear-gradient(135deg, #e53935, #ca8a04);
+    box-shadow: 0 2px 6px rgba(0,0,0,.12);
+  }
+  .aide-corps { flex: 1; min-width: 0; }
+  .aide-titre { font-weight: 800; color: #1f2937; font-size: 1rem; }
+  .aide-texte { color: #374151; font-size: .9rem; margin-top: .25rem; line-height: 1.55; }
+  .aide-capture {
+    margin-top: .75rem; border: 1px solid #e5e7eb; border-radius: 12px;
+    overflow: hidden; background: #fff; max-width: 640px;
+  }
+  .aide-capture-barre { display: flex; gap: 6px; padding: 8px 10px; background: #f3f4f6; border-bottom: 1px solid #e5e7eb; }
+  .aide-capture-barre span { width: 9px; height: 9px; border-radius: 9999px; background: #d1d5db; }
+  .aide-capture img { display: block; width: 100%; height: auto; }
+  .aide-capture-absente {
+    margin-top: .75rem; display: flex; align-items: center; gap: .6rem;
+    max-width: 640px; padding: 1.25rem; border: 2px dashed #e5e7eb; border-radius: 12px;
+    color: #9ca3af; font-size: .82rem; font-weight: 600; background: #fafafa;
+  }
+  .aide-astuce {
+    margin-top: .75rem; display: flex; align-items: flex-start; gap: .5rem;
+    padding: .6rem .8rem; border-radius: 10px; background: #fff8e1;
+    border: 1px solid rgba(202,138,4,.3); color: #92610a; font-size: .82rem;
+  }
+</style>
+{% endblock %}

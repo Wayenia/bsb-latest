@@ -59,6 +59,7 @@ urlpatterns = [
 
     # HELPER
     path('redirect-dashboard', views.redirect_to_dashboard, name='redirect_to_dashboard'),
+    path('aide', views.aide, name='aide'),
      # ── Statistiques ──────────────────────────────────────────────────────────
     path('statistiques/stat-globaux/',
          views.statistiques_view,

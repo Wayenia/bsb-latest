@@ -1588,6 +1588,45 @@ def _bounce_to_login(request, error_message):
 
 
 @login_required
+@login_required
+def aide(request):
+    """Guide pas-a-pas propre au role, plus les contacts du support.
+
+    Chaque agent voit le guide de son role. Les comptes qui voient tout
+    (admin, DG, superuser) peuvent previsualiser le guide d'un autre role via
+    ?role=..., pour relire un contenu avant sa mise en service.
+    """
+    from . import aide_contenu
+    from django.contrib.staticfiles import finders
+    from django.templatetags.static import static as static_url
+
+    user = request.user
+    peut_previsualiser = user.is_superuser or user.user_type in ('admin', 'dg')
+    role = user.user_type
+    apercu = None
+    demande = request.GET.get('role')
+    if demande and peut_previsualiser and aide_contenu.guide_pour(demande):
+        role, apercu = demande, demande
+
+    guide = aide_contenu.guide_pour(role)
+    if guide:
+        etapes = []
+        for i, e in enumerate(guide['etapes'], 1):
+            img = e.get('image')
+            url = static_url('aides/' + img) if img and finders.find('aides/' + img) else None
+            etapes.append({**e, 'numero': i, 'image_url': url})
+        guide = {**guide, 'etapes': etapes}
+
+    libelles = dict(user.USER_TYPE)
+    return render(request, 'aide/aide.html', {
+        'guide': guide,
+        'role_libelle': libelles.get(role, role),
+        'apercu': apercu,
+        'roles_disponibles': [(c, libelles.get(c, c)) for c in sorted(aide_contenu.GUIDES)] if peut_previsualiser else [],
+        'support': aide_contenu.SUPPORT,
+    })
+
+
 def redirect_to_dashboard(request):
     user = request.user
 
