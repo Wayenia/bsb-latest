@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'courses.apps.DetteConfig',
     'actualites',
     'audit',
+    'assistant',
    
 
     # third party for erd
@@ -272,6 +273,12 @@ BO_UI = env('BO_UI', default='nouveau')
 # page officielle facon quittance administrative ; 'classique' = ancien rendu.
 # Reversible sans redeploiement via ./bascule_doc.sh (README 9.8).
 DOC_MODELE = env('DOC_MODELE', default='officiel')
+
+# Assistant IA local (application `assistant`), lecture seule. 'off' par defaut.
+# Reversible sans redeploiement via ./bascule_ai.sh (assistant/README.md).
+AI_MODULE = env('AI_MODULE', default='off')
+AI_OLLAMA_URL = env('AI_OLLAMA_URL', default='http://suudu_ollama:11434')
+AI_MODEL = env('AI_MODEL', default='qwen2:0.5b')
 
 # --- Audit et surveillance (application `audit`) ---
 # Seuils de declenchement des alertes du rapport d'inspection. Les relever

@@ -161,8 +161,21 @@ services:
     networks:
       - suudu_net
 
+  # Assistant IA local (lecture seule). Ne demarre qu'avec le profil "ai"
+  # (via ./bascule_ai.sh). Aucun port expose : joignable seulement en interne.
+  suudu_ollama:
+    image: ollama/ollama:latest
+    container_name: suudu_ollama
+    restart: unless-stopped
+    profiles: ["ai"]
+    volumes:
+      - suudu_ollama_data:/root/.ollama
+    networks:
+      - suudu_net
+
 volumes:
   suudu_postgres_data_18:
+  suudu_ollama_data:
   suudu_pgadmin_data:
   suudu_redis_data:
   suudu_security_logs:

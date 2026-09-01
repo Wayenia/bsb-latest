@@ -15,6 +15,7 @@ palette inventee : l'espace de travail doit se reconnaitre comme la partie
 publique du site. Elles alternent d'un grand theme au suivant, ce qui donne un
 repere stable : on retrouve un groupe a sa couleur avant d'en relire le titre.
 """
+from django.conf import settings
 from django.urls import NoReverseMatch, reverse
 
 # Les classes sont ecrites en toutes lettres : tailwind.config.js balaie
@@ -109,6 +110,14 @@ GROUPES = [
         ],
     },
     {
+        'cle': 'assistant', 'titre': 'Assistant IA', 'couleur': 'vert', 'icone': 'graphique',
+        'liens': [
+            _lien('assistant:accueil', 'Assistant', 'assistant.utiliser_assistant_ia', '/bsb/assistant'),
+            _lien('assistant:acces', 'Accès délégués', 'assistant.gerer_assistant_ia', '/bsb/assistant/acces'),
+            _lien('assistant:modeles', 'Modèles', 'assistant.gerer_assistant_ia', '/bsb/assistant/modeles'),
+        ],
+    },
+    {
         'cle': 'territoire', 'titre': 'Découpage', 'couleur': 'grenat', 'icone': 'carte',
         'liens': [
             _lien('bsb_admin:direction_list', 'Directions inter-régionales', 'courses.gerer_directions', '/bsb/directions'),
@@ -135,6 +144,9 @@ def construire_menu(utilisateur, chemin):
     """
     menu = []
     for groupe in GROUPES:
+        # Le groupe Assistant n'apparait que si le module IA est active.
+        if groupe['cle'] == 'assistant' and getattr(settings, 'AI_MODULE', 'off') != 'on':
+            continue
         liens = []
         for lien in groupe['liens']:
             if lien['permission'] and not utilisateur.has_perm(lien['permission']):

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Modèles de l'assistant | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+  {% include 'partials/messages.html' %}
+
+  <div class="flex items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">Modèles de l'assistant</h1>
+      <p class="text-sm text-bsb-muted mt-1">Un seul modèle actif à la fois. Le changement se fait ici, sans arrêter la plateforme.</p>
+    </div>
+    <a href="{% url 'assistant:accueil' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-white text-bsb-ink border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors">Retour</a>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-6">
+    <p class="text-xs font-bold uppercase tracking-wider text-bsb-muted mb-1">Modèle actif</p>
+    <p class="text-lg font-black text-bsb-ink">{{ modele_actif }}</p>
+  </div>
+
+  <div class="space-y-3">
+    {% for nom, desc in conseilles %}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <p class="font-bold text-bsb-ink">{{ nom }}
+          {% if nom in installes %}<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">installé</span>{% endif %}
+          {% if nom == modele_actif %}<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-bsb-red text-white">actif</span>{% endif %}
+        </p>
+        <p class="text-sm text-bsb-muted mt-0.5">{{ desc }}</p>
+      </div>
+      <form method="post" class="shrink-0">
+        {% csrf_token %}
+        <input type="hidden" name="modele" value="{{ nom }}">
+        <button type="submit" {% if nom == modele_actif %}disabled{% endif %}
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white bg-bsb-green hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+          {% if nom in installes %}Activer{% else %}Télécharger et activer{% endif %}
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+
+  <p class="mt-6 text-xs text-bsb-muted">Un téléchargement se poursuit en arrière-plan : l'assistant devient disponible dès qu'il est terminé, sans interrompre la plateforme.</p>
+</div>
+{% endblock %}

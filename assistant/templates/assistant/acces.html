@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Accès à l'assistant | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+  {% include 'partials/messages.html' %}
+
+  <div class="flex items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">Accès à l'assistant</h1>
+      <p class="text-sm text-bsb-muted mt-1">Déléguez l'accès à un agent et délimitez son périmètre de consultation.</p>
+    </div>
+    <a href="{% url 'assistant:accueil' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-white text-bsb-ink border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors">Retour</a>
+  </div>
+
+  {% comment %} Formulaire d'octroi {% endcomment %}
+  <form method="post" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-6 space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="block text-sm font-bold text-bsb-ink mb-1.5">Agent</label>
+      <select name="utilisateur" required class="block w-full py-2.5 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold">
+        <option value="">— Choisir un agent —</option>
+        {% for a in agents %}<option value="{{ a.pk }}">{{ a.nom }} {{ a.prenom }} ({{ a.get_user_type_display }})</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <span class="block text-sm font-bold text-bsb-ink mb-1.5">Périmètre autorisé</span>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {% for code, libelle in tous_domaines %}
+        <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 text-sm cursor-pointer hover:bg-slate-50">
+          <input type="checkbox" name="domaines" value="{{ code }}" class="rounded border-slate-300 text-bsb-red focus:ring-bsb-gold">
+          {{ libelle }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="flex justify-end">
+      <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-white bg-bsb-green hover:brightness-110 transition-all">Accorder l'accès</button>
+    </div>
+  </form>
+
+  {% comment %} Liste des delegues {% endcomment %}
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100"><h2 class="text-sm font-bold uppercase tracking-wider text-bsb-muted">Agents avec accès</h2></div>
+    <div class="divide-y divide-slate-100">
+      {% for d in delegues %}
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4">
+        <div class="min-w-0">
+          <p class="font-bold text-bsb-ink">{{ d.utilisateur.nom }} {{ d.utilisateur.prenom }}</p>
+          <div class="mt-1 flex flex-wrap gap-1.5">
+            {% for dom in d.domaines %}<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ dom }}</span>
+            {% empty %}<span class="text-xs text-bsb-muted">aucun domaine</span>{% endfor %}
+          </div>
+        </div>
+        <form method="post" class="shrink-0">
+          {% csrf_token %}
+          <input type="hidden" name="utilisateur" value="{{ d.utilisateur.pk }}">
+          <input type="hidden" name="action" value="retirer">
+          <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors">Retirer</button>
+        </form>
+      </div>
+      {% empty %}
+      <p class="px-5 py-8 text-center text-sm text-bsb-muted">Aucun agent délégué pour l'instant.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

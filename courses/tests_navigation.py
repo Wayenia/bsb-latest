@@ -6,7 +6,7 @@ ferait disparaitre un lien de la barre en silence, et l'ecran deviendrait
 inatteignable sans que rien ne signale la panne.
 """
 from django.contrib.auth.models import Permission
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import NoReverseMatch, reverse
 
 from accounts.models import Utilisateur
@@ -70,8 +70,18 @@ class NavigationTests(TestCase):
         ])
         self.assertEqual(titres[-1], 'Paramétrage')
 
+    @override_settings(AI_MODULE='on')
     def test_le_superutilisateur_voit_tous_les_groupes(self):
+        # Assistant IA active : tous les groupes, y compris le groupe conditionnel.
         superutilisateur = Utilisateur.objects.create_superuser(
             username='chef2', password='x', nom='N', prenom='P', email='c2@example.invalid')
         menu = construire_menu(superutilisateur, '/bsb/dashboard')
         self.assertEqual(len(menu), len(GROUPES))
+
+    def test_groupe_assistant_masque_si_ia_desactivee(self):
+        # Assistant IA off (defaut) : le groupe n'apparait pas.
+        superutilisateur = Utilisateur.objects.create_superuser(
+            username='chef3', password='x', nom='N', prenom='P', email='c3@example.invalid')
+        with override_settings(AI_MODULE='off'):
+            cles = [g['cle'] for g in construire_menu(superutilisateur, '/bsb/dashboard')]
+        self.assertNotIn('assistant', cles)

@@ -79,7 +79,7 @@ l'interactivité (formulaires en plusieurs étapes, menus).
 
 ### 2.2 Applications Django
 
-Le projet est découpé en cinq applications Django, chacune avec une
+Le projet est découpé en applications Django, chacune avec une
 responsabilité précise :
 
 - **`accounts`** — Comptes utilisateurs, connexion/inscription, et le module de
@@ -97,6 +97,11 @@ responsabilité précise :
 - **`config`** — Réglages globaux du projet (`settings.py`), routage racine
   (`urls.py`), et deux middlewares maison : l'un renforce les en-têtes de sécurité
   HTTP, l'autre bloque les tentatives de connexion répétées (voir 9.2).
+- **`audit`** — Analyse des traces de connexion et diffusion du rapport
+  d'inspection. Documentation dédiée : [audit/README.md](audit/README.md).
+- **`assistant`** — Assistant IA local (Ollama), **en lecture seule**, pour des
+  analyses et de l'aide sur le fonctionnement. Désactivé par défaut, réversible
+  via `./bascule_ai.sh`. Documentation dédiée : [assistant/README.md](assistant/README.md).
 
 ### 2.3 Services Docker
 
