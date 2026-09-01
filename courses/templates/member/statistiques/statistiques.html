@@ -152,21 +152,25 @@
   /* ── KPI Cards ────────────────────────────────── */
   .kpi-card {
     background: #fff;
-    /* Meme arrondi et meme liseré que les cartes du tableau de bord (rounded-lg
-       + bordure fine), en conservant l'accent lateral colore propre a cet ecran. */
-    border: 1px solid var(--gris-border);
-    border-left: 4px solid transparent;
+    /* Meme facture que les cartes d'action du tableau de bord (bo-action) :
+       bordure pleine coloree de 2px, arrondi rounded-lg, ombre discrete, et
+       leger fond teinte au survol. Fini le liseré a gauche seulement. */
+    border: 2px solid var(--gris-border);
     border-radius: 0.5rem;
     box-shadow: 0 1px 2px rgba(0,0,0,.05);
     padding: 1.1rem 1.25rem;
-    transition: transform .2s, box-shadow .2s;
+    transition: transform .2s, box-shadow .2s, background-color .2s;
     height: 100%;
   }
-  .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
-  .kpi-card.rouge { border-left-color: var(--rouge); }
-  .kpi-card.or { border-left-color: var(--or); }
-  .kpi-card.vert { border-left-color: #16A34A; }
-  .kpi-card.gris { border-left-color: #6b7280; }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+  .kpi-card.rouge { border-color: var(--rouge); }
+  .kpi-card.rouge:hover { background-color: var(--rouge-soft); }
+  .kpi-card.or   { border-color: var(--or); }
+  .kpi-card.or:hover { background-color: var(--or-soft); }
+  .kpi-card.vert { border-color: var(--vert); }
+  .kpi-card.vert:hover { background-color: #e9f8ef; }
+  .kpi-card.gris { border-color: var(--gris); }
+  .kpi-card.gris:hover { background-color: var(--gris-light); }
   .kpi-icon {
     width: 48px; height: 48px; border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
