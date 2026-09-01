@@ -33,6 +33,9 @@ docker compose exec suudu_backend python manage.py envoyer_rapport_audit \
 # Produire le fichier sans envoyer de courriel (mise au point)
 docker compose exec suudu_backend python manage.py envoyer_rapport_audit \
     --fichier /tmp/audit.xlsx --sans-envoi
+
+# Mode planifie : n'envoie que si une echeance du reglage d'ecran est atteinte
+docker compose exec suudu_backend python manage.py envoyer_rapport_audit --auto
 ```
 
 ## Parametres (`.env`)
@@ -46,12 +49,24 @@ docker compose exec suudu_backend python manage.py envoyer_rapport_audit \
 | `AUDIT_SEUIL_IP_PAR_COMPTE` | 3 | Adresses distinctes pour un compte avant alerte |
 | `AUDIT_HEURE_OUVREE_DEBUT` | 7 | Debut des heures ouvrees (UTC, cf. TIME_ZONE) |
 | `AUDIT_HEURE_OUVREE_FIN` | 19 | Fin des heures ouvrees |
+| `AUDIT_SCAN_INTERVAL` | 3600 | Intervalle (s) entre deux verifications du planificateur `suudu_audit` |
 
 Les destinataires se gerent aussi depuis l'ecran **Envoi du rapport**, accessible
 depuis l'historique des connexions : ajout a l'unite, import d'un fichier Excel
 dont le modele est pre-rempli des adresses deja enregistrees, et suspension sans
 suppression — on garde trace de qui recevait le rapport. Les deux sources se
 cumulent ; `--a` les remplace, pour un envoi ponctuel cible.
+
+## Envoi automatique planifie
+
+L'ecran **Reglage d'envoi** (`/bsb/historique-connexions/destinataires`) permet de
+programmer une diffusion **quotidienne, hebdomadaire ou mensuelle** (jour et heure
+choisis au clic), en plus de l'envoi immediat « Envoyer maintenant ». Le service
+`suudu_audit` de `docker-compose.yml` execute `envoyer_rapport_audit --auto` toutes les
+`AUDIT_SCAN_INTERVAL` secondes ; la commande lit le reglage, n'envoie qu'a echeance et
+jamais deux fois la meme (la date de derniere diffusion est conservee en base). Aucune
+tache `cron` sur l'hote n'est donc necessaire, et la fenetre du rapport suit la
+frequence choisie (1, 7 ou 31 jours).
 
 Sans aucun destinataire ni `--a`, la commande s'arrete sans rien envoyer.
 Rappel : tant que `EMAIL_HOST` est vide, Django ecrit les courriels dans les

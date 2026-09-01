@@ -3,14 +3,15 @@ from django.contrib import messages
 from django.core.management import call_command
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from courses.bulk_import.views_helpers import handle_import_upload, render_import_template
 from courses.permissions import require_permission
 
 from .bulk_import_registry import SPEC_DESTINATAIRE_AUDIT
-from .forms import DestinataireRapportForm
-from .models import DestinataireRapport
+from .forms import DestinataireRapportForm, ReglageDiffusionForm
+from .models import DestinataireRapport, ReglageDiffusion
 
 PERMISSION = 'audit.gerer_destinataires_audit'
 
@@ -28,10 +29,16 @@ def destinataire_list(request):
         form = DestinataireRapportForm()
 
     destinataires = DestinataireRapport.objects.all()
+    reglage = ReglageDiffusion.charge()
+    maintenant = timezone.now()
     return render(request, 'audit/destinataires.html', {
         'destinataires': destinataires,
         'form': form,
         'nb_actifs': destinataires.filter(actif=True).count(),
+        'reglage': reglage,
+        'reglage_form': ReglageDiffusionForm(instance=reglage),
+        'prochaine_diffusion': reglage.prochaine(maintenant),
+        'derniere_diffusion': reglage.derniere_diffusion,
     })
 
 
@@ -53,6 +60,23 @@ def destinataire_envoyer(request):
     else:
         nombre = len(DestinataireRapport.adresses_actives())
         messages.success(request, f"Rapport envoyé à {nombre} destinataire{'s' if nombre > 1 else ''}.")
+    return redirect('bsb_admin:destinataire_audit_list')
+
+
+@require_permission(PERMISSION)
+@require_POST
+def reglage_diffusion(request):
+    """Enregistre la periodicite d'envoi automatique, reglee par clics."""
+    reglage = ReglageDiffusion.charge()
+    form = ReglageDiffusionForm(request.POST, instance=reglage)
+    if form.is_valid():
+        form.save()
+        if reglage.actif:
+            messages.success(request, "Envoi automatique enregistré.")
+        else:
+            messages.success(request, "Envoi automatique désactivé.")
+    else:
+        messages.error(request, "Réglage non enregistré : vérifiez les choix.")
     return redirect('bsb_admin:destinataire_audit_list')
 
 

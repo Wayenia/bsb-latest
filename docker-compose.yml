@@ -129,6 +129,38 @@ services:
     networks:
       - suudu_net
 
+  # Planificateur du rapport d'inspection : verifie a intervalle regulier si une
+  # echeance du reglage d'ecran est atteinte et, le cas echeant, envoie le
+  # rapport. La commande est auto-regulee (n'envoie jamais deux fois la meme
+  # echeance), donc une verification frequente est sans risque (README 9.5).
+  suudu_audit:
+    build: .
+    container_name: suudu_audit
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      # Meme volume de logs que le backend : la configuration de journalisation
+      # ecrit dans /app/logs, sinon toute commande manage.py echoue au demarrage.
+      - suudu_security_logs:/app/logs
+    env_file:
+      - .env
+    environment:
+      - AUDIT_SCAN_INTERVAL=${AUDIT_SCAN_INTERVAL:-3600}
+    depends_on:
+      suudu_db:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo "Planificateur du rapport d'audit : verification toutes les $${AUDIT_SCAN_INTERVAL}s."
+        while true; do
+          python manage.py envoyer_rapport_audit --auto || echo "[audit] verification en echec, ignoree"
+          sleep "$${AUDIT_SCAN_INTERVAL}"
+        done
+    networks:
+      - suudu_net
+
 volumes:
   suudu_postgres_data_18:
   suudu_pgadmin_data:

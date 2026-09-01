@@ -1,12 +1,45 @@
 {% extends 'base.html' %}
-{% block title %}Réglage d'envoi | Yupaan{% endblock %}
+{% block title %}Réglage d'envoi | Yupaan
+<style nonce="{{ csp_nonce }}">
+  .reglage-freq { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .reglage-seg { display: inline-flex; align-items: center; gap: .5rem;
+    border: 1.5px solid #e5e7eb; border-radius: 10px; padding: .45rem .85rem;
+    font-size: .85rem; font-weight: 600; color: #374151; cursor: pointer;
+    transition: border-color .15s, background-color .15s, color .15s; }
+  .reglage-seg input { accent-color: #e53935; }
+  .reglage-seg:hover { border-color: #ca8a04; }
+  .reglage-seg:has(input:checked) { border-color: #e53935; background: #fdecea; color: #b71c1c; }
+  .reglage-quand[hidden] { display: none; }
+</style>
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var carte = document.getElementById('carte-reglage');
+  if (!carte) return;
+  function courant() {
+    var c = carte.querySelector('input[name="frequence"]:checked');
+    return c ? c.value : 'desactive';
+  }
+  function rafraichir() {
+    var f = courant();
+    carte.querySelectorAll('.reglage-quand').forEach(function (bloc) {
+      var quand = (bloc.getAttribute('data-quand') || '').split(' ');
+      bloc.hidden = quand.indexOf(f) === -1;
+    });
+  }
+  carte.querySelectorAll('input[name="frequence"]').forEach(function (r) {
+    r.addEventListener('change', rafraichir);
+  });
+  rafraichir();
+})();
+</script>
+{% endblock %}
 {% block content %}
 <div class="bo-shell max-w-5xl">
   {% include 'partials/messages.html' %}
 
   <div class="bo-header">
     <div>
-      <h1 class="bo-title">Historique des connexions</h1>
+      <h1 class="bo-title">Réglage d'envoi</h1>
     </div>
   </div>
 
@@ -30,6 +63,48 @@
     {% endif %}
     {% url 'bsb_admin:destinataire_audit_import' as import_url %}
     {% include 'partials/import_export_buttons.html' with upload_url=import_url label="Importer Excel" %}
+  </div>
+
+  {% comment %}Envoi automatique : tout se regle au clic (frequence, jour, heure).{% endcomment %}
+  <div class="bo-card mb-6" id="carte-reglage">
+    <div class="bo-card-header">
+      <h2 class="bo-card-title">Envoi automatique</h2>
+      {% if reglage.actif %}<span class="bo-badge-success">Actif</span>{% else %}<span class="bo-badge-neutral">Désactivé</span>{% endif %}
+    </div>
+    <form method="post" action="{% url 'bsb_admin:destinataire_audit_reglage' %}" class="bo-card-body">
+      {% csrf_token %}
+      <p class="text-sm text-bsb-muted mb-3">À quelle fréquence les destinataires reçoivent-ils le rapport ?</p>
+
+      <div class="reglage-freq mb-4">
+        {% for radio in reglage_form.frequence %}
+        <label class="reglage-seg">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+        {% endfor %}
+      </div>
+
+      <div class="flex flex-wrap items-end gap-4">
+        <div class="reglage-quand" data-quand="hebdomadaire">
+          <label class="bo-label">Chaque</label>
+          {{ reglage_form.jour_semaine }}
+        </div>
+        <div class="reglage-quand" data-quand="mensuel">
+          <label class="bo-label">Chaque mois</label>
+          {{ reglage_form.jour_mois }}
+        </div>
+        <div class="reglage-quand" data-quand="quotidien hebdomadaire mensuel">
+          <label class="bo-label">À</label>
+          {{ reglage_form.heure }}
+        </div>
+        <button type="submit" class="bo-btn-primary">Enregistrer</button>
+      </div>
+
+      {% if reglage.actif %}
+      <p class="mt-4 text-sm text-bsb-muted">
+        Prochaine diffusion :
+        <strong class="text-bsb-ink">{{ prochaine_diffusion|date:"l j F Y à H\hi"|default:"—" }}</strong>
+        {% if derniere_diffusion %}<span> · Dernière : {{ derniere_diffusion|date:"j/m/Y à H\hi" }}</span>{% endif %}
+      </p>
+      {% endif %}
+    </form>
   </div>
 
   <div class="grid gap-6 lg:grid-cols-3">
@@ -120,4 +195,37 @@
     </div>
   </div>
 </div>
+
+<style nonce="{{ csp_nonce }}">
+  .reglage-freq { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .reglage-seg { display: inline-flex; align-items: center; gap: .5rem;
+    border: 1.5px solid #e5e7eb; border-radius: 10px; padding: .45rem .85rem;
+    font-size: .85rem; font-weight: 600; color: #374151; cursor: pointer;
+    transition: border-color .15s, background-color .15s, color .15s; }
+  .reglage-seg input { accent-color: #e53935; }
+  .reglage-seg:hover { border-color: #ca8a04; }
+  .reglage-seg:has(input:checked) { border-color: #e53935; background: #fdecea; color: #b71c1c; }
+  .reglage-quand[hidden] { display: none; }
+</style>
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var carte = document.getElementById('carte-reglage');
+  if (!carte) return;
+  function courant() {
+    var c = carte.querySelector('input[name="frequence"]:checked');
+    return c ? c.value : 'desactive';
+  }
+  function rafraichir() {
+    var f = courant();
+    carte.querySelectorAll('.reglage-quand').forEach(function (bloc) {
+      var quand = (bloc.getAttribute('data-quand') || '').split(' ');
+      bloc.hidden = quand.indexOf(f) === -1;
+    });
+  }
+  carte.querySelectorAll('input[name="frequence"]').forEach(function (r) {
+    r.addEventListener('change', rafraichir);
+  });
+  rafraichir();
+})();
+</script>
 {% endblock %}

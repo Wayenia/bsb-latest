@@ -220,3 +220,74 @@ class DestinataireTests(TestCase):
         self.Modele.objects.create(email='suspendu@example.invalid', actif=False)
         with self.assertRaises(CommandError):
             call_command('envoyer_rapport_audit')
+
+
+class ReglageDiffusionTests(TestCase):
+    """Planification de l'envoi automatique : echeances et non-double-envoi."""
+
+    def setUp(self):
+        from audit.models import ReglageDiffusion
+        self.Reglage = ReglageDiffusion
+        self.r = ReglageDiffusion.charge()
+
+    def test_desactive_n_est_jamais_du(self):
+        self.r.frequence = self.Reglage.DESACTIVE
+        self.assertFalse(self.r.est_du(timezone.now()))
+
+    def test_quotidien_du_puis_plus_du_apres_diffusion(self):
+        maintenant = timezone.localtime(timezone.now())
+        self.r.frequence = self.Reglage.QUOTIDIEN
+        self.r.heure = maintenant.hour
+        self.r.derniere_diffusion = None
+        self.assertTrue(self.r.est_du(timezone.now()))
+        self.r.derniere_diffusion = timezone.now()
+        self.assertFalse(self.r.est_du(timezone.now()))
+
+    def test_creneau_avant_l_heure_est_reporte_a_la_veille(self):
+        maintenant = timezone.localtime(timezone.now())
+        self.r.frequence = self.Reglage.QUOTIDIEN
+        # une heure future aujourd'hui : le dernier creneau echu est hier.
+        self.r.heure = (maintenant.hour + 1) % 24
+        creneau = self.r.creneau_courant(timezone.now())
+        self.assertIsNotNone(creneau)
+        self.assertLessEqual(creneau, timezone.now())
+
+    def test_prochaine_est_dans_le_futur(self):
+        self.r.frequence = self.Reglage.HEBDOMADAIRE
+        self.assertGreater(self.r.prochaine(timezone.now()), timezone.now())
+
+    def test_periode_jours_suit_la_frequence(self):
+        self.r.frequence = self.Reglage.QUOTIDIEN
+        self.assertEqual(self.r.periode_jours, 1)
+        self.r.frequence = self.Reglage.HEBDOMADAIRE
+        self.assertEqual(self.r.periode_jours, 7)
+
+
+class CommandeAutoTests(TestCase):
+    """Mode --auto : n'envoie qu'a echeance, et jamais deux fois la meme."""
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+                       AUDIT_DESTINATAIRES=['inspecteur@example.invalid'])
+    def test_auto_desactive_n_envoie_rien(self):
+        from audit.models import ReglageDiffusion
+        r = ReglageDiffusion.charge(); r.frequence = r.DESACTIVE; r.save()
+        mail.outbox = []
+        call_command('envoyer_rapport_audit', '--auto')
+        self.assertEqual(len(mail.outbox), 0)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+                       AUDIT_DESTINATAIRES=['inspecteur@example.invalid'])
+    def test_auto_envoie_a_echeance_puis_ne_double_pas(self):
+        from audit.models import ReglageDiffusion
+        maintenant = timezone.localtime(timezone.now())
+        r = ReglageDiffusion.charge()
+        r.frequence = r.QUOTIDIEN; r.heure = maintenant.hour
+        r.derniere_diffusion = None; r.save()
+        mail.outbox = []
+        call_command('envoyer_rapport_audit', '--auto')
+        self.assertEqual(len(mail.outbox), 1)
+        r.refresh_from_db()
+        self.assertIsNotNone(r.derniere_diffusion)
+        # deuxieme passage immediat : aucune nouvelle diffusion.
+        call_command('envoyer_rapport_audit', '--auto')
+        self.assertEqual(len(mail.outbox), 1)

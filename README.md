@@ -595,9 +595,23 @@ exécution planifiée :
 docker compose exec suudu_backend python manage.py envoyer_rapport_audit
 ```
 
-Les seuils de déclenchement des alertes et les destinataires se règlent dans `.env`
-(`AUDIT_DESTINATAIRES`, `AUDIT_PERIODE_JOURS`, `AUDIT_SEUIL_*`). Le détail figure dans
-[audit/README.md](audit/README.md).
+Les destinataires se gèrent aussi à l'écran **Supervision → Réglage d'envoi**
+(`/bsb/historique-connexions/destinataires`), qui permet en plus de **déclencher un
+envoi immédiat** et de **programmer un envoi automatique** (quotidien, hebdomadaire ou
+mensuel, avec le jour et l'heure), le tout par clics. Les adresses de cet écran
+s'ajoutent à celles de `AUDIT_DESTINATAIRES`.
+
+L'envoi automatique est assuré par le service `suudu_audit` de `docker-compose.yml` :
+il exécute `envoyer_rapport_audit --auto` à intervalle régulier
+(`AUDIT_SCAN_INTERVAL`, 3600 s par défaut). La commande est **auto-régulée** : elle lit
+le réglage d'écran, n'envoie que lorsqu'une échéance est atteinte et jamais deux fois la
+même (l'horodatage de la dernière diffusion est conservé en base). Une vérification
+fréquente est donc sans risque, et aucune tâche `cron` sur l'hôte n'est nécessaire. La
+fenêtre du rapport suit la fréquence choisie (un jour, sept jours, un mois).
+
+Les seuils de déclenchement des alertes et les destinataires par défaut se règlent
+dans `.env` (`AUDIT_DESTINATAIRES`, `AUDIT_PERIODE_JOURS`, `AUDIT_SEUIL_*`). Le détail
+figure dans [audit/README.md](audit/README.md).
 
 Point de vigilance : ce rapport n'a de valeur que si les **échecs** de connexion sont
 journalisés. Ils le sont dans `HistoriqueConnexion` avec le type `echec` — le compteur

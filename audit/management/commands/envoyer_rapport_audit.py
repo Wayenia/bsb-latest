@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from accounts.models import HistoriqueConnexion
 from audit import services
-from audit.models import DestinataireRapport
+from audit.models import DestinataireRapport, ReglageDiffusion
 from audit.classeur import construire_classeur
 
 PLAFOND_JOURNAL = 5000
@@ -30,8 +30,25 @@ class Command(BaseCommand):
                        help="Ecrit aussi le classeur sur disque (mise au point).")
         p.add_argument('--sans-envoi', action='store_true',
                        help="Construit le rapport sans envoyer de courriel.")
+        p.add_argument('--auto', action='store_true',
+                       help="Mode planifie : n'envoie que si le reglage d'ecran est echu.")
 
     def handle(self, *args, **o):
+        # Mode planifie : le planificateur appelle cette commande a intervalle
+        # regulier ; on n'envoie que lorsqu'une echeance du reglage d'ecran est
+        # atteinte, et jamais deux fois la meme (README 9.5).
+        reglage = None
+        if o['auto']:
+            reglage = ReglageDiffusion.charge()
+            if not reglage.actif:
+                self.stdout.write("Envoi automatique desactive : rien a faire.")
+                return
+            if not reglage.est_du(timezone.now()):
+                self.stdout.write("Aucune echeance atteinte : rien a envoyer.")
+                return
+            if o['jours'] is None:
+                o['jours'] = reglage.periode_jours
+
         # `is None` et non `or` : --jours 0 doit etre refuse, pas retomber
         # silencieusement sur la valeur par defaut.
         jours = o['jours'] if o['jours'] is not None else getattr(settings, 'AUDIT_PERIODE_JOURS', 7)
@@ -99,6 +116,9 @@ class Command(BaseCommand):
 
         envoyes = message.send(fail_silently=False)
         if envoyes:
+            if reglage is not None:
+                reglage.derniere_diffusion = timezone.now()
+                reglage.save(update_fields=['derniere_diffusion'])
             self.stdout.write(self.style.SUCCESS(
                 f"Rapport envoye a {', '.join(destinataires)} (piece jointe : {nom})."))
         else:
