@@ -1,15 +1,24 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Assistant IA | BSB{% endblock %}
+{% block title %}Yupaan-IA | BSB{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
 
   <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-6">
-    <div>
-      <p class="text-xs font-bold uppercase tracking-wider text-bsb-red mb-1">Assistant IA · lecture seule</p>
-      <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">Assistant Yupaan</h1>
-      <p class="text-sm text-bsb-muted mt-1">Analyses et explications sur le fonctionnement — l'assistant ne modifie jamais les données.</p>
+    <div class="flex items-center gap-3">
+      <span class="relative shrink-0">
+        <img src="{% static 'images/logo.png' %}" alt="Yupaan-IA" class="w-12 h-12 rounded-xl object-contain bg-white ring-1 ring-slate-200">
+        <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-bsb-gold to-bsb-red flex items-center justify-center ring-2 ring-white">
+          <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3l2.29 6.86L21 12l-5.71 2.14L13 21l-2.29-6.86L5 12l5.71-2.14L13 3zM5 3v3M3.5 4.5h3"/></svg>
+        </span>
+      </span>
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-bsb-red mb-0.5">Lecture seule</p>
+        <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">Yupaan-<span class="text-bsb-red">IA</span></h1>
+        <p class="text-sm text-bsb-muted mt-0.5">Analyses et explications — Yupaan-IA ne modifie jamais les données.</p>
+      </div>
     </div>
     {% if peut_gerer %}
     <div class="flex flex-wrap gap-2">

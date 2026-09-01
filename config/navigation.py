@@ -110,7 +110,7 @@ GROUPES = [
         ],
     },
     {
-        'cle': 'assistant', 'titre': 'Assistant IA', 'couleur': 'vert', 'icone': 'graphique',
+        'cle': 'assistant', 'titre': 'Yupaan-IA', 'couleur': 'vert', 'icone': 'graphique',
         'liens': [
             _lien('assistant:accueil', 'Assistant', 'assistant.utiliser_assistant_ia', '/bsb/assistant'),
             _lien('assistant:acces', 'Accès délégués', 'assistant.gerer_assistant_ia', '/bsb/assistant/acces'),

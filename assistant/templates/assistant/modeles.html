@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Modèles de l'assistant | BSB{% endblock %}
+{% block title %}Modèles · Yupaan-IA | BSB{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
@@ -8,7 +8,7 @@
 
   <div class="flex items-center justify-between gap-4 mb-6">
     <div>
-      <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">Modèles de l'assistant</h1>
+      <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">Modèles de Yupaan-IA</h1>
       <p class="text-sm text-bsb-muted mt-1">Un seul modèle actif à la fois. Le changement se fait ici, sans arrêter la plateforme.</p>
     </div>
     <a href="{% url 'assistant:accueil' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-white text-bsb-ink border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors">Retour</a>
@@ -41,6 +41,6 @@
     {% endfor %}
   </div>
 
-  <p class="mt-6 text-xs text-bsb-muted">Un téléchargement se poursuit en arrière-plan : l'assistant devient disponible dès qu'il est terminé, sans interrompre la plateforme.</p>
+  <p class="mt-6 text-xs text-bsb-muted">Un téléchargement se poursuit en arrière-plan : Yupaan-IA devient disponible dès qu'il est terminé, sans interrompre la plateforme.</p>
 </div>
 {% endblock %}

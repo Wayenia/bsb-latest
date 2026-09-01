@@ -99,7 +99,7 @@ responsabilité précise :
   HTTP, l'autre bloque les tentatives de connexion répétées (voir 9.2).
 - **`audit`** — Analyse des traces de connexion et diffusion du rapport
   d'inspection. Documentation dédiée : [audit/README.md](audit/README.md).
-- **`assistant`** — Assistant IA local (Ollama), **en lecture seule**, pour des
+- **`assistant`** — **Yupaan-IA**, assistant local (Ollama), **en lecture seule**, pour des
   analyses et de l'aide sur le fonctionnement. Désactivé par défaut, réversible
   via `./bascule_ai.sh`. Documentation dédiée : [assistant/README.md](assistant/README.md).
 

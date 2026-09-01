@@ -1,12 +1,12 @@
-# Assistant IA local (application `assistant`)
+# Yupaan-IA — assistant local (application `assistant`)
 
-Un assistant qui **lit** les données de Yupaan et **explique / analyse**, pour
+**Yupaan-IA** est un assistant qui **lit** les données de Yupaan et **explique / analyse**, pour
 aider l'administration. Il tourne **en local** (aucune donnée n'est envoyée sur
 Internet) grâce à **Ollama** + un modèle **DeepSeek/Qwen**.
 
 ## Règle d'or : lecture seule
 
-L'assistant **ne modifie jamais la base de données** — jamais de création, de
+Yupaan-IA **ne modifie jamais la base de données** — jamais de création, de
 modification ni de suppression, pour personne (y compris l'administrateur).
 Trois protections :
 
@@ -22,7 +22,7 @@ Trois protections :
 ./bascule_ai.sh              # affiche l'état courant
 ```
 
-Désactivé (**valeur par défaut**), l'écran disparaît et le conteneur Ollama ne
+Désactivé (**valeur par défaut**), l'écran de Yupaan-IA disparaît et le conteneur Ollama ne
 tourne pas : **aucun impact** sur le reste de la plateforme.
 
 ## Modèles (un seul actif à la fois)
@@ -34,7 +34,7 @@ tourne pas : **aucun impact** sur le reste de la plateforme.
 Le modèle se choisit dans `.env` (`AI_MODEL=...`) ou depuis l'écran
 **Assistant → Modèles** en back-office. Changer de modèle le télécharge en
 arrière-plan si besoin, **sans arrêter la plateforme** ; si Ollama est absent,
-l'assistant affiche « indisponible » et le reste fonctionne normalement.
+Yupaan-IA affiche « indisponible » et le reste fonctionne normalement.
 
 ## Qui y a accès
 
@@ -54,7 +54,7 @@ l'assistant affiche « indisponible » et le reste fonctionne normalement.
 
 ## En bref (scalabilité)
 
-Tout est isolé dans l'app `assistant` et le service `suudu_ollama` (profil Docker
+Tout est isolé dans l'app `assistant` (Yupaan-IA) et le service `suudu_ollama` (profil Docker
 `ai`). Pour ajouter un domaine consultable : compléter `DOMAINES` et
 `contexte_lecture_seule` dans `assistant/`. Pour un autre modèle : le choisir
 dans l'écran Modèles. Rien d'autre dans la plateforme n'est touché.
