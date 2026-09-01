@@ -2,18 +2,20 @@
 {% block title %}Informations personnelles | BSB{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 py-12">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
   {% include 'partials/messages.html' %}
 
-  <div class="bg-white border border-slate-200 rounded-sm mb-8">
-    <div class="h-1 w-full bg-[#ECAB0F]"></div>
-    
-    <div class="p-8">
+  {% include 'partials/inscription_stepper.html' with etape=2 %}
+
+  <div class="bg-white border border-slate-200 rounded-2xl shadow-sm mb-8 overflow-hidden">
+    <div class="h-1.5 w-full bg-gradient-to-r from-bsb-gold via-bsb-red to-bsb-green"></div>
+
+    <div class="p-6 sm:p-8">
       {% comment %} head {% endcomment %}
       <div class="mb-8">
-        <h3 class="text-xl font-light text-slate-800 mb-1">Informations personnelles</h3>
-        <p class="text-sm text-slate-500">
-          Veuillez renseigner attentivement vos vraies informations
+        <h1 class="text-xl sm:text-2xl font-black text-bsb-ink mb-1">Informations personnelles</h1>
+        <p class="text-sm text-bsb-muted">
+          Veuillez renseigner attentivement vos vraies informations.
         </p>
       </div>
 
@@ -121,7 +123,7 @@
           </div>
         </div>
 
-        <h3 class="text-xl font-light text-slate-800 mb-2"> Informations de la personne à contacter</h3>
+        <h2 class="text-lg font-bold text-bsb-ink mb-2">Informations de la personne à contacter</h2>
 
         {% comment %} Type de personne à contacter {% endcomment %}
         <div class="w-full mb-8">
@@ -230,26 +232,20 @@
         </div>
 
         {% comment %} Boutons de navigation {% endcomment %}
-        <div class="flex justify-between mt-10 pt-6 border-t border-slate-200">
-          
+        <div class="flex items-center justify-between mt-10 pt-6 border-t border-slate-200">
           <a href="{% url 'courses:subscribe_selection' %}"
-             class="px-5 py-2.5 text-white text-sm font-medium rounded-sm hover:opacity-90 transition-all bg-[#6b7280]">
-            ← Précédent
+             class="inline-flex items-center gap-2 px-5 py-2.5 text-bsb-ink text-sm font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            Précédent
           </a>
           <button type="submit"
-                  class="px-6 py-2.5 text-white text-sm font-medium rounded-sm transition-all hover:opacity-90 flex items-center gap-2 bg-[#CA8A04]">
-            <span>Suivant</span>
-            <span class="text-xs opacity-70">→</span>
+                  class="inline-flex items-center gap-2 px-6 py-2.5 text-white text-sm font-bold rounded-lg bg-gradient-to-r from-bsb-gold to-yellow-600 hover:brightness-110 transition-all">
+            Suivant
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
       </form>
     </div>
-  </div>
-
-  <div class="mt-8 flex justify-center space-x-3">
-    <span class="h-0.5 w-3 bg-[#ECAB0F]"></span>
-    <span class="h-0.5 w-3 bg-[#E30613]"></span>
-    <span class="h-0.5 w-3 bg-[#009640]"></span>
   </div>
 </div>
 

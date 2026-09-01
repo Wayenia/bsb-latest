@@ -2,19 +2,20 @@
 {% block title %}Documents requis | BSB{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 py-12">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
   {% include 'partials/messages.html' %}
 
+  {% include 'partials/inscription_stepper.html' with etape=3 %}
 
-  <div class="bg-white border border-slate-200 rounded-sm mb-8">
-    <div class="h-1 w-full bg-[#ECAB0F]"></div>
-    
+  <div class="bg-white border border-slate-200 rounded-2xl shadow-sm mb-6 overflow-hidden">
+    <div class="h-1.5 w-full bg-gradient-to-r from-bsb-gold via-bsb-red to-bsb-green"></div>
+
     <div class="p-6">
-      <div class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+      <div class="text-xs font-semibold text-bsb-muted uppercase tracking-wider mb-2">
         Formation sélectionnée
       </div>
-      
-      <h2 class="text-2xl font-light text-slate-800 mb-4">
+
+      <h2 class="text-xl sm:text-2xl font-black text-bsb-ink mb-4">
         {{ career.filiere.nom_filiere }}
       </h2>
       
@@ -36,8 +37,8 @@
       {% if career.filiere.communique %}
       <div class="mt-5 pt-4 border-t border-slate-100">
         <a href="{{ career.filiere.communique.url }}" target="_blank"
-           class="inline-flex items-center text-[25px] text-red-600">
-          <span class="mr-2 text-[25px] text-[#E30613]"></span>
+           class="inline-flex items-center gap-2 text-sm font-semibold text-bsb-red hover:underline">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           Relisez le communiqué officiel
         </a>
       </div>
@@ -46,11 +47,11 @@
   </div>
 
   {% comment %} Documents form {% endcomment %}
-  <div class="bg-white border border-slate-200 rounded-sm">
+  <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
     <div class="p-6">
       {% comment %} Form header with minimal decoration {% endcomment %}
       <div class="mb-6">
-        <h3 class="text-xl font-light text-slate-800 mb-1">Documents à fournir</h3>
+        <h3 class="text-lg sm:text-xl font-bold text-bsb-ink mb-1">Documents à fournir</h3>
         <p class="text-sm text-slate-500">
           Les champs marqués <span class="text-slate-700 font-medium">*</span> sont obligatoires.
         </p>
@@ -76,7 +77,7 @@
               {% endif %}
             </div>
             
-            <div class="rounded-xl border-2 border-dashed border-yellow-400 bg-yellow-50 hover:bg-yellow-100 transition-colors px-4 py-4">
+            <div class="rounded-xl border-2 border-dashed border-amber-300 bg-bsb-cream hover:bg-amber-100 transition-colors px-4 py-4">
               <input
                 type="file"
                 name="{{ doc.libelle_piece }}"
@@ -84,7 +85,7 @@
                 accept=".pdf,.jpg,.jpeg,.png"
                 data-max-size-mo="5"
                 {% if doc.est_requis %}required{% endif %}
-                class="block w-full text-sm text-slate-600 cursor-pointer file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-yellow-600 file:text-white hover:file:bg-yellow-700 file:cursor-pointer file:transition-colors"
+                class="block w-full text-sm text-slate-600 cursor-pointer file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-bsb-gold file:text-white hover:file:brightness-110 file:cursor-pointer file:transition-all"
               >
             </div>
 
@@ -110,26 +111,20 @@
 
 
         {% comment %} Boutons de navigation {% endcomment %}
-        <div class="flex justify-between mt-10 pt-6 border-t border-slate-200">
+        <div class="flex items-center justify-between mt-10 pt-6 border-t border-slate-200">
           <a href="{% url 'courses:personal_info' career.id %}"
-             class="px-5 py-2.5 text-white text-sm font-medium rounded-sm hover:opacity-90 transition-all bg-[#6b7280]">
-            ← Précédent
+             class="inline-flex items-center gap-2 px-5 py-2.5 text-bsb-ink text-sm font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            Précédent
           </a>
           <button type="submit"
-                  class="px-6 py-2.5 text-white text-sm font-medium rounded-sm transition-all hover:opacity-90 flex items-center gap-2 bg-[#CA8A04]">
-            <span>Suivant</span>
-            <span class="text-xs opacity-70">→</span>
+                  class="inline-flex items-center gap-2 px-6 py-2.5 text-white text-sm font-bold rounded-lg bg-gradient-to-r from-bsb-gold to-yellow-600 hover:brightness-110 transition-all">
+            Suivant
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
     </form>
     </div>
-  </div>
-
-  {% comment %} Footer with subtle BSB colors {% endcomment %}
-  <div class="mt-8 flex justify-center space-x-3">
-    <span class="h-0.5 w-3 bg-[#ECAB0F]"></span>
-    <span class="h-0.5 w-3 bg-[#E30613]"></span>
-    <span class="h-0.5 w-3 bg-[#009640]"></span>
   </div>
 </div>
 

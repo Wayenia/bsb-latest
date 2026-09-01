@@ -1,0 +1,51 @@
+{% comment %}
+Fil d'etapes du parcours d'inscription apprenant.
+Usage : {% include 'partials/inscription_stepper.html' with etape=2 %}
+etape = 1 Formation · 2 Informations · 3 Documents · 4 Recapitulatif
+Aucune dependance a la vue (l'etape est passee via `with`).
+{% endcomment %}
+<nav aria-label="Progression de l'inscription" class="mb-8">
+  <ol class="flex items-center justify-between gap-1 sm:gap-2">
+    {% comment %} Etape 1 {% endcomment %}
+    <li class="flex items-center flex-1 min-w-0">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2
+          {% if etape > 1 %}bg-bsb-green border-bsb-green text-white{% elif etape == 1 %}bg-bsb-red border-bsb-red text-white{% else %}bg-white border-slate-300 text-slate-400{% endif %}">
+          {% if etape > 1 %}<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}1{% endif %}
+        </span>
+        <span class="hidden sm:block truncate text-sm font-semibold {% if etape == 1 %}text-bsb-ink{% elif etape > 1 %}text-bsb-green{% else %}text-slate-400{% endif %}">Formation</span>
+      </div>
+      <span class="flex-1 h-0.5 mx-2 rounded {% if etape > 1 %}bg-bsb-green{% else %}bg-slate-200{% endif %}"></span>
+    </li>
+    {% comment %} Etape 2 {% endcomment %}
+    <li class="flex items-center flex-1 min-w-0">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2
+          {% if etape > 2 %}bg-bsb-green border-bsb-green text-white{% elif etape == 2 %}bg-bsb-red border-bsb-red text-white{% else %}bg-white border-slate-300 text-slate-400{% endif %}">
+          {% if etape > 2 %}<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}2{% endif %}
+        </span>
+        <span class="hidden sm:block truncate text-sm font-semibold {% if etape == 2 %}text-bsb-ink{% elif etape > 2 %}text-bsb-green{% else %}text-slate-400{% endif %}">Informations</span>
+      </div>
+      <span class="flex-1 h-0.5 mx-2 rounded {% if etape > 2 %}bg-bsb-green{% else %}bg-slate-200{% endif %}"></span>
+    </li>
+    {% comment %} Etape 3 {% endcomment %}
+    <li class="flex items-center flex-1 min-w-0">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2
+          {% if etape > 3 %}bg-bsb-green border-bsb-green text-white{% elif etape == 3 %}bg-bsb-red border-bsb-red text-white{% else %}bg-white border-slate-300 text-slate-400{% endif %}">
+          {% if etape > 3 %}<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}3{% endif %}
+        </span>
+        <span class="hidden sm:block truncate text-sm font-semibold {% if etape == 3 %}text-bsb-ink{% elif etape > 3 %}text-bsb-green{% else %}text-slate-400{% endif %}">Documents</span>
+      </div>
+      <span class="flex-1 h-0.5 mx-2 rounded {% if etape > 3 %}bg-bsb-green{% else %}bg-slate-200{% endif %}"></span>
+    </li>
+    {% comment %} Etape 4 {% endcomment %}
+    <li class="flex items-center min-w-0">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2
+          {% if etape == 4 %}bg-bsb-red border-bsb-red text-white{% else %}bg-white border-slate-300 text-slate-400{% endif %}">4</span>
+        <span class="hidden sm:block truncate text-sm font-semibold {% if etape == 4 %}text-bsb-ink{% else %}text-slate-400{% endif %}">Récapitulatif</span>
+      </div>
+    </li>
+  </ol>
+</nav>

@@ -1,136 +1,108 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Mes paiements | BSB{% endblock %}
 
 {% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+  {% include 'partials/messages.html' %}
 
-<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-6 py-10">
-      {% include 'partials/messages.html' %}
-   
-     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-      <div class="mb">
-        <h2 class="text-3xl serif-font border-l-4 border-green-700 font-bold pl-4 text-slate-900">
-            Mes paiements
-        </h2>
-        <p class="text-slate-500 pl-5 mt-1">
-            Historique des paiements des dettes
-        </p>
+  {% comment %} En-tete {% endcomment %}
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">Mes paiements</h1>
+      <p class="text-sm text-bsb-muted mt-1">Historique de vos versements et quittances.</p>
     </div>
     <a href="{% url 'courses:my_subscriptions' %}"
-       class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-yellow-600 text-white text-sm font-bold rounded-lg hover:bg-yellow-700">
-       Mes dossiers
+       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-white text-bsb-ink border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors">
+      <svg class="w-4 h-4 text-bsb-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Mes dossiers
     </a>
   </div>
 
-    <div>
-        <section class="py-20">
-            <div class="space-y-6">
-                {% for p in paiements %}
-                <div class="bg-white rounded-lg border border-slate-200 p-6 transition-shadow hover:shadow-md">
-                    <div class="grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-4">
-                        
-                        <div class="flex flex-col">
-                            <h3 class="text-lg font-semibold text-slate-900 leading-snug">
-                                {{ p.dette.frais_formation.type_frais }}
-                                {% if p.annule %}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 align-middle">Annulé</span>
-                                {% endif %}
-                            </h3>
-                            <div class="flex items-center gap-2 text-sm text-slate-500 mt-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                    <circle cx="12" cy="10" r="3"></circle>
-                                </svg>
-                                <span>{{ p.dette.inscription.formation}}</span>
-                            </div>
+  <div class="space-y-4">
+    {% for p in paiements %}
+    <article class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-5 sm:p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-                            {% comment %} Date d'subscription {% endcomment %}
-                            <div class="flex items-center gap-2 text-sm text-slate-500 mt-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"></path>
-                                </svg>
-                                <span>Soumis le: {{ p.date_paiement|date:"d F Y H:i:s" }}</span>
-                            </div>
-                        </div>
+        {% comment %} Infos versement {% endcomment %}
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="text-base sm:text-lg font-bold text-bsb-ink">{{ p.dette.frais_formation.type_frais }}</h2>
+            {% if p.annule %}
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">Annulé</span>
+            {% endif %}
+          </div>
+          <div class="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-bsb-muted">
+            <span class="inline-flex items-center gap-1.5">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              {{ p.dette.inscription.formation }}
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              {{ p.date_paiement|date:"d/m/Y à H\hi" }}
+            </span>
+          </div>
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ p.get_mode_paiement_display|default:p.mode_paiement }}</span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">Tranche {{ p.tranche }}</span>
+          </div>
+        </div>
 
-                        <div class="w-full flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
-                                
-                            montant: {{ p.montant_paiement }}
-                               mode paie: {{p.mode_paiement}}
-                               tranche : {{p.tranche}}
-                               
-                            {% if not p.annule %}
-                            <a href="{% url 'courses:reportlab' p.id %}" class="text-gray-500">Télécharger la quittance</a>
-                            {% else %}
-                            <span class="text-gray-300 cursor-not-allowed" title="Ce versement a été annulé, sa quittance n'est plus disponible">Télécharger la quittance</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                 {% if paiements.has_other_pages %}
-                    <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
-                            <div class="flex items-center justify-between">
-                                <div class="flex-1 flex justify-between sm:hidden">
-                                    {% if paiements.has_previous %}
-                                    <a href="?page={{ paiements.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                        Précédent
-                                    </a>
-                                    {% endif %}
-                                    {% if paiements.has_next %}
-                                    <a href="?page={{ paiements.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                        Suivant
-                                    </a>
-                                    {% endif %}
-                                </div>
-                                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                                    <div>
-                                        <p class="text-sm text-gray-700">
-                                            Page <span class="font-medium">{{ paiements.number }}</span> sur <span class="font-medium">{{ paiements.paginator.num_pages }}</span>
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                            {% if paiements.has_previous %}
-                                            <a href="?page={{ paiements.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Précédent</a>
-                                            {% endif %}
-                                            
-                                            {% for num in paiements.paginator.page_range %}
-                                                {% if paiements.number == num %}
-                                                <span class="relative inline-flex items-center px-4 py-2 border border-bsb-gold bg-bsb-gold text-sm font-medium text-white">
-                                                    {{ num }}
-                                                </span>
-                                                {% else %}
-                                                <a href="?page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                                    {{ num }}
-                                                </a>
-                                                {% endif %}
-                                            {% endfor %}
-                                            
-                                            {% if paiements.has_next %}
-                                            <a href="?page={{ paiements.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Suivant</a>
-                                            {% endif %}
-                                        </nav>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
+        {% comment %} Montant + quittance {% endcomment %}
+        <div class="flex items-center justify-between md:justify-end gap-5 shrink-0">
+          <div class="text-right">
+            <p class="text-xs text-bsb-muted uppercase font-semibold">Montant</p>
+            <p class="text-xl font-black {% if p.annule %}text-slate-400 line-through{% else %}text-bsb-ink{% endif %}">{{ p.montant_paiement|floatformat:0|intcomma }} FCFA</p>
+          </div>
+          {% if not p.annule %}
+          <a href="{% url 'courses:reportlab' p.id %}"
+             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-bsb-ink bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+            <svg class="w-4 h-4 text-bsb-muted" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+            Quittance
+          </a>
+          {% else %}
+          <span class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-slate-300 bg-slate-50 cursor-not-allowed" title="Versement annulé — quittance indisponible">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+            Quittance
+          </span>
+          {% endif %}
+        </div>
+      </div>
+    </article>
 
-                {% empty %}
-                <div class="text-center text-slate-400 py-10">
-                    <p>Aucun Paiement trouvé trouvé.</p>
-                </div>
-                {% endfor %}
-            </div>
-        </section>
+    {% empty %}
+    <div class="bg-white rounded-2xl border border-slate-200 px-8 py-16 text-center">
+      <svg class="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h4m-9 4h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      <p class="text-lg font-bold text-bsb-ink">Aucun paiement enregistré</p>
+      <p class="text-sm text-bsb-muted mt-1">Vos versements apparaîtront ici.</p>
     </div>
-</div>
+    {% endfor %}
+  </div>
 
-<script nonce="{{ csp_nonce }}">
-  setTimeout(function () {
-    document.querySelectorAll('[class*="border-l-4"]').forEach(function(el) {
-      el.remove();
-    });
-  }, 5000);
-</script>
+  {% comment %} Pagination (hors boucle) {% endcomment %}
+  {% if paiements.has_other_pages %}
+  <div class="flex items-center justify-between mt-8">
+    <p class="text-sm text-bsb-muted">
+      Page <span class="font-bold text-bsb-ink">{{ paiements.number }}</span>
+      sur <span class="font-bold text-bsb-ink">{{ paiements.paginator.num_pages }}</span>
+    </p>
+    <nav class="inline-flex rounded-lg shadow-sm overflow-hidden border border-slate-200 divide-x divide-slate-200">
+      {% if paiements.has_previous %}
+      <a href="?page={{ paiements.previous_page_number }}" class="px-3 py-2 bg-white text-sm text-bsb-ink hover:bg-slate-50 transition-colors">Précédent</a>
+      {% endif %}
+      {% for num in paiements.paginator.page_range %}
+        {% if paiements.number == num %}
+        <span class="px-4 py-2 bg-bsb-gold text-white text-sm font-bold">{{ num }}</span>
+        {% else %}
+        <a href="?page={{ num }}" class="px-4 py-2 bg-white text-sm text-bsb-ink hover:bg-slate-50 transition-colors">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if paiements.has_next %}
+      <a href="?page={{ paiements.next_page_number }}" class="px-3 py-2 bg-white text-sm text-bsb-ink hover:bg-slate-50 transition-colors">Suivant</a>
+      {% endif %}
+    </nav>
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

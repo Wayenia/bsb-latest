@@ -115,13 +115,13 @@
                             </span>
                             {% else %}
                             <a href="{% url 'courses:paiement' dette.id %}"
-                                    class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors">
+                                    class="px-4 py-2 bg-bsb-green hover:brightness-110 text-white text-xs font-bold rounded-lg transition-colors">
                                     Payer
                               </a>
                             {% endif %}
                         {% elif dette.etat_dette == 'soldé' %}
                          <span
-                                class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors">
+                                class="px-4 py-2 bg-bsb-green hover:brightness-110 text-white text-xs font-bold rounded-lg transition-colors">
                                Soldé
                          </span>
                         {% endif %}
@@ -153,7 +153,7 @@
                             <span class="px-3 py-1.5 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg">Soldée</span>
                             {% elif t.payable %}
                             <a href="{% url 'courses:paiement' dette.id %}"
-                               class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors">
+                               class="px-3 py-1.5 bg-bsb-green hover:brightness-110 text-white text-xs font-bold rounded-lg transition-colors">
                                 Payer
                             </a>
                             {% else %}

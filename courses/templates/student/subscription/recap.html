@@ -2,227 +2,125 @@
 {% block title %}Aperçu de votre dossier | BSB{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 py-12">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
   {% include 'partials/messages.html' %}
 
-  {% comment %} header {% endcomment %}
-  <div class="mb-10">
-    <h1 class="text-4xl font-light text-slate-800 tracking-tight mb-3">Aperçu de votre dossier de candidature</h1>
-    <p class="text-base text-slate-500 max-w-2xl leading-relaxed">
-      Vérifiez attentivement toutes vos informations avant de soumettre.
-      <span class="text-slate-400 block mt-1">Après confirmation, vous ne pourrez plus modifier votre dossier.</span>
+  {% include 'partials/inscription_stepper.html' with etape=4 %}
+
+  <div class="mb-8">
+    <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">Aperçu de votre dossier</h1>
+    <p class="text-sm text-bsb-muted mt-1">
+      Vérifiez attentivement toutes vos informations avant de soumettre — après confirmation, vous ne pourrez plus les modifier.
     </p>
   </div>
 
-  {% comment %} main card {% endcomment %}
-  <div class="bg-white border border-slate-200 rounded-sm mb-8">
-    {% comment %} line {% endcomment %}
-    <div class="h-1 w-full bg-[#ECAB0F]"></div>
-    
-    <div class="p-8">
-      {% comment %} career choosen {% endcomment %}
-      <div class="mb-10">
-        <div class="flex items-center justify-between mb-5">
-          <h3 class="text-lg font-light text-slate-800 uppercase">Metier de formation</h3>
-          <span class="text-xs text-slate-400 uppercase tracking-wider">Récapitulatif</span>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-12">
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Métier</span>
-            <span class="text-base font-medium text-slate-800">{{ career.filiere.nom_filiere }}</span>
-          </div>
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Durée</span>
-            <span class="text-base font-medium text-slate-800">{{ career.duree_display }}</span>
-          </div>
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Titre professionnel</span>
-            <span class="text-base font-medium text-slate-800">{{ career.filiere.get_titre_professionnel_display }}</span>
-          </div>
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Centre de Formation</span>
-            <span class="text-base font-medium text-slate-800">{{ career.centre.nom_centre }}</span>
-          </div>
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Ville</span>
-            <span class="text-base font-medium text-slate-800">{{ career.centre.province.chef_lieu }}</span>
-          </div>
-        </div>
-      </div>
+  <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    <div class="h-1.5 w-full bg-gradient-to-r from-bsb-gold via-bsb-red to-bsb-green"></div>
 
-      {% comment %} line {% endcomment %}
-      <div class="w-full h-px bg-slate-100 my-8"></div>
+    <div class="p-6 sm:p-8 space-y-8">
 
-      {% comment %} personal info {% endcomment %}
-      <div class="mb-10">
-        <div class="flex items-center justify-between mb-5">
-          <h3 class="text-lg font-light text-slate-800 uppercase">Informations personnelles</h3>
-          <a href="{% url 'courses:personal_info' career.id %}"
-             class="text-lg text-red-600 flex items-center gap-1">
-            <span class="text-lg"></span>
-            <span>Modifier</span>
+      {% comment %} Metier {% endcomment %}
+      <section>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-bsb-red">Métier de formation</h2>
+        </div>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8">
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Métier</dt><dd class="font-semibold text-bsb-ink">{{ career.filiere.nom_filiere }}</dd></div>
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Durée</dt><dd class="font-semibold text-bsb-ink">{{ career.duree_display }}</dd></div>
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Titre professionnel</dt><dd class="font-semibold text-bsb-ink">{{ career.filiere.get_titre_professionnel_display }}</dd></div>
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Centre de formation</dt><dd class="font-semibold text-bsb-ink">{{ career.centre.nom_centre }}</dd></div>
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Ville</dt><dd class="font-semibold text-bsb-ink">{{ career.centre.province.chef_lieu }}</dd></div>
+        </dl>
+      </section>
+
+      <div class="h-px bg-slate-100"></div>
+
+      {% comment %} Infos personnelles {% endcomment %}
+      <section>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-bsb-red">Informations personnelles</h2>
+          <a href="{% url 'courses:personal_info' career.id %}" class="inline-flex items-center gap-1 text-sm font-semibold text-bsb-red hover:underline">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            Modifier
           </a>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-12">
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Nom</span>
-            <span class="text-base font-medium text-slate-800">{{ student.nom }}</span>
-          </div>
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Prénom(s)</span>
-            <span class="text-base font-medium text-slate-800">{{ student.prenom }}</span>
-          </div>
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Sexe</span>
-            <span class="text-base font-medium text-slate-800">
-              {% if student.sexe|lower == 'm' %}Masculin{% elif student.sexe|lower == 'f' %}Féminin{% else %}{{ student.sexe }}{% endif %}
-            </span>
-          </div>
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Email</span>
-            <span class="text-base font-medium text-slate-800">{{ student.email|default:"—" }}</span>
-          </div>
-          {% if student.tel %}
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Téléphone</span>
-            <span class="text-base font-medium text-slate-800">{{ student.tel }}</span>
-          </div>
-          {% endif %}
-          {% if student.date_naissance %}
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Date de naissance</span>
-            <span class="text-base font-medium text-slate-800">{{ student.date_naissance }}</span>
-          </div>
-          {% endif %}
-          {% if student.lieu_naissance %}
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Lieu de naissance</span>
-            <span class="text-base font-medium text-slate-800">{{ student.lieu_naissance }}</span>
-          </div>
-          {% endif %}
-          {% if student.niveau_scolaire %}
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">Niveau scolaire</span>
-            <span class="text-base font-medium text-slate-800">{{ student.niveau_scolaire }}</span>
-          </div>
-          {% endif %}
-        </div>
-      </div>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8">
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Nom</dt><dd class="font-semibold text-bsb-ink">{{ student.nom }}</dd></div>
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Prénom(s)</dt><dd class="font-semibold text-bsb-ink">{{ student.prenom }}</dd></div>
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Sexe</dt><dd class="font-semibold text-bsb-ink">{% if student.sexe|lower == 'm' %}Masculin{% elif student.sexe|lower == 'f' %}Féminin{% else %}{{ student.sexe }}{% endif %}</dd></div>
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Email</dt><dd class="font-semibold text-bsb-ink break-words">{{ student.email|default:"—" }}</dd></div>
+          {% if student.tel %}<div><dt class="text-xs text-bsb-muted mb-0.5">Téléphone</dt><dd class="font-semibold text-bsb-ink">{{ student.tel }}</dd></div>{% endif %}
+          {% if student.date_naissance %}<div><dt class="text-xs text-bsb-muted mb-0.5">Date de naissance</dt><dd class="font-semibold text-bsb-ink">{{ student.date_naissance }}</dd></div>{% endif %}
+          {% if student.lieu_naissance %}<div><dt class="text-xs text-bsb-muted mb-0.5">Lieu de naissance</dt><dd class="font-semibold text-bsb-ink">{{ student.lieu_naissance }}</dd></div>{% endif %}
+          {% if student.niveau_scolaire %}<div><dt class="text-xs text-bsb-muted mb-0.5">Niveau scolaire</dt><dd class="font-semibold text-bsb-ink">{{ student.niveau_scolaire }}</dd></div>{% endif %}
+        </dl>
+      </section>
 
-       <h3 class="text-lg font-light text-slate-800 uppercase mb-6">Informations de la personne à contacter</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-12">
+      <div class="h-px bg-slate-100"></div>
 
-        <div>
-          <span class="text-xs text-slate-400 block mb-1">Nom de la Personne</span>
-          <span class="text-base font-medium text-slate-800">{{ student.nom_personne }}</span>
-        </div>
-        <div>
-          <span class="text-xs text-slate-400 block mb-1">Prénom de la personne</span>
-          <span class="text-base font-medium text-slate-800">{{student.prenom_personne}}</span>
-        </div>
-        <div>
-          <span class="text-xs text-slate-400 block mb-1">Fonction de la personne</span>
-          <span class="text-base font-medium text-slate-800">{{student.fonction}}</span>
-        </div>
-        <div>
-          <span class="text-xs text-slate-400 block mb-1">Contact de la personne</span>
-          <span class="text-base font-medium text-slate-800">{{student.contact}}</span>
-        </div>
-      </div>
-      
-      {% comment %} line {% endcomment %}
-      <div class="w-full h-px bg-slate-100 my-8"></div>
+      {% comment %} Personne a contacter {% endcomment %}
+      <section>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-bsb-red mb-4">Personne à contacter</h2>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8">
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Nom</dt><dd class="font-semibold text-bsb-ink">{{ student.nom_personne }}</dd></div>
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Prénom</dt><dd class="font-semibold text-bsb-ink">{{ student.prenom_personne }}</dd></div>
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Fonction</dt><dd class="font-semibold text-bsb-ink">{{ student.fonction }}</dd></div>
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Contact</dt><dd class="font-semibold text-bsb-ink">{{ student.contact }}</dd></div>
+        </dl>
+      </section>
 
-      {% comment %} documents {% endcomment %}
-      <div class="mb-10">
-        <div class="flex items-center justify-between mb-5">
-          <h3 class="text-lg font-light text-slate-800 uppercase">Documents soumis</h3>
-          {% if uploaded_files %}
-          <span class="text-xs text-slate-400">{{ uploaded_files|length }} fichier(s)</span>
-          {% endif %}
+      <div class="h-px bg-slate-100"></div>
+
+      {% comment %} Documents {% endcomment %}
+      <section>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-bsb-red">Documents soumis</h2>
+          {% if uploaded_files %}<span class="text-xs text-bsb-muted">{{ uploaded_files|length }} fichier(s)</span>{% endif %}
         </div>
-        
         {% if uploaded_files %}
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {% for nom, fic in uploaded_files.items %}
-            <div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-              <div class="flex items-center gap-3">
-                <span class="text-bsb-green text-sm"></span>
-                <span class="text-sm text-slate-700">{{ nom }}</span>
-              </div>
-              <a href="{{ fic.url }}" target="_blank"
-                 class="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-bold hover:bg-blue-100 transition-colors">
-                Voir
-              </a>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {% for nom, fic in uploaded_files.items %}
+          <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div class="flex items-center gap-2 min-w-0">
+              <svg class="w-5 h-5 text-bsb-green shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span class="text-sm text-bsb-ink truncate">{{ nom }}</span>
             </div>
-            {% endfor %}
+            <a href="{{ fic.url }}" target="_blank" class="shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-bsb-ink bg-white border border-slate-200 hover:bg-slate-50 transition-colors">Voir</a>
           </div>
-        {% else %}
-          <p class="text-sm text-slate-400 py-2">
-            Aucun document soumis (non requis pour cette formation)
-          </p>
-        {% endif %}
-      </div>
-      
-      {% comment %} line {% endcomment %}
-      <div class="w-full h-px bg-slate-100 my-8"></div>
-      
-      {% comment %} final info {% endcomment %}
-      <div class="mx-auto text-center mb-10 p-5 bg-slate-50 border border-slate-200">
-        <div class="flex items-start gap-3">
-          <span class="text-bsb-gold text-lg">
-            
-          </span>
-          <p class="text-sm text-slate-600 leading-relaxed">
-            <span class="font-bold text-red-600 text-base">Vérifiez attentivement toutes vos informations avant de soumettre.</span>
-            <span class="font-medium text-red-600">Après confirmation, vous ne pourrez plus modifier votre dossier.</span>
-            <br>
-            <br>
-            Vous serez notifié(e) de la décision par l'administration dans votre espace
-            <span class="font-medium text-green-600">
-              <a href="{% url 'courses:my_subscriptions' %}">
-                   Mes inscriptions
-              </a>
-            </span>.
-
-            
-          </p>
+          {% endfor %}
         </div>
+        {% else %}
+        <p class="text-sm text-bsb-muted">Aucun document soumis (non requis pour cette formation).</p>
+        {% endif %}
+      </section>
+
+      {% comment %} Avertissement {% endcomment %}
+      <div class="rounded-xl border border-amber-200 bg-bsb-cream p-4 flex items-start gap-3">
+        <svg class="w-5 h-5 text-bsb-gold shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86l-8.48 14.7A1.5 1.5 0 003.11 21h17.78a1.5 1.5 0 001.3-2.44l-8.48-14.7a1.5 1.5 0 00-2.6 0z"/></svg>
+        <p class="text-sm text-bsb-ink leading-relaxed">
+          <span class="font-bold">Vérifiez attentivement toutes vos informations avant de soumettre.</span>
+          Après confirmation, vous ne pourrez plus modifier votre dossier. Vous serez notifié(e) de la décision dans votre espace
+          <a href="{% url 'courses:my_subscriptions' %}" class="font-semibold text-bsb-red hover:underline">Mes demandes d'inscription</a>.
+        </p>
       </div>
 
-      {% comment %} BOUTONS DE CONFIRMATION {% endcomment %}
+      {% comment %} Confirmation {% endcomment %}
       <form method="POST" action="">
         {% csrf_token %}
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
           <a href="{% url 'courses:personal_info' career.id %}"
-             class="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-medium
-                    rounded-sm hover:bg-slate-50 hover:border-slate-300 transition-all text-center sm:text-left">
-            ← Modifier mes informations
+             class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-bsb-ink text-sm font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            Modifier mes informations
           </a>
-          
           <button type="submit"
-                  class="px-8 py-3 text-white text-base font-medium rounded-sm transition-all hover:opacity-90 bg-[#009640]">
-            Soumettre ma demande d'inscription
+                  class="inline-flex items-center justify-center gap-2 px-8 py-3 text-white text-sm font-bold rounded-lg bg-bsb-green hover:brightness-110 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Soumettre
           </button>
         </div>
       </form>
     </div>
   </div>
-
-  {% comment %} Pied de page avec les couleurs BSB {% endcomment %}
-  <div class="mt-8 flex justify-center space-x-3">
-    <span class="h-0.5 w-3 bg-[#ECAB0F]"></span>
-    <span class="h-0.5 w-3 bg-[#E30613]"></span>
-    <span class="h-0.5 w-3 bg-[#009640]"></span>
-  </div>
 </div>
-<script nonce="{{ csp_nonce }}">
-  setTimeout(function () {
-    document.querySelectorAll('[class*="border-l-4"]').forEach(function(el) {
-      el.remove();
-    });
-  }, 5000);
-</script>
 {% endblock %}
