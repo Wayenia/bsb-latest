@@ -11,6 +11,7 @@ if [ ! -f .env ]; then
     SECRET_KEY=$(openssl rand -base64 50 | tr -d '\n=' 2>/dev/null || python3 -c "import secrets; print(secrets.token_urlsafe(50))")
     DB_PASS=$(openssl rand -base64 20 | tr -d '\n=' 2>/dev/null || python3 -c "import secrets; print(secrets.token_urlsafe(20))")
     PGADMIN_PASS=$(openssl rand -base64 15 | tr -d '\n=' 2>/dev/null || python3 -c "import secrets; print(secrets.token_urlsafe(15))")
+    ADMIN_PATH=$(openssl rand -hex 8 2>/dev/null || python3 -c "import secrets; print(secrets.token_hex(8))")
     EMAIL="admin_$(date +%s)@local.dev"
     SERVER_IP=$(hostname -I | awk '{print $1}' | head -1)
 
@@ -66,6 +67,16 @@ SITE_URL=${SITE_URL_VAL}
 # Vide : la commande envoyer_rapport_audit refuse de s'executer sans --a.
 AUDIT_DESTINATAIRES=
 AUDIT_PERIODE_JOURS=7
+AUDIT_SCAN_INTERVAL=3600
+
+# --- Espace d'administration technique ---
+# Chemin secret de la page de connexion des comptes a privileges (jamais lie
+# depuis le site). Genere aleatoirement ici ; notez-le et communiquez-le aux
+# seuls administrateurs. Peut etre renouvele a tout moment.
+ADMIN_LOGIN_PATH=${ADMIN_PATH}
+# Plages d'adresses autorisees (CIDR, separees par des virgules). Vide : aucun
+# filtrage. Ex : ADMIN_LOGIN_IPS=196.28.0.0/16,10.0.0.0/8
+ADMIN_LOGIN_IPS=
 
 # --- E-mail (SMTP) ---
 # Requis pour l'envoi du code de verification a 4 chiffres a la connexion du

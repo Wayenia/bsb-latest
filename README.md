@@ -530,6 +530,23 @@ ces explications.
   outre un **avis au titulaire** : c'est la seule alerte qui lui parvienne
   directement, sans attendre le rapport d'inspection (section 9.5). L'échec
   d'envoi de l'un ou l'autre courriel n'interrompt jamais la connexion.
+- **Connexion séparée des comptes d'administration technique.** Les comptes
+  capables de modifier la base (superutilisateurs, rôle « admin », ou tout compte
+  ayant reçu la permission `acces_administration_technique` via **RH →
+  Permissions**) ne se connectent **pas** par la page publique : celle-ci les
+  refuse par un message générique, si bien qu'un mot de passe d'administrateur
+  volé y est inutile — indépendamment de toute URL secrète. Ils passent par une
+  **page dédiée** dont le chemin vient du `.env` (`ADMIN_LOGIN_PATH`, jamais écrit
+  dans le dépôt, renouvelable), n'est lié depuis aucune page et n'apparaît pas
+  dans un `robots.txt`. Cette page n'authentifie que les comptes habilités
+  (message générique pour les autres), **exige le code à chaque connexion** (aucune
+  dispense d'appareil pour ces comptes), et peut être restreinte à des plages
+  d'adresses IP (`ADMIN_LOGIN_IPS`, en notation CIDR) : hors liste, elle renvoie
+  un **404** plutôt qu'un refus, pour ne pas confirmer son existence. La liste vide
+  (défaut) désactive ce filtrage. Le **Directeur Général** fait exception et peut
+  se connecter par les deux portes. L'obscurité du chemin n'est qu'un filtre de
+  bruit ; la sécurité réelle tient à la fermeture de la page publique, au code
+  e-mail systématique et, le cas échéant, au filtrage par adresse.
 - **Photo de profil.** Le champ est facultatif et restreint aux formats JPG, PNG
   et WEBP ; le contenu réel est vérifié par Pillow (un exécutable renommé en
   `.png` est refusé) et le poids plafonné à deux mégaoctets. Les fichiers

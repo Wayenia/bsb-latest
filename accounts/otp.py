@@ -94,7 +94,7 @@ def _envoyer_email(user, code):
     msg.send(fail_silently=False)
 
 
-def envoyer_code(request, user, *, premier_envoi=True):
+def envoyer_code(request, user, *, premier_envoi=True, admin=False):
     """Génère un nouveau code, l'envoie par e-mail puis l'enregistre (haché) en
     session. Lève une exception si l'e-mail ne part pas : l'appelant annule
     alors la connexion et ne laisse pas le visiteur sur une page sans code."""
@@ -114,6 +114,7 @@ def envoyer_code(request, user, *, premier_envoi=True):
         'tentatives': 0,
         'nb_envois': nb_envois + 1,
         'dernier_envoi': maintenant.isoformat(),
+        'admin': admin,
     }
     request.session.modified = True
 

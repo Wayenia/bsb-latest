@@ -56,6 +56,42 @@ def _est_apprenant(user):
     return user.user_type == 'eleve' and not user.is_staff and not user.is_superuser
 
 
+def _est_compte_admin(user):
+    """Compte a privileges d'administration technique. Piloté par une permission
+    (les superutilisateurs l'ont d'office, les comptes « admin » via leur groupe),
+    donc délégable a tout compte depuis RH -> Permissions (README 9.2)."""
+    return user.has_perm('accounts.acces_administration_technique')
+
+
+def _passe_partout(user):
+    """Le DG peut se connecter par les deux portes, publique comme dédiée."""
+    return user.user_type == 'dg'
+
+
+def _verifier_acces_admin_ip(request):
+    """Filtre optionnel par adresse : hors des plages ADMIN_LOGIN_IPS, la page
+    d'administration est introuvable (404), et non refusée — un sondeur ne peut
+    pas même confirmer son existence. Liste vide = aucun filtrage."""
+    import ipaddress
+    from django.conf import settings
+    from django.http import Http404
+    reseaux = getattr(settings, 'ADMIN_LOGIN_IPS', []) or []
+    if not reseaux:
+        return
+    brut = ratelimit.adresse_client(request)
+    try:
+        adresse = ipaddress.ip_address(brut)
+    except ValueError:
+        raise Http404
+    for cidr in reseaux:
+        try:
+            if adresse in ipaddress.ip_network(cidr, strict=False):
+                return
+        except ValueError:
+            continue
+    raise Http404
+
+
 def user_login(request):
     from .models import Utilisateur
 
@@ -106,6 +142,15 @@ def user_login(request):
             messages.error(request, "Votre compte est désactivé. Contactez l'administrateur.")
             return render(request, 'accounts/login.html', {'identifiant': identifiant})
 
+        # ── Compte d'administration technique : porte publique fermée ─────
+        # Le DG fait exception (il passe partout). Message générique : la page
+        # ne révèle pas qu'un compte est à privilèges, ni qu'il existe.
+        if _est_compte_admin(user) and not _passe_partout(user):
+            logger.warning("Connexion admin refusee sur la page publique : %s (%s)",
+                           user.username, ratelimit.adresse_client(request))
+            messages.error(request, msg_incorrect)
+            return render(request, 'accounts/login.html', {'identifiant': identifiant})
+
         # ── Apprenant : connexion directe ────────────────────────────────
         if _est_apprenant(user):
             login(request, user)
@@ -136,6 +181,77 @@ def user_login(request):
         return redirect('accounts:login_otp')
 
     return render(request, 'accounts/login.html')
+
+
+def admin_login(request):
+    """Porte d'entrée dédiée aux comptes d'administration technique.
+
+    Chemin issu du .env (jamais du dépôt), non lié depuis le site. La page
+    n'authentifie que les comptes à privilèges (et le DG, qui passe partout) ;
+    tout autre compte est refusé par un message générique. Le code e-mail (2FA)
+    est exigé à chaque connexion, sans dispense d'appareil.
+    """
+    from .models import Utilisateur
+
+    _verifier_acces_admin_ip(request)
+
+    if request.user.is_authenticated:
+        return redirect('courses:redirect_to_dashboard')
+
+    if request.GET.get('reset'):
+        otp.annuler(request)
+
+    if request.method == 'POST':
+        identifiant = request.POST.get('identifiant', '').strip()
+        password = request.POST.get('password', '')
+
+        if not identifiant or not password:
+            messages.error(request, "Veuillez renseigner tous les champs.")
+            return render(request, 'accounts/admin_login.html', {'identifiant': identifiant})
+
+        if '@' in identifiant:
+            compte = Utilisateur.objects.filter(email__iexact=identifiant).first()
+        else:
+            compte = Utilisateur.objects.filter(username=identifiant).first()
+        msg_incorrect = "Identifiants incorrects."
+
+        if compte is not None and ratelimit.est_verrouille(request, compte.username):
+            messages.error(request, "Trop de tentatives de connexion. Réessayez dans quelques minutes.")
+            return render(request, 'accounts/admin_login.html', {'identifiant': identifiant})
+
+        user = None
+        if compte is not None:
+            user = authenticate(request, username=compte.username, password=password)
+        else:
+            authenticate(request, username='', password=password)
+
+        if user is None or not user.is_active:
+            messages.error(request, msg_incorrect)
+            return render(request, 'accounts/admin_login.html', {'identifiant': identifiant})
+
+        # Réservé aux comptes à privilèges et au DG. Refus générique sinon :
+        # la page ne dit pas si le compte existe ni s'il est admin.
+        if not (_est_compte_admin(user) or _passe_partout(user)):
+            logger.warning("Acces admin refuse (compte non habilite) : %s (%s)",
+                           user.username, ratelimit.adresse_client(request))
+            messages.error(request, msg_incorrect)
+            return render(request, 'accounts/admin_login.html', {'identifiant': identifiant})
+
+        if not user.email:
+            messages.error(request, "Aucune adresse e-mail n'est associée à ce compte. Contactez l'administrateur.")
+            return render(request, 'accounts/admin_login.html', {'identifiant': identifiant})
+
+        try:
+            otp.envoyer_code(request, user, premier_envoi=True, admin=True)
+        except Exception:
+            otp.annuler(request)
+            logger.exception("Echec d'envoi du code OTP (admin) a %s", user.email)
+            messages.error(request, "Impossible d'envoyer le code de connexion pour le moment. Réessayez plus tard.")
+            return render(request, 'accounts/admin_login.html', {'identifiant': identifiant})
+
+        return redirect('accounts:login_otp')
+
+    return render(request, 'accounts/admin_login.html')
 
 
 def _masquer_email(email):
@@ -175,9 +291,10 @@ def login_otp(request):
         if not code:
             code = ''.join(request.POST.get(f'code_{i}', '') for i in range(4))
 
-        # L'identifiant du compte est lu maintenant : en cas de succès,
-        # otp.verifier() purge l'entrée de session.
+        # L'identifiant du compte et le mode admin sont lus maintenant : en cas
+        # de succès, otp.verifier() purge l'entrée de session.
         user_id = donnees['user_id']
+        mode_admin = donnees.get('admin', False)
         ok, erreur = otp.verifier(request, code)
 
         if ok:
@@ -188,11 +305,15 @@ def login_otp(request):
             user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
             messages.success(request, f"Bienvenue {user.prenom} {user.nom} !")
-            # L'appareil devient reconnu pour trente jours, et le titulaire est
-            # averti : c'est la seule alerte qui lui parvienne directement, sans
-            # attendre un rapport periodique.
+            # Le titulaire est averti : c'est la seule alerte qui lui parvienne
+            # directement, sans attendre un rapport periodique.
             appareil.avertir(user, request)
             reponse = redirect('courses:redirect_to_dashboard')
+            # Espace d'administration : jamais de dispense d'appareil, le code
+            # est redemande a chaque connexion. Les autres profils gardent la
+            # reconnaissance d'appareil pendant trente jours.
+            if mode_admin:
+                return reponse
             return appareil.marquer_reconnu(reponse, user)
 
         messages.error(request, erreur)

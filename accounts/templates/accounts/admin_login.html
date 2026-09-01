@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Administration technique | BSB{% endblock %}
+
+{% comment %}Page volontairement dépouillée : ni navigation ni pied de page
+publics. On surcharge tout le corps pour ne rien exposer d'autre que le
+formulaire.{% endcomment %}
+{% block body %}
+<main class="min-h-screen flex items-center justify-center bg-bsb-ink px-4 py-10">
+  <div class="w-full max-w-sm">
+
+    {% if messages %}
+    <div class="mb-4 space-y-2">
+      {% for message in messages %}
+      <div class="rounded-lg px-4 py-3 text-sm font-medium
+                  {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
+                  {% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200
+                  {% else %}bg-gray-50 text-gray-800 border border-gray-200{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-2xl shadow-2xl border border-white/10 p-8">
+      <div class="flex flex-col items-center text-center mb-6">
+        <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-bsb-red to-bsb-gold text-white mb-3">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.4-2.9 8.5-7 9.8-4.1-1.3-7-5.4-7-9.8V6l7-3z"/>
+          </svg>
+        </span>
+        <h1 class="text-lg font-black text-bsb-ink">Administration technique</h1>
+        <p class="text-xs text-bsb-muted mt-1">Accès réservé — vérification en deux étapes</p>
+      </div>
+
+      <form method="post" novalidate class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label for="identifiant" class="block text-sm font-semibold text-gray-700 mb-1">Identifiant</label>
+          <input type="text" name="identifiant" id="identifiant" value="{{ identifiant|default:'' }}"
+                 autocomplete="username" autofocus
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bsb-red focus:border-transparent transition-all">
+        </div>
+        <div>
+          <label for="password" class="block text-sm font-semibold text-gray-700 mb-1">Mot de passe</label>
+          <input type="password" name="password" id="password" autocomplete="current-password"
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bsb-red focus:border-transparent transition-all">
+        </div>
+        <button type="submit"
+                class="w-full px-6 py-3 bg-bsb-red hover:bg-bsb-dark text-white font-bold rounded-lg shadow-md transition-all">
+          Continuer
+        </button>
+      </form>
+    </div>
+
+    <p class="text-center text-[11px] text-white/40 mt-6">Plateforme Yupaan — Burkina Suudu Bawdè</p>
+  </div>
+</main>
+{% endblock body %}

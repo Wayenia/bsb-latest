@@ -279,6 +279,14 @@ AUDIT_SEUIL_IP_PAR_COMPTE = env.int('AUDIT_SEUIL_IP_PAR_COMPTE', default=3)
 AUDIT_HEURE_OUVREE_DEBUT = env.int('AUDIT_HEURE_OUVREE_DEBUT', default=7)
 AUDIT_HEURE_OUVREE_FIN = env.int('AUDIT_HEURE_OUVREE_FIN', default=19)
 
+# Espace d'administration technique : porte d'entree distincte des comptes a
+# privileges. Le chemin vient du .env (jamais du depot public) et peut etre
+# renouvele. La liste blanche d'IP est optionnelle : vide = aucun filtrage,
+# sinon la page renvoie 404 hors des plages autorisees 
+ADMIN_LOGIN_PATH = env('ADMIN_LOGIN_PATH', default='teknicien-bsb')
+ADMIN_LOGIN_IPS = env.list('ADMIN_LOGIN_IPS', default=[])
+
+
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',

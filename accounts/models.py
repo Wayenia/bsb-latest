@@ -105,6 +105,10 @@ class Utilisateur(AbstractUser):
         permissions = [
             ("gerer_agents", "Gérer les comptes utilisateurs"),
             ("gerer_permissions", "Gérer les permissions"),
+            # Porte l'appartenance a l'espace d'administration technique : ces
+            # comptes se connectent par la page dediee et sont refuses sur la
+            # page publique. Deleguable via RH -> Permissions (README 9.2).
+            ("acces_administration_technique", "Accès à l'espace d'administration technique"),
         ]
 
 

@@ -1464,6 +1464,7 @@ MATRIX_PERMISSIONS = [
     ('gerer_agents', "Gérer les comptes utilisateurs", 'accounts', 'Comptes et accès'),
     ('gerer_eleves', "Gérer les comptes apprenants", 'accounts', 'Comptes et accès'),
     ('gerer_permissions', "Gérer les permissions", 'accounts', 'Comptes et accès'),
+    ('acces_administration_technique', "Accès à l'espace d'administration technique (connexion dédiée)", 'accounts', 'Comptes et accès'),
     ('voir_historique_connexion', "Voir l'historique des connexions", 'accounts', 'Comptes et accès'),
     ('voir_inscriptions', "Voir les candidatures", 'courses', 'Inscriptions'),
     ('valider_inscription', "Valider une candidature", 'courses', 'Inscriptions'),
