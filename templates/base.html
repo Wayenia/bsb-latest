@@ -370,48 +370,42 @@
     </script>
 
     {% if assistant_dispo %}
-    {% comment %} Bouton flottant de l'assistant : present partout, deplacable, sans masquer le contenu. {% endcomment %}
-    <a id="fab-assistant" href="{% url 'assistant:accueil' %}" title="Yupaan-IA — glissez pour déplacer"
-       class="fixed z-50 bottom-6 right-6 w-14 h-14 rounded-full bg-white ring-1 ring-slate-200 shadow-lg hover:shadow-xl flex items-center justify-center cursor-grab select-none">
-      <img src="{% static 'images/logo.png' %}" alt="Yupaan-IA" class="w-9 h-9 object-contain rounded-full pointer-events-none">
-      <span class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-bsb-gold to-bsb-red flex items-center justify-center ring-2 ring-white pointer-events-none">
-        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3l2.29 6.86L21 12l-5.71 2.14L13 21l-2.29-6.86L5 12l5.71-2.14L13 3zM5 3v3M3.5 4.5h3"/></svg>
-      </span>
-    </a>
+    {% comment %} Bouton flottant Yupaan-IA : present partout. Le bouton « deplacer »
+    le fait sauter proprement entre les 4 coins (pas de glisser), position memorisee. {% endcomment %}
+    <div id="fab-assistant" class="fixed z-50 bottom-6 right-6 select-none">
+      <button type="button" id="fab-move" title="Déplacer dans un autre coin"
+              class="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-bsb-ink text-white shadow flex items-center justify-center hover:bg-slate-700">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/></svg>
+      </button>
+      <a id="fab-open" href="{% url 'assistant:accueil' %}" title="Yupaan-IA"
+         class="relative w-14 h-14 rounded-full bg-white ring-1 ring-slate-200 shadow-lg hover:shadow-xl flex items-center justify-center">
+        <img src="{% static 'images/logo.png' %}" alt="Yupaan-IA" class="w-9 h-9 object-contain rounded-full">
+        <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-bsb-gold to-bsb-red flex items-center justify-center ring-2 ring-white">
+          <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3l2.29 6.86L21 12l-5.71 2.14L13 21l-2.29-6.86L5 12l5.71-2.14L13 3zM5 3v3M3.5 4.5h3"/></svg>
+        </span>
+      </a>
+    </div>
     <script nonce="{{ csp_nonce }}">
     (function () {
-      var fab = document.getElementById('fab-assistant');
-      if (!fab) return;
-      function place(x, y) {
-        x = Math.max(8, Math.min(x, window.innerWidth - fab.offsetWidth - 8));
-        y = Math.max(8, Math.min(y, window.innerHeight - fab.offsetHeight - 8));
-        fab.style.left = x + 'px'; fab.style.top = y + 'px';
-        fab.style.right = 'auto'; fab.style.bottom = 'auto';
+      var wrap = document.getElementById('fab-assistant');
+      var move = document.getElementById('fab-move');
+      if (!wrap || !move) return;
+      var coins = ['br', 'bl', 'tr', 'tl'];
+      var classes = { br: ['bottom-6', 'right-6'], bl: ['bottom-6', 'left-6'],
+                      tr: ['top-24', 'right-6'], tl: ['top-24', 'left-6'] };
+      function applique(c) {
+        Object.keys(classes).forEach(function (k) { wrap.classList.remove(classes[k][0], classes[k][1]); });
+        wrap.classList.add(classes[c][0], classes[c][1]);
       }
-      try {
-        var pos = JSON.parse(localStorage.getItem('fabAssistantPos') || 'null');
-        if (pos) place(pos.x, pos.y);
-      } catch (e) {}
-      var drag = false, moved = false, sx, sy, ox, oy;
-      fab.addEventListener('pointerdown', function (e) {
-        drag = true; moved = false; sx = e.clientX; sy = e.clientY;
-        var r = fab.getBoundingClientRect(); ox = r.left; oy = r.top;
-        fab.setPointerCapture(e.pointerId);
+      var coin = 'br';
+      try { var s = localStorage.getItem('fabAssistantCoin'); if (s && classes[s]) coin = s; } catch (e) {}
+      applique(coin);
+      move.addEventListener('click', function (e) {
+        e.preventDefault();
+        coin = coins[(coins.indexOf(coin) + 1) % coins.length];
+        applique(coin);
+        try { localStorage.setItem('fabAssistantCoin', coin); } catch (e) {}
       });
-      fab.addEventListener('pointermove', function (e) {
-        if (!drag) return;
-        var dx = e.clientX - sx, dy = e.clientY - sy;
-        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
-        place(ox + dx, oy + dy);
-      });
-      fab.addEventListener('pointerup', function () {
-        drag = false;
-        if (moved) {
-          var r = fab.getBoundingClientRect();
-          try { localStorage.setItem('fabAssistantPos', JSON.stringify({ x: r.left, y: r.top })); } catch (e) {}
-        }
-      });
-      fab.addEventListener('click', function (e) { if (moved) e.preventDefault(); });
     })();
     </script>
     {% endif %}
