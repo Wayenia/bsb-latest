@@ -33,18 +33,30 @@
     <span class="text-gray-700">Tranche {{ tranche }}</span>
   </nav>
 
-  <div class="flex items-center gap-3 mb-4">
-    <a href="{% url 'courses:stats_detail_dette' dette.id %}"
-       class="inline-flex items-center px-3 py-1.5 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Retour</a>
-    <div>
-      <h2 class="font-bold text-xl mb-0 text-[#374151]">
-        Quittance — Tranche {{ tranche }}
-      </h2>
-      <p class="text-gray-500 text-sm mb-0">
-        {{ dette.frais_formation.type_frais.libelle }} •
-        {{ dette.inscription.formation.filiere.nom_filiere }} •
-        {{ dette.inscription.formation.centre.nom_centre }}
-      </p>
+  <div class="page-card p-4 md:p-5 mb-4">
+    <div class="flex items-start gap-3">
+      <a href="{% url 'courses:stats_detail_dette' dette.id %}"
+         class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+         title="Retour" aria-label="Retour">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white bg-gradient-to-br from-bsb-red to-bsb-gold">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </span>
+      <div class="min-w-0">
+        <h2 class="font-black text-lg md:text-xl leading-tight text-bsb-ink">
+          Quittance — Tranche {{ tranche }}
+        </h2>
+        <p class="text-gray-500 text-sm mt-0.5 break-words">
+          {{ dette.frais_formation.type_frais.libelle }} •
+          {{ dette.inscription.formation.filiere.nom_filiere }} •
+          {{ dette.inscription.formation.centre.nom_centre }}
+        </p>
+      </div>
     </div>
   </div>
 

@@ -130,12 +130,15 @@
             Solder l'inscription
           </button>
           {% else %}
-          <button type="button" class="btn-detail bg-[linear-gradient(135deg,#059669,#10b981)]"
+          <button type="button" class="btn-detail inline-flex items-center gap-1.5 bg-gradient-to-br from-bsb-red to-bsb-gold text-white shadow-sm hover:brightness-105"
                   data-action="solder"
                   data-solder-url="{% url 'courses:stats_encaisser_solde_inscription' item.inscription.id %}"
                   data-solder-cible="Toute l'inscription — {{ item.inscription.formation.filiere.nom_filiere }}"
                   data-solder-max="{{ item.total_reste|floatformat:0 }}"
                   data-solder-primordiale="{{ item.primordiale_bloquante_reste|floatformat:0 }}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
             Solder l'inscription
           </button>
           {% endif %}
