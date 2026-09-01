@@ -1,28 +1,24 @@
-{% extends 'base.html' %}
-{% block title %}Trop de tentatives | BSB{% endblock %}
+{% extends 'erreur_base.html' %}
 
-{% block content %}
-<div class="min-h-[60vh] flex items-center justify-center px-4">
-    <div class="max-w-lg w-full text-center">
-        <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-amber-100 flex items-center justify-center">
+{% block erreur_titre_page %}Trop de tentatives{% endblock %}
+{% block erreur_code %}429{% endblock %}
+{% block erreur_code_badge %}429{% endblock %}
 
-        </div>
-        <h1 class="text-3xl font-black text-gray-900 mb-3">Trop de tentatives de connexion</h1>
-        <p class="text-gray-600 mb-4">
-            {% if motif == 'utilisateur' %}
-                Ce compte est temporairement verrouillé après plusieurs échecs de connexion.
-            {% else %}
-                Trop de tentatives de connexion ont été effectuées depuis votre poste.
-            {% endif %}
-        </p>
-        <p class="text-gray-600 mb-8">
-            Veuillez réessayer dans {{ minutes }} minutes. Si vous avez oublié votre mot de passe,
-            contactez l'administrateur de la plateforme.
-        </p>
-        <a href="{% url 'courses:home' %}"
-           class="inline-flex items-center justify-center px-6 py-3 bg-bsb-primary text-white font-bold rounded-xl hover:bg-gray-700 transition-all">
-            Retour à l'accueil
-        </a>
-    </div>
-</div>
+{% block erreur_pastille %}bg-bsb-yellow text-bsb-ink{% endblock %}
+{% block erreur_point %}bg-bsb-yellow{% endblock %}
+{% block erreur_icone %}
+<svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+</svg>
+{% endblock %}
+
+{% block erreur_titre %}Trop de tentatives de connexion{% endblock %}
+{% block erreur_message %}
+{% if motif == 'utilisateur' %}
+Ce compte est temporairement verrouillé après plusieurs échecs de connexion, par sécurité.
+{% else %}
+Trop de tentatives ont été effectuées depuis votre poste en peu de temps.
+{% endif %}
+Veuillez patienter <span class="font-bold text-bsb-ink">{{ minutes }} minute{{ minutes|pluralize }}</span> avant de réessayer.
+Si vous avez oublié votre mot de passe, contactez l'administrateur.
 {% endblock %}

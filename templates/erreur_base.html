@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+{% comment %}
+Socle commun des pages d'erreur applicatives (4xx) rendues par Django.
+Chaque page (400/403/404/429…) surcharge les blocs. Rendu dans base.html :
+la navbar, le pied de page et la charte Yupaan sont donc conservés.
+Contraintes CSP : aucun style= en ligne, aucun onclick — classes Tailwind seules.
+{% endcomment %}
+
+{% block title %}{% block erreur_titre_page %}Erreur{% endblock %} | BSB{% endblock %}
+
+{% block content %}
+<section class="relative overflow-hidden min-h-[72vh] flex items-center justify-center px-4 py-16">
+
+    {% comment %} Décor : dégradé doux + gros filigrane du code, sans gêner la lecture {% endcomment %}
+    <div class="absolute inset-0 -z-10 bg-gradient-to-b from-bsb-cream via-white to-white" aria-hidden="true"></div>
+    <div class="absolute inset-0 -z-10 flex items-center justify-center select-none pointer-events-none" aria-hidden="true">
+        <span class="text-[34vw] leading-none font-black text-bsb-red/5 tracking-tighter">{% block erreur_code %}?{% endblock %}</span>
+    </div>
+
+    <div class="relative max-w-xl w-full text-center">
+
+        {% comment %} Pastille icône colorée selon la gravité {% endcomment %}
+        <div class="mx-auto mb-6 w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg {% block erreur_pastille %}bg-bsb-red text-white{% endblock %}">
+            {% block erreur_icone %}
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86l-8.48 14.7A1.5 1.5 0 003.11 21h17.78a1.5 1.5 0 001.3-2.44l-8.48-14.7a1.5 1.5 0 00-2.6 0z"/>
+            </svg>
+            {% endblock %}
+        </div>
+
+        {% comment %} Badge code d'erreur {% endcomment %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 mb-4 rounded-full bg-bsb-ink/5 text-bsb-ink text-xs font-bold tracking-wide uppercase">
+            <span class="w-1.5 h-1.5 rounded-full {% block erreur_point %}bg-bsb-red{% endblock %}"></span>
+            Erreur {% block erreur_code_badge %}?{% endblock %}
+        </span>
+
+        <h1 class="text-3xl md:text-4xl font-black text-bsb-ink mb-3">
+            {% block erreur_titre %}Une erreur est survenue{% endblock %}
+        </h1>
+
+        <p class="text-base text-bsb-muted leading-relaxed mb-8 max-w-md mx-auto">
+            {% block erreur_message %}Quelque chose n'a pas fonctionné comme prévu.{% endblock %}
+        </p>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+            {% block erreur_actions %}
+            <a href="{% url 'courses:home' %}"
+               class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-bsb-red to-bsb-dark text-white font-bold rounded-xl shadow-md hover:shadow-lg hover:brightness-110 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/></svg>
+                Retour à l'accueil
+            </a>
+            {% endblock %}
+        </div>
+
+        {% comment %} Ligne d'aide discrète {% endcomment %}
+        <p class="mt-10 text-xs text-bsb-muted/80">
+            Besoin d'aide ? Contactez le support Yupaan —
+            <a href="mailto:guess.solomnde.comtact@gmail.com" class="font-semibold text-bsb-red hover:underline">guess.solomnde.comtact@gmail.com</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

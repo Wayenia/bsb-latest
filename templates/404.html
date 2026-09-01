@@ -1,0 +1,20 @@
+{% extends 'erreur_base.html' %}
+
+{% block erreur_titre_page %}Page introuvable{% endblock %}
+{% block erreur_code %}404{% endblock %}
+{% block erreur_code_badge %}404{% endblock %}
+
+{% block erreur_pastille %}bg-bsb-gold text-white{% endblock %}
+{% block erreur_point %}bg-bsb-gold{% endblock %}
+{% block erreur_icone %}
+<svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/>
+    <path stroke-linecap="round" stroke-linejoin="round" d="M9 9l4 4m0-4l-4 4"/>
+</svg>
+{% endblock %}
+
+{% block erreur_titre %}Cette page est introuvable{% endblock %}
+{% block erreur_message %}
+La page que vous cherchez a peut-être été déplacée, renommée, ou n'a jamais existé.
+Vérifiez l'adresse saisie ou revenez à un point connu.
+{% endblock %}

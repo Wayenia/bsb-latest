@@ -1,20 +1,31 @@
-{% extends 'base.html' %}
-{% block title %}Accès refusé | BSB{% endblock %}
+{% extends 'erreur_base.html' %}
 
-{% block content %}
-<div class="min-h-[60vh] flex items-center justify-center px-4">
-    <div class="max-w-lg w-full text-center">
-        <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
-            
-        </div>
-        <h1 class="text-3xl font-black text-gray-900 mb-3">Accès refusé</h1>
-        <p class="text-gray-600 mb-8">
-            {{ exception|default:"Vous n'avez pas la permission d'effectuer cette action." }}
-        </p>
-        <a href="{% url 'courses:redirect_to_dashboard' %}"
-           class="inline-flex items-center justify-center px-6 py-3 bg-bsb-red text-white font-bold rounded-xl hover:bg-red-700 transition-all">
-             Retour à mon tableau de bord
-        </a>
-    </div>
-</div>
+{% block erreur_titre_page %}Accès refusé{% endblock %}
+{% block erreur_code %}403{% endblock %}
+{% block erreur_code_badge %}403{% endblock %}
+
+{% block erreur_pastille %}bg-bsb-red text-white{% endblock %}
+{% block erreur_point %}bg-bsb-red{% endblock %}
+{% block erreur_icone %}
+<svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+    <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0v4"/>
+</svg>
+{% endblock %}
+
+{% block erreur_titre %}Accès refusé{% endblock %}
+{% block erreur_message %}
+{{ exception|default:"Vous n'avez pas la permission d'effectuer cette action. Si vous pensez qu'il s'agit d'une erreur, rapprochez-vous de votre administrateur." }}
+{% endblock %}
+
+{% block erreur_actions %}
+<a href="{% url 'courses:redirect_to_dashboard' %}"
+   class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-bsb-red to-bsb-dark text-white font-bold rounded-xl shadow-md hover:shadow-lg hover:brightness-110 transition-all">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    Mon tableau de bord
+</a>
+<a href="{% url 'courses:home' %}"
+   class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-bsb-ink font-bold rounded-xl border border-gray-200 shadow-sm hover:bg-gray-50 transition-all">
+    Retour à l'accueil
+</a>
 {% endblock %}

@@ -1,0 +1,51 @@
+{% load static %}<!DOCTYPE html>
+{% comment %}
+Page 500 autonome : le handler server_error de Django rend ce gabarit SANS
+contexte de requête (ni csp_nonce, ni request.user) — impossible donc d'étendre
+base.html. On se limite à output.css (autorisé par style-src 'self') et à des
+classes Tailwind, sans style= ni script en ligne.
+{% endcomment %}
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Erreur interne | BSB</title>
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link rel="icon" href="{% static 'images/logo.png' %}">
+</head>
+<body class="min-h-screen bg-gradient-to-b from-bsb-cream via-white to-white flex items-center justify-center px-4 py-16 font-sans">
+    <div class="relative w-full max-w-xl text-center">
+        <div class="absolute inset-0 -z-10 flex items-center justify-center select-none pointer-events-none" aria-hidden="true">
+            <span class="text-[34vw] leading-none font-black text-bsb-red/5 tracking-tighter">500</span>
+        </div>
+
+        <img src="{% static 'images/logo.png' %}" alt="Burkina Suudu Bawdè" class="mx-auto mb-6 h-16 w-auto">
+
+        <div class="mx-auto mb-6 w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg bg-bsb-red text-white">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86l-8.48 14.7A1.5 1.5 0 003.11 21h17.78a1.5 1.5 0 001.3-2.44l-8.48-14.7a1.5 1.5 0 00-2.6 0z"/>
+            </svg>
+        </div>
+
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 mb-4 rounded-full bg-bsb-ink/5 text-bsb-ink text-xs font-bold tracking-wide uppercase">
+            <span class="w-1.5 h-1.5 rounded-full bg-bsb-red"></span> Erreur 500
+        </span>
+
+        <h1 class="text-3xl md:text-4xl font-black text-bsb-ink mb-3">Une erreur interne est survenue</h1>
+        <p class="text-base text-bsb-muted leading-relaxed mb-8 max-w-md mx-auto">
+            Nos serveurs ont rencontré un problème inattendu. Nos équipes en sont informées.
+            Merci de réessayer dans quelques instants.
+        </p>
+
+        <a href="/" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-bsb-red to-bsb-dark text-white font-bold rounded-xl shadow-md hover:shadow-lg hover:brightness-110 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/></svg>
+            Retour à l'accueil
+        </a>
+
+        <p class="mt-10 text-xs text-bsb-muted/80">
+            Le problème persiste ? Contactez le support Yupaan —
+            <a href="mailto:guess.solomnde.comtact@gmail.com" class="font-semibold text-bsb-red hover:underline">guess.solomnde.comtact@gmail.com</a>
+        </p>
+    </div>
+</body>
+</html>
