@@ -4,32 +4,36 @@
 {% block title %}Mes dettes | BSB{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl py-10 mx-auto">
+<div class="max-w-4xl py-10 mx-auto px-4">
    {% include 'partials/messages.html' %}
     {% comment %} Header {% endcomment %}
     <div class="mb-8">
-        <div class="flex items-center mb-4">
-            <a href="{% url 'courses:my_subscriptions' %}" class="text-gray-600 hover:text-gray-900 mr-4">Retour</a>
-            <h1 class="text-3xl font-black text-gray-800 flex items-center">
-                
-                Mes dettes
-            </h1>
-        </div>
-        <p class="text-gray-500 text-sm ml-10">
-            Métier : <span class="font-semibold text-gray-700">{{ inscription.formation.filiere.nom_filiere }}</span>
-            &nbsp;|&nbsp;
-            Statut :
-            <span class="font-semibold
-                {% if inscription.statut == 'valide' %}text-green-600
-                {% elif inscription.statut == 'rejete' %}text-red-600
-                {% else %}text-yellow-600{% endif %}">
+        <a href="{% url 'courses:my_subscriptions' %}"
+           class="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-bsb-red mb-3">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Retour à mes inscriptions
+        </a>
+        <h1 class="text-2xl md:text-3xl font-black text-gray-800">Mes dettes</h1>
+        {% comment %}Métier et statut en chips séparées : lisibles et empilables
+        sur petit écran, au lieu d'une ligne « X | Y » qui déborde.{% endcomment %}
+        <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-gray-700 break-words">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a2 2 0 012-2h9a2 2 0 012 2v14l-5-3-5 3V5z"/></svg>
+                {{ inscription.formation.filiere.nom_filiere }}
+            </span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full font-semibold
+                {% if inscription.statut == 'valide' %}bg-green-100 text-green-800
+                {% elif inscription.statut == 'rejete' %}bg-red-100 text-red-800
+                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
                 {{ inscription.libelle_statut_paiement }}
             </span>
-        </p>
+        </div>
     </div>
 
     {% comment %} Résumé global {% endcomment %}
-    <div class="grid grid-cols-3 gap-4 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div class="bg-white rounded-xl shadow p-5 border border-gray-100 text-center">
             <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Total dû</p>
             <p class="text-2xl font-black text-gray-800">

@@ -7,9 +7,30 @@
 <div class="max-w-7xl mx-auto px-4 py-12">
   {% include 'partials/messages.html' %}
 
-  {% comment %} header {% endcomment %}
-  <div class="mb-10">
-    <h1 class="text-4xl font-light text-slate-800 tracking-tight mb-3">Aperçu du dossier de {{detail.eleve.nom}} {{detail.eleve.prenom}}</h1>
+  {% comment %} header soigné (charte Yupaan) {% endcomment %}
+  <div class="mb-8">
+    <a href="{% url 'bsb_admin:subscription_list' %}"
+       class="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-bsb-red mb-3">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+      </svg>
+      Retour aux inscriptions
+    </a>
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+      <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-bsb-red to-bsb-gold text-white font-bold">
+        {{ detail.eleve.nom|first|upper }}{{ detail.eleve.prenom|first|upper }}
+      </span>
+      <div class="min-w-0">
+        <h1 class="text-xl md:text-2xl font-black text-bsb-ink leading-tight">Dossier de {{ detail.eleve.nom }} {{ detail.eleve.prenom }}</h1>
+        <p class="text-sm text-gray-500 break-words">{{ detail.formation.filiere.nom_filiere }} • {{ detail.formation.centre.nom_centre }}</p>
+      </div>
+      <span class="sm:ml-auto shrink-0 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
+        {% if detail.statut == 'en_cours' %}bg-yellow-100 text-yellow-800
+        {% elif detail.statut == 'rejete' %}bg-red-100 text-red-800
+        {% else %}bg-green-100 text-green-800{% endif %}">
+        {{ detail.libelle_statut_paiement|default:detail.get_statut_display }}
+      </span>
+    </div>
   </div>
 
   {% comment %} main card {% endcomment %}
@@ -170,7 +191,7 @@
           <div>
             <span class="text-xs text-slate-400 block mb-1">Pièce jointe</span>
             {% if detail.eleve.piece_jointe_handicap %}
-            <a href="{{ detail.eleve.piece_jointe_handicap.url }}" target="_blank" class="text-base font-medium text-bsb-green hover:underline">Visualiser</a>
+            <a href="{{ detail.eleve.piece_jointe_handicap.url }}" download class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-bsb-green/10 text-bsb-green hover:bg-bsb-green hover:text-white transition-colors"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>Télécharger</a>
             {% else %}
             <span class="text-base font-medium text-slate-800">—</span>
             {% endif %}
@@ -269,9 +290,10 @@
                 </div>
 
                 {% if piece.piece %}
-                    <a href="{{ piece.piece.url }}" target="_blank"
-                    class="text-xs text-slate-400 hover:text-slate-600 transition-colors">
-                     Visualiser
+                    <a href="{{ piece.piece.url }}" download
+                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-bsb-red/10 text-bsb-red hover:bg-bsb-red hover:text-white transition-colors">
+                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+                     Télécharger
                     </a>
                 {% else %}
                     <span class="text-muted">Aucun fichier</span>

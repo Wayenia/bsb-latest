@@ -470,22 +470,33 @@
 
 {% comment %} MODAL PAIEMENT (réutilisé pour toutes les tranches / tous les types de frais) {% endcomment %}
 <div id="modal-paiement-tranche" class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(0,0,0,0.45)]">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-    <div class="flex justify-between items-center mb-[1rem]">
-      <h2 class="font-[800] text-[1.1rem] text-[#374151] m-[0]">Enregistrer un paiement</h2>
-      <button type="button" data-paiement-fermer class="border-0 bg-transparent text-[1.4rem] leading-[1] text-[#9ca3af] cursor-pointer">&times;</button>
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+    {% comment %}En-tete colore : on lit d'un coup ce qu'on encaisse et pour qui.{% endcomment %}
+    <div class="bg-gradient-to-r from-bsb-green to-emerald-500 px-5 py-4 flex items-center gap-3 text-white">
+      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-2 0-3 .9-3 2s1 2 3 2 3 .9 3 2-1 2-3 2m0-8V6m0 12v-2M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </span>
+      <div class="min-w-0 flex-1">
+        <h2 class="font-black text-base leading-tight">Encaisser un paiement</h2>
+        <p id="modal-paiement-cible" class="text-xs text-white/90 truncate"></p>
+      </div>
+      <button type="button" data-paiement-fermer class="shrink-0 text-white/90 hover:text-white text-2xl leading-none">&times;</button>
     </div>
-    <p id="modal-paiement-cible" class="text-sm text-gray-500 mb-4"></p>
-    <form method="post" id="form-paiement-tranche" action="" enctype="multipart/form-data">
+    <form method="post" id="form-paiement-tranche" action="" enctype="multipart/form-data" class="p-5">
       {% csrf_token %}
-      <div class="mb-3">
-        <label class="block text-sm font-semibold text-gray-700 mb-1">Montant (FCFA)</label>
-        <input type="number" name="montant_paiement" id="modal-montant-input" min="1" step="1" required
-               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+      <div class="mb-4">
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Montant reçu</label>
+        <div class="relative">
+          <input type="number" name="montant_paiement" id="modal-montant-input" min="1" step="1" required
+                 class="w-full pl-4 pr-16 py-3 text-lg font-bold border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-bsb-green focus:border-transparent">
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">FCFA</span>
+        </div>
       </div>
       <div class="mb-4">
         <label class="block text-sm font-semibold text-gray-700 mb-1">Mode de paiement</label>
-        <select name="mode_paiement" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        <select name="mode_paiement" class="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-bsb-green">
           <option value="espece" selected>Espèce</option>
           <option value="mobile">Mobile Money</option>
           <option value="chèque">Chèque</option>
@@ -505,11 +516,14 @@
         </div>
         <p class="text-xs text-gray-400 mt-1">JPEG, JPG, PNG ou PDF — 5 Mo max</p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 pt-1">
         <button type="button" data-paiement-fermer
-                class="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-semibold hover:bg-gray-50">Annuler</button>
+                class="flex-1 py-2.5 border border-gray-300 rounded-xl text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors">Annuler</button>
         <button type="submit"
-                class="flex-[2] py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold">Confirmer</button>
+                class="flex-[2] inline-flex items-center justify-center gap-1.5 py-2.5 bg-bsb-green hover:bg-emerald-700 text-white rounded-xl text-sm font-bold transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          Confirmer l'encaissement
+        </button>
       </div>
     </form>
   </div>
