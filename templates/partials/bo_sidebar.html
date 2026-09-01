@@ -11,13 +11,20 @@ l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
 
 <aside id="bo-sidebar" class="bo-sidebar" aria-label="Navigation du back-office">
 
-    <div class="bo-sidebar-entete">
+    {% comment %}Tout l'en-tete est cliquable : il ramene au site public.{% endcomment %}
+    <a href="{% url 'courses:home' %}" class="bo-sidebar-entete" title="Retour au site public">
         <img src="{% static 'images/logo.png' %}" alt="" class="h-9 w-auto object-contain shrink-0">
-        <div class="min-w-0">
+        <div class="min-w-0 flex-1">
             <div class="bo-sidebar-marque">Yupaan</div>
             <div class="bo-sidebar-sous">Burkina Suudu Bawdè</div>
         </div>
-    </div>
+        <span class="bo-sidebar-retour" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-8 9 8M5 10v10h14V10"/>
+            </svg>
+            Accueil
+        </span>
+    </a>
 
     <div class="bo-recherche-zone">
         <label for="bo-recherche" class="sr-only">Filtrer les rubriques</label>

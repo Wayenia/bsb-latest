@@ -330,10 +330,19 @@
   /* En-tete au degrade signature de l'accueil. */
   .bo-sidebar-entete {
     @apply flex items-center gap-3 px-4 h-16 shrink-0 sticky top-0 z-10
-           bg-gradient-to-r from-bsb-red to-bsb-yellow;
+           bg-gradient-to-r from-bsb-red to-bsb-yellow transition-[filter] duration-150;
   }
+  .bo-sidebar-entete:hover { @apply brightness-[1.06]; }
+  .bo-sidebar-entete:focus-visible { @apply outline-none ring-2 ring-inset ring-white/70; }
+  .bo-sidebar-entete:hover .bo-sidebar-retour { @apply bg-white/30; }
   .bo-sidebar-marque { @apply text-white font-bold tracking-tight leading-tight; }
   .bo-sidebar-sous   { @apply text-[11px] uppercase tracking-widest text-white/80; }
+  .bo-sidebar-retour {
+    @apply ml-auto flex shrink-0 items-center gap-1 rounded-full bg-white/15
+           px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white
+           transition-colors;
+  }
+  .bo-sidebar-retour svg { @apply h-3.5 w-3.5; }
 
   /* Filtre : avec une vingtaine d'entrees, chercher va plus vite que parcourir. */
   .bo-recherche-zone { @apply px-3 pt-3; }

@@ -19,7 +19,7 @@
             </div>
 
             {% comment %} LIENS DESKTOP {% endcomment %}
-            <div class="hidden sm:flex items-center space-x-1">
+            <div class="hidden lg:flex items-center space-x-1">
 
                 <a href="{% url 'courses:home' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
                     Accueil
@@ -122,20 +122,18 @@
             </div>
 
             {% comment %} BOUTONS AUTH DESKTOP {% endcomment %}
-            <div class="hidden sm:flex items-center space-x-3">
+            <div class="hidden lg:flex items-center gap-2">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'courses:redirect_to_dashboard' %}" class="px-5 py-2.5 text-sm font-bold text-white border border-gray-100 bg-yellow-600 rounded-full hover:bg-green-600 transition-all transform hover:-translate-y-0.5">
+                    {# Photo (ou initiales) portee par "Mon espace" ; "Mon profil" retire du site public. #}
+                    <a href="{% url 'courses:redirect_to_dashboard' %}" class="flex items-center gap-2 pl-1.5 pr-4 xl:pr-5 py-1.5 text-sm font-bold text-white bg-yellow-600 rounded-full hover:bg-green-600 shadow-sm transition-all transform hover:-translate-y-0.5">
+                        {% if user.photo %}
+                        <img src="{{ user.photo.url }}" alt="" class="h-8 w-8 rounded-full object-cover ring-2 ring-white/70">
+                        {% else %}
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white ring-2 ring-white/40">{{ user.nom|first|upper }}{{ user.prenom|first|upper }}</span>
+                        {% endif %}
                         Mon espace
                     </a>
-                    <a href="{% url 'accounts:mon_compte' %}" class="flex items-center gap-2 pl-2 pr-5 py-2.5 text-sm font-bold text-gray-700 border border-gray-300 rounded-full hover:bg-gray-100 transition-all transform hover:-translate-y-0.5">
-                        {% if user.photo %}
-                        <img src="{{ user.photo.url }}" alt="" class="h-7 w-7 rounded-full object-cover">
-                        {% else %}
-                        <span class="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-bsb-red to-bsb-gold text-[11px] font-bold text-white">{{ user.nom|first|upper }}{{ user.prenom|first|upper }}</span>
-                        {% endif %}
-                        Mon profil
-                    </a>
-                    <a href="{% url 'accounts:logout' %}" class="px-5 py-2.5 text-sm font-bold text-white border border-gray-300 bg-bsb-gray rounded-full hover:bg-gray-600 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                    <a href="{% url 'accounts:logout' %}" class="px-4 xl:px-5 py-2.5 text-sm font-bold text-white bg-bsb-gray rounded-full hover:bg-gray-600 shadow-sm hover:shadow transition-all transform hover:-translate-y-0.5">
                         Se déconnecter
                     </a>
                 {% else %}
@@ -150,7 +148,7 @@
 
             {% comment %} BOUTON HAMBURGER {% endcomment %}
             <button id="mobile-menu-btn"
-                    class="sm:hidden flex flex-col justify-center items-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
+                    class="lg:hidden flex flex-col justify-center items-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
                     aria-label="Menu">
                 <span class="hamburger-line block w-6 h-0.5 bg-gray-700 transition-all duration-300"></span>
                 <span class="hamburger-line block w-6 h-0.5 bg-gray-700 transition-all duration-300 mt-1.5"></span>
@@ -161,7 +159,7 @@
     </div>
 
     {% comment %} MENU MOBILE {% endcomment %}
-    <div id="mobile-menu" class="sm:hidden hidden border-t border-gray-100 bg-white">
+    <div id="mobile-menu" class="lg:hidden hidden border-t border-gray-100 bg-white">
         <div class="px-4 py-4 space-y-1">
 
             <a href="{% url 'courses:home' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">
@@ -218,11 +216,13 @@
             <div class="border-t border-gray-100 my-2"></div>
 
             {% if user.is_authenticated %}
-                <a href="{% url 'courses:redirect_to_dashboard' %}" class="block px-4 py-3 text-sm font-bold text-white bg-yellow-600 rounded-xl text-center hover:bg-green-600 transition-colors">
+                <a href="{% url 'courses:redirect_to_dashboard' %}" class="flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-white bg-yellow-600 rounded-xl hover:bg-green-600 transition-colors">
+                    {% if user.photo %}
+                    <img src="{{ user.photo.url }}" alt="" class="h-7 w-7 rounded-full object-cover ring-2 ring-white/70">
+                    {% else %}
+                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-[11px] font-bold text-white ring-2 ring-white/40">{{ user.nom|first|upper }}{{ user.prenom|first|upper }}</span>
+                    {% endif %}
                     Mon espace
-                </a>
-                <a href="{% url 'accounts:mon_compte' %}" class="block px-4 py-3 text-sm font-bold text-gray-700 border border-gray-300 rounded-xl text-center hover:bg-gray-100 transition-colors">
-                    Mon profil
                 </a>
                 <a href="{% url 'accounts:logout' %}" class="block px-4 py-3 text-sm font-bold text-gray-600 border border-gray-400 rounded-xl text-center hover:bg-gray-100 transition-colors">
                     Se déconnecter
