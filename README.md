@@ -213,7 +213,12 @@ Utilisent le back-office `/bsb/` pour :
   années scolaires ;
 - gérer le personnel (création de comptes, quel que soit le rôle) depuis
   **RH → Agents** ;
-- ajuster la matrice des permissions depuis **RH → Permissions** ;
+- ajuster la matrice des permissions **par rôle** depuis **RH → Permissions** ;
+- déléguer à **une personne précise** un rôle et des permissions **en plus** de
+  celles de son rôle, depuis **RH → Agents → Permissions** (bouton par agent) :
+  les droits déjà couverts par le rôle sont signalés, l'admin coche seulement ce
+  qu'il accorde en supplément. Modèle additif : pour retirer un droit hérité du
+  rôle, on change le rôle ou la matrice ;
 - suivre les statistiques et exporter les données (PDF, CSV, Excel).
 
 Le back-office présente une **barre latérale** regroupant les accès par thème

@@ -109,6 +109,7 @@ urlpatterns = [
     path('rh/agents/import/modele', views_admin.agent_import_template, name='agent_import_template'),
     path('rh/agents/import', views_admin.agent_import, name='agent_import'),
     path('rh/agents/<int:id>/modifier', views_admin.agent_update, name='agent_update'),
+    path('rh/agents/<int:id>/permissions', views_admin.agent_permissions, name='agent_permissions'),
     path('rh/agents/<int:id>/supprimer', views_admin.agent_delete, name='agent_delete'),
     path('rh/agents/<int:id>/suspendre', views_admin.agent_toggle_active, name='agent_toggle_active'),
     # APPRENANTS (modification complète, y compris mot de passe)

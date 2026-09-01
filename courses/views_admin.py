@@ -1392,6 +1392,60 @@ def agent_update(request, id):
     })
 
 
+@require_permission('accounts.gerer_permissions')
+def agent_permissions(request, id):
+    """Delegation individuelle : role de l'agent + permissions accordees en plus
+    a cette seule personne (user_permissions), par-dessus celles de son role.
+
+    La matrice RH reste la politique par role ; cette page delegue a une
+    personne precise, sans toucher aux autres membres du role. Modele additif de
+    Django : on ajoute des droits a un individu, on ne retire pas ceux herites
+    de son role (pour cela, on change le role, ou la matrice)."""
+    from django.contrib.auth.models import Permission
+    agent = get_object_or_404(Utilisateur, id=id, user_type__in=ALL_AGENT_TYPES)
+    centres_qs, _, scope = _get_scope(request.user)
+    if scope != "global" and not _agent_in_scope(agent, centres_qs):
+        raise PermissionDenied("Vous n'avez pas accès à cet agent.")
+
+    matrix_perms = Permission.objects.filter(codename__in=MATRIX_CODENAMES)
+
+    if request.method == 'POST':
+        nouveau_role = request.POST.get('user_type')
+        if nouveau_role in dict(TYPE_LABELS) and nouveau_role != agent.user_type:
+            agent.user_type = nouveau_role
+            agent.save()  # Utilisateur.save() reaffecte le groupe du role.
+        coches = set(request.POST.getlist('perm'))
+        # On ne gere que les permissions de la matrice ; d'eventuelles autres
+        # permissions individuelles sont preservees.
+        conservees = list(agent.user_permissions.exclude(codename__in=MATRIX_CODENAMES))
+        ajoutees = list(matrix_perms.filter(codename__in=coches))
+        agent.user_permissions.set(conservees + ajoutees)
+        messages.success(request, f"Délégation mise à jour pour {agent.prenom} {agent.nom}.")
+        return redirect('bsb_admin:agent_permissions', id=agent.id)
+
+    perms_role = set(Permission.objects
+                     .filter(group__in=agent.groups.all(), codename__in=MATRIX_CODENAMES)
+                     .values_list('codename', flat=True))
+    perms_indiv = set(agent.user_permissions
+                      .filter(codename__in=MATRIX_CODENAMES)
+                      .values_list('codename', flat=True))
+
+    par_theme = {}
+    for codename, libelle, app, theme in MATRIX_PERMISSIONS:
+        par_theme.setdefault(theme, []).append({
+            'codename': codename, 'libelle': libelle,
+            'par_role': codename in perms_role,
+            'individuel': codename in perms_indiv,
+        })
+
+    return render(request, 'admin/rh/agent_permissions.html', {
+        'agent': agent,
+        'roles': TYPE_LABELS,
+        'par_theme': par_theme,
+        'nb_individuelles': len(perms_indiv),
+    })
+
+
 @require_permission('accounts.gerer_agents')
 def agent_delete(request, id):
     agent = get_object_or_404(Utilisateur, id=id, user_type__in=ALL_AGENT_TYPES)

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Permissions de {{ agent.prenom }} {{ agent.nom }} | BSB{% endblock %}
+{% block content %}
+<div class="bo-shell bo-large">
+
+  <nav class="bo-breadcrumb">
+    <a href="{% url 'bsb_admin:agent_list' %}">Agents et formateurs</a>
+    <span class="bo-breadcrumb-sep">/</span>
+    <span class="text-gray-900">Permissions</span>
+  </nav>
+
+  {% include 'partials/messages.html' %}
+
+  {% comment %}Identite de la personne : on delegue a quelqu'un de precis.{% endcomment %}
+  <div class="bo-card mb-6">
+    <div class="bo-card-body flex items-center gap-4">
+      {% if agent.photo %}
+      <img src="{{ agent.photo.url }}" alt="" class="h-12 w-12 rounded-full object-cover ring-1 ring-gray-200">
+      {% else %}
+      <span class="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-bsb-red to-bsb-gold text-sm font-bold text-white">
+        {{ agent.nom|first|upper }}{{ agent.prenom|first|upper }}
+      </span>
+      {% endif %}
+      <div class="min-w-0">
+        <h1 class="text-lg font-black text-bsb-ink truncate">{{ agent.nom }} {{ agent.prenom }}</h1>
+        <p class="text-sm text-bsb-muted font-mono">{{ agent.username }}{% if agent.email %} · {{ agent.email }}{% endif %}</p>
+      </div>
+    </div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    {% comment %}1) Le role : socle des permissions.{% endcomment %}
+    <div class="bo-card mb-6">
+      <div class="bo-card-header"><h2 class="bo-card-title">Rôle</h2></div>
+      <div class="bo-card-body">
+        <p class="text-sm text-bsb-muted mb-3">Le rôle définit les permissions de base, communes à tous les agents de ce rôle.</p>
+        <div class="max-w-sm">
+          <label for="user_type" class="bo-label">Rôle de l'agent</label>
+          <select name="user_type" id="user_type" class="bo-select">
+            {% for code, libelle in roles %}
+            <option value="{{ code }}" {% if code == agent.user_type %}selected{% endif %}>{{ libelle }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {% comment %}2) Permissions individuelles : accordees en plus, a cette personne.{% endcomment %}
+    <div class="bo-card mb-6">
+      <div class="bo-card-header">
+        <h2 class="bo-card-title">Permissions accordées en plus</h2>
+        {% if nb_individuelles %}<span class="bo-badge-success">{{ nb_individuelles }} accordée{{ nb_individuelles|pluralize }}</span>{% endif %}
+      </div>
+      <div class="bo-card-body">
+        <div class="bo-note-info mb-4">
+          <p class="text-sm">
+            <span class="inline-block align-middle mr-1 h-2.5 w-2.5 rounded-full bg-bsb-green"></span>
+            <strong>Inclus par le rôle</strong> : déjà couvert, rien à faire.
+            &nbsp;•&nbsp; <strong>Case à cocher</strong> : droit accordé <em>en plus</em> à cette seule personne.
+          </p>
+        </div>
+
+        {% for theme, perms in par_theme.items %}
+        <div class="mb-5">
+          <h3 class="text-xs font-bold uppercase tracking-wide text-bsb-muted mb-2">{{ theme }}</h3>
+          <div class="divide-y divide-gray-100 rounded-lg border border-gray-200">
+            {% for p in perms %}
+            <div class="flex items-center justify-between gap-3 px-4 py-2.5">
+              <span class="text-sm text-bsb-ink">{{ p.libelle }}</span>
+              {% if p.par_role %}
+                <span class="bo-badge-success shrink-0">Inclus par le rôle</span>
+              {% else %}
+                <label class="inline-flex items-center gap-2 shrink-0 cursor-pointer">
+                  <input type="checkbox" name="perm" value="{{ p.codename }}"
+                         {% if p.individuel %}checked{% endif %}
+                         class="h-4 w-4 rounded border-gray-300 text-bsb-red focus:ring-bsb-red">
+                  <span class="text-xs text-bsb-muted">accorder</span>
+                </label>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="bo-card-footer flex items-center justify-between">
+        <a href="{% url 'bsb_admin:agent_list' %}" class="bo-btn-ghost">Annuler</a>
+        <button type="submit" class="bo-btn-primary">Enregistrer</button>
+      </div>
+    </div>
+  </form>
+
+  <p class="text-xs text-bsb-muted">
+    Pour modifier ce qu'un <strong>rôle entier</strong> peut faire, utilisez la
+    <a href="{% url 'bsb_admin:permissions_matrix' %}" class="text-bsb-red font-semibold">matrice des permissions</a>.
+  </p>
+</div>
+{% endblock %}

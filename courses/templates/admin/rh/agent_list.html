@@ -122,6 +122,8 @@
                             </form>
                             <a href="{% url 'bsb_admin:agent_update' agent.id %}"
                                class="bo-btn-secondary bo-btn-sm">Modifier</a>
+                            <a href="{% url 'bsb_admin:agent_permissions' agent.id %}"
+                               class="bo-btn-secondary bo-btn-sm" title="Déléguer rôle et permissions à cet agent">Permissions</a>
                             <a href="{% url 'bsb_admin:agent_delete' agent.id %}"
                                class="bo-btn-danger bo-btn-sm">Supprimer</a>
                         </div>
