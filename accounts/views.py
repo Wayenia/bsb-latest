@@ -952,11 +952,86 @@ def facture_proforma_delete(request, id):
 # ─── PDF de la facture ──────────────────────────────────────────────────────
 
 @require_permission('accounts.gerer_facturation', 'accounts.encaisser_prestation')
+def _facture_officielle_pdf(request, facture):
+    """Facture DAF au format officiel Yupaan. QR seulement sur une facture
+    définitive (numéro officiel vérifiable). Réutilise le gabarit unique."""
+    from courses.views import _document_officiel_pdf, _qr_data_uri
+    fcfa = lambda v: f"{v:,.0f} FCFA".replace(",", " ")
+    est_definitive = facture.type_facture == 'definitive'
+    lignes = [[
+        {'valeur': lg.prestation.libelle if lg.prestation else "—"},
+        {'valeur': str(lg.quantite), 'num': True},
+        {'valeur': fcfa(lg.prix_unitaire), 'num': True},
+        {'valeur': fcfa(lg.montant), 'num': True},
+    ] for lg in facture.lignes.all()]
+    contexte = {
+        'titre': "Facture définitive" if est_definitive else "Facture proforma",
+        'numero_libelle': "Facture n°", 'numero': facture.numero or "(proforma)",
+        'date': (facture.date_validation or facture.date_creation).strftime('%d/%m/%Y'),
+        'partie_gauche': {'titre': "Prestataire", 'lignes': [
+            "Burkina Suudu Bawdè", "Direction de l'Administration et des Finances (DAF)"]},
+        'partie_droite': {'titre': "Client", 'lignes': [
+            str(facture.client),
+            f"IFU : {facture.client.ifu}" if facture.client.ifu else "",
+            facture.client.telephone or ""]},
+        'colonnes': [{'libelle': "Prestation"}, {'libelle': "Qté", 'num': True},
+                     {'libelle': "P. unitaire", 'num': True}, {'libelle': "Montant", 'num': True}],
+        'lignes': lignes,
+        'total': fcfa(facture.montant_total),
+        'reglement': [("Objet", facture.objet or "—"),
+                      ("Nature", facture.get_type_facture_display())],
+        'formule': f"Arrêtée la présente facture à la somme de {montant_en_lettres(facture.montant_total)}.",
+    }
+    if est_definitive:
+        contexte['qr_uri'] = _qr_data_uri(
+            f"Facture : {facture.numero}\nClient : {facture.client}\n"
+            f"Montant : {fcfa(facture.montant_total)}\nDate : {contexte['date']}")
+    return _document_officiel_pdf(request, contexte)
+
+
+def _recu_prestation_officiel_pdf(request, paiement):
+    """Reçu de paiement de prestation au format officiel (QR de vérification)."""
+    from courses.views import _document_officiel_pdf, _qr_data_uri
+    fcfa = lambda v: f"{v:,.0f} FCFA".replace(",", " ")
+    facture = paiement.facture
+    contexte = {
+        'titre': "Reçu de paiement de prestation",
+        'numero_libelle': "Reçu n°", 'numero': paiement.numero_recu,
+        'date': paiement.date_paiement.strftime('%d/%m/%Y à %H:%M'),
+        'partie_gauche': {'titre': "Client", 'lignes': [
+            str(facture.client),
+            f"IFU : {facture.client.ifu}" if facture.client.ifu else "",
+            facture.client.telephone or ""]},
+        'partie_droite': {'titre': "Bénéficiaire", 'lignes': [
+            "Burkina Suudu Bawdè", "Direction de l'Administration et des Finances (DAF)"]},
+        'colonnes': [{'libelle': "Facture"}, {'libelle': "Objet"}, {'libelle': "Montant payé", 'num': True}],
+        'lignes': [[
+            {'valeur': facture.numero or "(proforma)"},
+            {'valeur': facture.objet or "—"},
+            {'valeur': fcfa(paiement.montant), 'num': True}]],
+        'total': fcfa(paiement.montant),
+        'reglement': [("Mode de règlement", paiement.get_mode_paiement_display()),
+                      ("Référence", paiement.reference or "—"),
+                      ("Facture", facture.numero or "(proforma)")],
+        'formule': f"Reçu la somme de {montant_en_lettres(paiement.montant)} pour règlement de la facture {facture.numero}.",
+        'qr_uri': _qr_data_uri(
+            f"Reçu : {paiement.numero_recu}\nFacture : {facture.numero}\n"
+            f"Montant : {fcfa(paiement.montant)}\nDate : {paiement.date_paiement.strftime('%d/%m/%Y')}"),
+    }
+    return _document_officiel_pdf(request, contexte)
+
+
 def facture_pdf(request, id):
     facture = get_object_or_404(
         Facture_prestation.objects.select_related('client', 'cree_par').prefetch_related('lignes__prestation'),
         id=id
     )
+    # Modele officiel (par defaut), reversible en 'classique' via DOC_MODELE.
+    if getattr(settings, 'DOC_MODELE', 'officiel') != 'classique':
+        reponse = HttpResponse(_facture_officielle_pdf(request, facture), content_type='application/pdf')
+        reponse['Content-Disposition'] = f'attachment; filename="{facture.numero.replace("/", "-") if facture.numero else "proforma"}.pdf"'
+        return reponse
+
     header_left, header_right = _facturation_header_lines(request.user)
     html_string = render_to_string('accounts/facturation/facture_pdf.html', {
         'facture': facture,

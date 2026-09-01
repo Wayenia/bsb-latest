@@ -4,46 +4,77 @@
 <head>
 <meta charset="utf-8">
 <style>
-  @page { size: A4; margin: 1.4cm 1.2cm; }
+  /* Pied de page facon acte officiel : numero de page centre, date a droite. */
+  @page {
+    size: A4; margin: 1.5cm 1.4cm 1.9cm;
+    @bottom-center { content: "Page " counter(page); font: 8px "Liberation Sans", sans-serif; color: #9ca3af; }
+    @bottom-right  { content: "Document généré le {{ genere_le }}"; font: italic 8px "Liberation Sans", sans-serif; color: #9ca3af; }
+    @bottom-left   { content: "Burkina Suudu Bawdè — Yupaan"; font: italic 8px "Liberation Sans", sans-serif; color: #9ca3af; }
+  }
   * { box-sizing: border-box; }
-  body { font-family: "Helvetica", "Arial", sans-serif; color: #1f2937; font-size: 11px; position: relative; }
-  /* Filigrane : logo BSB très pâle, derrière tout le contenu. */
-  .filigrane { position: fixed; top: 32%; left: 12%; width: 76%; opacity: 0.05; z-index: -1; }
-  .entete { display: flex; align-items: flex-start; justify-content: space-between; }
-  .entete .logo { width: 78px; height: 78px; object-fit: contain; }
-  .entete .centre { text-align: center; flex: 1; padding: 0 8px; }
-  .entete .centre .pays { font-size: 15px; font-weight: bold; letter-spacing: .5px; }
-  .entete .centre .devise { font-size: 9.5px; margin: 1px 0 6px; }
-  .entete .centre .entite { font-size: 10px; font-weight: bold; line-height: 1.35; }
-  .entete .qr { width: 78px; height: 78px; object-fit: contain; }
-  .bandeau-titre { margin: 14px 0 10px; background: #e9edf3; border-radius: 4px; padding: 10px 12px; text-align: center; }
-  .bandeau-titre h1 { margin: 0; font-size: 17px; font-weight: bold; color: #111827; }
-  .meta { margin: 4px 0 10px; }
-  .meta .num { font-size: 12px; }
-  .meta .num strong { font-size: 13px; }
-  .parties { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
-  .partie { font-size: 10.5px; line-height: 1.5; }
+  body { font-family: "Liberation Sans", "DejaVu Sans", Arial, Helvetica, sans-serif;
+         color: #111827; font-size: 11px; position: relative; }
+
+  /* Fond marbre gris (nuages + taches noiratres), facon papier d'acte officiel. */
+  .texture { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -3; }
+  /* Grand filigrane gris du logo, par-dessus le marbre, derriere le contenu. */
+  .filigrane { position: fixed; top: 27%; left: 17%; width: 66%; z-index: -1; }
+
+  /* En-tete aere : gros logo a gauche, bloc central, QR a droite. */
+  .entete { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .entete .logo { width: 96px; height: 96px; object-fit: contain; }
+  .entete .centre { text-align: center; flex: 1; }
+  .entete .centre .pays { font-size: 17px; font-weight: bold; letter-spacing: .6px; }
+  .entete .centre .devise { font-size: 10px; margin: 2px 0 10px; }
+  .entete .centre .entite { font-size: 10.5px; font-weight: bold; line-height: 1.5; }
+  .entete .centre .entite .etablissement { margin-top: 12px; font-size: 12.5px; letter-spacing: .5px; }
+  .entete .qr { width: 104px; height: 104px; object-fit: contain; }
+
+  .titre-doc { text-align: center; font-size: 20px; font-weight: bold; color: #111827;
+               margin: 22px 0 20px; }
+
+  .meta { margin: 0 0 16px; font-size: 12px; line-height: 1.8; }
+  .meta .lbl { display: inline-block; min-width: 92px; color: #374151; }
+  .meta .val { font-weight: bold; }
+
+  .parties { display: flex; justify-content: space-between; gap: 24px; margin-bottom: 20px; }
+  .partie { font-size: 11px; line-height: 1.75; }
   .partie.droite { text-align: right; }
-  .partie .titre { font-weight: bold; font-size: 11px; margin-bottom: 2px; }
-  table.lignes { width: 100%; border-collapse: collapse; margin: 6px 0; }
-  table.lignes th { background: #f3f4f6; border: 1px solid #d1d5db; padding: 6px 8px; font-size: 10px; text-align: left; }
-  table.lignes td { border: 1px solid #e5e7eb; padding: 6px 8px; font-size: 10.5px; }
-  table.lignes td.num { text-align: right; white-space: nowrap; }
-  .total-ligne { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin: 8px 0; }
-  .total-ligne .lbl { font-size: 13px; font-weight: bold; }
-  .total-ligne .val { font-size: 15px; font-weight: bold; background: #e9edf3; border-radius: 4px; padding: 6px 18px; min-width: 150px; text-align: right; }
-  .reglement { margin: 12px 0; font-size: 10.5px; line-height: 1.7; }
-  .reglement .k { color: #6b7280; }
-  .formule { margin: 14px 0 6px; font-size: 11px; }
-  .verif { text-align: center; font-size: 8.5px; color: #6b7280; margin-top: 2px; }
+  .partie .titre { font-weight: bold; font-size: 12px; margin-bottom: 4px; }
+
+  /* Tableau TRANSPARENT : le filigrane transparait, seules les bordures et
+     l'entete gris identifient les colonnes (comme l'acte de reference). */
+  table.lignes { width: 100%; border-collapse: collapse; margin: 4px 0 10px; background: transparent; }
+  table.lignes th { background: #e4e4e4; border: 1px solid #7c7c7c; padding: 8px 10px;
+                    font-size: 10.5px; font-weight: bold; text-align: left; }
+  table.lignes td { border: 1px solid #7c7c7c; padding: 8px 10px; font-size: 11px; background: transparent; }
+  table.lignes th.num, table.lignes td.num { text-align: right; white-space: nowrap; }
+
+  /* TOTAL : libelle gras + valeur dans une boite grise, alignes a droite. */
+  .total-ligne { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin: 10px 0; }
+  .total-ligne .lbl { font-size: 15px; font-weight: bold; }
+  .total-ligne .val { font-size: 16px; font-weight: bold; background: #cfcfcf; border: 1px solid #7c7c7c;
+                      padding: 7px 22px; min-width: 160px; text-align: right; }
+
+  .reglement { margin: 16px 0; font-size: 11px; line-height: 2; }
+  .reglement .k { display: inline-block; min-width: 165px; text-align: right; color: #374151; padding-right: 6px; }
+  .reglement .v { font-weight: bold; }
+
+  .corps { margin: 18px 0; font-size: 11.5px; line-height: 1.9; text-align: justify; }
+  .formule { margin: 18px 0 6px; font-size: 11.5px; }
+  .signature { margin: 30px 8px 6px auto; width: 46%; text-align: center; font-size: 11px; line-height: 1.5; }
+  .signature .lieu-date { margin-bottom: 4px; }
+  .signature .qualite { font-weight: bold; }
+  .signature .nom { margin-top: 36px; font-weight: bold; }
+  .verif { text-align: center; font-size: 8.5px; color: #6b7280; margin-top: 4px; }
+
   .annulee { position: fixed; top: 42%; left: 0; width: 100%; text-align: center;
-             font-size: 60px; font-weight: bold; color: rgba(220,38,38,.30); transform: rotate(-24deg); z-index: 0; }
-  .pied { position: fixed; bottom: -0.6cm; left: 0; width: 100%; display: flex;
-          justify-content: space-between; font-size: 8px; color: #9ca3af; font-style: italic; }
+             font-size: 64px; font-weight: bold; color: rgba(220,38,38,.28); transform: rotate(-24deg); z-index: 0; }
 </style>
 </head>
 <body>
-  {% if logo_uri %}<img class="filigrane" src="{{ logo_uri }}">{% endif %}
+  {% if texture_uri %}<img class="texture" src="{{ texture_uri }}">{% endif %}
+  {% if filigrane_uri %}<img class="filigrane" src="{{ filigrane_uri }}">{% endif %}
   {% if annulee %}<div class="annulee">ANNULÉE</div>{% endif %}
 
   <div class="entete">
@@ -52,55 +83,59 @@
       <div class="pays">BURKINA FASO</div>
       <div class="devise">La Patrie ou la Mort, nous Vaincrons</div>
       <div class="entite">
-        MINISTÈRE DE L'ENSEIGNEMENT SECONDAIRE,<br>
-        DE LA FORMATION PROFESSIONNELLE ET TECHNIQUE<br>
-        BURKINA SUUDU BAWDÈ
+        <div class="ministere">MINISTÈRE DE L'ENSEIGNEMENT SECONDAIRE,<br>DE LA FORMATION PROFESSIONNELLE ET TECHNIQUE</div>
+        <div class="etablissement">BURKINA SUUDU BAWDÈ</div>
       </div>
     </div>
     {% if qr_uri %}<img class="qr" src="{{ qr_uri }}">{% else %}<div class="qr"></div>{% endif %}
   </div>
 
-  <div class="bandeau-titre"><h1>{{ titre }}</h1></div>
+  <div class="titre-doc">{{ titre }}</div>
 
   <div class="meta">
-    <div class="num">{{ numero_libelle }} <strong>{{ numero }}</strong></div>
-    <div class="num">Date : {{ date }}</div>
+    <div><span class="lbl">{{ numero_libelle }}</span> <span class="val">{{ numero }}</span></div>
+    <div><span class="lbl">Date</span> <span class="val">{{ date }}</span></div>
   </div>
 
   <div class="parties">
     <div class="partie gauche">
       <div class="titre">{{ partie_gauche.titre }}</div>
-      {% for l in partie_gauche.lignes %}{{ l }}<br>{% endfor %}
+      {% for l in partie_gauche.lignes %}{% if l %}{{ l }}<br>{% endif %}{% endfor %}
     </div>
     <div class="partie droite">
       <div class="titre">{{ partie_droite.titre }}</div>
-      {% for l in partie_droite.lignes %}{{ l }}<br>{% endfor %}
+      {% for l in partie_droite.lignes %}{% if l %}{{ l }}<br>{% endif %}{% endfor %}
     </div>
   </div>
 
+  {% if colonnes %}
   <table class="lignes">
-    <thead><tr>{% for c in colonnes %}<th{% if c.num %} style="text-align:right"{% endif %}>{{ c.libelle }}</th>{% endfor %}</tr></thead>
+    <thead><tr>{% for c in colonnes %}<th{% if c.num %} class="num"{% endif %}>{{ c.libelle }}</th>{% endfor %}</tr></thead>
     <tbody>
       {% for ligne in lignes %}
       <tr>{% for cell in ligne %}<td{% if cell.num %} class="num"{% endif %}>{{ cell.valeur }}</td>{% endfor %}</tr>
       {% endfor %}
     </tbody>
   </table>
+  {% endif %}
 
-  <div class="total-ligne"><span class="lbl">TOTAL :</span><span class="val">{{ total }}</span></div>
+  {% if total %}<div class="total-ligne"><span class="lbl">{{ total_libelle|default:"TOTAL :" }}</span><span class="val">{{ total }}</span></div>{% endif %}
 
   {% if reglement %}
   <div class="reglement">
-    {% for k, v in reglement %}<span class="k">{{ k }} :</span> {{ v }}<br>{% endfor %}
+    {% for k, v in reglement %}<div><span class="k">{{ k }} :</span><span class="v">{{ v }}</span></div>{% endfor %}
   </div>
   {% endif %}
 
+  {% if corps %}<div class="corps">{{ corps|safe }}</div>{% endif %}
   {% if formule %}<div class="formule">{{ formule }}</div>{% endif %}
-  {% if qr_uri %}<div class="verif">Scannez le code pour vérifier ce document</div>{% endif %}
-
-  <div class="pied">
-    <span>Burkina Suudu Bawdè — plateforme Yupaan</span>
-    <span>Document généré le {{ genere_le }}</span>
+  {% if signature %}
+  <div class="signature">
+    <div class="lieu-date">{{ signature.lieu_date }}</div>
+    <div class="qualite">{{ signature.qualite }}</div>
+    <div class="nom">{{ signature.nom }}</div>
   </div>
+  {% endif %}
+  {% if qr_uri %}<div class="verif">Scannez le code pour vérifier ce document</div>{% endif %}
 </body>
 </html>

@@ -658,6 +658,12 @@ def telecharger_quittance(request, id):
         messages.error(request, "Ce versement a été annulé, sa quittance n'est plus disponible au téléchargement.")
         return redirect('courses:mes_paiements')
 
+    # Modele officiel (par defaut), reversible en 'classique' via DOC_MODELE.
+    if getattr(settings, 'DOC_MODELE', 'officiel') != 'classique':
+        reponse = HttpResponse(_quittance_officielle_pdf(request, paiement), content_type='application/pdf')
+        reponse['Content-Disposition'] = f'attachment; filename="quittance_{paiement.numero_quittance}.pdf"'
+        return reponse
+
     centre = paiement.dette.inscription.formation.centre
     header_left, header_right = _pdf_header_lines(centre)
     html_string = render_to_string('student/paiement/quittance_pdf.html', {
@@ -706,6 +712,14 @@ def telecharger_recepisse(request, id):
         titre_document = "Récépissé de demande d'inscription"
     else:
         titre_document = "Récépissé de dépôt de demande"
+
+    # Modele officiel (par defaut), reversible en 'classique' via DOC_MODELE.
+    if getattr(settings, 'DOC_MODELE', 'officiel') != 'classique':
+        reponse = HttpResponse(
+            _recepisse_officiel_pdf(request, inscription, titre_document, f"DOSS-{inscription.id:06d}"),
+            content_type='application/pdf')
+        reponse['Content-Disposition'] = f'attachment; filename="recepisse_{inscription.id}.pdf"'
+        return reponse
 
     html_string = render_to_string('student/subscription/recepisse_pdf.html', {
         'inscription': inscription,
@@ -768,6 +782,14 @@ def telecharger_attestation(request, id):
         directeur_titre_article = "Le Directeur"
     ville = centre.province.chef_lieu if centre.province_id else centre.nom_centre
 
+    # Modele officiel (par defaut), reversible en 'classique' via DOC_MODELE.
+    if getattr(settings, 'DOC_MODELE', 'officiel') != 'classique':
+        reponse = HttpResponse(
+            _attestation_officielle_pdf(request, inscription, directeur_nom, directeur_titre_article, ville),
+            content_type='application/pdf')
+        reponse['Content-Disposition'] = f'attachment; filename="attestation_{inscription.id}.pdf"'
+        return reponse
+
     html_string = render_to_string('student/subscription/attestation_pdf.html', {
         'inscription': inscription,
         'eleve': inscription.eleve,
@@ -793,12 +815,89 @@ def telecharger_attestation(request, id):
 def _qr_data_uri(texte):
     """Code QR d'un texte, encodé en data URI PNG pour un gabarit weasyprint."""
     import qrcode, base64
-    qr = qrcode.QRCode(version=1, box_size=4, border=2)
+    # Correction basse + peu de donnees = QR peu dense (modules larges, lisible).
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=2)
     qr.add_data(texte)
     qr.make(fit=True)
     tampon = io.BytesIO()
     qr.make_image(fill_color="black", back_color="white").save(tampon, format='PNG')
     return "data:image/png;base64," + base64.b64encode(tampon.getvalue()).decode('ascii')
+
+
+def _pdf_texture_data_uri():
+    """Fond marbré gris (nuages + taches noirâtres irrégulières), façon papier
+    d'acte officiel. Généré une fois (graine fixe) puis mémoïsé."""
+    global _TEXTURE_CACHE
+    try:
+        return _TEXTURE_CACHE
+    except NameError:
+        pass
+    from PIL import Image, ImageFilter, ImageChops, ImageOps, ImageDraw
+    import random, base64
+    rng = random.Random(7)
+    w, h = 700, 990
+    n = Image.new('L', (w, h))
+    n.putdata([rng.randint(0, 255) for _ in range(w * h)])
+    base = ImageChops.multiply(n.filter(ImageFilter.GaussianBlur(6)), n.filter(ImageFilter.GaussianBlur(20)))
+    base = ImageOps.autocontrast(base)
+    base_light = base.point(lambda p: int(216 + p * (251 - 216) / 255))     # marbre clair
+    blobs = Image.new('L', (w, h), 255)
+    dessin = ImageDraw.Draw(blobs)
+    for _ in range(18):                                                     # taches sombres
+        cx, cy = rng.randint(-40, w + 40), rng.randint(-40, h + 40)
+        rx, ry = rng.randint(50, 150), rng.randint(45, 170)
+        dessin.ellipse([cx - rx, cy - ry, cx + rx, cy + ry], fill=rng.randint(120, 200))
+    blobs = blobs.filter(ImageFilter.GaussianBlur(34))
+    smudge = blobs.point(lambda p: int((255 - p) * 0.55))
+    final = ImageChops.subtract(base_light, smudge)
+    tampon = io.BytesIO()
+    final.convert('RGB').save(tampon, format='PNG')
+    _TEXTURE_CACHE = "data:image/png;base64," + base64.b64encode(tampon.getvalue()).decode('ascii')
+    return _TEXTURE_CACHE
+
+
+def _pdf_logo_header_data_uri():
+    """Logo BSB couleur, fond blanc rendu transparent : posé sur le papier
+    teinté de l'acte, il n'affiche plus de cadre blanc (façon sceau officiel)."""
+    global _LOGO_HEADER_CACHE
+    try:
+        return _LOGO_HEADER_CACHE
+    except NameError:
+        pass
+    from PIL import Image
+    import base64
+    chemin = os.path.join(settings.BASE_DIR, 'static/images/logo.png')
+    img = Image.open(chemin).convert('RGBA')
+    img.thumbnail((480, 480))
+    donnees = [(r, g, b, 0) if r > 238 and g > 238 and b > 238 else (r, g, b, a)
+               for (r, g, b, a) in img.getdata()]
+    img.putdata(donnees)
+    tampon = io.BytesIO()
+    img.save(tampon, format='PNG')
+    _LOGO_HEADER_CACHE = "data:image/png;base64," + base64.b64encode(tampon.getvalue()).decode('ascii')
+    return _LOGO_HEADER_CACHE
+
+
+def _pdf_filigrane_data_uri():
+    """Logo BSB en grand filigrane gris (zones sombres translucides, blanc
+    transparent), façon armoiries d'un acte officiel. Mémoïsé (coûteux)."""
+    global _FILIGRANE_CACHE
+    try:
+        return _FILIGRANE_CACHE
+    except NameError:
+        pass
+    from PIL import Image
+    import base64
+    chemin = os.path.join(settings.BASE_DIR, 'static/images/logo.png')
+    gris = Image.open(chemin).convert('L')                 # 0 = noir, 255 = blanc
+    gris.thumbnail((520, 520))
+    alpha = gris.point(lambda p: int((255 - p) * 0.42))    # sombre => opaque, doux
+    filigrane = Image.new('RGBA', gris.size, (60, 60, 60, 0))
+    filigrane.putalpha(alpha)
+    tampon = io.BytesIO()
+    filigrane.save(tampon, format='PNG')
+    _FILIGRANE_CACHE = "data:image/png;base64," + base64.b64encode(tampon.getvalue()).decode('ascii')
+    return _FILIGRANE_CACHE
 
 
 def _quittance_officielle_pdf(request, paiement):
@@ -809,18 +908,13 @@ def _quittance_officielle_pdf(request, paiement):
     eleve = inscription.eleve
     centre = inscription.formation.centre
     tranche_label = paiement.tranche_frais.libelle if paiement.tranche_frais else f"Tranche {paiement.tranche}"
+    from accounts.utils import montant_en_lettres
     fcfa = lambda v: f"{v:,.0f} FCFA".replace(",", " ")
+    montant_lettres = lambda v: f"{montant_en_lettres(v)} ({fcfa(v)})"
 
-    qr_texte = (
-        f"Quittance : {paiement.numero_quittance}\n"
-        f"Date : {paiement.date_paiement.strftime('%d/%m/%Y à %H:%M')}\n"
-        f"Apprenant : {eleve.nom} {eleve.prenom}\n"
-        f"Centre : {centre}\nMétier : {inscription.formation.filiere}\n"
-        f"Montant payé : {fcfa(paiement.montant_paiement)}\n"
-        f"Reste à payer : {fcfa(dette.reste_a_payer())}\nÉtat : {dette.get_etat_dette_display()}"
-    )
+    # QR compact (peu dense) : identifiant + montant + date suffisent au controle.
+    qr_texte = f"BSB|QUIT|{paiement.numero_quittance}|{paiement.montant_paiement:.0f}|{paiement.date_paiement:%d%m%Y}"
     contexte = {
-        'logo_uri': _pdf_logo_data_uri(),
         'qr_uri': _qr_data_uri(qr_texte),
         'annulee': paiement.annule,
         'titre': "Quittance de paiement de la scolarité",
@@ -847,11 +941,79 @@ def _quittance_officielle_pdf(request, paiement):
             ("Total payé", fcfa(dette.montant_paye())),
             ("Reste à payer", fcfa(dette.reste_a_payer())),
             ("État de la dette", dette.get_etat_dette_display())],
-        'formule': f"Arrêtée la présente quittance à la somme de {fcfa(paiement.montant_paiement)}.",
-        'genere_le': timezone.now().strftime('%d/%m/%Y à %H:%M'),
+        'formule': f"Arrêtée la présente quittance à la somme de {montant_lettres(paiement.montant_paiement)}.",
     }
-    html = render_to_string('documents/quittance_officielle.html', contexte)
+    return _document_officiel_pdf(request, contexte)
+
+
+def _document_officiel_pdf(request, contexte, gabarit='documents/quittance_officielle.html'):
+    """Rendu WeasyPrint d'une pièce au format officiel Yupaan (en-tête MESFPT+BSB,
+    filigrane, pied). Complète les valeurs communes puis rend le gabarit unique."""
+    contexte.setdefault('logo_uri', _pdf_logo_header_data_uri())
+    contexte.setdefault('filigrane_uri', _pdf_filigrane_data_uri())
+    contexte.setdefault('texture_uri', _pdf_texture_data_uri())
+    contexte.setdefault('genere_le', timezone.now().strftime('%d/%m/%Y à %H:%M'))
+    html = render_to_string(gabarit, contexte)
     return weasyprint.HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf()
+
+
+def _recepisse_officiel_pdf(request, inscription, titre_document, numero_dossier):
+    """Récépissé d'inscription au format officiel (sans montant, sans QR)."""
+    eleve = inscription.eleve
+    centre = inscription.formation.centre
+    libelle_statut = {'valide': "Candidature validée", 'rejete': "Demande rejetée"}.get(
+        inscription.statut, "Dépôt enregistré")
+    contexte = {
+        'titre': titre_document,
+        'numero_libelle': "Dossier n°", 'numero': numero_dossier,
+        'date': inscription.date_inscription.strftime('%d/%m/%Y'),
+        'partie_gauche': {'titre': "Candidat", 'lignes': [
+            f"{eleve.nom} {eleve.prenom}", f"Matricule : {eleve.matricule or '—'}",
+            f"Année : {inscription.annee_scolaire}"]},
+        'partie_droite': {'titre': "Centre d'accueil", 'lignes': [
+            str(centre), centre.direction.nom_direction if centre and centre.direction else ""]},
+        'colonnes': [{'libelle': "Métier / Filière"}, {'libelle': "Année scolaire"},
+                     {'libelle': "Statut du dossier"}],
+        'lignes': [[
+            {'valeur': str(inscription.formation.filiere)},
+            {'valeur': str(inscription.annee_scolaire)},
+            {'valeur': libelle_statut}]],
+        'formule': "Le présent récépissé atteste le dépôt de la demande d'inscription auprès du centre.",
+        'qr_uri': _qr_data_uri(f"BSB|RECEP|{numero_dossier}|{inscription.statut}|{inscription.date_inscription:%d%m%Y}"),
+    }
+    return _document_officiel_pdf(request, contexte)
+
+
+def _attestation_officielle_pdf(request, inscription, directeur_nom, directeur_titre_article, ville):
+    """Attestation d'inscription au format officiel (acte signé, sans QR)."""
+    from django.utils.html import escape
+    eleve = inscription.eleve
+    centre = inscription.formation.centre
+    aujourd_hui = timezone.now().strftime('%d/%m/%Y')
+    # corps rendu via |safe : echapper les valeurs dynamiques (defense en profondeur).
+    nom_complet = escape(f"{eleve.nom} {eleve.prenom}")
+    corps = (
+        f"{escape(directeur_titre_article)} du {escape(str(centre))} atteste que "
+        f"<b>{nom_complet}</b>, matricule {escape(eleve.matricule or '—')}, "
+        f"est régulièrement inscrit(e) au titre de l'année scolaire {escape(str(inscription.annee_scolaire))} "
+        f"dans la filière « {escape(str(inscription.formation.filiere))} ».<br><br>"
+        "La présente attestation est délivrée pour servir et valoir ce que de droit."
+    )
+    contexte = {
+        'titre': "Attestation d'inscription",
+        'numero_libelle': "Référence", 'numero': f"ATT-{inscription.id:06d}",
+        'date': aujourd_hui,
+        'partie_gauche': {'titre': "Apprenant", 'lignes': [
+            f"{eleve.nom} {eleve.prenom}", f"Matricule : {eleve.matricule or '—'}",
+            str(inscription.formation.filiere), f"Année : {inscription.annee_scolaire}"]},
+        'partie_droite': {'titre': "Établissement", 'lignes': [
+            "Burkina Suudu Bawdè", str(centre)]},
+        'corps': corps,
+        'signature': {'lieu_date': f"Fait à {ville}, le {aujourd_hui}",
+                      'qualite': directeur_titre_article, 'nom': directeur_nom},
+        'qr_uri': _qr_data_uri(f"BSB|ATT|ATT-{inscription.id:06d}|{eleve.matricule or '-'}|{inscription.annee_scolaire}"),
+    }
+    return _document_officiel_pdf(request, contexte)
 
 
 @require_role('eleve')
@@ -1075,6 +1237,10 @@ def my_subscriptions(request):
     # (voir dettes__paiements préchargé ci-dessus — pas de requête par ligne).
     for insc in subscriptions:
         insc.has_payment = any(dette.paiements.all() for dette in insc.dettes.all())
+        # Dossier valide entierement solde : le bouton "payer" devient "consulter".
+        total_du = sum(d.montant_total for d in insc.dettes.all())
+        total_paye = sum(d.montant_paye() for d in insc.dettes.all())
+        insc.est_solde = (insc.statut == 'valide' and total_du > 0 and total_paye >= total_du)
 
     context = {'subscriptions': subscriptions, 'deja_reinscrites_ids': deja_reinscrites_ids}
     return render(request, 'student/dashboard/my_subscriptions.html', context)
@@ -3346,6 +3512,12 @@ def stats_download_quittance_view(request, paiement_id):
     if paiement.annule and est_apprenant:
         messages.error(request, "Ce versement a été annulé, sa quittance n'est plus disponible au téléchargement.")
         return redirect('courses:mes_paiements')
+
+    # Modele officiel (par defaut), reversible en 'classique' via DOC_MODELE.
+    if getattr(settings, 'DOC_MODELE', 'officiel') != 'classique':
+        reponse = HttpResponse(_quittance_officielle_pdf(request, paiement), content_type='application/pdf')
+        reponse['Content-Disposition'] = f'attachment; filename="quittance_{paiement.numero_quittance}.pdf"'
+        return reponse
 
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=A5)
