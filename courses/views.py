@@ -790,6 +790,70 @@ def telecharger_attestation(request, id):
     return response
 
 
+def _qr_data_uri(texte):
+    """Code QR d'un texte, encodé en data URI PNG pour un gabarit weasyprint."""
+    import qrcode, base64
+    qr = qrcode.QRCode(version=1, box_size=4, border=2)
+    qr.add_data(texte)
+    qr.make(fit=True)
+    tampon = io.BytesIO()
+    qr.make_image(fill_color="black", back_color="white").save(tampon, format='PNG')
+    return "data:image/png;base64," + base64.b64encode(tampon.getvalue()).decode('ascii')
+
+
+def _quittance_officielle_pdf(request, paiement):
+    """Quittance de paiement au format officiel (gabarit unique, réversible via
+    DOC_MODELE). Données réinjectées dynamiquement depuis le paiement."""
+    dette = paiement.dette
+    inscription = dette.inscription
+    eleve = inscription.eleve
+    centre = inscription.formation.centre
+    tranche_label = paiement.tranche_frais.libelle if paiement.tranche_frais else f"Tranche {paiement.tranche}"
+    fcfa = lambda v: f"{v:,.0f} FCFA".replace(",", " ")
+
+    qr_texte = (
+        f"Quittance : {paiement.numero_quittance}\n"
+        f"Date : {paiement.date_paiement.strftime('%d/%m/%Y à %H:%M')}\n"
+        f"Apprenant : {eleve.nom} {eleve.prenom}\n"
+        f"Centre : {centre}\nMétier : {inscription.formation.filiere}\n"
+        f"Montant payé : {fcfa(paiement.montant_paiement)}\n"
+        f"Reste à payer : {fcfa(dette.reste_a_payer())}\nÉtat : {dette.get_etat_dette_display()}"
+    )
+    contexte = {
+        'logo_uri': _pdf_logo_data_uri(),
+        'qr_uri': _qr_data_uri(qr_texte),
+        'annulee': paiement.annule,
+        'titre': "Quittance de paiement de la scolarité",
+        'numero_libelle': "Quittance n°", 'numero': paiement.numero_quittance,
+        'date': paiement.date_paiement.strftime('%d/%m/%Y à %H:%M'),
+        'partie_gauche': {'titre': "Apprenant", 'lignes': [
+            f"{eleve.nom} {eleve.prenom}", f"Matricule : {eleve.matricule or '—'}",
+            str(centre), str(inscription.formation.filiere),
+            f"Année : {inscription.annee_scolaire}"]},
+        'partie_droite': {'titre': "Bénéficiaire", 'lignes': [
+            "Burkina Suudu Bawdè", str(centre),
+            centre.direction.nom_direction if centre and centre.direction else ""]},
+        'colonnes': [{'libelle': "Type de frais"}, {'libelle': "Tranche"},
+                     {'libelle': "Montant dû", 'num': True}, {'libelle': "Montant payé", 'num': True}],
+        'lignes': [[
+            {'valeur': dette.frais_formation.type_frais.libelle},
+            {'valeur': tranche_label},
+            {'valeur': fcfa(dette.montant_total), 'num': True},
+            {'valeur': fcfa(paiement.montant_paiement), 'num': True}]],
+        'total': fcfa(paiement.montant_paiement),
+        'reglement': [
+            ("Mode de règlement", paiement.get_mode_paiement_display()),
+            ("Total dû", fcfa(dette.montant_total)),
+            ("Total payé", fcfa(dette.montant_paye())),
+            ("Reste à payer", fcfa(dette.reste_a_payer())),
+            ("État de la dette", dette.get_etat_dette_display())],
+        'formule': f"Arrêtée la présente quittance à la somme de {fcfa(paiement.montant_paiement)}.",
+        'genere_le': timezone.now().strftime('%d/%m/%Y à %H:%M'),
+    }
+    html = render_to_string('documents/quittance_officielle.html', contexte)
+    return weasyprint.HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf()
+
+
 @require_role('eleve')
 def download_quittance(request,id):
     paiement = get_object_or_404(
@@ -805,6 +869,12 @@ def download_quittance(request,id):
     if paiement.annule:
         messages.error(request, "Ce versement a été annulé, sa quittance n'est plus disponible au téléchargement.")
         return redirect('courses:mes_paiements')
+
+    # Modele officiel (par defaut), reversible en 'classique' via DOC_MODELE.
+    if getattr(settings, 'DOC_MODELE', 'officiel') != 'classique':
+        reponse = HttpResponse(_quittance_officielle_pdf(request, paiement), content_type='application/pdf')
+        reponse['Content-Disposition'] = f'attachment; filename="quittance_{paiement.numero_quittance}.pdf"'
+        return reponse
 
     dette=paiement.dette
     inscription=paiement.dette.inscription

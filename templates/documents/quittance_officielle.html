@@ -1,0 +1,106 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 1.4cm 1.2cm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Helvetica", "Arial", sans-serif; color: #1f2937; font-size: 11px; position: relative; }
+  /* Filigrane : logo BSB très pâle, derrière tout le contenu. */
+  .filigrane { position: fixed; top: 32%; left: 12%; width: 76%; opacity: 0.05; z-index: -1; }
+  .entete { display: flex; align-items: flex-start; justify-content: space-between; }
+  .entete .logo { width: 78px; height: 78px; object-fit: contain; }
+  .entete .centre { text-align: center; flex: 1; padding: 0 8px; }
+  .entete .centre .pays { font-size: 15px; font-weight: bold; letter-spacing: .5px; }
+  .entete .centre .devise { font-size: 9.5px; margin: 1px 0 6px; }
+  .entete .centre .entite { font-size: 10px; font-weight: bold; line-height: 1.35; }
+  .entete .qr { width: 78px; height: 78px; object-fit: contain; }
+  .bandeau-titre { margin: 14px 0 10px; background: #e9edf3; border-radius: 4px; padding: 10px 12px; text-align: center; }
+  .bandeau-titre h1 { margin: 0; font-size: 17px; font-weight: bold; color: #111827; }
+  .meta { margin: 4px 0 10px; }
+  .meta .num { font-size: 12px; }
+  .meta .num strong { font-size: 13px; }
+  .parties { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+  .partie { font-size: 10.5px; line-height: 1.5; }
+  .partie.droite { text-align: right; }
+  .partie .titre { font-weight: bold; font-size: 11px; margin-bottom: 2px; }
+  table.lignes { width: 100%; border-collapse: collapse; margin: 6px 0; }
+  table.lignes th { background: #f3f4f6; border: 1px solid #d1d5db; padding: 6px 8px; font-size: 10px; text-align: left; }
+  table.lignes td { border: 1px solid #e5e7eb; padding: 6px 8px; font-size: 10.5px; }
+  table.lignes td.num { text-align: right; white-space: nowrap; }
+  .total-ligne { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin: 8px 0; }
+  .total-ligne .lbl { font-size: 13px; font-weight: bold; }
+  .total-ligne .val { font-size: 15px; font-weight: bold; background: #e9edf3; border-radius: 4px; padding: 6px 18px; min-width: 150px; text-align: right; }
+  .reglement { margin: 12px 0; font-size: 10.5px; line-height: 1.7; }
+  .reglement .k { color: #6b7280; }
+  .formule { margin: 14px 0 6px; font-size: 11px; }
+  .verif { text-align: center; font-size: 8.5px; color: #6b7280; margin-top: 2px; }
+  .annulee { position: fixed; top: 42%; left: 0; width: 100%; text-align: center;
+             font-size: 60px; font-weight: bold; color: rgba(220,38,38,.30); transform: rotate(-24deg); z-index: 0; }
+  .pied { position: fixed; bottom: -0.6cm; left: 0; width: 100%; display: flex;
+          justify-content: space-between; font-size: 8px; color: #9ca3af; font-style: italic; }
+</style>
+</head>
+<body>
+  {% if logo_uri %}<img class="filigrane" src="{{ logo_uri }}">{% endif %}
+  {% if annulee %}<div class="annulee">ANNULÉE</div>{% endif %}
+
+  <div class="entete">
+    {% if logo_uri %}<img class="logo" src="{{ logo_uri }}">{% else %}<div class="logo"></div>{% endif %}
+    <div class="centre">
+      <div class="pays">BURKINA FASO</div>
+      <div class="devise">La Patrie ou la Mort, nous Vaincrons</div>
+      <div class="entite">
+        MINISTÈRE DE L'ENSEIGNEMENT SECONDAIRE,<br>
+        DE LA FORMATION PROFESSIONNELLE ET TECHNIQUE<br>
+        BURKINA SUUDU BAWDÈ
+      </div>
+    </div>
+    {% if qr_uri %}<img class="qr" src="{{ qr_uri }}">{% else %}<div class="qr"></div>{% endif %}
+  </div>
+
+  <div class="bandeau-titre"><h1>{{ titre }}</h1></div>
+
+  <div class="meta">
+    <div class="num">{{ numero_libelle }} <strong>{{ numero }}</strong></div>
+    <div class="num">Date : {{ date }}</div>
+  </div>
+
+  <div class="parties">
+    <div class="partie gauche">
+      <div class="titre">{{ partie_gauche.titre }}</div>
+      {% for l in partie_gauche.lignes %}{{ l }}<br>{% endfor %}
+    </div>
+    <div class="partie droite">
+      <div class="titre">{{ partie_droite.titre }}</div>
+      {% for l in partie_droite.lignes %}{{ l }}<br>{% endfor %}
+    </div>
+  </div>
+
+  <table class="lignes">
+    <thead><tr>{% for c in colonnes %}<th{% if c.num %} style="text-align:right"{% endif %}>{{ c.libelle }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for ligne in lignes %}
+      <tr>{% for cell in ligne %}<td{% if cell.num %} class="num"{% endif %}>{{ cell.valeur }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="total-ligne"><span class="lbl">TOTAL :</span><span class="val">{{ total }}</span></div>
+
+  {% if reglement %}
+  <div class="reglement">
+    {% for k, v in reglement %}<span class="k">{{ k }} :</span> {{ v }}<br>{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if formule %}<div class="formule">{{ formule }}</div>{% endif %}
+  {% if qr_uri %}<div class="verif">Scannez le code pour vérifier ce document</div>{% endif %}
+
+  <div class="pied">
+    <span>Burkina Suudu Bawdè — plateforme Yupaan</span>
+    <span>Document généré le {{ genere_le }}</span>
+  </div>
+</body>
+</html>

@@ -268,6 +268,11 @@ BO_NAVIGATION = env('BO_NAVIGATION', default='sidebar')
 # permet de reafficher sans toucher au code (voir courses/ui.py).
 BO_UI = env('BO_UI', default='nouveau')
 
+# Modele des documents PDF generes (quittances, recus...). 'officiel' = mise en
+# page officielle facon quittance administrative ; 'classique' = ancien rendu.
+# Reversible sans redeploiement via ./bascule_doc.sh (README 9.8).
+DOC_MODELE = env('DOC_MODELE', default='officiel')
+
 # --- Audit et surveillance (application `audit`) ---
 # Seuils de declenchement des alertes du rapport d'inspection. Les relever
 # reduit le bruit, les abaisser augmente la sensibilite (voir audit/README.md).
