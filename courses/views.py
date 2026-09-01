@@ -2282,6 +2282,9 @@ def _can_access_dette_finances(user, dette):
 def statistiques_view(request):
     user = request.user
     inscriptions_qs, dettes_qs, paiements_qs, centres_scope, directions_scope, scope = _base_qs(user)
+    # Perimetre nul (eleve, formateur, daf, membre) : statistiques scolarite interdites.
+    if scope == "none":
+        raise PermissionDenied("Vous n'avez pas accès aux statistiques de scolarité.")
 
     inscriptions_qs, dettes_qs, paiements_qs, filters = _apply_stats_filters(
         request, inscriptions_qs, dettes_qs, paiements_qs, scope
@@ -2484,6 +2487,9 @@ def statistiques_view(request):
 def export_csv(request):
     user = request.user
     inscriptions_qs, dettes_qs, paiements_qs, centres_scope, _, scope = _base_qs(user)
+    # Perimetre nul (eleve, formateur, daf, membre) : statistiques scolarite interdites.
+    if scope == "none":
+        raise PermissionDenied("Vous n'avez pas accès aux statistiques de scolarité.")
     inscriptions_qs, dettes_qs, paiements_qs, filters = _apply_stats_filters(
         request, inscriptions_qs, dettes_qs, paiements_qs, scope
     )
@@ -2564,6 +2570,9 @@ def export_csv(request):
 def export_excel(request):
     user = request.user
     inscriptions_qs, dettes_qs, paiements_qs, centres_scope, _, scope = _base_qs(user)
+    # Perimetre nul (eleve, formateur, daf, membre) : statistiques scolarite interdites.
+    if scope == "none":
+        raise PermissionDenied("Vous n'avez pas accès aux statistiques de scolarité.")
     inscriptions_qs, dettes_qs, paiements_qs, filters = _apply_stats_filters(
         request, inscriptions_qs, dettes_qs, paiements_qs, scope
     )
@@ -2652,6 +2661,9 @@ def export_excel(request):
 def export_pdf(request):
     user = request.user
     inscriptions_qs, dettes_qs, paiements_qs, centres_scope, directions_scope, scope = _base_qs(user)
+    # Perimetre nul (eleve, formateur, daf, membre) : statistiques scolarite interdites.
+    if scope == "none":
+        raise PermissionDenied("Vous n'avez pas accès aux statistiques de scolarité.")
     inscriptions_qs, dettes_qs, paiements_qs, filters = _apply_stats_filters(
         request, inscriptions_qs, dettes_qs, paiements_qs, scope
     )
