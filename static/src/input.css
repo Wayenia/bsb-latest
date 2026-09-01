@@ -699,19 +699,22 @@
    ========================================================================== */
 @layer components {
   .bo-filigrane { @apply relative; }
+  /* Filigrane derriere le contenu (-z-10) : les cartes opaques le recouvrent,
+     il ne ressort que dans les fonds et les marges. On peut donc le rendre plus
+     present sans jamais gener la lecture des textes poses sur les cartes. */
   .bo-filigrane::before {
     content: '';
     background-image: url('/static/images/logo.png');
-    @apply pointer-events-none fixed inset-0 -z-10 bg-center bg-no-repeat opacity-[0.035];
-    background-size: min(46vw, 26rem);
+    @apply pointer-events-none fixed inset-0 -z-10 bg-center bg-no-repeat opacity-[0.06];
+    background-size: min(48vw, 28rem);
   }
-  /* Ecran etroit : le filigrane est reduit, un logo trop large derriere une
-     fiche nuirait au contraste. */
+  /* Ecran etroit : le contenu occupe toute la largeur, on garde le filigrane
+     plus discret pour proteger le contraste derriere les fiches pleine largeur. */
   @media (max-width: 639px) {
-    .bo-filigrane::before { background-size: 60vw; @apply opacity-[0.025]; }
+    .bo-filigrane::before { background-size: 62vw; @apply opacity-[0.04]; }
   }
   @media print {
-    .bo-filigrane::before { @apply opacity-[0.06]; }
+    .bo-filigrane::before { @apply opacity-[0.08]; }
   }
 }
 
