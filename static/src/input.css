@@ -389,12 +389,19 @@
   .bo-compte-actions { @apply mt-2 grid grid-cols-3 gap-1.5; }
   .bo-compte-action  {
     @apply flex flex-col items-center gap-1 rounded-lg border border-transparent
-           px-1 py-2 text-[11px] font-medium text-bsb-muted
-           hover:border-bsb-gold/30 hover:bg-white hover:text-bsb-ink transition-colors
+           px-1 py-2 text-[11px] font-medium text-bsb-muted transition-colors
            focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red;
   }
   .bo-compte-action svg { @apply h-4 w-4; }
-  .bo-compte-quitter { @apply hover:text-bsb-red hover:border-bsb-red/30; }
+  /* Une couleur par action, selon ce qu'elle fait : or pour le profil (reglages
+     personnels), vert pour le site public (sortie positive), rouge pour quitter
+     la session. Icone teintee en permanence, fond et bordure au survol. */
+  .bo-compte-profil  svg { @apply text-bsb-gold; }
+  .bo-compte-profil:hover  { @apply border-bsb-gold/40 bg-bsb-gold/10 text-bsb-ink; }
+  .bo-compte-site    svg { @apply text-bsb-green; }
+  .bo-compte-site:hover    { @apply border-bsb-green/40 bg-bsb-green/10 text-bsb-ink; }
+  .bo-compte-quitter svg { @apply text-bsb-red; }
+  .bo-compte-quitter:hover { @apply border-bsb-red/40 bg-bsb-red/10 text-bsb-red; }
 
   .bo-avec-sidebar { @apply lg:ml-72; }
 }

@@ -66,7 +66,7 @@ class NavigationTests(TestCase):
             username='chef', password='x', nom='N', prenom='P', email='c@example.invalid')
         titres = [g['titre'] for g in construire_menu(superutilisateur, '/bsb/dashboard')]
         self.assertEqual(titres[:4], [
-            'Pilotage', 'Scolarité', 'Prestation et facturation', 'Offre de formation',
+            'Statistiques', 'Scolarité', 'Prestation et facturation', 'Offre de formation',
         ])
         self.assertEqual(titres[-1], 'Paramétrage')
 

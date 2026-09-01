@@ -55,7 +55,7 @@ def _lien(nom_url, libelle, permission=None, prefixe_actif=None, args=None):
 
 GROUPES = [
     {
-        'cle': 'pilotage', 'titre': 'Pilotage', 'couleur': 'rouge', 'icone': 'graphique',
+        'cle': 'pilotage', 'titre': 'Statistiques', 'couleur': 'rouge', 'icone': 'graphique',
         'liens': [
             _lien('courses:statistiques', 'Statistiques', 'courses.voir_statistiques', '/statistiques/stat-globaux'),
             _lien('courses:stats_reel_dashboard', 'Bilan des effectifs formés', 'courses.gerer_statistiques_reelles', '/statistiques-reelles'),
@@ -109,7 +109,7 @@ GROUPES = [
         ],
     },
     {
-        'cle': 'territoire', 'titre': 'Territoire', 'couleur': 'grenat', 'icone': 'carte',
+        'cle': 'territoire', 'titre': 'Découpage', 'couleur': 'grenat', 'icone': 'carte',
         'liens': [
             _lien('bsb_admin:direction_list', 'Directions inter-régionales', 'courses.gerer_directions', '/bsb/directions'),
             _lien('bsb_admin:region_list', 'Régions et provinces', 'courses.gerer_regions', '/bsb/regions'),
