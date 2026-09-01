@@ -96,16 +96,51 @@ def contexte_lecture_seule(user, domaines):
         lignes.append(f"Total encaissé: {encaisse:.0f} FCFA")
         lignes.append(f"Total dû: {du:.0f} FCFA")
         lignes.append(f"Reste à recouvrer: {max(du - encaisse, 0):.0f} FCFA")
+    if "offre" in domaines:
+        try:
+            from courses.models import Filiere, Module, CentreEtFiliere
+            lignes.append(f"Métiers actifs: {Filiere.objects.filter(is_active=True).count()}")
+            lignes.append(f"Modules: {Module.objects.count()}")
+            lignes.append(f"Programmations (centre × métier): {CentreEtFiliere.objects.count()}")
+        except Exception:
+            pass
     if "facturation" in domaines:
         try:
-            from accounts.models import Facture_prestation
+            from django.db.models import Sum
+            from accounts.models import Facture_prestation, Paiement_prestation, Client_prestation
+            lignes.append(f"Clients de prestation: {Client_prestation.objects.count()}")
             lignes.append(f"Factures de prestation: {Facture_prestation.objects.count()}")
+            fac = Paiement_prestation.objects.aggregate(s=Sum("montant"))["s"] or 0
+            lignes.append(f"Encaissements de prestations: {fac:.0f} FCFA")
         except Exception:
             pass
     if "rh" in domaines:
         try:
             from accounts.models import Utilisateur
             lignes.append(f"Comptes agents (hors élèves): {Utilisateur.objects.exclude(user_type='eleve').count()}")
+            lignes.append(f"Formateurs: {Utilisateur.objects.filter(user_type='formateur').count()}")
+        except Exception:
+            pass
+    if "actualites" in domaines:
+        try:
+            from actualites.models import Actualite, AbonneNewsletter
+            lignes.append(f"Actualités (toutes): {Actualite.objects.count()}")
+            lignes.append(f"Abonnés actifs à la lettre: {AbonneNewsletter.objects.filter(actif=True).count()}")
+        except Exception:
+            pass
+    if "territoire" in domaines:
+        try:
+            from courses.models import Direction_reg, Region, Province, CentreFormation
+            lignes.append(f"Directions inter-régionales: {Direction_reg.objects.count()}")
+            lignes.append(f"Régions: {Region.objects.count()} · Provinces: {Province.objects.count()}")
+            lignes.append(f"Centres de formation (total): {CentreFormation.objects.count()}")
+        except Exception:
+            pass
+    if "supervision" in domaines:
+        try:
+            from accounts.models import HistoriqueConnexion
+            lignes.append(f"Connexions enregistrées: {HistoriqueConnexion.objects.filter(type_evenement='connexion').count()}")
+            lignes.append(f"Tentatives échouées: {HistoriqueConnexion.objects.filter(type_evenement='echec').count()}")
         except Exception:
             pass
     return "\n".join(lignes) or "Aucune donnée dans le périmètre autorisé."

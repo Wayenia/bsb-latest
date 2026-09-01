@@ -24,16 +24,21 @@
         {% for a in agents %}<option value="{{ a.pk }}">{{ a.nom }} {{ a.prenom }} ({{ a.get_user_type_display }})</option>{% endfor %}
       </select>
     </div>
-    <div>
-      <span class="block text-sm font-bold text-bsb-ink mb-1.5">Périmètre autorisé</span>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {% for code, libelle in tous_domaines %}
-        <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 text-sm cursor-pointer hover:bg-slate-50">
-          <input type="checkbox" name="domaines" value="{{ code }}" class="rounded border-slate-300 text-bsb-red focus:ring-bsb-gold">
-          {{ libelle }}
-        </label>
-        {% endfor %}
+    <div class="space-y-4">
+      <span class="block text-sm font-bold text-bsb-ink">Périmètre d'analyse autorisé</span>
+      {% for theme, items in groupes_domaines %}
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-bsb-muted mb-2">{{ theme }}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {% for code, libelle in items %}
+          <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 text-sm cursor-pointer hover:bg-slate-50">
+            <input type="checkbox" name="domaines" value="{{ code }}" class="rounded border-slate-300 text-bsb-red focus:ring-bsb-gold">
+            {{ libelle }}
+          </label>
+          {% endfor %}
+        </div>
       </div>
+      {% endfor %}
     </div>
     <div class="flex justify-end">
       <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-white bg-bsb-green hover:brightness-110 transition-all">Accorder l'accès</button>
@@ -49,7 +54,7 @@
         <div class="min-w-0">
           <p class="font-bold text-bsb-ink">{{ d.utilisateur.nom }} {{ d.utilisateur.prenom }}</p>
           <div class="mt-1 flex flex-wrap gap-1.5">
-            {% for dom in d.domaines %}<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ dom }}</span>
+            {% for lib in d.libelles %}<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ lib }}</span>
             {% empty %}<span class="text-xs text-bsb-muted">aucun domaine</span>{% endfor %}
           </div>
         </div>

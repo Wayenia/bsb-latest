@@ -9,7 +9,7 @@ from courses.permissions import require_permission
 from accounts.models import Utilisateur
 
 from . import services
-from .models import DOMAINES, AccesAssistant, ReglageAssistant
+from .models import DOMAINES, DOMAINES_GROUPES, LIBELLES_DOMAINES, AccesAssistant, ReglageAssistant
 
 # Modeles conseilles : petit en dev (<=380 Mo), avance et stable en prod (<=1 Go).
 MODELES_CONSEILLES = [
@@ -89,9 +89,12 @@ def acces(request):
         return redirect("assistant:acces")
 
     delegues = AccesAssistant.objects.select_related("utilisateur").order_by("-cree_le")
+    for d in delegues:
+        d.libelles = [LIBELLES_DOMAINES.get(c, c) for c in (d.domaines or [])]
     agents = Utilisateur.objects.exclude(user_type="eleve").order_by("nom", "prenom")
+    groupes = [(theme, [(c, LIBELLES_DOMAINES[c]) for c in codes]) for theme, codes in DOMAINES_GROUPES]
     return render(request, "assistant/acces.html", {
-        "delegues": delegues, "agents": agents, "tous_domaines": DOMAINES})
+        "delegues": delegues, "agents": agents, "groupes_domaines": groupes})
 
 
 @require_permission("assistant.gerer_assistant_ia")

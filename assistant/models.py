@@ -1,13 +1,26 @@
 from django.conf import settings
 from django.db import models
 
-# Domaines de donnees consultables par l'assistant (lecture seule).
+# Domaines consultables par l'assistant (lecture seule), du plus sollicite au moins.
 DOMAINES = [
-    ("scolarite", "Scolarité (inscriptions, apprenants)"),
-    ("finances", "Finances (paiements, dettes)"),
-    ("facturation", "Facturation DAF (prestations)"),
-    ("rh", "RH (effectifs des agents)"),
+    ("scolarite", "Scolarité — inscriptions, apprenants"),
+    ("finances", "Finances — paiements, dettes, recouvrement"),
+    ("offre", "Offre de formation — métiers, centres, programmations"),
+    ("facturation", "Facturation DAF — clients, prestations, factures"),
+    ("rh", "RH — agents et formateurs"),
+    ("actualites", "Actualités — publications et abonnés"),
+    ("territoire", "Découpage territorial — directions, régions, provinces"),
+    ("supervision", "Supervision — connexions et sécurité"),
 ]
+
+# Regroupement par theme pour la page de delegation (ordre = utilite decroissante).
+DOMAINES_GROUPES = [
+    ("Scolarité & finances", ["scolarite", "finances", "offre"]),
+    ("Prestations & administration", ["facturation", "rh", "territoire"]),
+    ("Communication & supervision", ["actualites", "supervision"]),
+]
+
+LIBELLES_DOMAINES = dict(DOMAINES)
 
 
 class ReglageAssistant(models.Model):
