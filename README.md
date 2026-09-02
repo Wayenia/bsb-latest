@@ -753,6 +753,29 @@ autonomes car leurs gestionnaires n'ont pas de contexte de requête. Nginx sert 
 `nginx/errors/429.html` (dépassement de débit) et `nginx/errors/50x.html` (backend
 injoignable), bakées dans son image, sans intercepter les erreurs applicatives de Django.
 
+### 9.11 Guides d'aide illustrés par rôle (`/aide`)
+
+Chaque agent voit à `/aide` un guide pas-à-pas propre à son rôle. Le contenu vit dans
+`courses/aide_contenu.py` (dict `GUIDES`, une entrée par `user_type`). Deux formats :
+
+- **guide plat** : une liste `etapes` (caissier, formateur, eleve, agent_comptable,
+  deps, membre) ;
+- **guide par thèmes** : une liste `sections`, chaque section portant un `theme` et un
+  niveau de `sensibilite` (`faible` / `moyen` / `eleve`) affiché en badge (admin, dg,
+  dir, daf, gestionnaire).
+
+Chaque étape réserve un emplacement de capture ; le fichier réel se dépose sous
+`static/aides/<role>/<nom>.png` et s'affiche automatiquement (sinon « capture à venir »).
+Un compte admin/dg peut prévisualiser le guide d'un autre rôle via `?role=...`.
+
+**Régénérer les captures** (elles ont été produites en développement, sans jamais
+désactiver l'OTP) : un navigateur sans interface (Chrome/Chromium) charge chaque écran
+avec un **cookie de session injecté** — la session est créée côté Django par
+`Client().force_login(user)`, dont la clé sert de valeur au cookie `sessionid`. Les pages
+publiques se capturent directement, les pages connectées avec le cookie, la page du code
+OTP avec une session porteuse d'un état `otp_connexion`. Après dépôt des `.png` :
+`collectstatic`. Aucune modification du code d'authentification n'est requise.
+
 ---
 
 ## 10. Résolution des incidents courants
