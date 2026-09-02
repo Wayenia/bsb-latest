@@ -59,27 +59,25 @@
 
                     {# ── ELEVE ───────────────────────────────────────────────────── #}
                     {% elif user.user_type == 'eleve' %}
-                        <a href="{% url 'courses:available_career' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
-                            Métiers de formation
-                            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
-                        </a>
                         <a href="{% url 'courses:my_subscriptions' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
                             Mes demandes d'inscription
                             <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
                         </a>
-                        <a href="{% url 'courses:about' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
-                            À propos
-                            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
-                        </a>
 
-                    {# ── NON CONNECTE ────────────────────────────────────────────── #}
                     {% endif %}
 
-                    {# ── ACTUALITÉS PUBLIQUES : accessibles à tout utilisateur connecté, ── #}
-                    {# ── quel que soit son rôle. La gestion back-office reste dans la    ── #}
-                    {# ── sidebar (volet Communication) pour ceux qui y ont droit.       ── #}
+                    {# ── LIENS PUBLICS : Métiers, Actualités, À propos — visibles pour    ── #}
+                    {# ── tout utilisateur connecté qui revient sur le site public.       ── #}
+                    <a href="{% url 'courses:available_career' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                        Métiers de formation
+                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                    </a>
                     <a href="{% url 'actualites:liste' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
                         Actualités
+                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
+                    </a>
+                    <a href="{% url 'courses:about' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                        À propos
                         <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
                     </a>
 
@@ -180,14 +178,14 @@
 
                 {# ── ELEVE ───────────────────────────────────────────────────── #}
                 {% elif user.user_type == 'eleve' %}
-                    <a href="{% url 'courses:available_career' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Métiers de formation</a>
                     <a href="{% url 'courses:my_subscriptions' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors"> Mes demandes d'inscription</a>
-                    <a href="{% url 'courses:about' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">ℹ️ À propos</a>
 
                 {% endif %}
 
-                {# ── ACTUALITÉS PUBLIQUES : accessibles à tout utilisateur connecté ── #}
+                {# ── LIENS PUBLICS : visibles pour tout utilisateur connecté ── #}
+                <a href="{% url 'courses:available_career' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">Métiers de formation</a>
                 <a href="{% url 'actualites:liste' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">Actualités</a>
+                <a href="{% url 'courses:about' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">À propos</a>
 
                 {# ── FACTURATION : accessible à quiconque a la permission,     ── #}
                 {# ── quel que soit son rôle — sauf admin/dg (pas dans la       ── #}
