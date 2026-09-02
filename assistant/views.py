@@ -17,6 +17,7 @@ MODELES_CONSEILLES = [
     ("qwen2:0.5b", "Léger — tests locaux (~0,35 Go)"),
     ("qwen2.5:1.5b", "Avancé et stable — production (~1 Go)"),
     ("deepseek-r1:1.5b", "DeepSeek avancé (~1,1 Go)"),
+    ("qwen2.5:3b", "Très avancé — précision maximale (~1,9 Go, non installé par défaut)"),
 ]
 
 
