@@ -9,7 +9,8 @@ from courses.permissions import require_permission
 from accounts.models import Utilisateur
 
 from . import services
-from .models import DOMAINES, DOMAINES_GROUPES, LIBELLES_DOMAINES, AccesAssistant, ReglageAssistant
+from .models import (DOMAINES, DOMAINES_GROUPES, LIBELLES_DOMAINES, AccesAssistant,
+                     EchangeAssistant, ReglageAssistant)
 
 # Modeles conseilles : petit en dev (<=380 Mo), avance et stable en prod (<=1 Go).
 MODELES_CONSEILLES = [
@@ -61,9 +62,11 @@ def demander(request):
     domaines = domaines_autorises(request.user)
     # Aucun domaine autorise : refus professionnel, sans solliciter le modele.
     if not domaines:
+        EchangeAssistant.journaliser(request.user, question, services.REFUS, [], refuse=True)
         return JsonResponse({"ok": True, "message": services.REFUS})
     contexte = services.contexte_lecture_seule(request.user, domaines)
     ok, reponse = services.demander(question, contexte)
+    EchangeAssistant.journaliser(request.user, question, reponse, domaines, refuse=not ok)
     return JsonResponse({"ok": ok, "message": reponse})
 
 
@@ -117,6 +120,18 @@ def modeles(request):
         "modele_actif": reglage.modele_actif,
         "installes": services.modeles_installes(),
         "conseilles": MODELES_CONSEILLES})
+
+
+@require_permission("assistant.gerer_assistant_ia")
+def journal(request):
+    _garde()
+    echanges = list(EchangeAssistant.objects.select_related("utilisateur")[:200])
+    for e in echanges:
+        e.libelles = [LIBELLES_DOMAINES.get(c, c) for c in (e.domaines or [])]
+    return render(request, "assistant/journal.html", {
+        "echanges": echanges,
+        "total": EchangeAssistant.objects.count(),
+        "retention": EchangeAssistant.RETENTION_JOURS})
 
 
 def _permission_utiliser(user, accorder):

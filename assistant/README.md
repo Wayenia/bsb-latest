@@ -44,6 +44,19 @@ Yupaan-IA affiche « indisponible » et le reste fonctionne normalement.
   finances, facturation, RH). L'agent ne voit que ces domaines, dans son propre
   périmètre.
 
+## Journal d'audit des échanges
+
+Chaque question posée et la réponse de Yupaan-IA sont enregistrées (qui, quand,
+question, réponse, domaines interrogés, refusé oui/non) dans la table
+`EchangeAssistant`. C'est la **plateforme** qui écrit ce journal, pas l'IA : l'IA
+reste en lecture seule et ne touche jamais aux données métier. Les échanges de
+plus de **90 jours** sont supprimés automatiquement.
+
+Consultation : écran **Assistant → Journal**, réservé à la permission
+`gerer_assistant_ia` (admin et gestionnaires délégués). Le fil de discussion à
+l'écran reste, lui, éphémère (il disparaît au rechargement) : le journal est la
+seule trace conservée.
+
 ## Réglages `.env`
 
 | Variable | Rôle | Défaut |

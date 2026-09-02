@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Journal · Yupaan-IA | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+  {% include 'partials/messages.html' %}
+
+  <div class="flex items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">Journal des échanges Yupaan-IA</h1>
+      <p class="text-sm text-bsb-muted mt-1">Trace d'audit des questions posées et des réponses. Conservation {{ retention }} jours, puis suppression automatique.</p>
+    </div>
+    <a href="{% url 'assistant:accueil' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-white text-bsb-ink border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors">Retour</a>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 mb-6 flex items-center gap-6">
+    <div>
+      <p class="text-xs font-bold uppercase tracking-wider text-bsb-muted">Échanges conservés</p>
+      <p class="text-lg font-black text-bsb-ink">{{ total }}</p>
+    </div>
+    <p class="text-sm text-bsb-muted">Les 200 plus récents sont affichés ci-dessous.</p>
+  </div>
+
+  <div class="space-y-3">
+    {% for e in echanges %}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+      <div class="flex flex-wrap items-center gap-2 text-xs text-bsb-muted mb-2">
+        <span class="font-bold text-bsb-ink">{{ e.utilisateur|default:"Compte supprimé" }}</span>
+        <span>·</span>
+        <span>{{ e.cree_le|date:"d/m/Y H:i" }}</span>
+        {% if e.refuse %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">refusé</span>
+        {% endif %}
+        {% for lib in e.libelles %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ lib }}</span>
+        {% endfor %}
+      </div>
+      <p class="text-sm font-semibold text-bsb-ink">{{ e.question }}</p>
+      <p class="text-sm text-bsb-muted mt-1 whitespace-pre-line">{{ e.reponse }}</p>
+    </div>
+    {% empty %}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center text-bsb-muted">
+      Aucun échange enregistré pour l'instant.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

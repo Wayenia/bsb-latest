@@ -57,3 +57,33 @@ class AccesAssistant(models.Model):
 
     def __str__(self):
         return f"{self.utilisateur} → {', '.join(self.domaines) or 'aucun domaine'}"
+
+
+class EchangeAssistant(models.Model):
+    """Journal d'audit des questions posées à l'IA et de ses réponses. Écrit par
+    la plateforme, pas par l'IA (qui reste en lecture seule). Purge auto à 90 jours."""
+    RETENTION_JOURS = 90
+
+    utilisateur = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+                                    null=True, related_name="echanges_assistant")
+    question = models.TextField()
+    reponse = models.TextField(blank=True)
+    domaines = models.JSONField(default=list)
+    refuse = models.BooleanField(default=False)
+    cree_le = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Échange avec l'assistant"
+        ordering = ["-cree_le"]
+
+    def __str__(self):
+        return f"{self.utilisateur} · {self.cree_le:%d/%m/%Y %H:%M}"
+
+    @classmethod
+    def journaliser(cls, utilisateur, question, reponse, domaines, refuse):
+        """Enregistre un échange puis purge ceux au-delà de la rétention."""
+        from django.utils import timezone
+        cls.objects.create(utilisateur=utilisateur, question=question, reponse=reponse,
+                           domaines=domaines, refuse=refuse)
+        limite = timezone.now() - timezone.timedelta(days=cls.RETENTION_JOURS)
+        cls.objects.filter(cree_le__lt=limite).delete()
