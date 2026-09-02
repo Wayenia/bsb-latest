@@ -35,6 +35,27 @@
     {% empty %}<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-semibold">Aucun domaine autorisé</span>{% endfor %}
   </div>
 
+  <div class="flex items-center justify-between gap-2 mb-2">
+    <p class="text-xs text-bsb-muted">La conversation reste affichée même après un rechargement.</p>
+    <div class="flex items-center gap-1.5">
+      <button type="button" id="ia-nouveau" title="Nouvelle conversation"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-bsb-ink bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+        Nouveau
+      </button>
+      <button type="button" id="ia-nettoyer" title="Vider la conversation"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-bsb-ink bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
+        Nettoyer
+      </button>
+      <button type="button" id="ia-copier" title="Copier la conversation"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-bsb-ink bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8M8 12h8m-8-4h4M7 4h7l5 5v11a1 1 0 01-1 1H7a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>
+        <span id="ia-copier-txt">Copier</span>
+      </button>
+    </div>
+  </div>
+
   <div id="fil" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 h-[55vh] overflow-y-auto space-y-3 mb-4"></div>
 
   <form id="form-ia" class="flex items-end gap-3">
@@ -55,6 +76,20 @@
   const champ = document.getElementById('question');
   const bouton = document.getElementById('envoyer');
   const jeton = form.querySelector('[name=csrfmiddlewaretoken]').value;
+  // Clef propre a l'utilisateur : deux comptes sur le meme navigateur ne se melangent pas.
+  const CLE = 'yupaanIaChat_{{ request.user.pk }}';
+
+  // Messages memorises (source de verite), restaures au chargement.
+  let messages = [];
+  try { messages = JSON.parse(localStorage.getItem(CLE)) || []; } catch (e) { messages = []; }
+
+  function sauver() {
+    try { localStorage.setItem(CLE, JSON.stringify(messages)); } catch (e) {}
+  }
+
+  function vide() {
+    fil.innerHTML = '<p class="text-sm text-bsb-muted text-center mt-6">Posez une question pour démarrer la conversation.</p>';
+  }
 
   function bulle(texte, moi) {
     const d = document.createElement('div');
@@ -67,10 +102,21 @@
     return d;
   }
 
+  function afficher() {
+    fil.innerHTML = '';
+    if (!messages.length) { vide(); return; }
+    messages.forEach(m => bulle(m.texte, m.role === 'moi'));
+  }
+
+  afficher();
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     const q = champ.value.trim();
     if (!q) return;
+    if (!messages.length) fil.innerHTML = '';
+    messages.push({ role: 'moi', texte: q });
+    sauver();
     bulle(q, true);
     champ.value = '';
     bouton.disabled = true;
@@ -81,10 +127,43 @@
       headers: { 'X-CSRFToken': jeton, 'Content-Type': 'application/x-www-form-urlencoded' },
       body: data
     }).then(r => r.json()).then(j => {
-      attente.textContent = j.message || 'Aucune réponse.';
+      const rep = j.message || 'Aucune réponse.';
+      attente.textContent = rep;
+      messages.push({ role: 'ia', texte: rep });
+      sauver();
     }).catch(() => {
       attente.textContent = "L'assistant est indisponible pour le moment.";
     }).finally(() => { bouton.disabled = false; });
   });
+
+  // Nouveau : repart d'une conversation vierge, curseur pret.
+  document.getElementById('ia-nouveau').addEventListener('click', function () {
+    if (messages.length && !confirm('Démarrer une nouvelle conversation ? La conversation affichée sera effacée.')) return;
+    messages = []; sauver(); vide(); champ.focus();
+  });
+
+  // Nettoyer : vide la conversation affichee.
+  document.getElementById('ia-nettoyer').addEventListener('click', function () {
+    if (messages.length && !confirm('Vider la conversation ?')) return;
+    messages = []; sauver(); vide();
+  });
+
+  // Copier : met tout le fil dans le presse-papiers (avec repli si besoin).
+  document.getElementById('ia-copier').addEventListener('click', function () {
+    if (!messages.length) return;
+    const texte = messages.map(m => (m.role === 'moi' ? 'Vous : ' : 'Yupaan-IA : ') + m.texte).join('\n\n');
+    const ok = document.getElementById('ia-copier-txt');
+    const fait = function () { ok.textContent = 'Copié'; setTimeout(function () { ok.textContent = 'Copier'; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texte).then(fait).catch(function () { repli(texte, fait); });
+    } else { repli(texte, fait); }
+  });
+
+  function repli(texte, fait) {
+    const t = document.createElement('textarea');
+    t.value = texte; document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); fait(); } catch (e) {}
+    document.body.removeChild(t);
+  }
 </script>
 {% endblock %}

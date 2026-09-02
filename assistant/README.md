@@ -53,9 +53,14 @@ reste en lecture seule et ne touche jamais aux données métier. Les échanges d
 plus de **90 jours** sont supprimés automatiquement.
 
 Consultation : écran **Assistant → Journal**, réservé à la permission
-`gerer_assistant_ia` (admin et gestionnaires délégués). Le fil de discussion à
-l'écran reste, lui, éphémère (il disparaît au rechargement) : le journal est la
-seule trace conservée.
+`gerer_assistant_ia` (admin et gestionnaires délégués).
+
+Le fil de discussion à l'écran est mémorisé **dans le navigateur** de chaque
+utilisateur (`localStorage`) : il reste affiché après un rechargement ou un
+retour sur la page. Ce n'est qu'un confort local, propre à l'appareil, jamais
+partagé ni envoyé au serveur. Trois boutons le gèrent : **Nouveau** (repartir à
+zéro), **Nettoyer** (vider), **Copier** (copier tout le fil). Le journal
+serveur, lui, reste la trace d'audit officielle.
 
 ## Réglages `.env`
 
