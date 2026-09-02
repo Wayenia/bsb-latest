@@ -35,7 +35,7 @@
                 </div>
                 {% endif %}
 
-                <form method="POST" action="{% url 'accounts:login' %}" class="space-y-5">
+                <form method="POST" action="{% url 'accounts:login' %}" class="space-y-5" id="login-form">
                     {% csrf_token %}
 
                     <div>
@@ -66,10 +66,18 @@
                         par e-mail après cette étape.
                     </p>
 
-                    <button type="submit"
+                    <button type="submit" id="login-submit"
                             class="w-full px-4 py-3.5 bg-bsb-gold hover:bg-yellow-700 text-white uppercase
-                                   rounded-xl font-black tracking-wide shadow-lg shadow-yellow-600/25 transition-all">
-                        Se connecter
+                                   rounded-xl font-black tracking-wide shadow-lg shadow-yellow-600/25 transition-all
+                                   disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2">
+                        <span id="login-label">Se connecter</span>
+                        <span id="login-sending" class="hidden items-center gap-2">
+                            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4z"></path>
+                            </svg>
+                            Envoi du code…
+                        </span>
                     </button>
                 </form>
 
@@ -88,6 +96,23 @@
     </div>
 </div>
 
+<script nonce="{{ csp_nonce }}">
+    // Retour visuel pendant l'envoi du code : le bouton passe en « Envoi du code… ».
+    (function () {
+        var form = document.getElementById('login-form');
+        if (!form) return;
+        form.addEventListener('submit', function () {
+            var btn = document.getElementById('login-submit');
+            var label = document.getElementById('login-label');
+            var sending = document.getElementById('login-sending');
+            if (!btn || !label || !sending) return;
+            label.classList.add('hidden');
+            sending.classList.remove('hidden');
+            sending.classList.add('flex');
+            btn.disabled = true;
+        });
+    })();
+</script>
 <style nonce="{{ csp_nonce }}">
     .auth-wrap { background: #fbfaf7; }
     .auth-glow {

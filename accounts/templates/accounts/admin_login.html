@@ -32,7 +32,7 @@ formulaire.{% endcomment %}
         <p class="text-xs text-bsb-muted mt-1">Accès réservé — vérification en deux étapes</p>
       </div>
 
-      <form method="post" novalidate class="space-y-4">
+      <form method="post" novalidate class="space-y-4" id="admin-login-form">
         {% csrf_token %}
         <div>
           <label for="identifiant" class="block text-sm font-semibold text-gray-700 mb-1">Identifiant</label>
@@ -45,12 +45,38 @@ formulaire.{% endcomment %}
           <input type="password" name="password" id="password" autocomplete="current-password"
                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bsb-red focus:border-transparent transition-all">
         </div>
-        <button type="submit"
-                class="w-full px-6 py-3 bg-bsb-red hover:bg-bsb-dark text-white font-bold rounded-lg shadow-md transition-all">
-          Continuer
+        <button type="submit" id="admin-login-submit"
+                class="w-full px-6 py-3 bg-bsb-red hover:bg-bsb-dark text-white font-bold rounded-lg shadow-md transition-all
+                       disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2">
+          <span id="admin-login-label">Continuer</span>
+          <span id="admin-login-sending" class="hidden items-center gap-2">
+            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4z"></path>
+            </svg>
+            Envoi du code…
+          </span>
         </button>
       </form>
     </div>
+
+    <script nonce="{{ csp_nonce }}">
+      // Retour visuel pendant l'envoi du code (voir login.html).
+      (function () {
+        var form = document.getElementById('admin-login-form');
+        if (!form) return;
+        form.addEventListener('submit', function () {
+          var btn = document.getElementById('admin-login-submit');
+          var label = document.getElementById('admin-login-label');
+          var sending = document.getElementById('admin-login-sending');
+          if (!btn || !label || !sending) return;
+          label.classList.add('hidden');
+          sending.classList.remove('hidden');
+          sending.classList.add('flex');
+          btn.disabled = true;
+        });
+      })();
+    </script>
 
     <p class="text-center text-[11px] text-white/40 mt-6">Plateforme Yupaan — Burkina Suudu Bawdè</p>
   </div>

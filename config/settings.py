@@ -249,7 +249,7 @@ else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Sans timeout, un SMTP muet bloque le worker gunicorn pendant 120 s.
-EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT', default=20)
+EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT', default=15)
 
 # Avec Google Workspace, doit correspondre a EMAIL_HOST_USER (README 9).
 SERVER_EMAIL = env('SERVER_EMAIL', default='admin@burkinasuudu.com')
