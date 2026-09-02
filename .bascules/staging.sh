@@ -2,14 +2,14 @@
 # Environnement de STAGING isole (agents en test), totalement separe de la prod.
 # BD, conteneurs, reseau, media et port dedies. La prod n'est jamais touchee.
 #
-#   ./staging.sh up        build + demarre le stack staging (port 8081)
-#   ./staging.sh seed      BD staging neuve : donnees de reference (populate_data)
-#   ./staging.sh refresh   copie la BD de prod dans staging (donnees reelles, sans anonymisation)
-#   ./staging.sh down      arrete staging (volumes conserves)
-#   ./staging.sh           etat courant
+#   ./.bascules/staging.sh up        build + demarre le stack staging (port 8081)
+#   ./.bascules/staging.sh seed      BD staging neuve : donnees de reference (populate_data)
+#   ./.bascules/staging.sh refresh   copie la BD de prod dans staging (donnees reelles, sans anonymisation)
+#   ./.bascules/staging.sh down      arrete staging (volumes conserves)
+#   ./.bascules/staging.sh           etat courant
 set -e
 
-RACINE="$(cd "$(dirname "$0")" && pwd)"
+RACINE="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$RACINE"
 ENVF=".env.staging"
 PROJ="suudu_staging"
@@ -66,7 +66,7 @@ case "${1:-}" in
         echo "Demarrage du stack staging (port 8081)..."
         $DC up -d --build
         echo "Staging demarre : http://localhost:8081  (bandeau STAGING visible)."
-        echo "Astuce : ./staging.sh seed (donnees neuves) ou ./staging.sh refresh (copie de la prod)."
+        echo "Astuce : ./.bascules/staging.sh seed (donnees neuves) ou ./.bascules/staging.sh refresh (copie de la prod)."
         ;;
     seed)
         echo "Peuplement des donnees de reference dans staging..."
@@ -91,7 +91,7 @@ case "${1:-}" in
     "")
         echo "Staging : projet $PROJ"
         docker ps --filter "name=_staging" --format "  {{.Names}}  {{.Status}}" 2>/dev/null || true
-        echo "Usage : ./staging.sh [up|seed|refresh|down]"
+        echo "Usage : ./.bascules/staging.sh [up|seed|refresh|down]"
         ;;
     *)
         echo "Commande inconnue : $1 (attendu : up|seed|refresh|down)"; exit 1 ;;

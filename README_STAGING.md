@@ -24,19 +24,19 @@ réglages du staging. La production garde son `.env` habituel.
 Toujours depuis la racine du projet.
 
 ```bash
-./staging.sh up        # démarre le staging (port 8081)
-./staging.sh refresh   # remplace la base staging par une copie de la prod
-./staging.sh seed      # base staging neuve avec les données de référence
-./staging.sh down      # arrête le staging (les données sont conservées)
-./staging.sh           # affiche l'état
+./.bascules/staging.sh up        # démarre le staging (port 8081)
+./.bascules/staging.sh refresh   # remplace la base staging par une copie de la prod
+./.bascules/staging.sh seed      # base staging neuve avec les données de référence
+./.bascules/staging.sh down      # arrête le staging (les données sont conservées)
+./.bascules/staging.sh           # affiche l'état
 ```
 
 Après `up`, ouvrir : http://localhost:8081
 
 ## Utilisation pendant les tests
 
-1. Démarrer le staging : `./staging.sh up`.
-2. Charger des données réalistes : `./staging.sh refresh` (copie la prod).
+1. Démarrer le staging : `./.bascules/staging.sh up`.
+2. Charger des données réalistes : `./.bascules/staging.sh refresh` (copie la prod).
    La commande demande une confirmation avant d'écraser la base staging.
 3. Les agents testent sur le port 8081. Les vrais utilisateurs restent sur le
    port 80 (production).
@@ -69,7 +69,7 @@ Le déploiement de la production se fait comme d'habitude : `git push` puis
 Arrêt simple, les données sont conservées et peuvent être relancées plus tard :
 
 ```bash
-./staging.sh down
+./.bascules/staging.sh down
 ```
 
 ## Supprimer le staging complètement
@@ -78,14 +78,14 @@ Supprime les conteneurs, la base de données, les fichiers et les réglages du
 staging. La production n'est pas concernée.
 
 ```bash
-./staging.sh down
+./.bascules/staging.sh down
 docker volume rm suudu_staging_suudu_postgres_data_18 suudu_staging_suudu_staticfiles \
   suudu_staging_suudu_redis_data suudu_staging_suudu_security_logs \
   suudu_staging_suudu_pgadmin_data suudu_staging_suudu_ollama_data
 rm -rf media_staging backups_staging .env.staging
 ```
 
-Après cela, il ne reste aucune trace du staging. La commande `./staging.sh up`
+Après cela, il ne reste aucune trace du staging. La commande `./.bascules/staging.sh up`
 peut le recréer à neuf à tout moment.
 
 ## Point important
