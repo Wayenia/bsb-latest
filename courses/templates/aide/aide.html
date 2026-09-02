@@ -48,41 +48,25 @@
     </div>
   </div>
 
-  <ol class="aide-etapes">
-    {% for e in guide.etapes %}
-    <li class="aide-etape">
-      <div class="aide-num">{{ e.numero }}</div>
-      <div class="aide-corps">
-        <h3 class="aide-titre">{{ e.titre }}</h3>
-        <p class="aide-texte">{{ e.texte }}</p>
+  {% if guide.sections %}
+  {% comment %}Guide par thèmes : chaque thème porte son niveau de sensibilité.{% endcomment %}
+  {% for s in guide.sections %}
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+      <h2 class="text-lg font-black text-bsb-ink">{{ forloop.counter }}. {{ s.theme }}</h2>
+      <span class="inline-flex items-center gap-1 self-start px-2.5 py-0.5 rounded-full text-xs font-bold border {{ s.sensi_classe }}">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.4-2.9 8.5-7 9.8-4.1-1.3-7-5.4-7-9.8V6l7-3z"/></svg>
+        {{ s.sensi_libelle }}
+      </span>
+    </div>
+    <p class="text-sm text-bsb-muted mb-4">{{ s.intro }}</p>
+    {% include 'aide/_etapes.html' with etapes=s.etapes %}
+  </div>
+  {% endfor %}
+  {% else %}
+  {% include 'aide/_etapes.html' with etapes=guide.etapes %}
+  {% endif %}
 
-        {% if e.image_url %}
-        <div class="aide-capture">
-          <div class="aide-capture-barre"><span></span><span></span><span></span></div>
-          <img src="{{ e.image_url }}" alt="Capture : {{ e.titre }}" loading="lazy">
-        </div>
-        {% else %}
-        <div class="aide-capture-absente">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h3l2-2h4l2 2h3a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
-            <circle cx="12" cy="13" r="3.2"/>
-          </svg>
-          <span>Capture à venir</span>
-        </div>
-        {% endif %}
-
-        {% if e.astuce %}
-        <div class="aide-astuce">
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3a6 6 0 00-3.6 10.8c.4.3.6.7.6 1.2v.5h6v-.5c0-.5.2-.9.6-1.2A6 6 0 0012 3zM9 19h6M10 21h4"/>
-          </svg>
-          <span>{{ e.astuce }}</span>
-        </div>
-        {% endif %}
-      </div>
-    </li>
-    {% endfor %}
-  </ol>
   {% else %}
   <div class="bo-card mb-8">
     <div class="bo-card-body text-center py-10">

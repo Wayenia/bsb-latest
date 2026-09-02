@@ -1,0 +1,36 @@
+{% comment %}Liste d'étapes numérotées. Attend `etapes` (avec numero, image_url, image, astuce).{% endcomment %}
+<ol class="aide-etapes">
+  {% for e in etapes %}
+  <li class="aide-etape">
+    <div class="aide-num">{{ e.numero }}</div>
+    <div class="aide-corps">
+      <h3 class="aide-titre">{{ e.titre }}</h3>
+      <p class="aide-texte">{{ e.texte }}</p>
+
+      {% if e.image_url %}
+      <div class="aide-capture">
+        <div class="aide-capture-barre"><span></span><span></span><span></span></div>
+        <img src="{{ e.image_url }}" alt="Capture : {{ e.titre }}" loading="lazy">
+      </div>
+      {% elif e.image %}
+      <div class="aide-capture-absente">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h3l2-2h4l2 2h3a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+          <circle cx="12" cy="13" r="3.2"/>
+        </svg>
+        <span>Capture à venir</span>
+      </div>
+      {% endif %}
+
+      {% if e.astuce %}
+      <div class="aide-astuce">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3a6 6 0 00-3.6 10.8c.4.3.6.7.6 1.2v.5h6v-.5c0-.5.2-.9.6-1.2A6 6 0 0012 3zM9 19h6M10 21h4"/>
+        </svg>
+        <span>{{ e.astuce }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ol>

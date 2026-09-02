@@ -1844,14 +1844,24 @@ def aide(request):
     if demande and peut_previsualiser and aide_contenu.guide_pour(demande):
         role, apercu = demande, demande
 
-    guide = aide_contenu.guide_pour(role)
-    if guide:
-        etapes = []
-        for i, e in enumerate(guide['etapes'], 1):
+    def _numeroter(etapes):
+        # Attache le numéro et l'URL de la capture (si le fichier existe).
+        resultat = []
+        for i, e in enumerate(etapes, 1):
             img = e.get('image')
             url = static_url('aides/' + img) if img and finders.find('aides/' + img) else None
-            etapes.append({**e, 'numero': i, 'image_url': url})
-        guide = {**guide, 'etapes': etapes}
+            resultat.append({**e, 'numero': i, 'image_url': url})
+        return resultat
+
+    guide = aide_contenu.guide_pour(role)
+    if guide and guide.get('sections'):
+        sections = [{**s, 'etapes': _numeroter(s['etapes'])} for s in guide['sections']]
+        libelle_sensi = aide_contenu.SENSIBILITES
+        sections = [{**s, 'sensi_libelle': libelle_sensi.get(s['sensibilite'], ('', ''))[0],
+                     'sensi_classe': libelle_sensi.get(s['sensibilite'], ('', ''))[1]} for s in sections]
+        guide = {**guide, 'sections': sections}
+    elif guide:
+        guide = {**guide, 'etapes': _numeroter(guide['etapes'])}
 
     libelles = dict(user.USER_TYPE)
     return render(request, 'aide/aide.html', {
