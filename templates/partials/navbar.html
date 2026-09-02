@@ -124,16 +124,13 @@
             {% comment %} BOUTONS AUTH DESKTOP {% endcomment %}
             <div class="hidden lg:flex items-center gap-2">
                 {% if user.is_authenticated %}
-                    {# Photo (ou initiales) menant a "Mon compte" ; "Mon espace" mene au tableau de bord du role. #}
-                    <a href="{% url 'accounts:mon_compte' %}" title="Mon compte" class="flex items-center gap-2 pl-1.5 pr-4 xl:pr-5 py-1.5 text-sm font-bold text-white bg-yellow-600 rounded-full hover:bg-green-600 shadow-sm transition-all transform hover:-translate-y-0.5">
+                    {# Un seul bouton "Mon espace" (photo) menant a la page compte ; le tableau de bord y est accessible. #}
+                    <a href="{% url 'accounts:mon_compte' %}" title="Mon espace" class="flex items-center gap-2 pl-1.5 pr-4 xl:pr-5 py-1.5 text-sm font-bold text-white bg-yellow-600 rounded-full hover:bg-green-600 shadow-sm transition-all transform hover:-translate-y-0.5">
                         {% if user.photo %}
                         <img src="{{ user.photo.url }}" alt="" class="h-8 w-8 rounded-full object-cover ring-2 ring-white/70">
                         {% else %}
                         <span class="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white ring-2 ring-white/40">{{ user.nom|first|upper }}{{ user.prenom|first|upper }}</span>
                         {% endif %}
-                        Mon compte
-                    </a>
-                    <a href="{% url 'courses:redirect_to_dashboard' %}" class="px-4 xl:px-5 py-2.5 text-sm font-bold text-white bg-green-600 rounded-full hover:bg-green-700 shadow-sm hover:shadow transition-all transform hover:-translate-y-0.5">
                         Mon espace
                     </a>
                     <a href="{% url 'accounts:logout' %}" class="px-4 xl:px-5 py-2.5 text-sm font-bold text-white bg-bsb-gray rounded-full hover:bg-gray-600 shadow-sm hover:shadow transition-all transform hover:-translate-y-0.5">
@@ -225,9 +222,6 @@
                     {% else %}
                     <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-[11px] font-bold text-white ring-2 ring-white/40">{{ user.nom|first|upper }}{{ user.prenom|first|upper }}</span>
                     {% endif %}
-                    Mon compte
-                </a>
-                <a href="{% url 'courses:redirect_to_dashboard' %}" class="block px-4 py-3 text-sm font-bold text-white bg-green-600 rounded-xl text-center hover:bg-green-700 transition-colors">
                     Mon espace
                 </a>
                 <a href="{% url 'accounts:logout' %}" class="block px-4 py-3 text-sm font-bold text-gray-600 border border-gray-400 rounded-xl text-center hover:bg-gray-100 transition-colors">
