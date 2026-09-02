@@ -1,12 +1,18 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Administration technique | BSB{% endblock %}
 
 {% comment %}Page volontairement dépouillée : ni navigation ni pied de page
 publics. On surcharge tout le corps pour ne rien exposer d'autre que le
-formulaire.{% endcomment %}
+formulaire. Thème Yupaan (rouge/or/crème), accent rouge = accès privilégié.{% endcomment %}
 {% block body %}
-<main class="min-h-screen flex items-center justify-center bg-bsb-ink px-4 py-10">
-  <div class="w-full max-w-sm">
+<main class="min-h-screen flex items-center justify-center relative overflow-hidden px-4 py-10 bg-bsb-cream">
+
+  {% comment %}Décor : halos discrets rouge/or, sans gêner la lecture.{% endcomment %}
+  <div class="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-bsb-red/20 blur-3xl pointer-events-none" aria-hidden="true"></div>
+  <div class="absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-bsb-gold/25 blur-3xl pointer-events-none" aria-hidden="true"></div>
+
+  <div class="relative w-full max-w-sm">
 
     {% if messages %}
     <div class="mb-4 space-y-2">
@@ -21,64 +27,85 @@ formulaire.{% endcomment %}
     </div>
     {% endif %}
 
-    <div class="bg-white rounded-2xl shadow-2xl border border-white/10 p-8">
-      <div class="flex flex-col items-center text-center mb-6">
-        <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-bsb-red to-bsb-gold text-white mb-3">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.4-2.9 8.5-7 9.8-4.1-1.3-7-5.4-7-9.8V6l7-3z"/>
-          </svg>
-        </span>
-        <h1 class="text-lg font-black text-bsb-ink">Administration technique</h1>
-        <p class="text-xs text-bsb-muted mt-1">Accès réservé — vérification en deux étapes</p>
-      </div>
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div class="h-1.5 bg-gradient-to-r from-bsb-red via-bsb-gold to-bsb-red"></div>
+      <div class="p-8">
 
-      <form method="post" novalidate class="space-y-4" id="admin-login-form">
-        {% csrf_token %}
-        <div>
-          <label for="identifiant" class="block text-sm font-semibold text-gray-700 mb-1">Identifiant</label>
-          <input type="text" name="identifiant" id="identifiant" value="{{ identifiant|default:'' }}"
-                 autocomplete="username" autofocus
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bsb-red focus:border-transparent transition-all">
-        </div>
-        <div>
-          <label for="password" class="block text-sm font-semibold text-gray-700 mb-1">Mot de passe</label>
-          <input type="password" name="password" id="password" autocomplete="current-password"
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bsb-red focus:border-transparent transition-all">
-        </div>
-        <button type="submit" id="admin-login-submit"
-                class="w-full px-6 py-3 bg-bsb-red hover:bg-bsb-dark text-white font-bold rounded-lg shadow-md transition-all
-                       disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2">
-          <span id="admin-login-label">Continuer</span>
-          <span id="admin-login-sending" class="hidden items-center gap-2">
-            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4z"></path>
-            </svg>
-            Envoi du code…
+        <div class="flex flex-col items-center text-center mb-6">
+          <img src="{% static 'images/logo.png' %}" alt="Burkina Suudu Bawdè" class="h-14 w-auto mb-3">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-bsb-red/10 text-bsb-red text-[11px] font-bold uppercase tracking-wide">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.4-2.9 8.5-7 9.8-4.1-1.3-7-5.4-7-9.8V6l7-3z"/></svg>
+            Accès privilégié
           </span>
-        </button>
-      </form>
+          <h1 class="text-xl font-black text-bsb-ink mt-3">Administration technique</h1>
+          <p class="text-xs text-bsb-muted mt-1">Vérification en deux étapes</p>
+        </div>
+
+        <form method="post" novalidate class="space-y-4" id="admin-login-form">
+          {% csrf_token %}
+          <div>
+            <label for="identifiant" class="block text-xs font-bold uppercase tracking-wide text-gray-600 mb-1.5">Identifiant</label>
+            <input type="text" name="identifiant" id="identifiant" value="{{ identifiant|default:'' }}"
+                   autocomplete="username" autofocus
+                   class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-bsb-red focus:border-transparent transition-all">
+          </div>
+
+          <div>
+            <label for="password" class="block text-xs font-bold uppercase tracking-wide text-gray-600 mb-1.5">Mot de passe</label>
+            <div class="relative">
+              <input type="password" name="password" id="password" autocomplete="current-password"
+                     class="w-full px-4 py-3 pr-11 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-bsb-red focus:border-transparent transition-all">
+              <button type="button" id="toggle-mdp" aria-label="Afficher le mot de passe"
+                      class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-bsb-ink transition-colors">
+                <svg id="oeil" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12S5.5 5.5 12 5.5 21.5 12 21.5 12 18.5 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg id="oeil-barre" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 10.6a3 3 0 004.2 4.2M9.9 5.6A9.6 9.6 0 0112 5.5c6.5 0 9.5 6.5 9.5 6.5a15 15 0 01-2.9 3.7M6.2 6.2A15 15 0 002.5 12S5.5 18.5 12 18.5c.8 0 1.6-.1 2.3-.3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" id="admin-login-submit"
+                  class="w-full px-6 py-3.5 bg-gradient-to-r from-bsb-red to-bsb-dark hover:brightness-110 text-white font-black uppercase tracking-wide rounded-xl shadow-lg shadow-red-900/20 transition-all
+                         disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2">
+            <span id="admin-login-label">Continuer</span>
+            <span id="admin-login-sending" class="hidden items-center gap-2">
+              <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4z"></path>
+              </svg>
+              Envoi du code…
+            </span>
+          </button>
+        </form>
+      </div>
     </div>
 
-    <script nonce="{{ csp_nonce }}">
-      // Retour visuel pendant l'envoi du code (voir login.html).
-      (function () {
-        var form = document.getElementById('admin-login-form');
-        if (!form) return;
-        form.addEventListener('submit', function () {
-          var btn = document.getElementById('admin-login-submit');
-          var label = document.getElementById('admin-login-label');
-          var sending = document.getElementById('admin-login-sending');
-          if (!btn || !label || !sending) return;
-          label.classList.add('hidden');
-          sending.classList.remove('hidden');
-          sending.classList.add('flex');
-          btn.disabled = true;
-        });
-      })();
-    </script>
-
-    <p class="text-center text-[11px] text-white/40 mt-6">Plateforme Yupaan — Burkina Suudu Bawdè</p>
+    <p class="text-center text-[11px] text-bsb-muted/70 mt-6">Plateforme Yupaan — Burkina Suudu Bawdè</p>
   </div>
+
+  <script nonce="{{ csp_nonce }}">
+    (function () {
+      // Retour visuel pendant l'envoi du code.
+      var form = document.getElementById('admin-login-form');
+      if (form) form.addEventListener('submit', function () {
+        var btn = document.getElementById('admin-login-submit');
+        var label = document.getElementById('admin-login-label');
+        var sending = document.getElementById('admin-login-sending');
+        if (!btn || !label || !sending) return;
+        label.classList.add('hidden');
+        sending.classList.remove('hidden'); sending.classList.add('flex');
+        btn.disabled = true;
+      });
+      // Afficher / masquer le mot de passe.
+      var t = document.getElementById('toggle-mdp');
+      if (t) t.addEventListener('click', function () {
+        var champ = document.getElementById('password');
+        var montre = champ.type === 'password';
+        champ.type = montre ? 'text' : 'password';
+        document.getElementById('oeil').classList.toggle('hidden', montre);
+        document.getElementById('oeil-barre').classList.toggle('hidden', !montre);
+        t.setAttribute('aria-label', montre ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+      });
+    })();
+  </script>
 </main>
 {% endblock body %}

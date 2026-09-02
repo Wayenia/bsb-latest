@@ -54,11 +54,18 @@
                         <label for="id_password" class="block text-xs font-bold uppercase tracking-wide text-gray-600 mb-1.5">
                             Mot de passe
                         </label>
-                        <input type="password" name="password" id="id_password" required
-                               autocomplete="current-password"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white
-                                      focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-transparent transition-all"
-                               placeholder="••••••••">
+                        <div class="relative">
+                            <input type="password" name="password" id="id_password" required
+                                   autocomplete="current-password"
+                                   class="w-full px-4 py-3 pr-11 border border-gray-300 rounded-xl bg-white
+                                          focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-transparent transition-all"
+                                   placeholder="••••••••">
+                            <button type="button" id="toggle-mdp" aria-label="Afficher le mot de passe"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-bsb-ink transition-colors">
+                                <svg id="oeil" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12S5.5 5.5 12 5.5 21.5 12 21.5 12 18.5 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg id="oeil-barre" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 10.6a3 3 0 004.2 4.2M9.9 5.6A9.6 9.6 0 0112 5.5c6.5 0 9.5 6.5 9.5 6.5a15 15 0 01-2.9 3.7M6.2 6.2A15 15 0 002.5 12S5.5 18.5 12 18.5c.8 0 1.6-.1 2.3-.3"/></svg>
+                            </button>
+                        </div>
                     </div>
 
                     <p class="text-xs text-gray-500 leading-relaxed">
@@ -110,6 +117,16 @@
             sending.classList.remove('hidden');
             sending.classList.add('flex');
             btn.disabled = true;
+        });
+        // Afficher / masquer le mot de passe.
+        var t = document.getElementById('toggle-mdp');
+        if (t) t.addEventListener('click', function () {
+            var champ = document.getElementById('id_password');
+            var montre = champ.type === 'password';
+            champ.type = montre ? 'text' : 'password';
+            document.getElementById('oeil').classList.toggle('hidden', montre);
+            document.getElementById('oeil-barre').classList.toggle('hidden', !montre);
+            t.setAttribute('aria-label', montre ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
         });
     })();
 </script>
