@@ -37,23 +37,11 @@
 
   <div class="flex items-center justify-between gap-2 mb-2">
     <p class="text-xs text-bsb-muted">La conversation reste affichée même après un rechargement.</p>
-    <div class="flex items-center gap-1.5">
-      <button type="button" id="ia-nouveau" title="Nouvelle conversation"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-bsb-ink bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
-        Nouveau
-      </button>
-      <button type="button" id="ia-nettoyer" title="Vider la conversation"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-bsb-ink bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
-        Nettoyer
-      </button>
-      <button type="button" id="ia-copier" title="Copier la conversation"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-bsb-ink bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8M8 12h8m-8-4h4M7 4h7l5 5v11a1 1 0 01-1 1H7a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>
-        <span id="ia-copier-txt">Copier</span>
-      </button>
-    </div>
+    <button type="button" id="ia-nouveau" title="Nouvelle conversation"
+      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-bsb-ink bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+      Nouveau
+    </button>
   </div>
 
   <div id="fil" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 h-[55vh] overflow-y-auto space-y-3 mb-4"></div>
@@ -91,12 +79,49 @@
     fil.innerHTML = '<p class="text-sm text-bsb-muted text-center mt-6">Posez une question pour démarrer la conversation.</p>';
   }
 
-  function bulle(texte, moi) {
+  const ICONE_COPIE = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8M8 12h8m-8-4h4M7 4h7l5 5v11a1 1 0 01-1 1H7a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>';
+
+  function bulleMoi(texte) {
     const d = document.createElement('div');
-    d.className = moi
-      ? 'ml-auto max-w-[85%] bg-bsb-ink text-white rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap'
-      : 'mr-auto max-w-[85%] bg-slate-100 text-bsb-ink rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap';
+    d.className = 'ml-auto max-w-[85%] bg-bsb-ink text-white rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap';
     d.textContent = texte;
+    fil.appendChild(d);
+    fil.scrollTop = fil.scrollHeight;
+    return d;
+  }
+
+  // Reponse de l'IA : texte + petit bouton "Copier" propre a cette ligne.
+  function bulleIA(texte) {
+    const wrap = document.createElement('div');
+    wrap.className = 'mr-auto max-w-[85%] bg-slate-100 text-bsb-ink rounded-2xl px-4 py-2.5';
+    const t = document.createElement('div');
+    t.className = 'text-sm whitespace-pre-wrap';
+    t.textContent = texte;
+    const barre = document.createElement('div');
+    barre.className = 'flex justify-end mt-1.5';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-bsb-ink transition-colors';
+    const lbl = document.createElement('span');
+    lbl.textContent = 'Copier';
+    btn.innerHTML = ICONE_COPIE;
+    btn.appendChild(lbl);
+    btn.addEventListener('click', function () {
+      copier(t.textContent, function () {
+        lbl.textContent = 'Copié'; setTimeout(function () { lbl.textContent = 'Copier'; }, 1500);
+      });
+    });
+    barre.appendChild(btn);
+    wrap.appendChild(t);
+    wrap.appendChild(barre);
+    fil.appendChild(wrap);
+    fil.scrollTop = fil.scrollHeight;
+  }
+
+  function bulleAttente() {
+    const d = document.createElement('div');
+    d.className = 'mr-auto max-w-[85%] bg-slate-100 text-bsb-ink rounded-2xl px-4 py-2.5 text-sm';
+    d.textContent = '…';
     fil.appendChild(d);
     fil.scrollTop = fil.scrollHeight;
     return d;
@@ -105,7 +130,7 @@
   function afficher() {
     fil.innerHTML = '';
     if (!messages.length) { vide(); return; }
-    messages.forEach(m => bulle(m.texte, m.role === 'moi'));
+    messages.forEach(m => m.role === 'moi' ? bulleMoi(m.texte) : bulleIA(m.texte));
   }
 
   afficher();
@@ -117,10 +142,10 @@
     if (!messages.length) fil.innerHTML = '';
     messages.push({ role: 'moi', texte: q });
     sauver();
-    bulle(q, true);
+    bulleMoi(q);
     champ.value = '';
     bouton.disabled = true;
-    const attente = bulle('…', false);
+    const attente = bulleAttente();
     const data = new URLSearchParams({ question: q });
     fetch("{% url 'assistant:demander' %}", {
       method: 'POST',
@@ -128,7 +153,8 @@
       body: data
     }).then(r => r.json()).then(j => {
       const rep = j.message || 'Aucune réponse.';
-      attente.textContent = rep;
+      attente.remove();
+      bulleIA(rep);
       messages.push({ role: 'ia', texte: rep });
       sauver();
     }).catch(() => {
@@ -142,22 +168,12 @@
     messages = []; sauver(); vide(); champ.focus();
   });
 
-  // Nettoyer : vide la conversation affichee.
-  document.getElementById('ia-nettoyer').addEventListener('click', function () {
-    if (messages.length && !confirm('Vider la conversation ?')) return;
-    messages = []; sauver(); vide();
-  });
-
-  // Copier : met tout le fil dans le presse-papiers (avec repli si besoin).
-  document.getElementById('ia-copier').addEventListener('click', function () {
-    if (!messages.length) return;
-    const texte = messages.map(m => (m.role === 'moi' ? 'Vous : ' : 'Yupaan-IA : ') + m.texte).join('\n\n');
-    const ok = document.getElementById('ia-copier-txt');
-    const fait = function () { ok.textContent = 'Copié'; setTimeout(function () { ok.textContent = 'Copier'; }, 1500); };
+  // Copie d'une reponse dans le presse-papiers, avec repli si besoin.
+  function copier(texte, fait) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(texte).then(fait).catch(function () { repli(texte, fait); });
     } else { repli(texte, fait); }
-  });
+  }
 
   function repli(texte, fait) {
     const t = document.createElement('textarea');

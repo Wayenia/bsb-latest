@@ -75,16 +75,13 @@
                     {# ── NON CONNECTE ────────────────────────────────────────────── #}
                     {% endif %}
 
-                    {# ── ACTUALITÉS : visible pour tous les rôles, admin/dg compris. ── #}
-                    {# ── Contrairement à la facturation, aucun tableau de bord ne     ── #}
-                    {# ── porte de carte Actualités : sans ce lien, le back-office     ── #}
-                    {# ── /bsb/actualites/ ne serait accessible par aucune navigation. ── #}
-                    {% if perms.actualites.gerer_actualites %}
-                    <a href="{% url 'bsb_actualites:actualite_list' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
+                    {# ── ACTUALITÉS PUBLIQUES : accessibles à tout utilisateur connecté, ── #}
+                    {# ── quel que soit son rôle. La gestion back-office reste dans la    ── #}
+                    {# ── sidebar (volet Communication) pour ceux qui y ont droit.       ── #}
+                    <a href="{% url 'actualites:liste' %}" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors relative group">
                         Actualités
                         <span class="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></span>
                     </a>
-                    {% endif %}
 
                     {# ── FACTURATION : accessible à quiconque a la permission,     ── #}
                     {# ── quel que soit son rôle — sauf admin/dg (déjà sur la matrice── #}
@@ -189,10 +186,8 @@
 
                 {% endif %}
 
-                {# ── ACTUALITÉS : voir la note du menu bureau ── #}
-                {% if perms.actualites.gerer_actualites %}
-                <a href="{% url 'bsb_actualites:actualite_list' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">Actualités</a>
-                {% endif %}
+                {# ── ACTUALITÉS PUBLIQUES : accessibles à tout utilisateur connecté ── #}
+                <a href="{% url 'actualites:liste' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">Actualités</a>
 
                 {# ── FACTURATION : accessible à quiconque a la permission,     ── #}
                 {# ── quel que soit son rôle — sauf admin/dg (pas dans la       ── #}
