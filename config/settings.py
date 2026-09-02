@@ -252,6 +252,12 @@ else:
 # Sans timeout, un SMTP muet bloque le worker gunicorn pendant 120 s.
 EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT', default=15)
 
+# Envoi par API HTTPS (Brevo) : prioritaire si la cle est fournie. Le SMTP etant
+# bloque sur le serveur de prod (seul le 443 passe), c'est la voie retenue.
+BREVO_API_KEY = env('BREVO_API_KEY', default='')
+if BREVO_API_KEY:
+    EMAIL_BACKEND = 'accounts.email_backends.BrevoAPIBackend'
+
 # Avec Google Workspace, doit correspondre a EMAIL_HOST_USER (README 9).
 SERVER_EMAIL = env('SERVER_EMAIL', default='admin@burkinasuudu.com')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@burkinasuudu.com')

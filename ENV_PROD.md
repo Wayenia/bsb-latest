@@ -61,6 +61,20 @@ SERVER_EMAIL=adresse@gmail.com
 Laisser `EMAIL_HOST` vide bascule en mode console (les e-mails partent dans les
 logs du conteneur) : réservé au développement.
 
+**Serveurs où le SMTP sortant est bloqué (cas de la prod).** Si les ports SMTP
+(25/465/587/2525) sont fermés par le réseau et que seul le HTTPS (443) passe,
+l'envoi se fait par **API HTTPS (Brevo)** au lieu du SMTP :
+
+```
+BREVO_API_KEY=xkeysib-…                 # clé API v3 de Brevo
+DEFAULT_FROM_EMAIL=Yupaan BSB <expediteur-verifie@domaine.bf>
+SERVER_EMAIL=expediteur-verifie@domaine.bf
+```
+
+Dès que `BREVO_API_KEY` est renseignée, elle est **prioritaire** sur le SMTP.
+L'adresse expéditrice doit être **validée dans Brevo** (expéditeur ou domaine).
+Aucune ligne `EMAIL_HOST` n'est alors nécessaire.
+
 ## 3. Recommandés en production
 
 ```
