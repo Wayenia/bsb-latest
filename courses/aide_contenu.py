@@ -265,6 +265,306 @@ GUIDES = {
                 ]),
         ],
     },
+
+    'gestionnaire': {
+        'titre': "Gérer la scolarité de votre centre",
+        'resume': "Le guide suit votre travail quotidien : suivre les dossiers "
+                  "d'inscription et les paiements de votre centre, en toute clarté.",
+        'sections': [
+            _section(
+                "Connexion sécurisée", 'eleve',
+                "Protégez votre accès : il ouvre les données de votre centre.",
+                [
+                    _etape("Se connecter à la plateforme",
+                           "Ouvrez le site, cliquez sur « Se connecter », saisissez vos "
+                           "identifiants puis le code à quatre chiffres reçu par e-mail.",
+                           image='gestionnaire/01-connexion.png',
+                           astuce="Ne communiquez jamais votre mot de passe."),
+                    _etape("Arriver sur le tableau de bord de votre centre",
+                           "Vous atteignez votre espace : le tableau de bord de votre centre, "
+                           "avec la barre latérale à gauche.",
+                           image='gestionnaire/02-dashboard.png'),
+                ]),
+            _section(
+                "Suivre les inscriptions", 'moyen',
+                "Les demandes d'inscription de votre centre, de la réception à la validation.",
+                [
+                    _etape("Ouvrir la liste des inscriptions",
+                           "Dans le volet « Scolarité », ouvrez les inscriptions. Vous ne "
+                           "voyez que les dossiers de votre centre.",
+                           image='gestionnaire/03-inscriptions.png'),
+                    _etape("Vérifier et valider un dossier",
+                           "Contrôlez les informations et les pièces jointes, puis validez. "
+                           "La validation crée automatiquement les échéances de paiement.",
+                           astuce="La validation est engageante : vérifiez les pièces avant de valider."),
+                ]),
+            _section(
+                "Suivre les paiements", 'moyen',
+                "L'état de recouvrement de votre centre, tranche par tranche.",
+                [
+                    _etape("Consulter les encaissements",
+                           "Le volet « Scolarité » donne l'état des paiements. Chaque dette se "
+                           "règle par tranches ; une tranche « primordiale » passe avant les autres.",
+                           image='gestionnaire/04-paiements.png'),
+                ]),
+            _section(
+                "Fin de service", 'moyen',
+                "Refermez votre session proprement.",
+                [
+                    _etape("Se déconnecter",
+                           "Cliquez sur « Quitter » en bas de la barre latérale, surtout sur "
+                           "un poste partagé.",
+                           image='gestionnaire/05-quitter.png'),
+                ]),
+        ],
+    },
+
+    'dir': {
+        'titre': "Piloter votre direction régionale",
+        'resume': "Vous supervisez les centres de votre région : vue d'ensemble, "
+                  "statistiques et suivi financier.",
+        'sections': [
+            _section(
+                "Connexion sécurisée", 'eleve',
+                "Votre accès couvre plusieurs centres : protégez-le.",
+                [
+                    _etape("Se connecter",
+                           "Ouvrez le site, connectez-vous et validez le code reçu par e-mail.",
+                           image='dir/01-connexion.png',
+                           astuce="Ne partagez jamais votre mot de passe."),
+                    _etape("Arriver sur le tableau de bord régional",
+                           "Votre espace affiche la vue d'ensemble de votre région.",
+                           image='dir/02-dashboard.png'),
+                ]),
+            _section(
+                "Suivre l'activité de la région", 'moyen',
+                "Les chiffres consolidés de vos centres.",
+                [
+                    _etape("Consulter les statistiques",
+                           "Le volet « Statistiques » donne effectifs et recouvrement pour "
+                           "l'ensemble de votre région.",
+                           image='dir/03-statistiques.png'),
+                ]),
+            _section(
+                "Suivi financier", 'eleve',
+                "Une vue d'argent : à lire avec rigueur avant toute diffusion.",
+                [
+                    _etape("Suivre le recouvrement",
+                           "Consultez l'état des paiements de vos centres et les montants "
+                           "restant à recouvrer."),
+                    _etape("Se déconnecter en fin de session",
+                           "Cliquez sur « Quitter ». Déconnectez-vous toujours sur un poste partagé.",
+                           image='dir/04-quitter.png'),
+                ]),
+        ],
+    },
+
+    'dg': {
+        'titre': "Superviser la plateforme (Direction générale)",
+        'resume': "Vous avez une vue d'ensemble : pilotage, statistiques officielles "
+                  "et supervision de la sécurité.",
+        'sections': [
+            _section(
+                "Connexion sécurisée", 'eleve',
+                "Votre compte a une portée large : traitez sa connexion avec soin.",
+                [
+                    _etape("Se connecter",
+                           "Ouvrez le site, connectez-vous et validez le code reçu par e-mail.",
+                           image='dg/01-connexion.png',
+                           astuce="Ne partagez jamais votre mot de passe."),
+                    _etape("Arriver sur le tableau de bord",
+                           "Votre espace donne la vue d'ensemble de toute la plateforme.",
+                           image='dg/02-dashboard.png'),
+                ]),
+            _section(
+                "Piloter et lire les chiffres", 'moyen',
+                "Les statistiques consolidées de l'ensemble des centres.",
+                [
+                    _etape("Consulter les statistiques",
+                           "Le volet « Statistiques » agrège effectifs, inscriptions et "
+                           "recouvrement au niveau national.",
+                           image='dg/03-statistiques.png',
+                           astuce="Vérifiez toujours une source avant de la diffuser publiquement."),
+                ]),
+            _section(
+                "Supervision et sécurité", 'eleve',
+                "Garder un œil sur les accès et la diffusion des rapports.",
+                [
+                    _etape("Historique et rapport d'inspection",
+                           "Le volet « Supervision » donne le journal des connexions et le "
+                           "réglage d'envoi du rapport d'inspection."),
+                    _etape("Se déconnecter",
+                           "Cliquez sur « Quitter » en fin de session.",
+                           image='dg/04-quitter.png'),
+                ]),
+        ],
+    },
+
+    'daf': {
+        'titre': "Facturer des prestations (DAF)",
+        'resume': "Le cycle complet d'une facture de prestation, du client jusqu'au "
+                  "reçu, indépendamment de la scolarité.",
+        'sections': [
+            _section(
+                "Connexion sécurisée", 'eleve',
+                "Votre accès touche à la facturation : protégez-le.",
+                [
+                    _etape("Se connecter",
+                           "Ouvrez le site, connectez-vous et validez le code reçu par e-mail.",
+                           image='daf/01-connexion.png',
+                           astuce="Ne partagez jamais votre mot de passe."),
+                ]),
+            _section(
+                "Client et prestations", 'moyen',
+                "La base de toute facture : un client et les prestations à facturer.",
+                [
+                    _etape("Créer le client et ses prestations",
+                           "Dans « Prestation et facturation », enregistrez le client puis "
+                           "les prestations à lui facturer.",
+                           image='daf/02-prestations.png'),
+                ]),
+            _section(
+                "De la proforma à la facture définitive", 'moyen',
+                "La validation transforme la proforma en facture officielle.",
+                [
+                    _etape("Établir une facture proforma",
+                           "Regroupez les prestations dans une facture proforma, modifiable "
+                           "tant qu'elle n'est pas validée.",
+                           image='daf/03-proforma.png'),
+                    _etape("Valider la facture",
+                           "La validation attribue un numéro officiel et rend la facture "
+                           "définitive.",
+                           astuce="Seule une facture définitive est encaissable : la validation est irréversible."),
+                ]),
+            _section(
+                "Encaissement et reçu", 'eleve',
+                "Enregistrer le paiement et remettre le reçu.",
+                [
+                    _etape("Encaisser et éditer le reçu",
+                           "Enregistrez l'encaissement (total ou ligne par ligne), puis éditez "
+                           "le reçu à remettre au client.",
+                           image='daf/04-encaissement.png'),
+                    _etape("Se déconnecter",
+                           "Cliquez sur « Quitter » en fin de session.",
+                           image='daf/05-quitter.png'),
+                ]),
+        ],
+    },
+
+    'agent_comptable': {
+        'titre': "Suivre les encaissements (Agent comptable)",
+        'resume': "Votre rôle est le suivi financier d'ensemble : recouvrement et "
+                  "statistiques, sur tout le périmètre.",
+        'etapes': [
+            _etape("Se connecter",
+                   "Ouvrez le site, connectez-vous et validez le code à quatre chiffres "
+                   "reçu par e-mail.",
+                   image='agent_comptable/01-connexion.png',
+                   astuce="Ne partagez jamais votre mot de passe."),
+            _etape("Consulter le recouvrement",
+                   "Le tableau de bord et le volet « Statistiques » donnent l'état des "
+                   "encaissements et des montants restant à recouvrer.",
+                   image='agent_comptable/02-statistiques.png'),
+            _etape("Exporter les chiffres",
+                   "Depuis les statistiques, exportez les données (CSV, Excel, PDF) pour "
+                   "vos rapports."),
+            _etape("Se déconnecter",
+                   "Cliquez sur « Quitter » en fin de session.",
+                   image='agent_comptable/03-quitter.png'),
+        ],
+    },
+
+    'deps': {
+        'titre': "Consulter l'activité (DESP)",
+        'resume': "Votre rôle est la consultation d'ensemble : effectifs et "
+                  "statistiques, sans intervention sur les dossiers.",
+        'etapes': [
+            _etape("Se connecter",
+                   "Ouvrez le site, connectez-vous et validez le code reçu par e-mail.",
+                   image='deps/01-connexion.png',
+                   astuce="Ne partagez jamais votre mot de passe."),
+            _etape("Lire les statistiques",
+                   "Le volet « Statistiques » donne la vue d'ensemble : effectifs, "
+                   "inscriptions et recouvrement.",
+                   image='deps/02-statistiques.png'),
+            _etape("Se déconnecter",
+                   "Cliquez sur « Quitter » en fin de session.",
+                   image='deps/03-quitter.png'),
+        ],
+    },
+
+    'formateur': {
+        'titre': "Consulter vos filières (Formateur)",
+        'resume': "Retrouvez les filières qui vous sont rattachées et votre tableau "
+                  "de bord.",
+        'etapes': [
+            _etape("Se connecter",
+                   "Ouvrez le site, cliquez sur « Se connecter », saisissez vos identifiants "
+                   "puis le code à quatre chiffres reçu par e-mail.",
+                   image='formateur/01-connexion.png',
+                   astuce="Ne communiquez jamais votre mot de passe."),
+            _etape("Ouvrir « Mes métiers »",
+                   "Dans le menu, ouvrez « Mes métiers » pour voir les filières qui vous "
+                   "sont rattachées.",
+                   image='formateur/02-mes-metiers.png'),
+            _etape("Consulter votre tableau de bord",
+                   "Le tableau de bord regroupe les informations utiles à votre suivi.",
+                   image='formateur/03-dashboard.png'),
+            _etape("Se déconnecter",
+                   "En fin de session, déconnectez-vous, surtout sur un poste partagé.",
+                   image='formateur/04-quitter.png'),
+        ],
+    },
+
+    'eleve': {
+        'titre': "S'inscrire et suivre sa scolarité (Apprenant)",
+        'resume': "De la création de votre compte au suivi de vos paiements, chaque "
+                  "étape est décrite dans l'ordre.",
+        'etapes': [
+            _etape("Créer votre compte ou vous connecter",
+                   "Sur la page d'accueil, cliquez sur « S'inscrire » pour créer votre "
+                   "compte, ou « Se connecter » si vous en avez déjà un.",
+                   image='eleve/01-connexion.png'),
+            _etape("Choisir un métier de formation",
+                   "Ouvrez « Métiers de formation » et parcourez les filières proposées "
+                   "par les centres.",
+                   image='eleve/02-metiers.png'),
+            _etape("Déposer une demande d'inscription",
+                   "Choisissez la formation qui vous intéresse et remplissez votre demande "
+                   "d'inscription en suivant les étapes.",
+                   image='eleve/03-inscription.png',
+                   astuce="Préparez vos pièces (pièce d'identité, documents demandés) avant de commencer."),
+            _etape("Suivre vos demandes",
+                   "Dans « Mes demandes d'inscription », suivez l'état de chaque dossier "
+                   "(en cours, validé, rejeté).",
+                   image='eleve/04-mes-demandes.png'),
+            _etape("Régler la scolarité par tranches",
+                   "Une fois votre inscription validée, votre scolarité se règle par "
+                   "tranches auprès du caissier de votre centre. Votre espace montre ce "
+                   "qui reste à payer.",
+                   image='eleve/05-paiements.png'),
+            _etape("Se déconnecter",
+                   "En fin de session, déconnectez-vous, surtout sur un poste partagé.",
+                   image='eleve/06-quitter.png'),
+        ],
+    },
+
+    'membre': {
+        'titre': "Accéder à votre espace (Membre)",
+        'resume': "Votre espace personnel et les informations utiles à votre rôle.",
+        'etapes': [
+            _etape("Se connecter",
+                   "Ouvrez le site, connectez-vous et validez le code reçu par e-mail.",
+                   image='membre/01-connexion.png',
+                   astuce="Ne partagez jamais votre mot de passe."),
+            _etape("Ouvrir votre espace",
+                   "Après connexion, vous accédez à votre tableau de bord.",
+                   image='membre/02-dashboard.png'),
+            _etape("Se déconnecter",
+                   "Cliquez sur « Quitter » en fin de session.",
+                   image='membre/03-quitter.png'),
+        ],
+    },
 }
 
 
