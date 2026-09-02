@@ -24,7 +24,14 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div class="sm:col-span-2">
-        <label for="{{ form.lien.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">Lien (facultatif)</label>
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <label for="{{ form.lien.id_for_label }}" class="block text-sm font-bold text-bsb-ink">Lien (facultatif)</label>
+          <a href="{% url 'bsb_actualites:chemins_internes' %}" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold text-bsb-primary bg-bsb-primary/10 hover:bg-bsb-primary/20 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5"/></svg>
+            Voir les chemins internes
+          </a>
+        </div>
         {{ form.lien }}
         <p class="mt-1.5 text-xs text-bsb-muted">Collez le lien complet (ex. https://exemple.bf/page). Pour renvoyer vers une page du site lui-même, un chemin comme /actualites/ suffit. Laissez vide s'il n'y a pas de lien.</p>
         {% for e in form.lien.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ e }}</p>{% endfor %}

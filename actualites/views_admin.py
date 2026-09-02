@@ -176,3 +176,28 @@ def annonce_delete(request, id):
     annonce.delete()
     messages.success(request, f'Annonce « {texte} » supprimée.')
     return redirect('bsb_actualites:annonce_list')
+
+
+# Pages publiques proposables comme lien d'annonce. Uniquement du public non
+# sensible : jamais de back-office ni de page exposant des données.
+_CHEMINS_PUBLICS = [
+    ("Accueil du site", 'courses:home'),
+    ("Actualités", 'actualites:liste'),
+    ("Métiers de formation", 'courses:available_career'),
+    ("À propos", 'courses:about'),
+    ("Créer un compte", 'accounts:register'),
+    ("Se connecter", 'accounts:login'),
+    ("S'abonner à la lettre d'information", 'actualites:abonnement'),
+]
+
+
+@require_permission('actualites.gerer_actualites')
+def chemins_internes(request):
+    from django.urls import reverse, NoReverseMatch
+    chemins = []
+    for libelle, nom in _CHEMINS_PUBLICS:
+        try:
+            chemins.append({'libelle': libelle, 'chemin': reverse(nom)})
+        except NoReverseMatch:
+            continue
+    return render(request, 'admin/annonce/chemins.html', {'chemins': chemins})
