@@ -52,6 +52,7 @@ Mise à jour (communiqué de recrutement FI 2026-2027) :
 =============================================================================
 """
 
+import os
 from django.contrib.auth.hashers import make_password
 from datetime import date
 
@@ -59,6 +60,10 @@ from accounts.models import (
     Utilisateur, MembreAdministration, DirecteurInterRegional, DAF,
 )
 from courses.models import Region, Province, Direction_reg, Filiere, CentreFormation
+
+# POPULATE_COMPTES=0 -> peuple UNIQUEMENT la structure (régions, provinces,
+# directions, centres, métiers), sans créer aucun compte (ni admin ni agents).
+CREER_COMPTES = os.environ.get('POPULATE_COMPTES', '1') != '0'
 
 print("=" * 80)
 print("   POPULATION DE LA BASE DE DONNÉES — BURKINA SUUDU BAWDÈ (BSB)")
@@ -71,26 +76,28 @@ def log(label, created, identifier=""):
 
 
 # == ÉTAPE 1 — COMPTE ADMINISTRATEUR ===========================================
-print("\n[1/6] Création du compte administrateur...")
-
-admin_obj, admin_created = Utilisateur.objects.get_or_create(
-    username="admin",
-    defaults={
-        "nom": "ADMINISTRATEUR",
-        "prenom": "Système",
-        "email": "admin@bsb.bf",
-        "tel": "+226 70 00 00 00",
-        "adresse": "Ouagadougou",
-        "sexe": "m",
-        "date_naissance": date(1990, 1, 1),
-        "user_type": "admin",
-        "password": make_password("Admin@2024"),
-        "is_staff": True,
-        "is_superuser": True,
-        "is_active": True,
-    }
-)
-log("Admin", admin_created, admin_obj.username)
+if CREER_COMPTES:
+    print("\n[1/6] Création du compte administrateur...")
+    admin_obj, admin_created = Utilisateur.objects.get_or_create(
+        username="admin",
+        defaults={
+            "nom": "ADMINISTRATEUR",
+            "prenom": "Système",
+            "email": "admin@bsb.bf",
+            "tel": "+226 70 00 00 00",
+            "adresse": "Ouagadougou",
+            "sexe": "m",
+            "date_naissance": date(1990, 1, 1),
+            "user_type": "admin",
+            "password": make_password("Admin@2024"),
+            "is_staff": True,
+            "is_superuser": True,
+            "is_active": True,
+        }
+    )
+    log("Admin", admin_created, admin_obj.username)
+else:
+    print("\n[1/6] Compte administrateur ignoré (POPULATE_COMPTES=0).")
 
 
 # == ÉTAPE 2 — RÉGIONS ET PROVINCES (découpage 2025 — 17 régions / 47 provinces) ===
@@ -483,16 +490,23 @@ MEMBRES_SIEGE_DATA = [
      "DCAPPS-TT", "membre"),
 ]
 
+# Structure seule : si POPULATE_COMPTES=0, listes vidées -> aucun compte créé.
+if not CREER_COMPTES:
+    print("   Comptes de la plateforme ignorés (structure seule).")
+    DG_DATA = DAF_DATA = None
+    DIR_DATA = CENTRE_DIRECTEURS_DATA = CAISSIERS_CENTRE_DATA = MEMBRES_SIEGE_DATA = []
+
 # --- DG : aucun sous-modèle requis (rôle seul, cf. AgentForm.save()) -------
-nom, prenom, username, email, mdp = DG_DATA
-obj, created = Utilisateur.objects.get_or_create(
-    username=username,
-    defaults={
-        "nom": nom.upper(), "prenom": prenom, "email": email, "sexe": "m",
-        "user_type": "dg", "password": make_password(mdp), "is_active": True,
-    }
-)
-log("Directeur Général", created, username)
+if DG_DATA:
+    nom, prenom, username, email, mdp = DG_DATA
+    obj, created = Utilisateur.objects.get_or_create(
+        username=username,
+        defaults={
+            "nom": nom.upper(), "prenom": prenom, "email": email, "sexe": "m",
+            "user_type": "dg", "password": make_password(mdp), "is_active": True,
+        }
+    )
+    log("Directeur Général", created, username)
 
 # --- Directeurs Inter-Régionaux --------------------------------------------
 for nom, prenom, username, email, mdp, direction_nom in DIR_DATA:
@@ -507,15 +521,16 @@ for nom, prenom, username, email, mdp, direction_nom in DIR_DATA:
     log("Directeur Inter-Régional", created, username)
 
 # --- DAF ---------------------------------------------------------------
-nom, prenom, username, email, mdp = DAF_DATA
-obj, created = DAF.objects.get_or_create(
-    username=username,
-    defaults={
-        "nom": nom.upper(), "prenom": prenom, "email": email, "sexe": "m",
-        "password": make_password(mdp), "is_active": True,
-    }
-)
-log("DAF", created, username)
+if DAF_DATA:
+    nom, prenom, username, email, mdp = DAF_DATA
+    obj, created = DAF.objects.get_or_create(
+        username=username,
+        defaults={
+            "nom": nom.upper(), "prenom": prenom, "email": email, "sexe": "m",
+            "password": make_password(mdp), "is_active": True,
+        }
+    )
+    log("DAF", created, username)
 
 # --- Directeurs de Centre ------------------------------------------------
 for nom, prenom, username, email, mdp, centre_nom in CENTRE_DIRECTEURS_DATA:
@@ -559,12 +574,13 @@ for nom, prenom, username, email, mdp, emploi, user_type in MEMBRES_SIEGE_DATA:
     )
     log("Membre de l'administration", created, username)
 
-utilisateurs_plateforme_count = (
-    1 + len(DIR_DATA) + 1 + len(CENTRE_DIRECTEURS_DATA)
-    + len(CAISSIERS_CENTRE_DATA) + len(MEMBRES_SIEGE_DATA)
-)
-print(f"   ✓ {utilisateurs_plateforme_count} utilisateurs de la plateforme traités "
-      f"(total {Utilisateur.objects.count()} comptes)")
+if CREER_COMPTES:
+    utilisateurs_plateforme_count = (
+        1 + len(DIR_DATA) + 1 + len(CENTRE_DIRECTEURS_DATA)
+        + len(CAISSIERS_CENTRE_DATA) + len(MEMBRES_SIEGE_DATA)
+    )
+    print(f"   ✓ {utilisateurs_plateforme_count} utilisateurs de la plateforme traités "
+          f"(total {Utilisateur.objects.count()} comptes)")
 
 
 # == RÉSUMÉ FINAL ==============================================================
@@ -588,11 +604,12 @@ for label, count in summary:
 print("=" * 80)
 print("✅  POPULATION TERMINÉE AVEC SUCCÈS !")
 print("=" * 80)
-print()
-print("   Compte administrateur :")
-print("   ┌─────────────────────────┬─────────────────────┬──────────────────┐")
-print("   │ Rôle                    │ username            │ password         │")
-print("   ├─────────────────────────┼─────────────────────┼──────────────────┤")
-print("   │ Super Admin             │ admin               │ Admin@2024       │")
-print("   └─────────────────────────┴─────────────────────┴──────────────────┘")
-print("=" * 80)
+if CREER_COMPTES:
+    print()
+    print("   Compte administrateur :")
+    print("   ┌─────────────────────────┬─────────────────────┬──────────────────┐")
+    print("   │ Rôle                    │ username            │ password         │")
+    print("   ├─────────────────────────┼─────────────────────┼──────────────────┤")
+    print("   │ Super Admin             │ admin               │ Admin@2024       │")
+    print("   └─────────────────────────┴─────────────────────┴──────────────────┘")
+    print("=" * 80)
