@@ -76,16 +76,16 @@ ADMIN_LOGIN_IPS=                    # CIDR autorisés, vide = aucun filtrage (op
 À ajouter uniquement pour changer le comportement par défaut.
 
 ```
-DOC_MODELE=officiel        # documents PDF : officiel (défaut) ou classique. ./bascule_doc.sh
-BO_UI=nouveau              # écrans back-office : nouveau (défaut) ou classique. ./bascule_ui.sh
-BO_NAVIGATION=sidebar      # navigation : sidebar (défaut) ou navbar. ./bascule_ui.sh
+DOC_MODELE=officiel        # documents PDF : officiel (défaut) ou classique. ./.bascules/bascule_doc.sh
+BO_UI=nouveau              # écrans back-office : nouveau (défaut) ou classique. ./.bascules/bascule_ui.sh
+BO_NAVIGATION=sidebar      # navigation : sidebar (défaut) ou navbar. ./.bascules/bascule_ui.sh
 ENV_LABEL=                 # bandeau à l'écran ; vide en prod = aucun bandeau (STAGING l'utilise)
 ```
 
 ## 5. Optionnels — Yupaan-IA (désactivé par défaut)
 
 ```
-AI_MODULE=off                          # ./bascule_ai.sh activer le passe à on
+AI_MODULE=off                          # ./.bascules/bascule_ai.sh activer le passe à on
 AI_MODEL=qwen2.5:1.5b                  # EN PROD : ce modèle (≤1 Go, garde-fous fiables). PAS le 0.5b.
 AI_OLLAMA_URL=http://suudu_ollama:11434
 ```

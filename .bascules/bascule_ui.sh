@@ -1,14 +1,16 @@
 #!/bin/sh
 # Bascule l'interface du back-office, dans un sens comme dans l'autre.
 #
-#   ./bascule_ui.sh nouveau     interface refondue (navigation laterale + ecrans repris)
-#   ./bascule_ui.sh classique   retour integral a l'interface d'origine
-#   ./bascule_ui.sh sidebar     bascule la seule navigation vers la barre laterale
-#   ./bascule_ui.sh navbar      bascule la seule navigation vers la barre horizontale
-#   ./bascule_ui.sh             affiche l'etat courant
+#   ./.bascules/bascule_ui.sh nouveau     interface refondue (navigation laterale + ecrans repris)
+#   ./.bascules/bascule_ui.sh classique   retour integral a l'interface d'origine
+#   ./.bascules/bascule_ui.sh sidebar     bascule la seule navigation vers la barre laterale
+#   ./.bascules/bascule_ui.sh navbar      bascule la seule navigation vers la barre horizontale
+#   ./.bascules/bascule_ui.sh             affiche l'etat courant
 set -e
 
-RACINE="$(cd "$(dirname "$0")" && pwd)"
+# Le script vit dans .bascules/ : la racine du projet est le dossier parent.
+RACINE="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$RACINE"
 ENV="$RACINE/.env"
 
 [ -f "$ENV" ] || { echo "Erreur : .env introuvable. Lancez ce script depuis la racine du projet."; exit 1; }
@@ -29,7 +31,7 @@ ecrire() {
 if [ $# -eq 0 ]; then
     echo "Navigation : $(lire BO_NAVIGATION sidebar)"
     echo "Ecrans     : $(lire BO_UI nouveau)"
-    echo "Usage : ./bascule_ui.sh [nouveau|classique|sidebar|navbar]"
+    echo "Usage : ./.bascules/bascule_ui.sh [nouveau|classique|sidebar|navbar]"
     exit 0
 fi
 

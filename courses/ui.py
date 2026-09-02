@@ -3,7 +3,7 @@
 Toute refonte d'ecran conserve son gabarit d'origine sous le meme nom suffixe
 `_classique`. Le reglage BO_UI decide lequel est rendu, si bien qu'un retour en
 arriere ne demande ni modification de code ni redeploiement du depot : une
-commande suffit (./bascule_ui.sh classique).
+commande suffit (./.bascules/bascule_ui.sh classique).
 
 Un ecran qui n'a pas de variante classique est rendu tel quel : la bascule ne
 peut donc jamais provoquer d'erreur de gabarit introuvable.

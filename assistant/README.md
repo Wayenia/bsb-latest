@@ -17,9 +17,9 @@ Trois protections :
 ## Activer / désactiver (réversible à tout moment)
 
 ```bash
-./bascule_ai.sh activer      # démarre Ollama, télécharge le modèle, ouvre l'assistant
-./bascule_ai.sh desactiver   # arrête Ollama et masque l'assistant (plateforme intacte)
-./bascule_ai.sh              # affiche l'état courant
+./.bascules/bascule_ai.sh activer      # démarre Ollama, télécharge le modèle, ouvre l'assistant
+./.bascules/bascule_ai.sh desactiver   # arrête Ollama et masque l'assistant (plateforme intacte)
+./.bascules/bascule_ai.sh              # affiche l'état courant
 ```
 
 Désactivé (**valeur par défaut**), l'écran de Yupaan-IA disparaît et le conteneur Ollama ne

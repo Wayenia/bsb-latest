@@ -261,7 +261,7 @@ DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@burkinasuudu.com
 SITE_URL = env('SITE_URL', default='')
 
 # Navigation du back-office : 'sidebar' (nouvelle) ou 'navbar' (ancienne barre
-# horizontale). Bascule reversible a tout moment par ./bascule_ui.sh, sans
+# horizontale). Bascule reversible a tout moment par ./.bascules/bascule_ui.sh, sans
 # modification de code — aucun gabarit ne code en dur l'une ou l'autre.
 BO_NAVIGATION = env('BO_NAVIGATION', default='sidebar')
 
@@ -272,11 +272,11 @@ BO_UI = env('BO_UI', default='nouveau')
 
 # Modele des documents PDF generes (quittances, recus...). 'officiel' = mise en
 # page officielle facon quittance administrative ; 'classique' = ancien rendu.
-# Reversible sans redeploiement via ./bascule_doc.sh (README 9.8).
+# Reversible sans redeploiement via ./.bascules/bascule_doc.sh (README 9.8).
 DOC_MODELE = env('DOC_MODELE', default='officiel')
 
 # Assistant IA local (application `assistant`), lecture seule. 'off' par defaut.
-# Reversible sans redeploiement via ./bascule_ai.sh (assistant/README.md).
+# Reversible sans redeploiement via ./.bascules/bascule_ai.sh (assistant/README.md).
 # Bandeau d'environnement (ex: "STAGING"). Vide en prod = aucun bandeau.
 ENV_LABEL = env('ENV_LABEL', default='')
 

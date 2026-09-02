@@ -3708,7 +3708,7 @@ from courses.models import CentreFormation, Direction_reg
 @method_decorator(login_required, name='dispatch')
 @method_decorator(require_permission('courses.gerer_centres'), name='dispatch')
 class CenterListView(View):
-    # Choisi au rendu : la bascule ./bascule_ui.sh classique reaffiche le
+    # Choisi au rendu : la bascule ./.bascules/bascule_ui.sh classique reaffiche le
     # gabarit d'origine sans modification de code (voir courses/ui.py).
     template_name = 'admin/center/list.html'
 

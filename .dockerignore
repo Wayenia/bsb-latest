@@ -35,3 +35,6 @@ __pycache__/
 *.log
 logs.txt
 *.sqlite3
+
+# Scripts de bascule : usage hote uniquement, pas dans l'image
+.bascules/

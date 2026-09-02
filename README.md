@@ -101,7 +101,7 @@ responsabilité précise :
   d'inspection. Documentation dédiée : [audit/README.md](audit/README.md).
 - **`assistant`** — **Yupaan-IA**, assistant local (Ollama), **en lecture seule**, pour des
   analyses et de l'aide sur le fonctionnement. Désactivé par défaut, réversible
-  via `./bascule_ai.sh`. Documentation dédiée : [assistant/README.md](assistant/README.md).
+  via `./.bascules/bascule_ai.sh`. Documentation dédiée : [assistant/README.md](assistant/README.md).
 
 ### 2.3 Services Docker
 
@@ -705,15 +705,15 @@ Toute refonte d'écran conserve son gabarit d'origine sous le même nom suffixé
 sans variante `_classique` est rendu tel quel, si bien que la bascule ne peut
 jamais provoquer d'erreur de gabarit introuvable.
 
-Le script `./bascule_ui.sh` écrit ces variables et recrée le conteneur (un simple
+Le script `./.bascules/bascule_ui.sh` écrit ces variables et recrée le conteneur (un simple
 `restart` ne relit pas le `.env`) :
 
 ```bash
-./bascule_ui.sh              # affiche l'état courant
-./bascule_ui.sh nouveau      # interface refondue (barre latérale + écrans repris)
-./bascule_ui.sh classique    # retour intégral à l'interface d'origine
-./bascule_ui.sh sidebar      # bascule la seule navigation vers la barre latérale
-./bascule_ui.sh navbar       # bascule la seule navigation vers la barre horizontale
+./.bascules/bascule_ui.sh              # affiche l'état courant
+./.bascules/bascule_ui.sh nouveau      # interface refondue (barre latérale + écrans repris)
+./.bascules/bascule_ui.sh classique    # retour intégral à l'interface d'origine
+./.bascules/bascule_ui.sh sidebar      # bascule la seule navigation vers la barre latérale
+./.bascules/bascule_ui.sh navbar       # bascule la seule navigation vers la barre horizontale
 ```
 
 Sur les tableaux de plus de trois colonnes, l'excédent est replié dans une fiche
@@ -736,9 +736,9 @@ rendu ; chaque vue teste ce réglage et retombe sur son ancien tracé (ReportLab
 les quittances, WeasyPrint d'origine pour les autres) quand il vaut `classique`.
 
 ```bash
-./bascule_doc.sh             # affiche l'état courant
-./bascule_doc.sh officiel    # format officiel (défaut)
-./bascule_doc.sh classique   # retour intégral aux anciens tracés
+./.bascules/bascule_doc.sh             # affiche l'état courant
+./.bascules/bascule_doc.sh officiel    # format officiel (défaut)
+./.bascules/bascule_doc.sh classique   # retour intégral aux anciens tracés
 ```
 
 La police du rendu officiel est **Liberation Sans** (métrique Arial), installée dans

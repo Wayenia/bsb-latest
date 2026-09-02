@@ -1,12 +1,14 @@
 #!/bin/sh
 # Bascule le modele des documents PDF generes (quittances, recus...).
 #
-#   ./bascule_doc.sh officiel    mise en page officielle (facon quittance administrative)
-#   ./bascule_doc.sh classique   ancien rendu
-#   ./bascule_doc.sh             affiche l'etat courant
+#   ./.bascules/bascule_doc.sh officiel    mise en page officielle (facon quittance administrative)
+#   ./.bascules/bascule_doc.sh classique   ancien rendu
+#   ./.bascules/bascule_doc.sh             affiche l'etat courant
 set -e
 
-RACINE="$(cd "$(dirname "$0")" && pwd)"
+# Le script vit dans .bascules/ : la racine du projet est le dossier parent.
+RACINE="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$RACINE"
 ENV="$RACINE/.env"
 
 [ -f "$ENV" ] || { echo "Erreur : .env introuvable. Lancez ce script depuis la racine du projet."; exit 1; }
@@ -25,7 +27,7 @@ ecrire() {
 
 if [ $# -eq 0 ]; then
     echo "Documents : $(lire DOC_MODELE officiel)"
-    echo "Usage : ./bascule_doc.sh [officiel|classique]"
+    echo "Usage : ./.bascules/bascule_doc.sh [officiel|classique]"
     exit 0
 fi
 

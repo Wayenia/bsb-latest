@@ -1,12 +1,14 @@
 #!/bin/sh
 # Active ou desactive l'assistant IA local (Ollama), en lecture seule.
 #
-#   ./bascule_ai.sh activer      demarre Ollama, telecharge le modele, ouvre l'assistant
-#   ./bascule_ai.sh desactiver   arrete Ollama et ferme l'assistant (plateforme intacte)
-#   ./bascule_ai.sh              affiche l'etat courant
+#   ./.bascules/bascule_ai.sh activer      demarre Ollama, telecharge le modele, ouvre l'assistant
+#   ./.bascules/bascule_ai.sh desactiver   arrete Ollama et ferme l'assistant (plateforme intacte)
+#   ./.bascules/bascule_ai.sh              affiche l'etat courant
 set -e
 
-RACINE="$(cd "$(dirname "$0")" && pwd)"
+# Le script vit dans .bascules/ : la racine du projet est le dossier parent.
+RACINE="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$RACINE"
 ENV="$RACINE/.env"
 
 [ -f "$ENV" ] || { echo "Erreur : .env introuvable. Lancez ce script depuis la racine du projet."; exit 1; }
@@ -28,7 +30,7 @@ MODELE=$(lire AI_MODEL "qwen2:0.5b")
 if [ $# -eq 0 ]; then
     echo "Assistant IA : $(lire AI_MODULE off)"
     echo "Modele       : $MODELE"
-    echo "Usage : ./bascule_ai.sh [activer|desactiver]"
+    echo "Usage : ./.bascules/bascule_ai.sh [activer|desactiver]"
     exit 0
 fi
 

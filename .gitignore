@@ -48,3 +48,6 @@ rapport_audit_demo.xlsx
 media_staging/
 backups_staging/
 *.bak
+
+# Journal de modifications local (non versionne)
+CHANGELOG.md
