@@ -109,10 +109,6 @@ l'ecran courant s'ouvre toujours, meme s'il avait ete referme.{% endcomment %}
                 <p class="bo-compte-role">{{ user.get_user_type_display }}</p>
             </div>
         </div>
-        <div class="flex items-center justify-between px-1 mb-2">
-            <span class="text-xs font-semibold text-gray-500 dark:text-slate-400">Thème d'affichage</span>
-            {% include 'partials/theme_toggle.html' %}
-        </div>
         <div class="bo-compte-actions">
             <a href="{% url 'accounts:mon_compte' %}" class="bo-compte-action bo-compte-profil">
                 <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">

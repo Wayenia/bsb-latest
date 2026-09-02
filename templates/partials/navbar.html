@@ -118,7 +118,6 @@
 
             {% comment %} BOUTONS AUTH DESKTOP {% endcomment %}
             <div class="hidden lg:flex items-center gap-2">
-                {% include 'partials/theme_toggle.html' %}
                 {% if user.is_authenticated %}
                     {# Un seul bouton "Mon espace" (photo) menant a la page compte ; le tableau de bord y est accessible. #}
                     <a href="{% url 'accounts:mon_compte' %}" title="Mon espace" class="flex items-center gap-2 pl-1.5 pr-4 xl:pr-5 py-1.5 text-sm font-bold text-white bg-yellow-600 rounded-full hover:bg-green-600 shadow-sm transition-all transform hover:-translate-y-0.5">
@@ -157,11 +156,6 @@
     {% comment %} MENU MOBILE {% endcomment %}
     <div id="mobile-menu" class="lg:hidden hidden border-t border-gray-100 bg-white">
         <div class="px-4 py-4 space-y-1">
-
-            <div class="flex items-center justify-between px-4 py-2">
-                <span class="text-sm font-medium text-gray-700">Thème d'affichage</span>
-                {% include 'partials/theme_toggle.html' %}
-            </div>
 
             <a href="{% url 'courses:home' %}" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-yellow-50 hover:text-red-600 rounded-xl transition-colors">
                  Accueil

@@ -106,7 +106,7 @@ class AnnonceForm(forms.ModelForm):
         fields = ["texte", "lien", "libelle_lien", "ordre", "date_debut", "date_fin", "actif"]
         widgets = {
             "texte": forms.TextInput(attrs={"placeholder": "Ex. : Les inscriptions 2026 sont ouvertes.", "maxlength": 200}),
-            "lien": forms.TextInput(attrs={"placeholder": "https://… ou /chemin/interne (optionnel)"}),
+            "lien": forms.TextInput(attrs={"placeholder": "https://exemple.bf/page (optionnel)"}),
             "libelle_lien": forms.TextInput(attrs={"placeholder": "En savoir plus", "maxlength": 60}),
             "ordre": forms.NumberInput(attrs={"min": 0}),
             "date_debut": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
