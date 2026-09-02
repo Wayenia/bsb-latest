@@ -125,6 +125,15 @@ class AnnonceForm(forms.ModelForm):
         self.fields["lien"].required = False
         self.fields["libelle_lien"].required = False
 
+    def clean_lien(self):
+        # Strictement un lien : URL http(s) ou chemin interne commençant par « / ».
+        lien = (self.cleaned_data.get("lien") or "").strip()
+        if lien and not (lien.startswith(("http://", "https://")) or lien.startswith("/")):
+            raise forms.ValidationError(
+                "Saisissez un lien valide : une adresse commençant par http:// ou https://, "
+                "ou un chemin interne commençant par « / ».")
+        return lien
+
     def clean(self):
         donnees = super().clean()
         debut, fin = donnees.get("date_debut"), donnees.get("date_fin")

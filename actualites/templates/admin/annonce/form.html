@@ -26,7 +26,7 @@
       <div class="sm:col-span-2">
         <label for="{{ form.lien.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">Lien (facultatif)</label>
         {{ form.lien }}
-        <p class="mt-1.5 text-xs text-bsb-muted">Collez ici l'adresse concernée si elle existe. Sinon, laissez vide.</p>
+        <p class="mt-1.5 text-xs text-bsb-muted">Un lien uniquement : https://… ou un chemin interne /… . Laissez vide s'il n'y en a pas.</p>
         {% for e in form.lien.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ e }}</p>{% endfor %}
       </div>
       <div>

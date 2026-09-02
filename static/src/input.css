@@ -48,6 +48,39 @@
   --bsb-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
+/* ===== Thème sombre : bascule par la classe .dark sur <html> (module clair/sombre).
+   On teinte les classes composant du projet, pas les gabarits. Couverture large du
+   back-office ; les pages publiques suivront ecran par ecran. ===== */
+.dark {
+  color-scheme: dark;
+  --bsb-text: #e2e8f0;
+  --bsb-text-soft: #94a3b8;
+  --bsb-cream: #1e293b;
+}
+.dark body { background-color: #0f172a; color: #e2e8f0; }
+
+@layer components {
+  .dark .card,
+  .dark .bo-card,
+  .dark .dashboard-card { @apply bg-slate-800 border-slate-700 text-slate-100; }
+  .dark .bo-page { @apply bg-slate-900; }
+  .dark .bo-card-header { @apply border-slate-700; }
+  .dark .bo-card-footer { @apply border-slate-700 bg-slate-800; }
+  .dark .bo-card-title,
+  .dark .bo-title { @apply text-slate-100; }
+  .dark .bo-subtitle,
+  .dark .bo-breadcrumb { @apply text-slate-400; }
+  .dark .bo-breadcrumb a:hover { @apply text-white; }
+  .dark .bo-table-wrap { @apply bg-slate-800 border-slate-700; }
+  .dark .bo-table thead th { @apply bg-slate-900 text-slate-300; }
+  .dark .bo-table tbody td { @apply text-slate-300; }
+  .dark .bo-table tbody tr:hover { @apply bg-slate-700/40; }
+  .dark .bo-btn-secondary { @apply bg-slate-800 text-slate-200 border-slate-600 hover:bg-slate-700; }
+  .dark .bo-btn-ghost { @apply text-slate-300 hover:bg-slate-700 hover:text-white; }
+  .dark .btn-secondary,
+  .dark .form-input { @apply bg-slate-800 text-slate-100 border-slate-600; }
+}
+
 /* Dégradé signature rouge → jaune */
 .bsb-gradient { background: var(--bsb-gradient); }
 
@@ -707,7 +740,7 @@
   .bo-filigrane::before {
     content: '';
     background-image: url('/static/images/logo.png');
-    @apply pointer-events-none fixed inset-0 -z-10 bg-center bg-no-repeat opacity-[0.06];
+    @apply pointer-events-none fixed inset-0 -z-10 bg-center bg-no-repeat opacity-[0.25];
     background-size: min(48vw, 28rem);
   }
   /* Ecran etroit : le contenu occupe toute la largeur, on garde le filigrane

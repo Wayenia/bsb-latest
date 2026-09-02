@@ -9,6 +9,17 @@
     {% comment %} Custom CSS {% endcomment %}
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
 
+    {% comment %} Thème clair/sombre : appliqué avant le rendu pour éviter le flash. {% endcomment %}
+    <script nonce="{{ csp_nonce }}">
+      (function () {
+        try {
+          var p = localStorage.getItem('bsbTheme') || 'auto';
+          var sombre = p === 'sombre' || (p === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+          if (sombre) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
+
     <style nonce="{{ csp_nonce }}">
         :root {
             --bsb-primary: #374151;
@@ -422,6 +433,34 @@
     })();
     </script>
     {% endif %}
+
+    {% comment %} Contrôleur du thème clair/sombre : cycle clair → sombre → auto, mémorisé. {% endcomment %}
+    <script nonce="{{ csp_nonce }}">
+    (function () {
+      var ORDRE = ['auto', 'clair', 'sombre'];
+      function pref() { try { return localStorage.getItem('bsbTheme') || 'auto'; } catch (e) { return 'auto'; } }
+      function sombreSysteme() { try { return matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) { return false; } }
+      function appliquer() {
+        var p = pref();
+        var sombre = p === 'sombre' || (p === 'auto' && sombreSysteme());
+        document.documentElement.classList.toggle('dark', sombre);
+        document.querySelectorAll('[data-theme-toggle]').forEach(function (btn) {
+          btn.querySelectorAll('[data-ic]').forEach(function (ic) {
+            ic.classList.toggle('hidden', ic.getAttribute('data-ic') !== p);
+          });
+        });
+      }
+      document.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-theme-toggle]');
+        if (!btn) return;
+        var suivant = ORDRE[(ORDRE.indexOf(pref()) + 1) % ORDRE.length];
+        try { localStorage.setItem('bsbTheme', suivant); } catch (e) {}
+        appliquer();
+      });
+      try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { if (pref() === 'auto') appliquer(); }); } catch (e) {}
+      appliquer();
+    })();
+    </script>
 
 {% endblock body %}
 </body>
