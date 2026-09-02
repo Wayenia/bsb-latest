@@ -99,6 +99,7 @@ GROUPES = [
         'cle': 'communication', 'titre': 'Communication', 'couleur': 'or', 'icone': 'megaphone',
         'liens': [
             _lien('bsb_actualites:actualite_list', 'Actualités', 'actualites.gerer_actualites', '/bsb/actualites'),
+            _lien('bsb_actualites:annonce_list', 'Annonces défilantes', 'actualites.gerer_actualites', '/bsb/actualites/annonces'),
             _lien('bsb_actualites:abonne_list', 'Abonnés à la lettre', 'actualites.gerer_newsletter', '/bsb/actualites/abonnes'),
         ],
     },

@@ -50,6 +50,24 @@ def _assistant_dispo(utilisateur):
     )
 
 
+def annonces(request):
+    """Annonces défilantes actives ; celles qu'un connecté a acquittées
+    (« J'ai vu ») sont retirées pour lui (actualites/docs/README.md § Annonces)."""
+    try:
+        from actualites.models import Annonce, AnnonceVue
+        liste = list(Annonce.actives())
+        utilisateur = getattr(request, 'user', None)
+        if liste and getattr(utilisateur, 'is_authenticated', False):
+            vues = set(AnnonceVue.objects
+                       .filter(utilisateur=utilisateur, annonce__in=liste)
+                       .values_list('annonce_id', flat=True))
+            liste = [a for a in liste if a.pk not in vues]
+        return {'annonces_defilantes': liste}
+    except Exception:
+        # Table absente (migration en cours) ou erreur DB : pas de bandeau.
+        return {'annonces_defilantes': []}
+
+
 def navigation(request):
     utilisateur = getattr(request, 'user', None)
     dispo = _assistant_dispo(utilisateur)

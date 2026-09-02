@@ -1,13 +1,15 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from .forms import AbonnementForm
-from .models import AbonneNewsletter, Actualite
+from .models import AbonneNewsletter, Actualite, Annonce, AnnonceVue
 
 
 def _publiees():
@@ -28,6 +30,15 @@ def detail(request, slug):
     autres = _publiees().exclude(pk=actualite.pk)[:3]
     return render(request, "actualites/detail.html",
                   {"actualite": actualite, "autres": autres, "form": AbonnementForm()})
+
+
+@login_required
+@require_POST
+def annonce_vue(request, pk):
+    """L'utilisateur acquitte une annonce (« J'ai vu ») : elle ne lui revient plus."""
+    annonce = get_object_or_404(Annonce, pk=pk)
+    AnnonceVue.objects.get_or_create(utilisateur=request.user, annonce=annonce)
+    return JsonResponse({"ok": True})
 
 
 @require_POST

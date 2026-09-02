@@ -21,6 +21,7 @@ et du modèle utilisateur du projet, référencé par `settings.AUTH_USER_MODEL`
 8. [Données de démonstration](#8-données-de-démonstration)
 9. [Organisation des fichiers](#9-organisation-des-fichiers)
 10. [Limites connues](#10-limites-connues)
+11. [Annonces défilantes](#11-annonces-défilantes)
 
 ---
 
@@ -298,3 +299,40 @@ actualites/
 - **Contenu en texte seul.** Le corps de l'article n'accepte pas de mise en forme riche
   (gras, listes, titres). Les retours à la ligne deviennent des paragraphes et les
   adresses web saisies en clair deviennent des liens cliquables, par le filtre `urlize`.
+
+---
+
+## 11. Annonces défilantes
+
+Bandeau court qui défile en haut du site, indépendant des actualités. Chaque annonce
+porte un texte, un **lien facultatif** (où coller l'adresse concernée, sinon vide) et
+une **fenêtre d'affichage** (début et expiration).
+
+### 11.1 Modèles
+
+- `Annonce` : `texte`, `lien` (facultatif), `libelle_lien`, `ordre`, `date_debut`,
+  `date_fin`, `actif`. `Annonce.actives()` renvoie celles qui sont affichables
+  maintenant (actives, commencées, non expirées).
+- `AnnonceVue` : mémorise qu'un utilisateur connecté a acquitté une annonce (bouton
+  « J'ai vu »). Elle ne lui est alors plus réaffichée, sur aucun de ses appareils.
+
+### 11.2 Affichage
+
+Le context processor `config.context_processors.annonces` fournit `annonces_defilantes`
+à tous les gabarits ; le partiel `templates/partials/annonces_defilantes.html` (inclus
+dans `base.html`) trace le bandeau. Pour un connecté, les annonces déjà acquittées sont
+retirées de la liste. Les visiteurs anonymes voient toutes les annonces actives.
+
+### 11.3 Acquittement (« J'ai vu »)
+
+Le bouton envoie un POST sur `actualites:annonce_vue` (connecté requis), qui crée une
+ligne `AnnonceVue` puis retire l'annonce du bandeau. Une expiration (`date_fin`) masque
+l'annonce pour tout le monde ; un acquittement la masque pour ce seul utilisateur.
+
+### 11.4 Gestion
+
+Back-office : **Communication → Annonces défilantes** (`/bsb/actualites/annonces`), sous
+la permission `gerer_actualites`. Créer, modifier, afficher/masquer, supprimer.
+
+→ **Suivant :** l'assistant en lecture seule et son journal d'audit, dans
+[`assistant/README.md`](../../assistant/README.md).

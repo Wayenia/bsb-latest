@@ -148,6 +148,9 @@
             {% include 'partials/navbar.html' %}
         {% endif %}
 
+        {% comment %} Bandeau d'annonces defilantes (si des annonces sont actives) {% endcomment %}
+        {% include 'partials/annonces_defilantes.html' %}
+
         {% comment %} Messages Django globaux {% endcomment %}
         {% if messages %}
         <div class="fixed top-[80px] right-[20px] z-[9999] min-w-[300px] max-w-[420px]">

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Annonces défilantes | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-8 sm:py-10 px-4 md:px-6">
+  {% include 'partials/messages.html' %}
+
+  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">Annonces défilantes</h1>
+      <p class="text-sm text-bsb-muted mt-1">Bandeau en haut du site. {{ total_actives }} affichée{{ total_actives|pluralize }} actuellement.</p>
+    </div>
+    <a href="{% url 'bsb_actualites:annonce_create' %}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-bsb-primary text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-sm transition-all">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+      Nouvelle annonce
+    </a>
+  </div>
+
+  <div class="space-y-3">
+    {% for a in annonces %}
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-center gap-2 mb-1">
+          {% if a.visible %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200">Affichée</span>
+          {% elif not a.actif %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600">Masquée</span>
+          {% else %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">Programmée / expirée</span>
+          {% endif %}
+          {% if a.lien %}<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">avec lien</span>{% endif %}
+        </div>
+        <p class="font-bold text-bsb-ink truncate">{{ a.texte }}</p>
+        <p class="text-xs text-bsb-muted mt-0.5">
+          {% if a.date_debut %}Du {{ a.date_debut|date:"d/m/Y H:i" }}{% endif %}
+          {% if a.date_fin %} · expire le {{ a.date_fin|date:"d/m/Y H:i" }}{% else %} · sans expiration{% endif %}
+        </p>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <form method="post" action="{% url 'bsb_actualites:annonce_basculer' a.id %}">
+          {% csrf_token %}
+          <button type="submit" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-gray-200 text-bsb-ink hover:bg-gray-50 transition-colors">
+            {% if a.actif %}Masquer{% else %}Afficher{% endif %}
+          </button>
+        </form>
+        <a href="{% url 'bsb_actualites:annonce_update' a.id %}" class="px-3 py-1.5 text-xs font-bold rounded-lg text-yellow-700 bg-yellow-50 hover:bg-yellow-100 transition-colors">Modifier</a>
+        <form method="post" action="{% url 'bsb_actualites:annonce_delete' a.id %}" data-confirm="Supprimer cette annonce ?">
+          {% csrf_token %}
+          <button type="submit" class="px-3 py-1.5 text-xs font-bold rounded-lg text-red-700 bg-red-50 hover:bg-red-100 transition-colors">Supprimer</button>
+        </form>
+      </div>
+    </div>
+    {% empty %}
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
+      <p class="text-bsb-muted">Aucune annonce pour l'instant.</p>
+      <a href="{% url 'bsb_actualites:annonce_create' %}" class="mt-3 inline-block text-sm font-bold text-bsb-primary hover:underline">Créer la première</a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

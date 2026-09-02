@@ -84,6 +84,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.csp',
                 'config.context_processors.navigation',
+                'config.context_processors.annonces',
             ],
         },
     },

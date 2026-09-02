@@ -7,8 +7,8 @@ from django.views.decorators.http import require_POST
 
 from courses.permissions import require_permission
 
-from .forms import ActualiteForm
-from .models import AbonneNewsletter, Actualite
+from .forms import ActualiteForm, AnnonceForm
+from .models import AbonneNewsletter, Actualite, Annonce
 from .notifications import notifier_abonnes
 
 
@@ -116,3 +116,63 @@ def abonne_list(request):
         'total_actifs': total_actifs,
         'total_desabonnes': total_desabonnes,
     })
+
+
+# ─────────────────────────── Annonces défilantes ───────────────────────────
+
+@require_permission('actualites.gerer_actualites')
+def annonce_list(request):
+    annonces = Annonce.objects.all()
+    actives = [a for a in annonces if a.visible]
+    return render(request, 'admin/annonce/list.html', {
+        'annonces': annonces,
+        'total_actives': len(actives),
+    })
+
+
+@require_permission('actualites.gerer_actualites')
+def annonce_create(request):
+    if request.method == 'POST':
+        form = AnnonceForm(request.POST)
+        if form.is_valid():
+            annonce = form.save()
+            messages.success(request, f'Annonce « {annonce.texte} » enregistrée.')
+            return redirect('bsb_actualites:annonce_list')
+    else:
+        form = AnnonceForm()
+    return render(request, 'admin/annonce/form.html', {'form': form, 'action': 'Créer'})
+
+
+@require_permission('actualites.gerer_actualites')
+def annonce_update(request, id):
+    annonce = get_object_or_404(Annonce, id=id)
+    if request.method == 'POST':
+        form = AnnonceForm(request.POST, instance=annonce)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Annonce « {annonce.texte} » mise à jour.')
+            return redirect('bsb_actualites:annonce_list')
+    else:
+        form = AnnonceForm(instance=annonce)
+    return render(request, 'admin/annonce/form.html',
+                  {'form': form, 'action': 'Modifier', 'annonce': annonce})
+
+
+@require_permission('actualites.gerer_actualites')
+@require_POST
+def annonce_basculer(request, id):
+    annonce = get_object_or_404(Annonce, id=id)
+    annonce.actif = not annonce.actif
+    annonce.save(update_fields=['actif'])
+    messages.success(request, "Annonce affichée." if annonce.actif else "Annonce masquée.")
+    return redirect('bsb_actualites:annonce_list')
+
+
+@require_permission('actualites.gerer_actualites')
+@require_POST
+def annonce_delete(request, id):
+    annonce = get_object_or_404(Annonce, id=id)
+    texte = annonce.texte
+    annonce.delete()
+    messages.success(request, f'Annonce « {texte} » supprimée.')
+    return redirect('bsb_actualites:annonce_list')

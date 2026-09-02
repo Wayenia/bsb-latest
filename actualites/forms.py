@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Actualite, AbonneNewsletter
+from .models import Actualite, AbonneNewsletter, Annonce
 
 
 class AbonnementForm(forms.Form):
@@ -93,4 +93,41 @@ class ActualiteForm(forms.ModelForm):
         debut, fin = donnees.get("date_publication"), donnees.get("date_fin_publication")
         if debut and fin and fin <= debut:
             self.add_error("date_fin_publication", "La fin de publication doit être postérieure à la date de publication.")
+        return donnees
+
+
+class AnnonceForm(forms.ModelForm):
+    """Annonce du bandeau défilant : texte court, lien optionnel, fenêtre d'affichage."""
+    _INPUT = ("w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none "
+              "focus:ring-2 focus:ring-bsb-primary focus:border-bsb-primary transition-colors")
+
+    class Meta:
+        model = Annonce
+        fields = ["texte", "lien", "libelle_lien", "ordre", "date_debut", "date_fin", "actif"]
+        widgets = {
+            "texte": forms.TextInput(attrs={"placeholder": "Ex. : Les inscriptions 2026 sont ouvertes.", "maxlength": 200}),
+            "lien": forms.TextInput(attrs={"placeholder": "https://… ou /chemin/interne (optionnel)"}),
+            "libelle_lien": forms.TextInput(attrs={"placeholder": "En savoir plus", "maxlength": 60}),
+            "ordre": forms.NumberInput(attrs={"min": 0}),
+            "date_debut": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
+            "date_fin": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for nom, champ in self.fields.items():
+            if nom == "actif":
+                continue
+            champ.widget.attrs.setdefault("class", self._INPUT)
+        for nom_date in ("date_debut", "date_fin"):
+            self.fields[nom_date].input_formats = ["%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M:%S"]
+            self.fields[nom_date].required = False
+        self.fields["lien"].required = False
+        self.fields["libelle_lien"].required = False
+
+    def clean(self):
+        donnees = super().clean()
+        debut, fin = donnees.get("date_debut"), donnees.get("date_fin")
+        if debut and fin and fin <= debut:
+            self.add_error("date_fin", "L'expiration doit être postérieure au début d'affichage.")
         return donnees

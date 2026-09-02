@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} une annonce | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-8 sm:py-10 px-4 md:px-6">
+  {% include 'partials/messages.html' %}
+
+  <div class="mb-6 sm:mb-8">
+    <a href="{% url 'bsb_actualites:annonce_list' %}" class="inline-flex items-center gap-1.5 text-sm font-bold text-bsb-muted hover:text-bsb-primary transition-colors mb-4">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      Retour aux annonces
+    </a>
+    <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">{{ action }} une annonce défilante</h1>
+  </div>
+
+  <form method="post" class="bg-white border border-gray-200 rounded-2xl shadow-md p-5 sm:p-8 space-y-6">
+    {% csrf_token %}
+
+    <div>
+      <label for="{{ form.texte.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">Texte de l'annonce <span class="text-bsb-primary">*</span></label>
+      {{ form.texte }}
+      {% for e in form.texte.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ e }}</p>{% endfor %}
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="sm:col-span-2">
+        <label for="{{ form.lien.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">Lien (facultatif)</label>
+        {{ form.lien }}
+        <p class="mt-1.5 text-xs text-bsb-muted">Collez ici l'adresse concernée si elle existe. Sinon, laissez vide.</p>
+        {% for e in form.lien.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ e }}</p>{% endfor %}
+      </div>
+      <div>
+        <label for="{{ form.libelle_lien.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">Libellé du lien</label>
+        {{ form.libelle_lien }}
+        {% for e in form.libelle_lien.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ e }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div>
+        <label for="{{ form.ordre.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">Ordre</label>
+        {{ form.ordre }}
+      </div>
+      <div>
+        <label for="{{ form.date_debut.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">Début d'affichage</label>
+        {{ form.date_debut }}
+        <p class="mt-1.5 text-xs text-bsb-muted">Vide = tout de suite.</p>
+        {% for e in form.date_debut.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ e }}</p>{% endfor %}
+      </div>
+      <div>
+        <label for="{{ form.date_fin.id_for_label }}" class="block text-sm font-bold text-bsb-ink mb-2">Expiration</label>
+        {{ form.date_fin }}
+        <p class="mt-1.5 text-xs text-bsb-muted">Vide = sans expiration.</p>
+        {% for e in form.date_fin.errors %}<p class="mt-1.5 text-xs text-red-600 font-semibold">{{ e }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <label class="flex items-center gap-3 cursor-pointer">
+      {{ form.actif }}
+      <span class="text-sm font-bold text-bsb-ink">Afficher cette annonce</span>
+    </label>
+
+    <div class="flex flex-col sm:flex-row gap-3 pt-2">
+      <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-bsb-primary text-white font-bold rounded-xl hover:brightness-110 shadow-sm transition-all">
+        Enregistrer
+      </button>
+      <a href="{% url 'bsb_actualites:annonce_list' %}" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-bsb-ink font-bold rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
+        Annuler
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}
