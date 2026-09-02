@@ -65,8 +65,8 @@ cache, sauvegarde quotidienne).
 
 | Composant | Rôle | Technologie |
 |---|---|---|
-| Backend | Logique métier, pages web, formulaires | Django 5.2 (Python) |
-| Base de données | Stockage des données | PostgreSQL 15 |
+| Backend | Logique métier, pages web, formulaires | Django 6.1 (Python) |
+| Base de données | Stockage des données | PostgreSQL 18.6 |
 | Serveur d'application | Exécute Django en production | Gunicorn |
 | Reverse proxy | Reçoit les requêtes, sert les fichiers statiques | Nginx |
 | Feuilles de style | Mise en forme des pages | Tailwind CSS (compilé) |
@@ -110,10 +110,10 @@ Le fichier `docker-compose.yml` définit six services :
 | Service | Conteneur | Rôle | Accès depuis l'extérieur |
 |---|---|---|---|
 | `suudu_backend` | Django + Gunicorn | Traite les requêtes de l'application | Non (uniquement via nginx) |
-| `suudu_db` | PostgreSQL 15 | Stocke toutes les données | Non |
+| `suudu_db` | PostgreSQL 18.6 | Stocke toutes les données | Non |
 | `suudu_nginx` | Nginx | Sert les pages, les fichiers statiques et médias | Oui, port **80** |
 | `suudu_redis` | Redis | Compteur du verrou anti-force brute (voir 9.2) | Non |
-| `suudu_backup` | PostgreSQL 15 | Sauvegarde quotidienne de la base | Non |
+| `suudu_backup` | PostgreSQL 18.6 | Sauvegarde quotidienne de la base | Non |
 | `suudu_pgadmin` | pgAdmin | Interface d'administration de la base de données | Non exposé par défaut (voir 9.1) |
 
 Au démarrage, le conteneur `suudu_backend` exécute automatiquement, dans l'ordre :
