@@ -58,10 +58,12 @@ def navigation(request):
         and _est_agent(utilisateur)
         and request.path.startswith(PREFIXES_ESPACE_AGENT)
     )
+    label = getattr(settings, 'ENV_LABEL', '')
     if not actif:
-        return {'bo_sidebar': False, 'assistant_dispo': dispo}
+        return {'bo_sidebar': False, 'assistant_dispo': dispo, 'env_label': label}
     return {
         'bo_sidebar': True,
         'bo_menu': construire_menu(utilisateur, request.path),
         'assistant_dispo': dispo,
+        'env_label': label,
     }

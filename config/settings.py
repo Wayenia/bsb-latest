@@ -276,6 +276,9 @@ DOC_MODELE = env('DOC_MODELE', default='officiel')
 
 # Assistant IA local (application `assistant`), lecture seule. 'off' par defaut.
 # Reversible sans redeploiement via ./bascule_ai.sh (assistant/README.md).
+# Bandeau d'environnement (ex: "STAGING"). Vide en prod = aucun bandeau.
+ENV_LABEL = env('ENV_LABEL', default='')
+
 AI_MODULE = env('AI_MODULE', default='off')
 AI_OLLAMA_URL = env('AI_OLLAMA_URL', default='http://suudu_ollama:11434')
 AI_MODEL = env('AI_MODEL', default='qwen2:0.5b')

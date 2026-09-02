@@ -43,3 +43,8 @@ backups/
 zzzzdocs/
 current_context.txt
 rapport_audit_demo.xlsx
+
+# Environnement de staging (non versionne)
+media_staging/
+backups_staging/
+*.bak

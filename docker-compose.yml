@@ -1,18 +1,18 @@
 services:
   suudu_backend:
     build: .
-    container_name: suudu_backend
+    container_name: suudu_backend${COMPOSE_SUFFIX:-}
     restart: unless-stopped
     volumes:
       - .:/app
       # Volume nomme et non bind mount : initialise avec les droits de l'image,
       # donc inscriptible par appuser (README 9).
       - suudu_staticfiles:/app/staticfiles
-      - ./media:/app/media
+      - ${MEDIA_DIR:-./media}:/app/media
       - suudu_security_logs:/app/logs
     command: ["./entrypoint.sh"]
     env_file:
-      - .env
+      - ${ENV_FILE:-.env}
     environment:
       - HOST_IP=${HOST_IP:-}
     depends_on:
@@ -31,7 +31,7 @@ services:
 
   suudu_db:
     image: postgres:18.6-trixie
-    container_name: suudu_db
+    container_name: suudu_db${COMPOSE_SUFFIX:-}
     volumes:
       - suudu_postgres_data_18:/var/lib/postgresql/data
     environment:
@@ -56,13 +56,13 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
-    container_name: suudu_nginx
+    container_name: suudu_nginx${COMPOSE_SUFFIX:-}
     restart: unless-stopped
     ports:
-      - 80:80
+      - "${WEB_PORT:-80}:80"
     volumes:
       - suudu_staticfiles:/app/staticfiles:ro
-      - ./media:/app/media:ro
+      - ${MEDIA_DIR:-./media}:/app/media:ro
     depends_on:
       suudu_backend:
         condition: service_healthy
@@ -71,7 +71,7 @@ services:
 
   suudu_redis:
     image: redis:bookworm
-    container_name: suudu_redis
+    container_name: suudu_redis${COMPOSE_SUFFIX:-}
     restart: unless-stopped
     volumes:
       - suudu_redis_data:/data
@@ -81,12 +81,12 @@ services:
 
   suudu_pgadmin:
     image: dpage/pgadmin4:snapshot
-    container_name: suudu_pgadmin
+    container_name: suudu_pgadmin${COMPOSE_SUFFIX:-}
     restart: unless-stopped
     volumes:
       - suudu_pgadmin_data:/var/lib/pgadmin
     env_file:
-      - .env
+      - ${ENV_FILE:-.env}
     depends_on:
       - suudu_db
     networks:
@@ -96,7 +96,7 @@ services:
   # Aucune restauration automatique : elle passe par ./db_restore.sh (README 7).
   suudu_backup:
     image: postgres:18.6-trixie
-    container_name: suudu_backup
+    container_name: suudu_backup${COMPOSE_SUFFIX:-}
     restart: unless-stopped
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD}
@@ -105,7 +105,7 @@ services:
       BACKUP_INTERVAL: ${BACKUP_INTERVAL:-86400}
       BACKUP_RETENTION: ${BACKUP_RETENTION:-14}
     volumes:
-      - ./backups:/backups
+      - ${BACKUP_DIR:-./backups}:/backups
     depends_on:
       suudu_db:
         condition: service_healthy
@@ -135,7 +135,7 @@ services:
   # echeance), donc une verification frequente est sans risque (README 9.5).
   suudu_audit:
     build: .
-    container_name: suudu_audit
+    container_name: suudu_audit${COMPOSE_SUFFIX:-}
     restart: unless-stopped
     volumes:
       - .:/app
@@ -143,7 +143,7 @@ services:
       # ecrit dans /app/logs, sinon toute commande manage.py echoue au demarrage.
       - suudu_security_logs:/app/logs
     env_file:
-      - .env
+      - ${ENV_FILE:-.env}
     environment:
       - AUDIT_SCAN_INTERVAL=${AUDIT_SCAN_INTERVAL:-3600}
     depends_on:
@@ -165,7 +165,7 @@ services:
   # (via ./bascule_ai.sh). Aucun port expose : joignable seulement en interne.
   suudu_ollama:
     image: ollama/ollama:latest
-    container_name: suudu_ollama
+    container_name: suudu_ollama${COMPOSE_SUFFIX:-}
     restart: unless-stopped
     profiles: ["ai"]
     volumes:
@@ -182,6 +182,7 @@ volumes:
   suudu_staticfiles:
   
 networks:
+  # Pas de nom fixe : Compose prefixe le reseau par projet, ce qui isole
+  # automatiquement un 2e stack (staging) de la prod (voir staging.sh).
   suudu_net:
     driver: bridge
-    name: suudu_network

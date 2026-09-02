@@ -130,6 +130,13 @@
 <body class="bg-gray-50">
 {% block body %}
 
+    {% if env_label %}
+    {% comment %} Bandeau d'environnement (staging) : jamais en prod (ENV_LABEL vide). {% endcomment %}
+    <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9999] px-4 py-1.5 rounded-full bg-amber-400 text-amber-950 text-xs font-bold shadow-lg ring-1 ring-amber-600/40 pointer-events-none">
+      ⚠ {{ env_label }}
+    </div>
+    {% endif %}
+
     {% if not request.path|slice:"0:7" == "/admin/" %}
         {% comment %}Navigation du back-office : laterale ou horizontale selon
         BO_NAVIGATION, expose par config.context_processors.navigation. Aucun
