@@ -794,6 +794,32 @@ explicitement l'origine rejetée (« Origin checking failed »). **Correction** 
 ajouter cette origine exacte, avec son protocole, à `CSRF_TRUSTED_ORIGINS` et
 `CORS_ALLOWED_ORIGINS`, puis recréer le conteneur (`docker compose up -d`).
 
+### `password authentication failed for user "postgres"` (le conteneur `suudu_backend` redémarre en boucle)
+
+Le mot de passe de `.env` et celui réellement enregistré dans le volume
+PostgreSQL ont divergé. PostgreSQL ne lit `POSTGRES_PASSWORD` qu'à la **première
+initialisation** du volume : toute modification ultérieure de `.env` (nouveau
+`.env` régénéré par `deploy.sh`, restauration d'une sauvegarde, changement
+manuel) laisse le mot de passe du rôle inchangé dans la base, et le backend ne
+peut plus se connecter.
+
+**Vérification** : `docker compose logs suudu_backend | tail -5` se termine par
+`django.db.utils.OperationalError: ... password authentication failed for user "postgres"`.
+
+**Correction — ne jamais supprimer le volume, les données seraient perdues.**
+Réaligner le mot de passe du rôle sur celui de `.env` (la commande lit la valeur
+dans l'environnement du conteneur, le mot de passe n'apparaît donc ni à l'écran
+ni dans l'historique du shell) :
+
+```bash
+docker compose exec -T suudu_db sh -c \
+  "printf \"ALTER USER postgres WITH PASSWORD :'pw';\n\" | psql -U postgres -v ON_ERROR_STOP=1 -v pw=\"\$POSTGRES_PASSWORD\""
+docker compose up -d
+```
+
+La réponse attendue est `ALTER ROLE`. Le backend redevient sain en une trentaine
+de secondes ; `suudu_nginx`, qui attend sa bonne santé, démarre alors seul.
+
 ### « Ce site présente un certificat incorrect » (avertissement du navigateur/antivirus)
 
 Ce message ne concerne **pas** le code de cette application (aucun certificat n'y

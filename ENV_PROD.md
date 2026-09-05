@@ -10,7 +10,9 @@ défaut sûre dans le code (à ajouter seulement si on veut changer le défaut).
 
 Avertissement : ne jamais régénérer le `.env` sur un volume PostgreSQL déjà
 peuplé. PostgreSQL ne prend le mot de passe qu'à la première initialisation ;
-un nouveau `.env` provoque `password authentication failed` (voir CLAUDE.md).
+un nouveau `.env` provoque `password authentication failed`. Si le cas se
+présente, ne pas supprimer le volume : la procédure de réalignement du mot de
+passe, sans perte de données, est décrite au README section 10.
 
 ---
 
