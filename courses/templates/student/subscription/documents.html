@@ -25,8 +25,13 @@
           <div class="text-sm font-medium text-slate-700">{{ career.duree_display }} </div>
         </div>
         <div>
+          {% if career.est_reconversion %}
+          <div class="text-xs text-slate-400 mb-1">Ville</div>
+          <div class="text-sm font-medium text-slate-700">{{ career.centre.province.chef_lieu|default:career.centre.province.nom_province }}</div>
+          {% else %}
           <div class="text-xs text-slate-400 mb-1">Centre</div>
           <div class="text-sm font-medium text-slate-700">{{ career.centre.nom_centre }}, {{ career.centre.province.nom_province }}</div>
+          {% endif %}
         </div>
         <div>
           <div class="text-xs text-slate-400 mb-1">Titre Professionnel</div>

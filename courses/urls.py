@@ -108,6 +108,11 @@ urlpatterns = [
          views.stats_download_quittance_view,
          name='stats_download_quittance'),
 
+    # ── Quittance groupée (règlement intégral, ex. Reconversion) ──────────────
+    path('statistiques/paiement/quittance-groupe/<uuid:groupe_id>/pdf/',
+         views.stats_download_quittance_groupe_view,
+         name='stats_download_quittance_groupe'),
+
     # ── Statistiques réelles (effectifs formés + liste nominative) ───────────
     path('statistiques-reelles/',
          views_stats_reel.stats_reel_dashboard,

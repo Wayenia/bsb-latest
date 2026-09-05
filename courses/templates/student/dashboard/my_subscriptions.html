@@ -41,7 +41,7 @@
             <div class="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-bsb-muted">
               <span class="inline-flex items-center gap-1.5">
                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                {{ subscription.formation.centre.nom_centre }}
+                {% if subscription.est_reconversion %}{{ subscription.formation.centre.province.chef_lieu }}{% else %}{{ subscription.formation.centre.nom_centre }}{% endif %}
               </span>
               <span class="inline-flex items-center gap-1.5">
                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -130,8 +130,13 @@
                   <dd class="font-semibold text-bsb-ink text-right">DOSS-{{ subscription.id|stringformat:"06d" }}</dd>
                 </div>
                 <div class="flex justify-between gap-3 sm:col-span-2">
+                  {% if subscription.est_reconversion %}
+                  <dt class="text-bsb-muted">Ville</dt>
+                  <dd class="font-semibold text-bsb-ink text-right">{{ subscription.formation.centre.province.chef_lieu }}</dd>
+                  {% else %}
                   <dt class="text-bsb-muted">Centre</dt>
                   <dd class="font-semibold text-bsb-ink text-right">{{ subscription.formation.centre.nom_centre }}</dd>
+                  {% endif %}
                 </div>
               </dl>
 

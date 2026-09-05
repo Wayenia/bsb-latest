@@ -46,7 +46,9 @@ from django.conf import settings
 
 ############### STUDENT LEVEL #############
 
-# SUBSCRIBE SELECTION : annee scolaire -> centre -> metier
+# SUBSCRIBE SELECTION :
+#   - Formation    : annee -> type programme -> centre -> metier (parcours historique)
+#   - Reconversion : annee -> type programme -> ville -> pack (centre masque)
 def _param_id(request, nom):
     """Retourne l'identifiant s'il est un entier, sinon '' : un paramètre non
     numérique (ex. '../../etc/passwd') ne doit pas atteindre le filtre SQL."""
@@ -54,49 +56,90 @@ def _param_id(request, nom):
     return valeur if valeur.isdigit() else ''
 
 
+# Programmes ouverts au parcours d'inscription apprenant. « vacances_utiles »
+# existe à la création d'une formation mais n'a pas encore de parcours dédié.
+TYPES_PROGRAMME_INSCRIPTION = ('formation', 'reconversion')
+
+
 def subscribe_selection_view(request):
     annees = AnneeScolaire.objects.all()
     centres = CentreFormation.objects.all()
 
-    # Retour sans parametre GET : on retrouve annee/centre/metier depuis la
-    # formation memorisee en session plutot que de tout vider.
+    reset_params = {'annee', 'centre', 'type_programme', 'ville'}
     session_career = None
-    if 'annee' not in request.GET and 'centre' not in request.GET:
+    if reset_params.isdisjoint(request.GET.keys()):
         session_career_id = request.session.get('career_id')
         if session_career_id:
-            session_career = CentreEtFiliere.objects.filter(id=session_career_id).select_related('filiere').first()
+            session_career = (
+                CentreEtFiliere.objects.filter(id=session_career_id)
+                .select_related('filiere', 'centre__province').first()
+            )
 
+    # ── Année ────────────────────────────────────────────────────────────
     if 'annee' in request.GET:
-        # Choix explicite de l'utilisateur (y compris "revenir à ---Sélectionnez---") : respecté tel quel.
         selected_annee_id = _param_id(request, 'annee')
     elif session_career:
         selected_annee_id = str(session_career.annee_prog_id or '')
     else:
-        # Premier chargement de la page : présélectionner l'année scolaire la plus récente.
         derniere_annee = AnneeScolaire.objects.order_by('-date_creation').first()
         selected_annee_id = str(derniere_annee.id) if derniere_annee else ''
 
-    if session_career and 'centre' not in request.GET:
-        selected_centre_id = str(session_career.centre_id or '')
+    # ── Type de programme ────────────────────────────────────────────────
+    if 'type_programme' in request.GET:
+        selected_type_programme = request.GET.get('type_programme') or 'formation'
+    elif session_career and session_career.type_programme in TYPES_PROGRAMME_INSCRIPTION:
+        selected_type_programme = session_career.type_programme
     else:
-        selected_centre_id = _param_id(request, 'centre')
+        selected_type_programme = 'formation'
+    if selected_type_programme not in TYPES_PROGRAMME_INSCRIPTION:
+        selected_type_programme = 'formation'
+
+    # Offres actives, dans les délais, pour l'année choisie.
+    base_qs = CentreEtFiliere.objects.filter(is_active=True)
+    if selected_annee_id:
+        base_qs = base_qs.filter(annee_prog_id=selected_annee_id)
+    base_qs = base_qs.filter(
+        Q(date_limite_inscription__isnull=True) | Q(date_limite_inscription__gte=timezone.now())
+    )
+    reconversion_qs = base_qs.filter(type_programme='reconversion')
+    reconversion_dispo = bool(selected_annee_id) and reconversion_qs.exists()
+    if selected_type_programme == 'reconversion' and not reconversion_dispo:
+        selected_type_programme = 'formation'
+
+    villes = []
+    selected_ville = ''
+    selected_centre_id = ''
+    careers = []
+
+    if selected_type_programme == 'reconversion':
+        villes = sorted({
+            v.strip() for v in reconversion_qs.values_list('centre__province__chef_lieu', flat=True)
+            if v and v.strip()
+        })
+        if 'ville' in request.GET:
+            selected_ville = (request.GET.get('ville') or '').strip()
+        elif session_career and session_career.est_reconversion and session_career.centre.province:
+            selected_ville = (session_career.centre.province.chef_lieu or '').strip()
+        if selected_ville:
+            careers = (
+                reconversion_qs.filter(centre__province__chef_lieu=selected_ville)
+                .select_related('filiere').prefetch_related('frais_set')
+                .annotate(total_frais=Sum('frais__montant'))
+            )
+    else:
+        # Parcours historique — packs Reconversion et Vacances utiles exclus.
+        if session_career and 'centre' not in request.GET and not session_career.est_reconversion:
+            selected_centre_id = str(session_career.centre_id or '')
+        else:
+            selected_centre_id = _param_id(request, 'centre')
+        if selected_annee_id and selected_centre_id:
+            careers = (
+                base_qs.filter(centre_id=selected_centre_id, type_programme='formation')
+                .select_related('filiere').prefetch_related('frais_set')
+                .annotate(total_frais=Sum('frais__montant'))
+            )
 
     selected_career_id = str(session_career.id) if session_career else ''
-
-    careers = []
-    if selected_annee_id and selected_centre_id:
-        careers = (
-            CentreEtFiliere.objects
-            .filter(
-                is_active=True,
-                annee_prog_id=selected_annee_id,
-                centre_id=selected_centre_id,
-            )
-            .filter(Q(date_limite_inscription__isnull=True) | Q(date_limite_inscription__gte=timezone.now()))
-            .select_related('filiere')
-            .prefetch_related('frais_set')
-            .annotate(total_frais=Sum('frais__montant'))
-        )
 
     careers_data = [
         {
@@ -116,6 +159,10 @@ def subscribe_selection_view(request):
         'annees': annees,
         'centres': centres,
         'selected_annee_id': selected_annee_id,
+        'selected_type_programme': selected_type_programme,
+        'reconversion_dispo': reconversion_dispo,
+        'villes': villes,
+        'selected_ville': selected_ville,
         'selected_centre_id': selected_centre_id,
         'selected_career_id': selected_career_id,
         'careers': careers,
@@ -464,6 +511,18 @@ def effectuer_paiment(request, id):
     if dette.reste_a_payer() <= 0:
         messages.warning(request, "Cette dette est déjà soldée.")
         return redirect('courses:liste_dettes', id=dette.inscription.id)
+
+    # Reconversion : l'inscription se règle en une seule fois, tous frais
+    # confondus — pas de paiement dette par dette.
+    if dette.inscription.paiement_integral_obligatoire:
+        messages.error(
+            request,
+            "Cette inscription (Reconversion) se règle en une seule fois, tous frais confondus, "
+            "via « Régler l'inscription »."
+        )
+        return redirect(
+            f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}"
+        )
 
     # Ordre de paiement : la tranche primordiale d'une autre dette de la même
     # inscription doit être intégralement réglée avant celle-ci.
@@ -1422,6 +1481,13 @@ def gerer_inscription(request,id):
      if request.method == 'POST':
          action=request.POST.get('action')
          if action == 'valide':
+             if (subscription.formation and subscription.formation.est_reconversion
+                     and not request.user.has_perm('courses.valider_inscription_reconversion')):
+                 messages.error(
+                     request,
+                     "Vous n'avez pas la permission de valider une inscription en programme Reconversion."
+                 )
+                 return redirect("courses:valide_inscription")
              if subscription.formation and subscription.formation.type_formation == 'initiale':
                  conflit = Inscription.objects.filter(
                      eleve=subscription.eleve,
@@ -2934,6 +3000,19 @@ def stats_dettes_eleve_view(request, eleve_id):
             _reste_blocage(dette_bloquante, tranche_bloquante) if dette_bloquante else 0
         )
 
+        # Reconversion : le règlement intégral produit un lot de paiements
+        # partageant un groupe_id → une seule quittance groupée à télécharger.
+        quittance_groupe_id = None
+        if insc.est_reconversion and insc_reste <= 0 and insc_paye > 0:
+            dernier = max(
+                (p for d in insc.dettes.all() for p in d.paiements.all()
+                 if not p.annule and p.groupe_id),
+                key=lambda p: p.date_paiement,
+                default=None,
+            )
+            if dernier:
+                quittance_groupe_id = dernier.groupe_id
+
         inscriptions_dettes.append({
             'inscription': insc,
             'dettes': dettes_data,
@@ -2942,6 +3021,7 @@ def stats_dettes_eleve_view(request, eleve_id):
             'total_reste': insc_reste,
             'dossier_impaye': dossier_impaye,
             'primordiale_bloquante_reste': primordiale_bloquante_reste,
+            'quittance_groupe_id': quittance_groupe_id,
         })
 
     return render(request, 'member/statistiques/stats_dettes_eleve.html', {
@@ -3055,6 +3135,14 @@ def stats_encaisser_solde_dette_view(request, dette_id):
 
     redirect_url = f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}"
 
+    if dette.inscription.paiement_integral_obligatoire:
+        messages.error(
+            request,
+            "Cette inscription (Reconversion) se règle en une seule fois, tous frais confondus, "
+            "via « Régler l'inscription »."
+        )
+        return redirect(redirect_url)
+
     dette_bloquante, tranche_bloquante = dette.inscription.dette_et_tranche_bloquantes()
     if dette_bloquante and dette_bloquante.id != dette.id:
         messages.error(
@@ -3139,20 +3227,26 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
 
     redirect_url = f"{reverse('courses:stats_dettes_eleve', args=[inscription.eleve_id])}?inscription={inscription.id}"
 
-    # Le frais de dossier se regle integralement par son propre bouton ; solder
-    # l'inscription n'est possible qu'ensuite.
-    dette_dossier_impayee = next(
-        (d for d in inscription.dettes.all()
-         if d.frais_formation.type_frais.est_frais_de_dossier and d.reste_a_payer() > 0),
-        None
-    )
-    if dette_dossier_impayee:
-        messages.error(
-            request,
-            f"Réglez d'abord entièrement le frais de dossier « {dette_dossier_impayee.frais_formation.type_frais} » "
-            "(bouton « Solder ce frais ») avant de pouvoir solder l'inscription."
+    # Reconversion : tous les frais (dossier compris) se règlent d'un seul
+    # versement — on ne passe donc PAS par le préalable « frais de dossier
+    # d'abord » et on exige le montant exact plus bas.
+    integral = inscription.paiement_integral_obligatoire
+
+    if not integral:
+        # Le frais de dossier se regle integralement par son propre bouton ; solder
+        # l'inscription n'est possible qu'ensuite.
+        dette_dossier_impayee = next(
+            (d for d in inscription.dettes.all()
+             if d.frais_formation.type_frais.est_frais_de_dossier and d.reste_a_payer() > 0),
+            None
         )
-        return redirect(redirect_url)
+        if dette_dossier_impayee:
+            messages.error(
+                request,
+                f"Réglez d'abord entièrement le frais de dossier « {dette_dossier_impayee.frais_formation.type_frais} » "
+                "(bouton « Solder ce frais ») avant de pouvoir solder l'inscription."
+            )
+            return redirect(redirect_url)
 
     mode = request.POST.get('mode_paiement', 'espece')
     montant_str = request.POST.get('montant_paiement', '').strip()
@@ -3170,6 +3264,14 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
     reste_total = sum(max(d.reste_a_payer(), 0) for d in dettes)
     if montant > reste_total:
         messages.error(request, f"Le montant saisi ({montant:,.0f} FCFA) dépasse le reste dû total ({reste_total:,.0f} FCFA).")
+        return redirect(redirect_url)
+
+    if integral and abs(montant - reste_total) >= 0.5:
+        messages.error(
+            request,
+            f"Une inscription Reconversion se règle intégralement en une seule fois "
+            f"(montant dû : {reste_total:,.0f} FCFA)."
+        )
         return redirect(redirect_url)
 
     # La dette bloquante est traitee en premier, comme dans l'encaissement
@@ -3261,6 +3363,16 @@ def stats_detail_dette_view(request, dette_id):
     if request.method == 'POST':
         if not (request.user.is_superuser or request.user.has_perm('courses.encaisser_paiement')):
             raise PermissionDenied("Vous n'avez pas la permission d'encaisser un paiement.")
+
+        if dette.inscription.paiement_integral_obligatoire:
+            messages.error(
+                request,
+                "Cette inscription (Reconversion) se règle en une seule fois, tous frais confondus, "
+                "via « Régler l'inscription »."
+            )
+            return redirect(
+                f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}"
+            )
 
         # Ordre de paiement : la tranche primordiale d'une autre dette de la
         # même inscription doit être intégralement réglée avant celle-ci.
@@ -3679,6 +3791,85 @@ def stats_download_quittance_view(request, paiement_id):
         f'attachment; filename="quittance_{paiement.numero_quittance}.pdf"'
     )
     return response
+
+
+# ── QUITTANCE GROUPÉE (règlement intégral, ex. inscription Reconversion) ──────
+def _quittance_groupe_officielle_pdf(request, paiements):
+    """Quittance unique regroupant tous les versements d'un même lot
+    d'encaissement (`groupe_id`) : une ligne par type de frais, un total. Sert
+    au règlement intégral d'une inscription Reconversion."""
+    from accounts.utils import montant_en_lettres
+
+    premier = paiements[0]
+    inscription = premier.dette.inscription
+    eleve = inscription.eleve
+    centre = inscription.formation.centre
+    fcfa = lambda v: f"{v:,.0f} FCFA".replace(",", " ")
+    montant_lettres = lambda v: f"{montant_en_lettres(v)} ({fcfa(v)})"
+
+    total_paye = sum(p.montant_paiement for p in paiements)
+    dettes_vues = {}
+    for p in paiements:
+        dettes_vues.setdefault(p.dette_id, p.dette)
+    total_du = sum(d.montant_total for d in dettes_vues.values())
+
+    qr_texte = f"BSB|QUIT|{premier.numero_quittance}|{total_paye:.0f}|{premier.date_paiement:%d%m%Y}"
+    contexte = {
+        'qr_uri': _qr_data_uri(qr_texte),
+        'annulee': False,
+        'titre': "Quittance de paiement — règlement intégral",
+        'numero_libelle': "Quittance n°", 'numero': premier.numero_quittance,
+        'date': premier.date_paiement.strftime('%d/%m/%Y à %H:%M'),
+        'partie_gauche': {'titre': "Apprenant", 'lignes': [
+            f"{eleve.nom} {eleve.prenom}", f"Matricule : {eleve.matricule or '—'}",
+            str(centre), str(inscription.formation.filiere),
+            f"Année : {inscription.annee_scolaire}"]},
+        'partie_droite': {'titre': "Bénéficiaire", 'lignes': [
+            "Burkina Suudu Bawdè", str(centre),
+            centre.direction.nom_direction if centre and centre.direction else ""]},
+        'colonnes': [{'libelle': "Type de frais"},
+                     {'libelle': "Montant dû", 'num': True}, {'libelle': "Montant payé", 'num': True}],
+        'lignes': [[
+            {'valeur': p.dette.frais_formation.type_frais.libelle},
+            {'valeur': fcfa(p.dette.montant_total), 'num': True},
+            {'valeur': fcfa(p.montant_paiement), 'num': True}] for p in paiements],
+        'total': fcfa(total_paye),
+        'reglement': [
+            ("Mode de règlement", premier.get_mode_paiement_display()),
+            ("Total dû", fcfa(total_du)),
+            ("Total payé", fcfa(total_paye)),
+            ("Reste à payer", fcfa(max(total_du - total_paye, 0))),
+        ],
+        'formule': f"Arrêtée la présente quittance à la somme de {montant_lettres(total_paye)}.",
+    }
+    return _document_officiel_pdf(request, contexte)
+
+
+@login_required
+def stats_download_quittance_groupe_view(request, groupe_id):
+    from django.http import Http404
+
+    paiements = list(
+        Paiement.objects.filter(groupe_id=groupe_id, annule=False)
+        .select_related(
+            'dette__inscription__eleve',
+            'dette__inscription__formation__filiere',
+            'dette__inscription__formation__centre__direction',
+            'dette__inscription__annee_scolaire',
+            'dette__frais_formation__type_frais',
+        )
+        .order_by('date_paiement', 'id')
+    )
+    if not paiements:
+        raise Http404("Aucun versement pour ce lot d'encaissement.")
+
+    if not _can_access_dette_finances(request.user, paiements[0].dette):
+        raise PermissionDenied("Vous n'avez pas accès à cette quittance.")
+
+    reponse = HttpResponse(_quittance_groupe_officielle_pdf(request, paiements), content_type='application/pdf')
+    reponse['Content-Disposition'] = f'attachment; filename="quittance_{paiements[0].numero_quittance}.pdf"'
+    return reponse
+
 
 # courses/views/center_views.py
 

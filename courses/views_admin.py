@@ -711,6 +711,13 @@ def gerer_inscription(request,id):
      if request.method == 'POST':
          action=request.POST.get('action')
          if action == 'valide':
+             if (subscription.formation and subscription.formation.est_reconversion
+                     and not request.user.has_perm('courses.valider_inscription_reconversion')):
+                 messages.error(
+                     request,
+                     "Vous n'avez pas la permission de valider une inscription en programme Reconversion."
+                 )
+                 return redirect("bsb_admin:subscription_en_cours")
              if subscription.formation and subscription.formation.type_formation == 'initiale':
                  conflit = Inscription.objects.filter(
                      eleve=subscription.eleve,
@@ -1522,6 +1529,7 @@ MATRIX_PERMISSIONS = [
     ('voir_historique_connexion', "Voir l'historique des connexions", 'accounts', 'Comptes et accès'),
     ('voir_inscriptions', "Voir les candidatures", 'courses', 'Inscriptions'),
     ('valider_inscription', "Valider une candidature", 'courses', 'Inscriptions'),
+    ('valider_inscription_reconversion', "Valider une candidature en programme Reconversion", 'courses', 'Inscriptions'),
     ('rejeter_inscription', "Rejeter une candidature", 'courses', 'Inscriptions'),
     ('encaisser_paiement', "Encaisser un paiement", 'courses', 'Paiements de scolarité'),
     ('gerer_paiements', "Modifier/supprimer un paiement", 'courses', 'Paiements de scolarité'),

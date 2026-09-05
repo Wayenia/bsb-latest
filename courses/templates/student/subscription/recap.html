@@ -28,7 +28,11 @@
           <div><dt class="text-xs text-bsb-muted mb-0.5">Métier</dt><dd class="font-semibold text-bsb-ink">{{ career.filiere.nom_filiere }}</dd></div>
           <div><dt class="text-xs text-bsb-muted mb-0.5">Durée</dt><dd class="font-semibold text-bsb-ink">{{ career.duree_display }}</dd></div>
           <div><dt class="text-xs text-bsb-muted mb-0.5">Titre professionnel</dt><dd class="font-semibold text-bsb-ink">{{ career.filiere.get_titre_professionnel_display }}</dd></div>
+          {% if career.est_reconversion %}
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Programme</dt><dd class="font-semibold text-bsb-ink">Reconversion</dd></div>
+          {% else %}
           <div><dt class="text-xs text-bsb-muted mb-0.5">Centre de formation</dt><dd class="font-semibold text-bsb-ink">{{ career.centre.nom_centre }}</dd></div>
+          {% endif %}
           <div><dt class="text-xs text-bsb-muted mb-0.5">Ville</dt><dd class="font-semibold text-bsb-ink">{{ career.centre.province.chef_lieu }}</dd></div>
         </dl>
       </section>

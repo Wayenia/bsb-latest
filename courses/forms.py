@@ -3,7 +3,7 @@ from datetime import date
 from django import forms
 from django.contrib.auth.password_validation import validate_password
 from .models import (
-    TITRE_PROFESSIONNEL_CHOICE, Direction_reg, Filiere, CentreFormation, Module,
+    TITRE_PROFESSIONNEL_CHOICE, TYPE_PROGRAMME_CHOICE, Direction_reg, Filiere, CentreFormation, Module,
     Frais, Cours, Inscription, Paiement, CentreEtFiliere,PieceJointeInscription,TypeFrais,
     AnneeScolaire, TrancheFrais, Region, DG, Membre
 )
@@ -357,6 +357,15 @@ class PaiementAdminForm(BaseModelForm):
         self.fields['tranche_frais'].empty_label = 'Aucune'
         self.fields['numero_quittance'].required = False
 
+    def clean_dette(self):
+        dette = self.cleaned_data.get('dette')
+        if dette and dette.inscription and dette.inscription.paiement_integral_obligatoire:
+            raise forms.ValidationError(
+                "Inscription Reconversion : le règlement se fait en une seule fois via "
+                "l'écran « Régler l'inscription », pas par un paiement manuel sur une dette."
+            )
+        return dette
+
 
 ############### ADMIN LEVEL #############
 
@@ -664,10 +673,11 @@ class CoursForm(BaseModelForm):
 class CentreEtFiliereForm(BaseModelForm):
     class Meta:
         model = CentreEtFiliere
-        fields = ['centre', 'type_formation', 'filiere', 'is_active', 'communique', 'annee_prog', 'date_lancement', 'duree_jours', 'date_limite_inscription']
+        fields = ['centre', 'type_formation', 'type_programme', 'filiere', 'is_active', 'communique', 'annee_prog', 'date_lancement', 'duree_jours', 'date_limite_inscription']
         labels = {
             'centre': 'Centre de formation',
             'type_formation': 'Type de formation',
+            'type_programme': 'Type de programme',
             'filiere': 'Métier',           # ← "filière" → "Métier"
             'is_active': 'Actif',
             'communique': 'Communiqué',
@@ -679,6 +689,7 @@ class CentreEtFiliereForm(BaseModelForm):
         widgets = {
             'centre': forms.Select(attrs={'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all cursor-pointer'}),
             'type_formation': forms.Select(attrs={'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all cursor-pointer'}),
+            'type_programme': forms.Select(attrs={'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all cursor-pointer'}),
             'filiere': forms.Select(attrs={'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all cursor-pointer'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'sr-only peer'}),
             'communique': forms.FileInput(attrs={
@@ -705,6 +716,11 @@ class CentreEtFiliereForm(BaseModelForm):
         self.fields['type_formation'].empty_label = "Sélectionnez un type de formation"
         self.fields['filiere'].empty_label = "Sélectionnez un métier"
         self.fields['annee_prog'].empty_label = "Sélectionnez une année"
+        # Obligatoire et sans présélection : l'agent doit choisir le programme.
+        self.fields['type_programme'].required = True
+        self.fields['type_programme'].choices = (
+            [('', 'Sélectionnez un type de programme')] + list(TYPE_PROGRAMME_CHOICE)
+        )
         # Portée (ex: un Directeur Inter-régional ne doit programmer que dans
         # les centres de sa propre direction) — non restreint par défaut.
         if centre_queryset is not None:

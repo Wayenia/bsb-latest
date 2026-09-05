@@ -321,6 +321,13 @@
       {% comment %} BOUTONS DE CONFIRMATION {% endcomment %}
      <div class="flex flex-col sm:flex-row sm:items-center justify-center gap-4">
           {% comment %} Valider : POST direct {% endcomment %}
+          {% if detail.formation.est_reconversion and not perms.courses.valider_inscription_reconversion %}
+          <button type="button" disabled
+                  title="Vous n'avez pas la permission de valider une inscription en programme Reconversion."
+                  class="px-8 py-3 text-gray-400 text-base font-medium rounded-sm bg-gray-200 cursor-not-allowed">
+            Valider
+          </button>
+          {% else %}
           <form method="POST" action="{% url 'bsb_admin:gerer_subscription' detail.id %}">
             {% csrf_token %}
             <input type="hidden" name="action" value="valide">
@@ -329,6 +336,7 @@
               Valider
             </button>
           </form>
+          {% endif %}
 
           {% comment %} Rejeter : simple lien vers la page motif {% endcomment %}
           <a href="{% url 'bsb_admin:rejeter_inscription' detail.id %}"

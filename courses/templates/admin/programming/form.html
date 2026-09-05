@@ -62,7 +62,7 @@
                 </div>
 
                 {% comment %} Type de formation {% endcomment %}
-                <div class="md:col-span-2">
+                <div>
                     <label class="block text-sm font-bold text-gray-800 mb-2">
                         {{ form.type_formation.label }} <span class="text-red-600">*</span>
                     </label>
@@ -70,6 +70,20 @@
                     {% if form.type_formation.errors %}
                     <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
                          {{ form.type_formation.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                {% comment %} Type de programme {% endcomment %}
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        {{ form.type_programme.label }} <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.type_programme }}
+                    <p class="mt-1.5 text-xs text-gray-500">« Reconversion » : l'apprenant choisit une ville puis un pack, le centre lui est masqué et le règlement se fait en une seule fois.</p>
+                    {% if form.type_programme.errors %}
+                    <p class="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                         {{ form.type_programme.errors.0 }}
                     </p>
                     {% endif %}
                 </div>

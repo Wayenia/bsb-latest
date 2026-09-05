@@ -123,7 +123,20 @@
           <div class="text-[.75rem] opacity-[.75]">payé / dû</div>
         </div>
         {% if item.total_reste > 0 and perms.courses.encaisser_paiement %}
-          {% if item.dossier_impaye %}
+          {% if item.inscription.est_reconversion %}
+          <button type="button" class="btn-detail inline-flex items-center gap-1.5 bg-gradient-to-br from-bsb-red to-bsb-gold text-white shadow-sm hover:brightness-105"
+                  data-action="solder"
+                  data-solder-url="{% url 'courses:stats_encaisser_solde_inscription' item.inscription.id %}"
+                  data-solder-cible="Reconversion — {{ item.inscription.formation.filiere.nom_filiere }} — règlement intégral, en une seule fois"
+                  data-solder-max="{{ item.total_reste|floatformat:0 }}"
+                  data-solder-exact="1"
+                  data-solder-primordiale="0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+            Régler l'inscription
+          </button>
+          {% elif item.dossier_impaye %}
           <button type="button" class="btn-detail bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed"
                   data-action="aucune"
                   disabled title="Réglez d'abord entièrement le frais de dossier (bouton « Solder ce frais ») avant de pouvoir solder l'inscription">
@@ -142,6 +155,14 @@
             Solder l'inscription
           </button>
           {% endif %}
+        {% elif item.quittance_groupe_id %}
+          <a href="{% url 'courses:stats_download_quittance_groupe' item.quittance_groupe_id %}"
+             class="btn-detail inline-flex items-center gap-1.5 bg-[linear-gradient(135deg,#059669,#10b981)] text-white">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/>
+            </svg>
+            Télécharger la quittance
+          </a>
         {% endif %}
       </div>
     </div>
@@ -174,7 +195,16 @@
           </div>
           <div class="text-right text-[.75rem] text-[#9ca3af] mb-[.75rem]">{{ dette.taux|floatformat:1 }}% réglé</div>
 
-          {% if dette.tranches %}
+          {% if item.inscription.est_reconversion %}
+          <div class="tranche-row border-t border-t-[1px] border-[#e2e8f0] mt-[.5rem] pt-[.6rem]">
+            <span class="text-[#374151]">Montant à régler</span>
+            {% if dette.etat_dette == 'soldé' %}
+              <button class="btn-payer-tranche" disabled title="Dette déjà soldée">Soldée</button>
+            {% else %}
+              <span class="text-[.75rem] text-[#9ca3af] italic">Réglé via « Régler l'inscription »</span>
+            {% endif %}
+          </div>
+          {% elif dette.tranches %}
           <div class="tranches-toggle" data-action="basculer-tranches">
             <span class="text-[.72rem] text-[#9ca3af] font-[700] uppercase">Tranches ({{ dette.tranches|length }})</span>
             <span class="chevron">▾</span>
@@ -214,7 +244,7 @@
           {% endif %}
 
           <div class="flex justify-end gap-[.5rem] mt-[.5rem]">
-            {% if dette.etat_dette != 'soldé' and perms.courses.encaisser_paiement %}
+            {% if not item.inscription.est_reconversion and dette.etat_dette != 'soldé' and perms.courses.encaisser_paiement %}
               {% if dette.bloquee %}
               <button type="button" class="btn-detail bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed"
                       disabled title="Réglez d'abord la tranche primordiale bloquante d'un autre type de frais">
@@ -401,21 +431,29 @@ document.getElementById('modal-paiement-tranche').addEventListener('click', func
 
 let modalSolderMax = 0;
 let modalSolderPrimordiale = 0;
+let modalSolderExact = false;
 
 function ouvrirModalSolder(opts) {
   document.getElementById('form-solder').action = opts.url;
   document.getElementById('modal-solder-cible').textContent = opts.cible;
   modalSolderMax = opts.maxMontant;
   modalSolderPrimordiale = opts.primordiale || 0;
+  modalSolderExact = !!opts.exact;
 
   const input = document.getElementById('modal-solder-montant');
   input.value = opts.maxMontant;
   input.max = opts.maxMontant;
+  // Reconversion : montant verrouille au total, pas de derogation possible.
+  input.readOnly = modalSolderExact;
+  input.min = modalSolderExact ? opts.maxMontant : 1;
 
-  document.getElementById('modal-solder-max').textContent =
-    'Maximum : ' + Number(opts.maxMontant).toLocaleString('fr-FR') + ' FCFA';
+  document.getElementById('modal-solder-max').textContent = modalSolderExact
+    ? 'Règlement intégral obligatoire : ' + Number(opts.maxMontant).toLocaleString('fr-FR') + ' FCFA'
+    : 'Maximum : ' + Number(opts.maxMontant).toLocaleString('fr-FR') + ' FCFA';
 
-  document.getElementById('modal-solder-derogation-wrap').style.display = 'none';
+  const derogWrap = document.getElementById('modal-solder-derogation-wrap');
+  derogWrap.style.display = 'none';
+  derogWrap.hidden = modalSolderExact;
   document.getElementById('modal-solder-motif-derogation').value = '';
   document.getElementById('modal-solder-piece-jointe-derogation').value = '';
 
@@ -425,6 +463,7 @@ function ouvrirModalSolder(opts) {
 }
 
 document.getElementById('modal-solder-montant').addEventListener('input', function () {
+  if (modalSolderExact) return;
   const val = parseFloat(this.value);
   const sousPaiementPrimordiale = modalSolderPrimordiale > 0 && val > 0 && val < modalSolderPrimordiale;
   document.getElementById('modal-solder-derogation-wrap').style.display = sousPaiementPrimordiale ? 'block' : 'none';
@@ -435,6 +474,11 @@ document.getElementById('form-solder').addEventListener('submit', function (e) {
   if (!(val > 0)) {
     e.preventDefault();
     alert('Le montant doit être supérieur à 0.');
+    return;
+  }
+  if (modalSolderExact && Math.abs(val - modalSolderMax) >= 0.5) {
+    e.preventDefault();
+    alert('Cette inscription (Reconversion) doit être réglée intégralement : ' + Number(modalSolderMax).toLocaleString('fr-FR') + ' FCFA.');
     return;
   }
   if (val > modalSolderMax) {
@@ -484,7 +528,8 @@ document.addEventListener('click', function (e) {
         url: el.dataset.solderUrl,
         cible: el.dataset.solderCible,
         maxMontant: Number(el.dataset.solderMax),
-        primordiale: Number(el.dataset.solderPrimordiale)
+        primordiale: Number(el.dataset.solderPrimordiale),
+        exact: el.dataset.solderExact === '1'
       });
       break;
     case 'fermer-paiement':

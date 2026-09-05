@@ -14,7 +14,7 @@ from accounts.models import Utilisateur
 from courses.models import (
     AnneeScolaire, CentreEtFiliere, CentreFormation, Cours, Direction_reg,
     Filiere, Frais, Membre, Module, Province, Region, TITRE_PROFESSIONNEL_CHOICE,
-    TYPE_FORMATION_CHOICE, TypeFrais,
+    TYPE_FORMATION_CHOICE, TYPE_PROGRAMME_CHOICE, TypeFrais,
 )
 from courses.forms import (
     AgentForm, AnneeScolaireForm, CentreFormationForm, CoursForm,
@@ -398,6 +398,7 @@ def _programmation_validator(resolved):
         centre_id=centre_id,
         filiere=filiere,
         type_formation=resolved.get("type_formation") or "initiale",
+        type_programme=resolved.get("type_programme") or "formation",
         is_active=True if resolved.get("is_active") is None else resolved["is_active"],
         annee_prog_id=annee_id,
         duree_jours=duree_jours or None,
@@ -443,6 +444,9 @@ SPEC_PROGRAMMATION = ImportSpec(
         ColumnSpec("Type de formation", "type_formation", required=False,
                     kind="choice_static", choices=TYPE_FORMATION_CHOICE,
                     help_text="Laisser vide = Initiale."),
+        ColumnSpec("Type de programme", "type_programme", required=False,
+                    kind="choice_static", choices=TYPE_PROGRAMME_CHOICE,
+                    help_text="Laisser vide = Formation. « Reconversion » = parcours par ville/pack, règlement en une fois."),
         ColumnSpec("Frais de formation (FCFA)", "montant_frais", required=False, kind="int",
                     help_text="Laisser vide si aucun frais n'est encore fixé pour cette formation."),
         ColumnSpec("Année de formation", "annee_prog", required=False, kind="fk_pk",

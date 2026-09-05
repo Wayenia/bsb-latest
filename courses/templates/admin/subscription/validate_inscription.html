@@ -109,6 +109,13 @@
                                     class="px-3 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-lg transition-colors">
                                     Consulter
                                 </a>
+                                {% if s.formation.est_reconversion and not perms.courses.valider_inscription_reconversion %}
+                                <button type="button" disabled
+                                        title="Vous n'avez pas la permission de valider une inscription en programme Reconversion."
+                                        class="px-3 py-2 bg-gray-200 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed">
+                                    Valider
+                                </button>
+                                {% else %}
                                 <form method="POST" action="{% url 'bsb_admin:gerer_subscription' s.id %}">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="valide">
@@ -117,6 +124,7 @@
                                         Valider
                                     </button>
                                 </form>
+                                {% endif %}
                                 <a href="{% url 'bsb_admin:rejeter_inscription' s.id %}"
                                     class="px-3 py-2 bg-white border border-red-300 hover:bg-red-50 text-red-600 text-xs font-bold rounded-lg transition-colors">
                                     Rejeter

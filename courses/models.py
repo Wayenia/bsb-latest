@@ -287,6 +287,16 @@ TYPE_FORMATION_CHOICE = [
     ("modulaire_qualifiante", "Modulaire qualifiante"),
 ]
 
+# Programme auquel se rattache la formation. Distinct de `type_formation` :
+# gouverne le parcours d'inscription (Reconversion = ville -> pack, centre
+# masqué côté apprenant) et le mode de règlement (Reconversion = paiement
+# intégral en une fois).
+TYPE_PROGRAMME_CHOICE = [
+    ("vacances_utiles", "Vacances utiles"),
+    ("formation", "Formation"),
+    ("reconversion", "Reconversion"),
+]
+
 
 def _format_duree_en_jours(total_jours):
     """Formate un nombre de jours en texte lisible ("15 jrs", "9 mois",
@@ -321,6 +331,7 @@ def _format_duree_en_jours(total_jours):
 class CentreEtFiliere(models.Model):
     centre = models.ForeignKey(CentreFormation, on_delete=models.CASCADE, verbose_name="Centre")
     type_formation = models.CharField(max_length=30, choices=TYPE_FORMATION_CHOICE, verbose_name="Type de formation", null=True,blank=True)  # ← AJOUTE
+    type_programme = models.CharField(max_length=20, choices=TYPE_PROGRAMME_CHOICE, verbose_name="Type de programme", null=True, blank=True)
     filiere = models.ForeignKey(Filiere, on_delete=models.CASCADE, verbose_name="Filiere associee")
     is_active = models.BooleanField(default=True, verbose_name="Rendre actif")
     communique = models.FileField(
@@ -342,6 +353,10 @@ class CentreEtFiliere(models.Model):
 
     def __str__(self):
         return f"Centre: {self.centre}, Métier: {self.filiere}"
+
+    @property
+    def est_reconversion(self):
+        return self.type_programme == "reconversion"
 
     def save(self, *args, **kwargs):
         if self.duree_jours and self.date_lancement:
@@ -576,6 +591,17 @@ class Inscription(models.Model):
         return self.statut
 
     @property
+    def est_reconversion(self):
+        return bool(self.formation and self.formation.est_reconversion)
+
+    @property
+    def paiement_integral_obligatoire(self):
+        """Reconversion : l'inscription se règle en une seule fois, montant
+        exact = total de tous les frais. Ni tranche, ni dérogation, ni
+        paiement partiel."""
+        return self.est_reconversion
+
+    @property
     def libelle_statut_paiement(self):
         """Libellé affiché à l'apprenant : reflète l'avancement réel du paiement
         plutôt que le seul statut d'inscription (qui reste "valide" quel que
@@ -629,6 +655,7 @@ class Inscription(models.Model):
         permissions = [
             ("voir_inscriptions", "Voir les candidatures"),
             ("valider_inscription", "Valider une candidature"),
+            ("valider_inscription_reconversion", "Valider une candidature en programme Reconversion"),
             ("rejeter_inscription", "Rejeter une candidature"),
         ]
 
