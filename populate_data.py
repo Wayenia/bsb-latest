@@ -22,8 +22,9 @@ Ce script crée :
          (montant du fichier, tranches 75 % primordiale / 25 %) et
          3 pièces requises ;
        - packs de reconversion (PRDSU, source : PRDSU.2026_PACKS.docx) :
-         métiers + modules, frais « Reconversion » (40 000), 1 pièce
-         requise, durée 90 jours.
+         métiers + modules, frais « Reconversion » (40 000), pièces
+         « BAC » (obligatoire) et « Diplôme universitaire » (optionnel),
+         durée 90 jours.
        Toutes ces programmations partagent l'année « 2026-2027 » et la
        date limite d'inscription du 10 octobre 2026.
     6. Les 51 utilisateurs réels de la plateforme (source :
@@ -435,13 +436,16 @@ TEXTE_DEFILANT_PACK = "Programme de reconversion des diplômés du système univ
 MONTANT_FRAIS_DOSSIER = 2000
 MONTANT_PACK = 40000
 
-# Documents requis (libellé, type de pièce) — voir PieceJointeInscription.TYPE_PIECE
+# Documents (libellé, type de pièce, obligatoire) — voir PieceJointeInscription.TYPE_PIECE
 DOCS_FORMATION = [
-    ("Extrait d'acte de naissance", "type_4"),
-    ("Photocopie du diplôme, titre de qualification ou attestation de niveau requis", "type_5"),
-    ("Photo d'identité récente", "type_4"),
+    ("Extrait d'acte de naissance", "type_4", True),
+    ("Photocopie du diplôme, titre de qualification ou attestation de niveau requis", "type_5", True),
+    ("Photo d'identité récente", "type_4", True),
 ]
-DOC_PACK = ("Diplôme universitaire ou BAC", "type_5")
+DOCS_PACK = [
+    ("BAC", "type_5", True),
+    ("Diplôme universitaire", "type_5", False),
+]
 
 FORMATIONS_2026_2027 = [
     # (centre, métier, titre professionnel, durée en mois, montant « Frais de formation »)
@@ -916,10 +920,14 @@ def _set_frais(programmation, type_frais, montant):
         obj.save(update_fields=["montant"])
 
 
-def _set_piece(programmation, libelle, type_piece):
-    PieceJointeInscription.objects.get_or_create(
+def _set_piece(programmation, libelle, type_piece, est_requis=True):
+    obj, created = PieceJointeInscription.objects.get_or_create(
         formation=programmation, libelle_piece=libelle,
-        defaults={"type_piece": type_piece, "est_requis": True})
+        defaults={"type_piece": type_piece, "est_requis": est_requis})
+    if not created and (obj.type_piece != type_piece or obj.est_requis != est_requis):
+        obj.type_piece = type_piece
+        obj.est_requis = est_requis
+        obj.save(update_fields=["type_piece", "est_requis"])
 
 
 # Recherche de filière insensible à la casse / aux espaces : on évite de
@@ -985,8 +993,8 @@ for centre_nom, metier, titre, duree_mois, montant in FORMATIONS_2026_2027:
     _set_frais(prog, tf_dossier, MONTANT_FRAIS_DOSSIER)
     if montant:
         _set_frais(prog, tf_formation, montant)
-    for libelle, type_piece in DOCS_FORMATION:
-        _set_piece(prog, libelle, type_piece)
+    for libelle, type_piece, est_requis in DOCS_FORMATION:
+        _set_piece(prog, libelle, type_piece, est_requis)
     nb_formations += 1
 
 print("   OK " + str(nb_formations) + " programmations Formation "
@@ -1038,7 +1046,8 @@ for nom_pack, modules, centres_pack in PACKS_2026_2027:
             prog.is_active = True
             prog.save()
         _set_frais(prog, tf_reconversion, MONTANT_PACK)
-        _set_piece(prog, DOC_PACK[0], DOC_PACK[1])
+        for libelle, type_piece, est_requis in DOCS_PACK:
+            _set_piece(prog, libelle, type_piece, est_requis)
         nb_packs_prog += 1
 
 print("   OK " + str(len(PACKS_2026_2027)) + " packs (metiers + modules) - "
