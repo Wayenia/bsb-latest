@@ -116,16 +116,16 @@
 
 
         {% comment %} Boutons de navigation {% endcomment %}
-        <div class="flex items-center justify-between mt-10 pt-6 border-t border-slate-200">
+        <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mt-10 pt-6 border-t border-slate-200">
           <a href="{% url 'courses:personal_info' career.id %}"
-             class="inline-flex items-center gap-2 px-5 py-2.5 text-bsb-ink text-sm font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
+             class="inline-flex items-center justify-center gap-2 px-5 py-3 text-bsb-ink text-sm font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
             Précédent
           </a>
           <button type="submit"
-                  class="inline-flex items-center gap-2 px-6 py-2.5 text-white text-sm font-bold rounded-lg bg-gradient-to-r from-bsb-gold to-yellow-600 hover:brightness-110 transition-all">
+                  class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 bg-bsb-gold hover:bg-yellow-600 text-white text-base font-black uppercase tracking-wide rounded-xl shadow-lg shadow-yellow-600/25 transition-all">
             Suivant
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
     </form>

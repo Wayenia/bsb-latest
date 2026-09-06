@@ -125,7 +125,7 @@ class PersonalInfoForm(forms.Form):
     )
 
     TYPE_PERSONNE_CONTACT_CHOICES = [
-        ('', 'Sélectionnez…'),
+        ('', '— Aucune —'),
         ('parent', 'Parent'),
         ('organisation', 'Organisation/Parrain'),
         ('les_deux', 'Parent et Organisation/Parrain'),
@@ -133,7 +133,7 @@ class PersonalInfoForm(forms.Form):
     type_personne_contact = forms.ChoiceField(
         label='Type de personne à contacter',
         choices=TYPE_PERSONNE_CONTACT_CHOICES,
-        required=True,
+        required=False,
         widget=forms.Select(attrs={
             'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500',
             'id': 'id_type_personne_contact',

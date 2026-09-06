@@ -232,16 +232,19 @@
         </div>
 
         {% comment %} Boutons de navigation {% endcomment %}
-        <div class="flex items-center justify-between mt-10 pt-6 border-t border-slate-200">
+        <p id="form-erreur" class="hidden mt-8 p-3 rounded-lg bg-red-50 text-red-700 border border-red-100 text-sm">
+          Veuillez remplir les champs obligatoires en surbrillance.
+        </p>
+        <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mt-6 pt-6 border-t border-slate-200">
           <a href="{% url 'courses:subscribe_selection' %}"
-             class="inline-flex items-center gap-2 px-5 py-2.5 text-bsb-ink text-sm font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
+             class="inline-flex items-center justify-center gap-2 px-5 py-3 text-bsb-ink text-sm font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
             Précédent
           </a>
           <button type="submit"
-                  class="inline-flex items-center gap-2 px-6 py-2.5 text-white text-sm font-bold rounded-lg bg-gradient-to-r from-bsb-gold to-yellow-600 hover:brightness-110 transition-all">
+                  class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 bg-bsb-gold hover:bg-yellow-600 text-white text-base font-black uppercase tracking-wide rounded-xl shadow-lg shadow-yellow-600/25 transition-all">
             Suivant
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
       </form>
@@ -266,6 +269,34 @@
 
   select.addEventListener('change', toggle);
   toggle();
+
+  // Le bouton « Suivant » semblait ne rien faire quand un champ obligatoire
+  // était vide : la bulle native passait inaperçue (champ hors écran).
+  // L'événement 'submit' n'est pas émis quand la validation native échoue —
+  // on écoute donc 'invalid' (en capture, il ne bulle pas) et le clic.
+  var form = select.closest('form');
+  var banniere = document.getElementById('form-erreur');
+  if (form) {
+    form.addEventListener('invalid', function (e) {
+      var champ = e.target;
+      champ.classList.add('ring-2', 'ring-red-500', 'border-red-500');
+      ['input', 'change'].forEach(function (evt) {
+        champ.addEventListener(evt, function () {
+          champ.classList.remove('ring-2', 'ring-red-500', 'border-red-500');
+        }, { once: true });
+      });
+      if (banniere) banniere.classList.remove('hidden');
+    }, true);
+
+    var submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', function () {
+        if (form.checkValidity()) return;
+        var premier = form.querySelector(':invalid');
+        if (premier) premier.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
+  }
 })();
 </script>
 {% endblock %}
