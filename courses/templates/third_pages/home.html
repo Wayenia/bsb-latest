@@ -12,7 +12,7 @@
             {% comment %} Identification de l'institution {% endcomment %}
             <div class="lg:col-span-7">
                 <p class="text-white font-bold leading-snug text-xl md:text-2xl lg:text-3xl mb-4 mt-2">
-                    Ministère de l'Enseignement Secondaire,<br class="hidden sm:block">
+                    Ministère de l'Enseignement Secondaire et<br class="hidden sm:block">
                     de la Formation Professionnelle et Technique
                 </p>
 
@@ -100,47 +100,6 @@
                 </div>
             </div>
         </div>
-    </div>
-</section>
-
-{% comment %} Le réseau en chiffres {% endcomment %}
-<section class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-4 py-2">
-            <p class="text-bsb-muted text-lg mx-auto">Une plateforme publique de formation professionnelle présente dans chaque région du pays.</p>
-        </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-            <a href="{% url 'bsb_admin:center_list' %}" class="bsb-info-card block p-6 text-center">
-                <span class="block text-4xl font-extrabold text-bsb-primary leading-none mb-3">32</span>
-                <h3 class="font-bold text-bsb-ink mb-1">Centres de formation</h3>
-                <p class="text-sm text-bsb-muted">Sur tout le territoire national.</p>
-            </a>
-
-            <a href="{% url 'bsb_admin:field_list' %}" class="bsb-info-card block p-6 text-center">
-                <span class="block text-4xl font-extrabold text-bsb-primary leading-none mb-3">144</span>
-                <h3 class="font-bold text-bsb-ink mb-1">Métiers enseignés</h3>
-                <p class="text-sm text-bsb-muted">En 8 domaines d'apprentissage.</p>
-            </a>
-
-            <div class="bsb-info-card p-6 text-center">
-                <span class="block text-4xl font-extrabold text-bsb-primary leading-none mb-3">15 000+</span>
-                <h3 class="font-bold text-bsb-ink mb-1">Apprenants formés</h3>
-                <p class="text-sm text-bsb-muted">Depuis son ouverture.</p>
-            </div>
-
-            <div class="bsb-info-card p-6 text-center">
-                <span class="block text-4xl font-extrabold text-bsb-primary leading-none mb-3">13</span>
-                <h3 class="font-bold text-bsb-ink mb-1">Régions couvertes</h3>
-                <p class="text-sm text-bsb-muted">Une implantation par région.</p>
-            </div>
-        </div>
-
-        <p class="text-center mt-10">
-            <a href="{% url 'courses:about' %}" class="text-bsb-primary font-semibold hover:text-bsb-dark underline">
-                En savoir plus sur BSB, sa mission et ses piliers
-            </a>
-        </p>
     </div>
 </section>
 
@@ -273,6 +232,47 @@
                 </div>
             </div>
         </div>
+    </div>
+</section>
+
+{% comment %} Le réseau en chiffres {% endcomment %}
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-4 py-2">
+            <p class="text-bsb-muted text-lg mx-auto">Une plateforme publique de formation professionnelle présente dans chaque région du pays.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+            <a href="{% url 'bsb_admin:center_list' %}" class="bsb-info-card block p-6 text-center">
+                <span class="block text-4xl font-extrabold text-bsb-primary leading-none mb-3">32</span>
+                <h3 class="font-bold text-bsb-ink mb-1">Centres de formation</h3>
+                <p class="text-sm text-bsb-muted">Sur tout le territoire national.</p>
+            </a>
+
+            <a href="{% url 'bsb_admin:field_list' %}" class="bsb-info-card block p-6 text-center">
+                <span class="block text-4xl font-extrabold text-bsb-primary leading-none mb-3">144</span>
+                <h3 class="font-bold text-bsb-ink mb-1">Métiers enseignés</h3>
+                <p class="text-sm text-bsb-muted">En 8 domaines d'apprentissage.</p>
+            </a>
+
+            <div class="bsb-info-card p-6 text-center">
+                <span class="block text-4xl font-extrabold text-bsb-primary leading-none mb-3">15 000+</span>
+                <h3 class="font-bold text-bsb-ink mb-1">Apprenants formés</h3>
+                <p class="text-sm text-bsb-muted">Depuis son ouverture.</p>
+            </div>
+
+            <div class="bsb-info-card p-6 text-center">
+                <span class="block text-4xl font-extrabold text-bsb-primary leading-none mb-3">13</span>
+                <h3 class="font-bold text-bsb-ink mb-1">Régions couvertes</h3>
+                <p class="text-sm text-bsb-muted">Une implantation par région.</p>
+            </div>
+        </div>
+
+        <p class="text-center mt-10">
+            <a href="{% url 'courses:about' %}" class="text-bsb-primary font-semibold hover:text-bsb-dark underline">
+                En savoir plus sur BSB, sa mission et ses piliers
+            </a>
+        </p>
     </div>
 </section>
 

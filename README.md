@@ -1,7 +1,7 @@
 # Yupaan — Plateforme de gestion Burkina Suudu Bawdè (BSB)
 
 Plateforme de gestion des centres de formation professionnelle, développée pour le
-Ministère de l'Enseignement Secondaire, de la Formation Professionnelle et Technique
+Ministère de l'Enseignement Secondaire et de la Formation Professionnelle et Technique
 (MESFPT) du Burkina Faso. Elle couvre l'inscription des élèves, le suivi des paiements
 de scolarité, la facturation de prestations de services (module DAF) et
 l'administration des centres, filières et personnels.

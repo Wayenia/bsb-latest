@@ -84,17 +84,12 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
     {% for career in available_career %}
     <article class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
-      {% comment %} Titre + titre professionnel {% endcomment %}
-      <div class="flex items-start justify-between gap-3 mb-3">
+      {% comment %} Titre du métier {% endcomment %}
+      <div class="mb-3">
         <h3 class="text-base sm:text-lg font-bold text-bsb-ink leading-snug">{{ career.filiere.nom_filiere }}</h3>
-        {% if career.filiere.titre_professionnel %}
-        <span class="shrink-0 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-          {{ career.filiere.get_titre_professionnel_display }}
-        </span>
-        {% endif %}
       </div>
 
-      {% comment %} 3 infos cles {% endcomment %}
+      {% comment %} Infos cles : durée, frais, (ville si Reconversion), titre professionnel {% endcomment %}
       <div class="flex flex-wrap items-center gap-2 mb-4">
         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -105,10 +100,17 @@
           {{ career.total_frais|floatformat:0|intcomma }} FCFA
         </span>
         {% endif %}
+        {% if career.est_reconversion %}
         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 max-w-full">
           <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <span class="truncate">{% if career.est_reconversion %}{{ career.centre.province.chef_lieu }}{% else %}{{ career.centre.nom_centre }}{% endif %}</span>
+          <span class="truncate">{{ career.centre.province.chef_lieu }}</span>
         </span>
+        {% endif %}
+        {% if career.filiere.titre_professionnel %}
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+          {{ career.filiere.get_titre_professionnel_display }}
+        </span>
+        {% endif %}
       </div>
 
       {% comment %} Actions + details {% endcomment %}
@@ -128,15 +130,12 @@
               <span class="text-bsb-muted">Conditions d'accès</span>
               <span class="font-semibold text-bsb-ink text-right">{{ career.filiere.niveau_diplome|default:"Non précisé" }}</span>
             </div>
+            {% if career.est_reconversion %}
             <div class="flex justify-between gap-3">
-              {% if career.est_reconversion %}
               <span class="text-bsb-muted">Ville</span>
               <span class="font-semibold text-bsb-ink text-right">{{ career.centre.province.chef_lieu|default:career.centre.province.nom_province }}</span>
-              {% else %}
-              <span class="text-bsb-muted">Centre</span>
-              <span class="font-semibold text-bsb-ink text-right">{{ career.centre.nom_centre }}{% if career.centre.province %} — {{ career.centre.province.nom_province }}{% endif %}</span>
-              {% endif %}
             </div>
+            {% endif %}
             {% if career.communique %}
             <div class="pt-1">
               <a href="{{ career.communique.url }}" target="_blank" class="inline-flex items-center gap-1.5 text-sm font-semibold text-bsb-red hover:underline">

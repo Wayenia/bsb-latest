@@ -2206,10 +2206,13 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
     return inscriptions_qs, dettes_qs, paiements_qs, filters
 
 
-def _resume_filtres_stats(filters):
+def _resume_filtres_stats(filters, exclure_filiere=False):
     """Phrase récapitulant les filtres actifs du tableau de bord statistiques,
     reprise dans les fichiers exportés (CSV/Excel/PDF) pour que leur contenu
-    reste traçable une fois détaché de l'écran qui les a produits."""
+    reste traçable une fois détaché de l'écran qui les a produits.
+
+    `exclure_filiere` : ne pas répéter le métier (le PDF des inscriptions
+    l'affiche déjà sur sa propre ligne)."""
     from .models import Region
     from accounts.models import Utilisateur
 
@@ -2223,7 +2226,7 @@ def _resume_filtres_stats(filters):
         direction = Direction_reg.objects.filter(pk=filters["direction_id"]).first()
         parties.append(f"Direction : {direction.nom_direction if direction else '—'}")
 
-    if filters.get("filiere_id"):
+    if filters.get("filiere_id") and not exclure_filiere:
         filiere = Filiere.objects.filter(pk=filters["filiere_id"]).first()
         parties.append(f"Métier : {filiere.nom_filiere if filiere else '—'}")
 
@@ -2833,26 +2836,30 @@ def export_pdf(request):
     if export_type == "inscriptions":
         story.append(Paragraph("Rapport des Inscriptions — BSB", title_style))
         story.append(Paragraph(f"Généré le {now}  |  {inscriptions_qs.count()} inscription(s)", sub_style))
-        story.append(Paragraph(f"Filtres appliqués : {_resume_filtres_stats(filters)}", filtres_style))
+        _filtre_filiere = bool(filters.get("filiere_id"))
+        if _filtre_filiere:
+            _filiere_filtree = Filiere.objects.filter(pk=filters["filiere_id"]).first()
+            if _filiere_filtree:
+                story.append(Paragraph(f"Métier : {_filiere_filtree.nom_filiere}", sub_style))
+        # Métier seul : la ligne « Filtres appliqués » ne dirait que « Métier : … »,
+        # déjà affiché juste au-dessus — on l'omet. Métier + autres filtres : on
+        # l'affiche sans répéter le métier.
+        _resume = _resume_filtres_stats(filters, exclure_filiere=_filtre_filiere)
+        if not (_filtre_filiere and _resume == "Aucun filtre appliqué"):
+            story.append(Paragraph(f"Filtres appliqués : {_resume}", filtres_style))
 
-        data = [["N°", "Apprenant", "Matricule", "Métier", "Centre", "Année", "Statut", "Date"]]
+        data = [["N°", "Nom(s) et prénom(s)", "Matricule", "Statut"]]
         for i, insc in enumerate(
-            inscriptions_qs.select_related(
-                "eleve","formation__filiere","formation__centre","annee_scolaire"
-            ).order_by("-date_inscription")[:500], 1
+            inscriptions_qs.select_related("eleve").order_by("-date_inscription")[:500], 1
         ):
             data.append([
                 str(i),
                 cell(f"{insc.eleve.nom} {insc.eleve.prenom}") if insc.eleve else "—",
                 cell(insc.eleve.matricule) if insc.eleve and insc.eleve.matricule else "—",
-                cell(insc.formation.filiere.nom_filiere) if insc.formation and insc.formation.filiere else "—",
-                cell(insc.formation.centre.nom_centre) if insc.formation and insc.formation.centre else "—",
-                insc.annee_scolaire.libelle_anne if insc.annee_scolaire else "—",
                 cell(insc.get_statut_display()),
-                insc.date_inscription.strftime("%d/%m/%Y") if insc.date_inscription else "—",
             ])
 
-        col_widths = [1.2*cm, 4.5*cm, 3.5*cm, 4*cm, 4*cm, 2.5*cm, 4*cm, 2.5*cm]
+        col_widths = [1.5*cm, 12*cm, 6*cm, 6.5*cm]
         t = Table(data, colWidths=col_widths, repeatRows=1)
         t.setStyle(base_table_style())
         story.append(t)

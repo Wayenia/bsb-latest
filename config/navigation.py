@@ -92,7 +92,7 @@ GROUPES = [
         'liens': [
             _lien('bsb_admin:agent_list', 'Agents et formateurs', 'accounts.gerer_agents', '/bsb/rh/agents'),
             _lien('bsb_admin:permissions_matrix', 'Permissions', 'accounts.gerer_permissions', '/bsb/rh/permissions'),
-            _lien('bsb_admin:equipe_list', 'Équipe publique', 'courses.gerer_equipe', '/bsb/equipe'),
+            _lien('bsb_admin:equipe_list', 'Conseil de direction', 'courses.gerer_equipe', '/bsb/equipe'),
         ],
     },
     {
