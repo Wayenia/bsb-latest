@@ -57,8 +57,10 @@ REDIS_LOCATION_URL=redis://suudu_redis:6379/1
 PGADMIN_DEFAULT_EMAIL=staging@local.dev
 PGADMIN_DEFAULT_PASSWORD=$(alea 12)
 
-# ADMIN_LOGIN_PATH propre au staging (jamais celui de la prod).
-ADMIN_LOGIN_PATH=$(alea 8 | tr 'A-Z' 'a-z')
+# ADMIN_LOGIN_PATH du staging : chemin fixe et memorable, distinct de la prod.
+# Les agents yupaan ouvrent la page d'administration technique sur /staging-bsb.
+# Surchargable au premier up : ADMIN_LOGIN_PATH=autre ./.bascules/staging.sh up
+ADMIN_LOGIN_PATH=${ADMIN_LOGIN_PATH:-staging-bsb}
 AI_MODULE=off
 BACKUP_INTERVAL=86400
 BACKUP_RETENTION=7
@@ -117,6 +119,19 @@ appliquer_domaine() {
     echo "  SITE_URL            = https://${dom}"
 }
 
+# (Re)ecrit le chemin de la page d'administration technique dans .env.staging.
+# Meme logique que appliquer_domaine : utile pour changer /staging-bsb sur un
+# stack deja genere (ADMIN_LOGIN_PATH=... ./.bascules/staging.sh up).
+appliquer_admin_path() {
+    chemin="$1"
+    if grep -q '^ADMIN_LOGIN_PATH=' "$ENVF"; then
+        sed -i -e "s|^ADMIN_LOGIN_PATH=.*|ADMIN_LOGIN_PATH=${chemin}|" "$ENVF"
+    else
+        echo "ADMIN_LOGIN_PATH=${chemin}" >> "$ENVF"
+    fi
+    echo "Chemin d'administration staging applique : /${chemin}"
+}
+
 case "${1:-}" in
     up)
         generer_env
@@ -124,19 +139,25 @@ case "${1:-}" in
         if [ -n "${DOMAIN:-}" ]; then
             appliquer_domaine "$DOMAIN"
         fi
+        if [ -n "${ADMIN_LOGIN_PATH:-}" ]; then
+            appliquer_admin_path "$ADMIN_LOGIN_PATH"
+        fi
         mkdir -p media_staging backups_staging
         echo "Demarrage du stack staging (port 8081)..."
         $DC up -d --build
-        # Si un domaine vient d'etre (re)ecrit sur un stack deja lance, forcer la
-        # recreation des conteneurs qui lisent l'env (un restart ne relit pas le
-        # fichier ; voir CLAUDE.md).
-        if [ -n "${DOMAIN:-}" ]; then
+        # Si un domaine ou le chemin d'admin vient d'etre (re)ecrit sur un stack
+        # deja lance, forcer la recreation des conteneurs qui lisent l'env (un
+        # restart ne relit pas le fichier ; voir CLAUDE.md).
+        if [ -n "${DOMAIN:-}" ] || [ -n "${ADMIN_LOGIN_PATH:-}" ]; then
             $DC up -d --force-recreate --no-deps suudu_backend suudu_nginx suudu_audit
         fi
+        chemin_admin=$(grep -E '^ADMIN_LOGIN_PATH=' "$ENVF" | cut -d= -f2-)
         if [ -n "${DOMAIN:-}" ]; then
             echo "Staging demarre : https://${DOMAIN}  (bandeau STAGING visible)."
+            echo "Administration technique : https://${DOMAIN}/${chemin_admin}"
         else
             echo "Staging demarre : http://localhost:8081  (bandeau STAGING visible)."
+            echo "Administration technique : http://localhost:8081/${chemin_admin}"
         fi
         echo "Astuce : ./.bascules/staging.sh seed (donnees neuves) ou ./.bascules/staging.sh refresh (copie de la prod)."
         ;;

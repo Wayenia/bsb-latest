@@ -40,6 +40,13 @@ ces lignes puis recrée les conteneurs applicatifs.
 utilisateurs : n'utiliser que des comptes de test dont la boîte mail est
 accessible aux agents.
 
+**Administration technique.** Le staging expose la page de connexion des
+comptes à privilèges sur un chemin **fixe et connu** des agents yupaan :
+`/staging-bsb` (soit `https://<domaine-test>/staging-bsb`, ou
+`http://localhost:8081/staging-bsb` en local). C'est volontairement différent
+de la prod, dont le chemin reste secret. Pour en changer sur un stack déjà
+généré : `ADMIN_LOGIN_PATH=autre-chemin ./.bascules/staging.sh up`.
+
 **Remise à zéro.** `./.bascules/staging.sh reset` supprime les conteneurs, les
 volumes **du projet staging uniquement** et `.env.staging`. À utiliser si un
 ancien volume PostgreSQL de staging provoque `password authentication failed`
