@@ -13,25 +13,53 @@ base de données. La production n'est jamais touchée par le staging.
 | Réseau, conteneurs | projet prod | projet staging (séparé) |
 | Fichiers téléversés | `./media` | `./media_staging` |
 | Sauvegardes | `./backups` | `./backups_staging` |
-| E-mail | SMTP réel | mode console (aucun e-mail réel envoyé) |
+| E-mail | SMTP / Brevo réel | **identique à la prod** (bloc e-mail recopié depuis `.env`) |
 | Bandeau à l'écran | aucun | « STAGING — Environnement de test » |
 
 Le fichier `.env.staging` (généré automatiquement, non versionné) contient les
 réglages du staging. La production garde son `.env` habituel.
+
+**Domaine public.** Comme pour la prod (`DOMAIN=… ./deploy.sh`), on passe le
+domaine de test au premier démarrage :
+
+```bash
+DOMAIN=domaine2-test ./.bascules/staging.sh up
+```
+
+Le script inscrit `domaine2-test` dans `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`,
+`CORS_ALLOWED_ORIGINS` (en `https://` **et** `http://`) et `SITE_URL` de
+`.env.staging`. Le TLS et le routage `domaine2-test → port 8081` sont assurés
+par l'infrastructure (le proxy amont doit envoyer `X-Forwarded-Proto: https`,
+comme pour la prod). Relancer la même commande avec un autre `DOMAIN=` réécrit
+ces lignes puis recrée les conteneurs applicatifs.
+
+**E-mail.** Le staging n'est plus en mode console : le bloc e-mail
+(`EMAIL_HOST…`, `BREVO_API_KEY`, `DEFAULT_FROM_EMAIL`…) est recopié depuis le
+`.env` de prod à chaque `up`, donc les OTP partent réellement. Après un
+`refresh` (copie de la prod), la base staging contient les adresses réelles des
+utilisateurs : n'utiliser que des comptes de test dont la boîte mail est
+accessible aux agents.
+
+**Remise à zéro.** `./.bascules/staging.sh reset` supprime les conteneurs, les
+volumes **du projet staging uniquement** et `.env.staging`. À utiliser si un
+ancien volume PostgreSQL de staging provoque `password authentication failed`
+(mot de passe régénéré ≠ mot de passe du volume — voir `ENV_PROD.md`).
 
 ## Commandes
 
 Toujours depuis la racine du projet.
 
 ```bash
-./.bascules/staging.sh up        # démarre le staging (port 8081)
+DOMAIN=domaine2-test ./.bascules/staging.sh up   # démarre + (ré)inscrit le domaine public
+./.bascules/staging.sh up        # démarre le staging sans toucher au domaine
 ./.bascules/staging.sh refresh   # remplace la base staging par une copie de la prod
 ./.bascules/staging.sh seed      # base staging neuve avec les données de référence
 ./.bascules/staging.sh down      # arrête le staging (les données sont conservées)
+./.bascules/staging.sh reset     # supprime conteneurs + volumes staging + .env.staging
 ./.bascules/staging.sh           # affiche l'état
 ```
 
-Après `up`, ouvrir : http://localhost:8081
+Après `up`, ouvrir `https://domaine2-test` (ou `http://localhost:8081` en local).
 
 ## Utilisation pendant les tests
 
