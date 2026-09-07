@@ -18,6 +18,16 @@
         <div class="mt-4 sm:mt-0 flex gap-3 flex-wrap">
             {% url 'bsb_admin:programming_import' as programming_import_url %}
             {% include 'partials/import_export_buttons.html' with upload_url=programming_import_url label="Importer des formations" %}
+            <button type="button" data-modal-ouvrir="modal-lot" data-lot-mode="desactiver"
+               class="inline-flex items-center gap-2 px-5 py-3 bg-white border border-red-300 text-red-700 font-bold rounded-lg hover:bg-red-50 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                Désactiver un ensemble
+            </button>
+            <button type="button" data-modal-ouvrir="modal-lot" data-lot-mode="activer"
+               class="inline-flex items-center gap-2 px-5 py-3 bg-white border border-green-300 text-green-700 font-bold rounded-lg hover:bg-green-50 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Activer un ensemble
+            </button>
             <a href="{% url 'bsb_admin:program_create' %}"
                class="inline-flex items-center px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
 
@@ -120,25 +130,23 @@
                         </p>
                     </div>
                     <div>
-                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        <nav class="flex flex-wrap items-center gap-1">
                             {% if programs.has_previous %}
-                            <a href="{% querystring page=programs.previous_page_number %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Précédent</a>
+                            <a href="{% querystring page=programs.previous_page_number %}" class="inline-flex items-center px-3 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50">Précédent</a>
                             {% endif %}
 
-                            {% for num in programs.paginator.page_range %}
-                                {% if programs.number == num %}
-                                <span class="relative inline-flex items-center px-4 py-2 border border-bsb-gold bg-bsb-gold text-sm font-medium text-white">
-                                    {{ num }}
-                                </span>
+                            {% for num in page_range %}
+                                {% if num == programs.paginator.ELLIPSIS %}
+                                <span class="inline-flex items-center px-2 py-2 text-sm text-gray-400">{{ num }}</span>
+                                {% elif num == programs.number %}
+                                <span class="inline-flex items-center px-4 py-2 rounded-md border border-bsb-gold bg-bsb-gold text-sm font-medium text-white">{{ num }}</span>
                                 {% else %}
-                                <a href="{% querystring page=num %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                    {{ num }}
-                                </a>
+                                <a href="{% querystring page=num %}" class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ num }}</a>
                                 {% endif %}
                             {% endfor %}
 
                             {% if programs.has_next %}
-                            <a href="{% querystring page=programs.next_page_number %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Suivant</a>
+                            <a href="{% querystring page=programs.next_page_number %}" class="inline-flex items-center px-3 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50">Suivant</a>
                             {% endif %}
                         </nav>
                     </div>
@@ -159,7 +167,131 @@
         {% endif %}
     </div>
 </div>
+
+{% comment %} Modale : activation / désactivation en lot {% endcomment %}
+<div id="modal-lot" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-[rgba(0,0,0,0.5)]">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-start justify-between">
+            <h2 id="modal-lot-titre" class="text-lg font-bold text-gray-900">Activer / désactiver un ensemble</h2>
+            <button type="button" data-modal-fermer="modal-lot" class="text-gray-400 hover:text-gray-700 text-xl font-bold ml-4">&times;</button>
+        </div>
+        <form method="post" action="{% url 'bsb_admin:programming_bulk_toggle' %}" id="lot-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" id="lot-action" value="desactiver">
+            <div class="px-6 py-5 space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-1.5">Année de formation <span class="text-red-600">*</span></label>
+                    <select name="annee_prog" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                        <option value="">Sélectionnez une année</option>
+                        {% for a in annees %}
+                        <option value="{{ a.id }}">{{ a.libelle_anne }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-1.5">Centre</label>
+                    <select name="centre"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                        <option value="">Tous les centres</option>
+                        {% for c in centres_lot %}
+                        <option value="{{ c.id }}">{{ c.nom_centre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-1.5">Type de programme</label>
+                    <select name="type_programme"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                        <option value="">Tous</option>
+                        {% for value, label in types_programme %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <p id="modal-lot-note" class="text-xs text-gray-500"></p>
+                <div id="lot-confirm" hidden
+                     class="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p id="lot-confirm-txt" class="font-medium"></p>
+                    <p class="mt-1 text-xs text-amber-700">Cliquez à nouveau sur le bouton pour appliquer.</p>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                <button type="button" data-modal-fermer="modal-lot"
+                        class="px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 font-bold text-sm hover:bg-gray-100">Annuler</button>
+                <button type="submit" id="lot-submit"
+                        class="px-5 py-2.5 rounded-lg bg-red-600 text-white font-bold text-sm hover:bg-red-700">Désactiver</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script nonce="{{ csp_nonce }}">
+    // Une seule modale pour les deux sens : chaque bouton d'en-tete precise
+    // data-lot-mode="activer|desactiver" et on adapte titre / bouton / note.
+    (function () {
+        var LOT = {
+            desactiver: {
+                titre: "Désactiver un ensemble de formations",
+                bouton: "Désactiver",
+                verbe: "désactiver",
+                boutonClasses: "px-5 py-2.5 rounded-lg bg-red-600 text-white font-bold text-sm hover:bg-red-700",
+                note: "Seules les formations actuellement actives sont concernées.",
+            },
+            activer: {
+                titre: "Activer un ensemble de formations",
+                bouton: "Activer",
+                verbe: "activer",
+                boutonClasses: "px-5 py-2.5 rounded-lg bg-green-600 text-white font-bold text-sm hover:bg-green-700",
+                note: "Seules les formations actuellement désactivées sont concernées.",
+            },
+        };
+        var form = document.getElementById('lot-form');
+        var boite = document.getElementById('lot-confirm');
+        var texte = document.getElementById('lot-confirm-txt');
+        var bouton = document.getElementById('lot-submit');
+        var mode = 'desactiver';
+
+        function libelle(nom) {
+            var sel = form.elements[nom];
+            return sel && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : '';
+        }
+        function reinit() {
+            form.dataset.pret = '';
+            boite.hidden = true;
+            bouton.textContent = LOT[mode].bouton;
+        }
+        function config(m) {
+            mode = LOT[m] ? m : 'desactiver';
+            var cfg = LOT[mode];
+            document.getElementById('lot-action').value = mode;
+            document.getElementById('modal-lot-titre').textContent = cfg.titre;
+            document.getElementById('modal-lot-note').textContent = cfg.note;
+            bouton.className = cfg.boutonClasses;
+            reinit();
+        }
+
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-lot-mode]');
+            if (btn) config(btn.dataset.lotMode);
+        });
+        form.addEventListener('change', reinit);
+        form.addEventListener('submit', function (e) {
+            if (form.dataset.pret === '1') return;              // 2e clic : on laisse passer
+            if (!form.reportValidity()) return;                 // année manquante
+            e.preventDefault();
+            var cfg = LOT[mode];
+            texte.textContent =
+                'Vous allez ' + cfg.verbe + ' les formations — '
+                + libelle('annee_prog') + ', '
+                + (libelle('centre') || 'tous les centres') + ', '
+                + (libelle('type_programme') === 'Tous' ? 'tous les programmes' : libelle('type_programme')) + '.';
+            boite.hidden = false;
+            bouton.textContent = 'Confirmer';
+            form.dataset.pret = '1';
+        });
+    })();
+
     const searchInput = document.getElementById('id_formation');
     let timeout = null;
     searchInput.focus();

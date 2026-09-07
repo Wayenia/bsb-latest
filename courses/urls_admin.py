@@ -93,6 +93,7 @@ urlpatterns = [
 
     #PROGRAMMING
     path('programmings',views_admin.programming_list,name='programming_list'),
+    path('programmings/activer-desactiver-lot',views_admin.programming_bulk_toggle,name='programming_bulk_toggle'),
     path('programmings/create',views_admin.programming_create,name='program_create'),
     path('programmings/<int:id>/update',views_admin.update_pregramming,name='programming_update'),
     path('programmings/<int:id>/delete',views_admin.programming_delete,name='programming_delete'),

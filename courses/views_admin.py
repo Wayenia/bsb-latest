@@ -1160,7 +1160,72 @@ def programming_list(request):
     paginator=Paginator(f.qs,10)
     page=request.GET.get('page')
     programs=paginator.get_page(page)
-    return render(request,'admin/programming/list.html',{'programs':programs,'filter':f})
+    # Fenetre de pages (1 … 20 21 [22] 23 24 … 27) : au-dela de ~20 pages, la
+    # barre affichait tous les numeros et debordait, rendant les dernieres
+    # pages inatteignables.
+    page_range = paginator.get_elided_page_range(programs.number, on_each_side=2, on_ends=1)
+    return render(request,'admin/programming/list.html',{
+        'programs':programs, 'filter':f, 'page_range':page_range,
+        'annees': AnneeScolaire.objects.order_by('-date_creation'),
+        'centres_lot': centres_qs.order_by('nom_centre'),
+        'types_programme': CentreEtFiliere._meta.get_field('type_programme').choices,
+    })
+
+
+@require_permission('courses.gerer_programmations')
+def programming_bulk_toggle(request):
+    """Active ou désactive en lot les programmations d'une année, avec un
+    filtre facultatif par centre et par type de programme."""
+    if request.method != 'POST':
+        return redirect('bsb_admin:programming_list')
+
+    centres_qs, _, _ = _get_scope(request.user)
+    action = request.POST.get('action')
+    annee_id = request.POST.get('annee_prog')
+    centre_id = request.POST.get('centre')
+    type_programme = (request.POST.get('type_programme') or '').strip()
+
+    if action not in ('activer', 'desactiver'):
+        messages.error(request, "Action invalide.")
+        return redirect('bsb_admin:programming_list')
+
+    annee = AnneeScolaire.objects.filter(pk=annee_id).first() if annee_id else None
+    if annee is None:
+        messages.error(request, "Veuillez choisir une année de formation.")
+        return redirect('bsb_admin:programming_list')
+
+    cible_active = action == 'activer'
+    qs = CentreEtFiliere.objects.filter(
+        centre__in=centres_qs, annee_prog=annee, is_active=not cible_active,
+    )
+
+    portee = [annee.libelle_anne]
+
+    if centre_id:
+        centre = centres_qs.filter(pk=centre_id).first()
+        if centre is None:
+            messages.error(request, "Centre inconnu ou hors de votre périmètre.")
+            return redirect('bsb_admin:programming_list')
+        qs = qs.filter(centre=centre)
+        portee.append(centre.nom_centre)
+    else:
+        portee.append("tous les centres")
+
+    valides = dict(CentreEtFiliere._meta.get_field('type_programme').choices)
+    if type_programme in valides:
+        qs = qs.filter(type_programme=type_programme)
+        portee.append(valides[type_programme])
+    else:
+        portee.append("tous programmes")
+
+    nb = qs.update(is_active=cible_active)
+    verbe = "activée(s)" if cible_active else "désactivée(s)"
+    if nb:
+        messages.success(request, f"{nb} formation(s) {verbe} — {', '.join(portee)}.")
+    else:
+        etat = "inactive" if cible_active else "active"
+        messages.info(request, f"Aucune formation {etat} à traiter — {', '.join(portee)}.")
+    return redirect('bsb_admin:programming_list')
 
 from .models import TypeFrais, PieceJointeInscription  # assure-toi des imports
 
