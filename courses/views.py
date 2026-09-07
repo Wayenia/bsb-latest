@@ -1326,9 +1326,12 @@ def member_dashboard(request):
         .order_by('-date_lancement')
     )
 
-    # ── deps/membre (personnel du siège, sans centre) → accès global en
-    # lecture ; ce que chacun peut FAIRE reste gouverné par ses permissions ─
-    if utype in ['deps', 'admin', 'dg', 'membre'] or user.is_superuser:
+    # ── deps/membre/agent_comptable (personnel du siège, sans centre) →
+    # accès global en lecture ; ce que chacun peut FAIRE reste gouverné par ses
+    # permissions. La liste doit rester alignée sur redirect_to_dashboard(),
+    # qui route ces mêmes rôles vers member_dashboard — sinon boucle de
+    # redirection (member_dashboard renvoie au login, qui renvoie ici). ─
+    if utype in ['deps', 'admin', 'dg', 'membre', 'agent_comptable'] or user.is_superuser:
         stats = {
             'total_inscriptions': Inscription.objects.count(),
             'filieres': Filiere.objects.distinct().count(),
