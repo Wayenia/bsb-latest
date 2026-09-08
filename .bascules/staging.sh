@@ -145,12 +145,16 @@ case "${1:-}" in
         mkdir -p media_staging backups_staging
         echo "Demarrage du stack staging (port 8081)..."
         $DC up -d --build
-        # Si un domaine ou le chemin d'admin vient d'etre (re)ecrit sur un stack
-        # deja lance, forcer la recreation des conteneurs qui lisent l'env (un
-        # restart ne relit pas le fichier ; voir CLAUDE.md).
-        if [ -n "${DOMAIN:-}" ] || [ -n "${ADMIN_LOGIN_PATH:-}" ]; then
-            $DC up -d --force-recreate --no-deps suudu_backend suudu_nginx suudu_audit
-        fi
+        # Recreation SYSTEMATIQUE des conteneurs applicatifs a chaque `up`.
+        # Sans cela, `docker compose up -d` laisse tourner tels quels les
+        # conteneurs deja lances (le code est monte en bind mount, donc l'image
+        # ne change pas) : entrypoint.sh ne rejoue pas `collectstatic`, gunicorn
+        # ne recharge pas, et Django garde ses templates en cache (loader de
+        # cache actif des que DEBUG=False). Resultat : le staging continue de
+        # servir d'ANCIENS templates / CSS / JS et ne reflete plus la prod.
+        # La recreation force le rejeu d'entrypoint (statiques) + un gunicorn
+        # neuf (code + templates a jour). --no-deps : db / redis intacts.
+        $DC up -d --force-recreate --no-deps suudu_backend suudu_nginx suudu_audit
         chemin_admin=$(grep -E '^ADMIN_LOGIN_PATH=' "$ENVF" | cut -d= -f2-)
         if [ -n "${DOMAIN:-}" ]; then
             echo "Staging demarre : https://${DOMAIN}  (bandeau STAGING visible)."
