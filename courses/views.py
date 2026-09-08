@@ -1937,17 +1937,20 @@ def home(request):
         career.date_limite_proche = earliest_deadlines.get(career.filiere_id)
 
     # ── Tuiles « Accède à la formation de ton choix » ────────────────────
-    # Une tuile par catégorie de programme. Un clic mène au parcours
-    # d'inscription pré-filtré ; sans formation lancée (ou parcours non
-    # encore ouvert), la tuile n'est pas cliquable et affiche « Pas de
-    # programme ».
+    # Une tuile par catégorie de programme QUI A au moins une formation
+    # lancée : les autres ne sont pas affichées. La largeur des tuiles se
+    # répartit dynamiquement selon leur nombre (cf. gabarit).
+    # Titre / image / texte défilant sont personnalisables via
+    # CarrouselAccueil ; tout champ vide retombe sur la valeur par défaut.
+    from django.templatetags.static import static
+    from .models import CarrouselAccueil
+    perso = {c.cle: c for c in CarrouselAccueil.objects.all()}
+
     base_url = reverse('courses:subscribe_selection')
     definitions = [
         ('initiale',              'formation',       'initiale'),
         ('continue',              'formation',       'continue'),
-        # Tuile « Formations modulaires qualifiantes » masquée à la demande —
-        # décommenter la ligne pour la réactiver.
-        # ('modulaire_qualifiante', 'formation',       'modulaire_qualifiante'),
+        ('modulaire_qualifiante', 'formation',       'modulaire_qualifiante'),
         ('reconversion',          'reconversion',    ''),
         ('vacances_utiles',       'vacances_utiles', ''),
     ]
@@ -1957,14 +1960,13 @@ def home(request):
         if type_formation:
             cat_qs = cat_qs.filter(type_formation=type_formation)
         nb_metiers = cat_qs.values('filiere_id').distinct().count()
-        parcours_ouvert = cle != 'vacances_utiles'
-        dispo = parcours_ouvert and nb_metiers > 0
+        # Pas de parcours d'inscription pour « vacances utiles » -> jamais affichée.
+        if cle == 'vacances_utiles' or nb_metiers == 0:
+            continue
         if type_programme == 'formation':
             lien = f'{base_url}?type_programme=formation&type_formation={type_formation}'
-        elif type_programme == 'reconversion':
-            lien = f'{base_url}?type_programme=reconversion'
         else:
-            lien = ''
+            lien = f'{base_url}?type_programme=reconversion'
         date_limite = (
             cat_qs.exclude(date_limite_inscription__isnull=True)
             .order_by('date_limite_inscription')
@@ -1975,17 +1977,22 @@ def home(request):
             .values_list('annee_prog__libelle_anne', flat=True).first()
         )
         fond, titre_couleur, accent = THEMES_CATEGORIE[cle]
+        reglage = perso.get(cle)
+        titre_court = (reglage.titre.strip() if reglage and reglage.titre.strip()
+                       else TITRES_TUILE[cle])
+        image_url = (reglage.image.url if reglage and reglage.image
+                     else static(IMAGES_CATEGORIE[cle]))
+        texte_defilant = reglage.texte_defilant.strip() if reglage else ''
         categories_accueil.append({
             'cle': cle,
             'titre': LIBELLES_CATEGORIE[cle],
-            'titre_court': TITRES_TUILE[cle],
-            'image': IMAGES_CATEGORIE[cle],
-            'dispo': dispo,
-            'parcours_ouvert': parcours_ouvert,
+            'titre_court': titre_court,
+            'image_url': image_url,
+            'texte_defilant': texte_defilant,
             'nb_metiers': nb_metiers,
             'date_limite': date_limite,
             'annee': annee,
-            'lien': lien if dispo else '',
+            'lien': lien,
             'fond': fond,
             'titre_couleur': titre_couleur,
             'accent': accent,

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Carrousels de l'accueil | BSB{% endblock %}
+{% block content %}
+<div class="bo-shell max-w-5xl">
+    {% include 'partials/messages.html' %}
+
+    <div class="bo-header">
+        <div>
+            <h1 class="bo-title">Carrousels de l'accueil</h1>
+            <p class="bo-subtitle max-w-2xl">
+                Personnalisez les tuiles « Accède à la formation de ton choix » de la page
+                d'accueil : titre, image et texte défilant. Un champ laissé vide garde la
+                valeur par défaut. Une tuile n'apparaît sur le site que si son programme a
+                au moins une formation lancée.
+            </p>
+        </div>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+        {% for ligne in lignes %}
+        <div class="bo-card overflow-hidden">
+            <div class="flex gap-4 p-4">
+                <div class="shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                    {% if ligne.image_perso %}
+                    <img src="{{ ligne.image_perso.url }}" alt="" class="w-full h-full object-cover">
+                    {% else %}
+                    <img src="{% static ligne.image_defaut %}" alt="" class="w-full h-full object-cover">
+                    {% endif %}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">{{ ligne.libelle }}</p>
+                    <p class="font-bold text-gray-900 leading-snug">{{ ligne.titre_effectif }}</p>
+                    <p class="mt-1 text-xs text-gray-500">
+                        {% if ligne.obj and ligne.obj.titre %}Titre personnalisé{% else %}Titre par défaut{% endif %}
+                        · {% if ligne.image_perso %}image personnalisée{% else %}image par défaut{% endif %}
+                    </p>
+                    {% if ligne.texte_defilant %}
+                    <p class="mt-1 text-xs text-bsb-primary font-semibold truncate">▸ {{ ligne.texte_defilant }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="px-4 py-3 border-t border-gray-100 bg-gray-50 text-right">
+                <a href="{% url 'bsb_admin:carrousel_update' ligne.cle %}" class="bo-btn-primary bo-btn-sm">Modifier</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -130,6 +130,7 @@ GROUPES = [
         'liens': [
             _lien('bsb_admin:type_frais_list', 'Types de frais', 'courses.gerer_frais', '/bsb/type-frais'),
             _lien('bsb_admin:annee_list', 'Années de formation', 'courses.gerer_annees', '/bsb/annees'),
+            _lien('bsb_admin:carrousel_list', "Carrousels de l'accueil", 'courses.gerer_carrousel', '/bsb/carrousels'),
         ],
     },
 ]

@@ -25,6 +25,16 @@ class CentreFormationFilter(django_filters.FilterSet):
         })
     )
 
+    ville=django_filters.AllValuesFilter(
+        field_name='centre__province__chef_lieu',
+        label="Ville",
+        empty_label="---Toutes les villes---",
+        widget=Select(attrs={
+            'class': 'block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold',
+            'data-autosubmit': 'true'
+        })
+    )
+
     formation=django_filters.CharFilter(
         field_name='filiere__nom_filiere',
         lookup_expr='icontains',

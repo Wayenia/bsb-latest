@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Modifier le carrousel | BSB{% endblock %}
+{% block content %}
+<div class="bo-shell max-w-2xl">
+    {% include 'partials/messages.html' %}
+
+    <nav class="bo-breadcrumb">
+        <a href="{% url 'bsb_admin:carrousel_list' %}">Carrousels de l'accueil</a>
+        <span class="bo-breadcrumb-sep">/</span>
+        <span class="text-gray-900">{{ libelle }}</span>
+    </nav>
+
+    <div class="bo-card">
+        <div class="bo-card-header">
+            <h1 class="bo-card-title">{{ libelle }}</h1>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="bo-card-body">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bo-note-danger mb-5">
+                {% for erreur in form.non_field_errors %}<p>{{ erreur }}</p>{% endfor %}
+            </div>
+            {% endif %}
+
+            {% comment %} Titre {% endcomment %}
+            <div class="bo-field">
+                <label for="{{ form.titre.id_for_label }}" class="bo-label">{{ form.titre.label }}</label>
+                {{ form.titre }}
+                <p class="bo-help">Par défaut : « {{ titre_defaut }} »</p>
+                {% for erreur in form.titre.errors %}<p class="bo-error">{{ erreur }}</p>{% endfor %}
+            </div>
+
+            {% comment %} Image {% endcomment %}
+            <div class="bo-field">
+                <label for="{{ form.image.id_for_label }}" class="bo-label">{{ form.image.label }}</label>
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 shrink-0">
+                        {% if objet.image %}
+                        <img src="{{ objet.image.url }}" alt="" class="w-full h-full object-cover">
+                        {% else %}
+                        <img src="{% static image_defaut %}" alt="" class="w-full h-full object-cover">
+                        {% endif %}
+                    </div>
+                    <span class="text-xs text-gray-500">
+                        {% if objet.image %}Image personnalisée actuelle.{% else %}Image par défaut (aucune personnalisation).{% endif %}
+                        Laisser le champ vide pour la conserver.
+                    </span>
+                </div>
+                {{ form.image }}
+                <p class="bo-help">{{ form.image.help_text }}</p>
+                {% for erreur in form.image.errors %}<p class="bo-error">{{ erreur }}</p>{% endfor %}
+                {% if objet.image %}
+                <button type="submit" name="supprimer_image" value="1"
+                        class="mt-2 text-xs font-semibold text-red-600 hover:underline">
+                    Réinitialiser l'image (revenir à l'image par défaut)
+                </button>
+                {% endif %}
+            </div>
+
+            {% comment %} Texte défilant {% endcomment %}
+            <div class="bo-field">
+                <label for="{{ form.texte_defilant.id_for_label }}" class="bo-label">{{ form.texte_defilant.label }}</label>
+                {{ form.texte_defilant }}
+                <p class="bo-help">{{ form.texte_defilant.help_text }}</p>
+                {% for erreur in form.texte_defilant.errors %}<p class="bo-error">{{ erreur }}</p>{% endfor %}
+            </div>
+
+            <div class="flex flex-wrap gap-3 pt-2">
+                <button type="submit" class="bo-btn-primary">Enregistrer</button>
+                <a href="{% url 'bsb_admin:carrousel_list' %}" class="bo-btn-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

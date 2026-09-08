@@ -5,7 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from .models import (
     TITRE_PROFESSIONNEL_CHOICE, TYPE_PROGRAMME_CHOICE, Direction_reg, Filiere, CentreFormation, Module,
     Frais, Cours, Inscription, Paiement, CentreEtFiliere,PieceJointeInscription,TypeFrais,
-    AnneeScolaire, TrancheFrais, Region, DG, Membre
+    AnneeScolaire, TrancheFrais, Region, DG, Membre, CarrouselAccueil
 )
 from django.forms import inlineformset_factory
 
@@ -1495,4 +1495,27 @@ class MembreEquipeImportForm(MembreEquipeForm):
 
     class Meta(MembreEquipeForm.Meta):
         fields = ['full_name', 'position', 'description', 'order', 'is_active']
+
+
+# ── Carrousels de la page d'accueil ─────────────────────────────────────────
+class CarrouselAccueilForm(forms.ModelForm):
+    """Titre / image / texte défilant d'une tuile de l'accueil. Tous les champs
+    sont facultatifs : vide = valeur par défaut conservée."""
+
+    class Meta:
+        model = CarrouselAccueil
+        fields = ['titre', 'image', 'texte_defilant']
+        widgets = {
+            'titre': forms.TextInput(attrs={
+                'class': _CLASSES_CHAMP,
+                'placeholder': 'Laisser vide pour garder le titre par défaut',
+            }),
+            'texte_defilant': forms.TextInput(attrs={
+                'class': _CLASSES_CHAMP,
+                'placeholder': 'Ex. Inscriptions ouvertes jusqu’au 10 octobre',
+            }),
+        }
+
+    def clean_image(self):
+        return _valider_photo(self.cleaned_data.get('image'))
 

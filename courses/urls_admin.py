@@ -101,6 +101,10 @@ urlpatterns = [
     path('programmings/import', views_admin.programming_import, name='programming_import'),
 
 
+    # CARROUSELS DE LA PAGE D'ACCUEIL
+    path('carrousels', views_admin.carrousel_list, name='carrousel_list'),
+    path('carrousels/<str:cle>', views_admin.carrousel_update, name='carrousel_update'),
+
     #Année scolaire
     path('annee/create',views_admin.annee_create,name='annee_create'),
     path('annees',views_admin.annee_list,name='annee_list'),

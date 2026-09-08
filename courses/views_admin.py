@@ -19,21 +19,22 @@ from django.utils import timezone
 from .permissions import require_permission
 from .ui import gabarit
 from .models import (
-    Direction_reg, Filiere, CentreFormation, Module, 
+    Direction_reg, Filiere, CentreFormation, Module,
     Frais, Cours, Inscription, Paiement, CentreEtFiliere,PieceJointeInscription,
-    DocumentEleve,AnneeScolaire,Dette
+    DocumentEleve,AnneeScolaire,Dette,CarrouselAccueil
 )
 from .forms import (
     DirectionRegForm, FiliereForm, CentreFormationForm, ModuleForm,
     FraisForm, CoursForm, InscriptionForm, PaiementForm, PaiementAdminForm, CentreEtFiliereForm,
-    PieceJointeFormSet,FraisFormSet,AnneeScolaireForm, EleveForm
+    PieceJointeFormSet,FraisFormSet,AnneeScolaireForm, EleveForm, CarrouselAccueilForm
 )
 from accounts.models import Eleve,Formateur
 from .admin_filters import FormationFilter,FiliereFilter,SubscriptionFilter
 from django.db.models import Sum
 from datetime import datetime
 from django.urls import reverse
-from .views import _base_qs, _get_scope, _pdf_header_lines, _draw_pdf_watermark
+from .views import (_base_qs, _get_scope, _pdf_header_lines, _draw_pdf_watermark,
+                    TITRES_TUILE, IMAGES_CATEGORIE)
 
 
 def _filiere_modules_map():
@@ -1874,3 +1875,56 @@ def membre_import(request):
     from .bulk_import_registry import SPEC_MEMBRE_EQUIPE
     from .bulk_import.views_helpers import handle_import_upload
     return handle_import_upload(request, SPEC_MEMBRE_EQUIPE)
+
+
+# == CARROUSELS DE LA PAGE D'ACCUEIL ==========================================
+# Personnalisation des tuiles « Accède à la formation de ton choix ». Une ligne
+# CarrouselAccueil (facultative) par catégorie ; chaque champ vide retombe sur
+# la valeur par défaut codée dans courses.views.home().
+@require_permission('courses.gerer_carrousel')
+def carrousel_list(request):
+    existants = {c.cle: c for c in CarrouselAccueil.objects.all()}
+    lignes = []
+    for cle, libelle in CarrouselAccueil.CLE_CHOICES:
+        obj = existants.get(cle)
+        lignes.append({
+            'cle': cle,
+            'libelle': libelle,
+            'titre_defaut': TITRES_TUILE.get(cle, libelle),
+            'image_defaut': IMAGES_CATEGORIE.get(cle, ''),
+            'obj': obj,
+            'titre_effectif': (obj.titre if obj and obj.titre else TITRES_TUILE.get(cle, libelle)),
+            'texte_defilant': obj.texte_defilant if obj else '',
+            'image_perso': obj.image if obj and obj.image else None,
+        })
+    return render(request, 'admin/carrousel/list.html', {'lignes': lignes})
+
+
+@require_permission('courses.gerer_carrousel')
+def carrousel_update(request, cle):
+    libelles = dict(CarrouselAccueil.CLE_CHOICES)
+    if cle not in libelles:
+        raise Http404("Carrousel inconnu.")
+    obj = CarrouselAccueil.objects.filter(cle=cle).first() or CarrouselAccueil(cle=cle)
+
+    if request.method == 'POST':
+        form = CarrouselAccueilForm(request.POST, request.FILES, instance=obj)
+        if 'supprimer_image' in request.POST and obj.pk and obj.image:
+            obj.image.delete(save=True)
+            messages.success(request, "Image réinitialisée : l'image par défaut est de nouveau utilisée.")
+            return redirect('bsb_admin:carrousel_list')
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Carrousel « {libelles[cle]} » enregistré.")
+            return redirect('bsb_admin:carrousel_list')
+        messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
+    else:
+        form = CarrouselAccueilForm(instance=obj)
+
+    return render(request, 'admin/carrousel/form.html', {
+        'form': form,
+        'objet': obj,
+        'libelle': libelles[cle],
+        'titre_defaut': TITRES_TUILE.get(cle, libelles[cle]),
+        'image_defaut': IMAGES_CATEGORIE.get(cle, ''),
+    })

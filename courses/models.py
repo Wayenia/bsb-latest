@@ -909,3 +909,42 @@ class PermissionsPlateforme(models.Model):
             ("rechercher_tous_centres", "Rechercher un apprenant dans tous les centres (paiements)"),
             ("gerer_statistiques_reelles", "Saisir et consulter le bilan des effectifs formés (listes nominatives)"),
         ]
+
+
+class CarrouselAccueil(models.Model):
+    """Personnalisation des tuiles « Accède à la formation de ton choix » de la
+    page d'accueil. Une ligne facultative par catégorie de programme : chaque
+    champ laissé vide retombe sur la valeur par défaut définie dans la vue."""
+
+    CLE_CHOICES = [
+        ("initiale", "Formations initiales"),
+        ("continue", "Formations continues"),
+        ("modulaire_qualifiante", "Formations modulaires qualifiantes"),
+        ("reconversion", "Programme de reconversion des diplômés du système universitaire"),
+        ("vacances_utiles", "Programme vacances utiles avec BSB"),
+    ]
+
+    cle = models.CharField(max_length=30, choices=CLE_CHOICES, unique=True,
+                           verbose_name="Carrousel")
+    titre = models.CharField(max_length=120, blank=True, verbose_name="Titre affiché",
+                             help_text="Laisser vide pour garder le titre par défaut.")
+    image = models.ImageField(
+        upload_to="accueil/carrousel/", blank=True, null=True,
+        validators=[FileExtensionValidator(["jpg", "jpeg", "png", "webp"])],
+        verbose_name="Image",
+        help_text="Laisser vide pour garder l'image par défaut. JPG, JPEG, PNG ou WEBP.",
+    )
+    texte_defilant = models.CharField(
+        max_length=200, blank=True, verbose_name="Texte défilant",
+        help_text="Bandeau qui défile sous l'image. Laisser vide pour n'afficher aucun bandeau.",
+    )
+    date_maj = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Carrousel de l'accueil"
+        verbose_name_plural = "Carrousels de l'accueil"
+        ordering = ["cle"]
+        permissions = [("gerer_carrousel", "Gérer les carrousels de l'accueil")]
+
+    def __str__(self):
+        return self.get_cle_display()
