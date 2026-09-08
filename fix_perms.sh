@@ -27,3 +27,14 @@ normaliser() {
 
 normaliser media   "$APP_UID:$APP_UID"     "uid $APP_UID (conteneur)"
 normaliser backups "$HOTE_UID:$HOTE_GID"   "uid $HOTE_UID (hote)"
+
+# Memes dossiers cote STAGING (bind mounts MEDIA_DIR=./media_staging,
+# BACKUP_DIR=./backups_staging). staging.sh les cree avec `mkdir` — donc
+# souvent root sur le serveur — mais ne les chownait pas : l'upload d'une
+# piece de candidature echouait alors en 500 (README staging).
+if [ -d "$RACINE/media_staging" ]; then
+    normaliser media_staging   "$APP_UID:$APP_UID"   "uid $APP_UID (conteneur, staging)"
+fi
+if [ -d "$RACINE/backups_staging" ]; then
+    normaliser backups_staging "$HOTE_UID:$HOTE_GID" "uid $HOTE_UID (hote, staging)"
+fi

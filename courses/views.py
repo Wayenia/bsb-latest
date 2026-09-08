@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -42,6 +44,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from django.conf import settings
 
+logger = logging.getLogger(__name__)
 
 
 ############### STUDENT LEVEL #############
@@ -317,22 +320,32 @@ def documents_view(request):
             for err in errors:
                 messages.error(request, err)
         else:
-            # Save each to disk, store path in session
-            for doc in required_doc:
-                if doc.libelle_piece in request.FILES:
-                    requested_file = request.FILES[doc.libelle_piece]
-                    file_name_saved = fs.save(f'student/pieces/{requested_file.name}', requested_file)
-                    uploaded_files[doc.libelle_piece] = {
-                        'url':fs.url(file_name_saved),
-                        'path':file_name_saved
-                    }
-
-            # Save to session
-            request.session['career_id'] = career_id
-            request.session['uploaded_files'] = uploaded_files
-            return redirect('courses:recap')
+            # Save each to disk, store path in session. Une erreur d'ecriture
+            # (dossier media non inscriptible par l'uid du conteneur, disque
+            # plein...) ne doit pas renvoyer une 500 en pleine candidature :
+            # on l'affiche proprement et on laisse l'eleve reessayer.
+            try:
+                for doc in required_doc:
+                    if doc.libelle_piece in request.FILES:
+                        requested_file = request.FILES[doc.libelle_piece]
+                        file_name_saved = fs.save(f'student/pieces/{requested_file.name}', requested_file)
+                        uploaded_files[doc.libelle_piece] = {
+                            'url':fs.url(file_name_saved),
+                            'path':file_name_saved
+                        }
+            except OSError:
+                logger.exception("Echec d'enregistrement d'une piece jointe de candidature")
+                messages.error(
+                    request,
+                    "Le téléversement des pièces a échoué côté serveur. "
+                    "Réessayez dans quelques instants ; si le problème persiste, contactez le support."
+                )
+            else:
+                # Save to session
+                request.session['career_id'] = career_id
+                request.session['uploaded_files'] = uploaded_files
+                return redirect('courses:recap')
     context = {'career': career, 'required_doc': required_doc,}
-    print(f'=== CAREER : {career} ======')
     return render(request, 'student/subscription/documents.html', context)
 
 # PERSONAL INFO

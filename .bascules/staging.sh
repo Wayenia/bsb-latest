@@ -143,6 +143,11 @@ case "${1:-}" in
             appliquer_admin_path "$ADMIN_LOGIN_PATH"
         fi
         mkdir -p media_staging backups_staging
+        # Droits des bind mounts : media_staging doit appartenir a l'uid du
+        # conteneur (10001), sinon l'upload d'une piece de candidature echoue
+        # en 500. fix_perms.sh gere media/ + backups/ ET, s'ils existent,
+        # media_staging/ + backups_staging/.
+        ./fix_perms.sh
         echo "Demarrage du stack staging (port 8081)..."
         $DC up -d --build
         # Recreation SYSTEMATIQUE des conteneurs applicatifs a chaque `up`.
