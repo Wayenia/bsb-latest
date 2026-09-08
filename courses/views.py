@@ -1945,7 +1945,9 @@ def home(request):
     definitions = [
         ('initiale',              'formation',       'initiale'),
         ('continue',              'formation',       'continue'),
-        ('modulaire_qualifiante', 'formation',       'modulaire_qualifiante'),
+        # Tuile « Formations modulaires qualifiantes » masquée à la demande —
+        # décommenter la ligne pour la réactiver.
+        # ('modulaire_qualifiante', 'formation',       'modulaire_qualifiante'),
         ('reconversion',          'reconversion',    ''),
         ('vacances_utiles',       'vacances_utiles', ''),
     ]

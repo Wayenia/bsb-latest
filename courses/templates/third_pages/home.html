@@ -113,7 +113,7 @@
         </div>
 
         <div class="grid grid-flow-col auto-cols-[15rem] sm:auto-cols-[16rem] gap-5 overflow-x-auto pb-4 snap-x
-                    lg:grid-flow-row lg:auto-cols-auto lg:grid-cols-5 lg:overflow-visible">
+                    lg:grid-flow-row lg:auto-cols-auto lg:grid-cols-4 lg:max-w-5xl lg:mx-auto lg:overflow-visible">
             {% for cat in categories_accueil %}
             <div class="relative snap-start flex flex-col {{ cat.fond }} rounded-3xl p-5
                         {% if cat.lien %}hover:shadow-xl transition-shadow duration-300{% endif %}">
@@ -144,10 +144,8 @@
                         <span class="block w-full px-4 py-2.5 bg-bsb-primary text-white font-bold rounded-xl text-sm">S'inscrire</span>
                         <a href="{{ cat.lien }}" aria-label="S'inscrire — {{ cat.titre }}"
                            class="absolute inset-0 rounded-3xl focus:outline-none focus:ring-2 focus:ring-bsb-primary focus:ring-offset-2"></a>
-                    {% elif not cat.parcours_ouvert %}
-                        <p class="text-sm font-bold text-bsb-muted py-2.5">Ouverture prochaine</p>
                     {% else %}
-                        <p class="text-sm font-bold text-red-600 py-2.5">Pas de programme</p>
+                        <p class="text-sm font-bold text-red-600 py-2.5">Pas de lancement en cours</p>
                     {% endif %}
                 </div>
             </div>
