@@ -316,6 +316,16 @@
         </div>
 
         <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Type de programme</label>
+          <select name="type_programme" class="form-select">
+            <option value="">— Tous —</option>
+            {% for code, label in types_programme %}
+              <option value="{{ code }}" {% if f_type_programme == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
           <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Statut inscription</label>
           <select name="statut" class="form-select">
             <option value="">— Tous —</option>
@@ -394,7 +404,7 @@
         <div class="export-panel export-panel-insc">
           <div class="export-panel-title"><span class="export-dot"></span> Inscriptions</div>
           <div class="export-actions">
-            <a href="?{% if f_centre %}centre={{ f_centre }}&{% endif %}{% if f_filiere %}filiere={{ f_filiere }}&{% endif %}{% if f_annee %}annee={{ f_annee }}&{% endif %}type=inscriptions"
+            <a href="?{% if f_centre %}centre={{ f_centre }}&{% endif %}{% if f_filiere %}filiere={{ f_filiere }}&{% endif %}{% if f_annee %}annee={{ f_annee }}&{% endif %}{% if f_type_programme %}type_programme={{ f_type_programme }}&{% endif %}type=inscriptions"
                data-action="exporter" data-export-type="inscriptions" data-export-format="pdf" class="btn-exp btn-exp-pdf">PDF</a>
             <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="excel" class="btn-exp btn-exp-excel">Excel</a>
             <a href="#" data-action="exporter" data-export-type="inscriptions" data-export-format="csv" class="btn-exp btn-exp-csv">CSV</a>

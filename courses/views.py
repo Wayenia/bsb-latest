@@ -60,6 +60,47 @@ def _param_id(request, nom):
 # existe à la création d'une formation mais n'a pas encore de parcours dédié.
 TYPES_PROGRAMME_INSCRIPTION = ('formation', 'reconversion')
 
+# Libellés des tuiles « Accède à la formation de ton choix » (accueil) et des
+# titres du parcours d'inscription dédié. Clé = type_formation pour les
+# programmes « Formation », sinon le type_programme lui-même.
+LIBELLES_CATEGORIE = {
+    'initiale': "Formations initiales",
+    'continue': "Formations continues",
+    'modulaire_qualifiante': "Formations modulaires qualifiantes",
+    'reconversion': "Programme de reconversion des diplômés du système universitaire",
+    'vacances_utiles': "Programme vacances utiles avec BSB",
+}
+
+# Titre court affiché sur la tuile (le libellé complet sert d'aria-label et de
+# titre de page dans le parcours d'inscription).
+TITRES_TUILE = {
+    'initiale': "Formations initiales",
+    'continue': "Formations continues",
+    'modulaire_qualifiante': "Formations modulaires qualifiantes",
+    'reconversion': "Reconversion des diplômés",
+    'vacances_utiles': "Vacances utiles avec BSB",
+}
+
+# Visuel provisoire de chaque tuile (recadrages de la maquette fournie ;
+# destinés à être remplacés par les photos officielles).
+IMAGES_CATEGORIE = {
+    'initiale': 'images/accueil/initiale.jpg',
+    'continue': 'images/accueil/continue.jpg',
+    'modulaire_qualifiante': 'images/accueil/modulaire.jpg',
+    'reconversion': 'images/accueil/reconversion.jpg',
+    'vacances_utiles': 'images/accueil/vacances.jpg',
+}
+
+# Habillage des tuiles de l'accueil : (fond, couleur du titre, bloc d'accent
+# derrière l'hexagone). Repris des teintes de la maquette fournie.
+THEMES_CATEGORIE = {
+    'initiale':              ('bg-sky-50',     'text-bsb-primary',  'bg-bsb-primary'),
+    'continue':              ('bg-amber-50',   'text-sky-800',      'bg-sky-700'),
+    'modulaire_qualifiante': ('bg-sky-50',     'text-amber-700',    'bg-amber-500'),
+    'reconversion':          ('bg-emerald-50', 'text-emerald-800',  'bg-emerald-800'),
+    'vacances_utiles':       ('bg-amber-50',   'text-amber-600',    'bg-amber-400'),
+}
+
 
 def subscribe_selection_view(request):
     annees = AnneeScolaire.objects.all()
@@ -106,6 +147,31 @@ def subscribe_selection_view(request):
     if selected_type_programme == 'reconversion' and not reconversion_dispo:
         selected_type_programme = 'formation'
 
+    # ── Type de formation (parcours dédié Initiale / Continue / Modulaire) ─
+    from .models import TYPE_FORMATION_CHOICE
+    types_formation_valides = dict(TYPE_FORMATION_CHOICE)
+    if 'type_formation' in request.GET:
+        selected_type_formation = (request.GET.get('type_formation') or '').strip()
+    elif session_career and session_career.type_programme == 'formation':
+        selected_type_formation = session_career.type_formation or ''
+    else:
+        selected_type_formation = ''
+    if selected_type_programme != 'formation' or selected_type_formation not in types_formation_valides:
+        selected_type_formation = ''
+
+    # Parcours dédié : on arrive depuis une tuile de l'accueil (type_programme
+    # passé en paramètre). Le sélecteur « type de programme » est alors masqué
+    # et remplacé par un titre.
+    parcours_dedie = 'type_programme' in request.GET
+    if selected_type_programme == 'reconversion':
+        libelle_parcours = LIBELLES_CATEGORIE['reconversion']
+    elif selected_type_formation:
+        libelle_parcours = LIBELLES_CATEGORIE[selected_type_formation]
+    elif parcours_dedie:
+        libelle_parcours = "Formations"
+    else:
+        libelle_parcours = ''
+
     villes = []
     selected_ville = ''
     selected_centre_id = ''
@@ -133,9 +199,11 @@ def subscribe_selection_view(request):
         else:
             selected_centre_id = _param_id(request, 'centre')
         if selected_annee_id and selected_centre_id:
+            careers = base_qs.filter(centre_id=selected_centre_id, type_programme='formation')
+            if selected_type_formation:
+                careers = careers.filter(type_formation=selected_type_formation)
             careers = (
-                base_qs.filter(centre_id=selected_centre_id, type_programme='formation')
-                .select_related('filiere').prefetch_related('frais_set')
+                careers.select_related('filiere').prefetch_related('frais_set')
                 .annotate(total_frais=Sum('frais__montant'))
             )
 
@@ -160,6 +228,9 @@ def subscribe_selection_view(request):
         'centres': centres,
         'selected_annee_id': selected_annee_id,
         'selected_type_programme': selected_type_programme,
+        'selected_type_formation': selected_type_formation,
+        'parcours_dedie': parcours_dedie,
+        'libelle_parcours': libelle_parcours,
         'reconversion_dispo': reconversion_dispo,
         'villes': villes,
         'selected_ville': selected_ville,
@@ -179,7 +250,8 @@ def available_career_view(request):
         CentreEtFiliere.objects.filter(is_active=True)
         .filter(Q(date_limite_inscription__isnull=True) | Q(date_limite_inscription__gte=timezone.now()))
         .prefetch_related('frais_set').annotate(total_frais=Sum('frais__montant'))
-        .select_related('centre', 'filiere').order_by('-date_creation')
+        .select_related('centre', 'centre__province', 'filiere', 'annee_prog')
+        .order_by('-date_creation')
     )
     #Ici on doit récupéré le id de la formtion lié a fil et centre pour l'affecter le frais   
 
@@ -1864,7 +1936,63 @@ def home(request):
     for career in active_careers:
         career.date_limite_proche = earliest_deadlines.get(career.filiere_id)
 
-    return render(request, "third_pages/home.html", {'active_careers': active_careers})
+    # ── Tuiles « Accède à la formation de ton choix » ────────────────────
+    # Une tuile par catégorie de programme. Un clic mène au parcours
+    # d'inscription pré-filtré ; sans formation lancée (ou parcours non
+    # encore ouvert), la tuile n'est pas cliquable et affiche « Pas de
+    # programme ».
+    base_url = reverse('courses:subscribe_selection')
+    definitions = [
+        ('initiale',              'formation',       'initiale'),
+        ('continue',              'formation',       'continue'),
+        ('modulaire_qualifiante', 'formation',       'modulaire_qualifiante'),
+        ('reconversion',          'reconversion',    ''),
+        ('vacances_utiles',       'vacances_utiles', ''),
+    ]
+    categories_accueil = []
+    for cle, type_programme, type_formation in definitions:
+        cat_qs = careers_qs.filter(type_programme=type_programme)
+        if type_formation:
+            cat_qs = cat_qs.filter(type_formation=type_formation)
+        nb_metiers = cat_qs.values('filiere_id').distinct().count()
+        parcours_ouvert = cle != 'vacances_utiles'
+        dispo = parcours_ouvert and nb_metiers > 0
+        if type_programme == 'formation':
+            lien = f'{base_url}?type_programme=formation&type_formation={type_formation}'
+        elif type_programme == 'reconversion':
+            lien = f'{base_url}?type_programme=reconversion'
+        else:
+            lien = ''
+        date_limite = (
+            cat_qs.exclude(date_limite_inscription__isnull=True)
+            .order_by('date_limite_inscription')
+            .values_list('date_limite_inscription', flat=True).first()
+        )
+        annee = (
+            cat_qs.order_by('-annee_prog__date_creation')
+            .values_list('annee_prog__libelle_anne', flat=True).first()
+        )
+        fond, titre_couleur, accent = THEMES_CATEGORIE[cle]
+        categories_accueil.append({
+            'cle': cle,
+            'titre': LIBELLES_CATEGORIE[cle],
+            'titre_court': TITRES_TUILE[cle],
+            'image': IMAGES_CATEGORIE[cle],
+            'dispo': dispo,
+            'parcours_ouvert': parcours_ouvert,
+            'nb_metiers': nb_metiers,
+            'date_limite': date_limite,
+            'annee': annee,
+            'lien': lien if dispo else '',
+            'fond': fond,
+            'titre_couleur': titre_couleur,
+            'accent': accent,
+        })
+
+    return render(request, "third_pages/home.html", {
+        'active_careers': active_careers,
+        'categories_accueil': categories_accueil,
+    })
 
 # ABOUT
 def about_view(request):
@@ -2133,6 +2261,7 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
     date_debut   = request.GET.get("date_debut")
     date_fin     = request.GET.get("date_fin")
     statut_paiement_f = request.GET.get("statut_paiement")
+    type_programme_f  = request.GET.get("type_programme")
 
     if direction_id and scope == "global":
         inscriptions_qs = inscriptions_qs.filter(formation__centre__direction_id=direction_id)
@@ -2153,6 +2282,14 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
         inscriptions_qs = inscriptions_qs.filter(annee_scolaire_id=annee_id)
         dettes_qs = dettes_qs.filter(inscription__annee_scolaire_id=annee_id)
         paiements_qs = paiements_qs.filter(dette__inscription__annee_scolaire_id=annee_id)
+
+    from .models import TYPE_PROGRAMME_CHOICE
+    if type_programme_f in dict(TYPE_PROGRAMME_CHOICE):
+        inscriptions_qs = inscriptions_qs.filter(formation__type_programme=type_programme_f)
+        dettes_qs = dettes_qs.filter(inscription__formation__type_programme=type_programme_f)
+        paiements_qs = paiements_qs.filter(dette__inscription__formation__type_programme=type_programme_f)
+    else:
+        type_programme_f = ""
 
     if statut_f:
         inscriptions_qs = inscriptions_qs.filter(statut=statut_f)
@@ -2204,7 +2341,7 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
         "centre_id": centre_id, "direction_id": direction_id, "filiere_id": filiere_id,
         "annee_id": annee_id, "statut_f": statut_f, "region_id": region_id,
         "genre": genre, "date_debut": date_debut, "date_fin": date_fin,
-        "statut_paiement_f": statut_paiement_f,
+        "statut_paiement_f": statut_paiement_f, "type_programme_f": type_programme_f,
     }
     return inscriptions_qs, dettes_qs, paiements_qs, filters
 
@@ -2236,6 +2373,11 @@ def _resume_filtres_stats(filters, exclure_filiere=False):
     if filters.get("annee_id"):
         annee = AnneeScolaire.objects.filter(pk=filters["annee_id"]).first()
         parties.append(f"Année de formation : {annee.libelle_anne if annee else '—'}")
+
+    if filters.get("type_programme_f"):
+        from .models import TYPE_PROGRAMME_CHOICE
+        tp_labels = dict(TYPE_PROGRAMME_CHOICE)
+        parties.append(f"Type de programme : {tp_labels.get(filters['type_programme_f'], filters['type_programme_f'])}")
 
     if filters.get("statut_f"):
         statut_labels = dict(Inscription.STATUT_CHOICE)
@@ -2381,6 +2523,7 @@ def statistiques_view(request):
     date_debut   = filters["date_debut"]
     date_fin     = filters["date_fin"]
     statut_paiement_f = filters["statut_paiement_f"]
+    type_programme_f  = filters["type_programme_f"]
 
     # Narrowing du dropdown "centre" affiché à l'écran quand une direction est sélectionnée.
     if direction_id and scope == "global":
@@ -2540,6 +2683,7 @@ def statistiques_view(request):
         "annees":     AnneeScolaire.objects.all().order_by("-libelle_anne"),
         "regions":    regions_scope.order_by("nom_region"),
         "genres":     Utilisateur.SEXE_CHOICE,
+        "types_programme": CentreEtFiliere._meta.get_field("type_programme").choices,
         # Valeurs actives des filtres
         "f_centre":     centre_id,
         "f_direction":  direction_id,
@@ -2551,6 +2695,7 @@ def statistiques_view(request):
         "f_date_debut": date_debut,
         "f_date_fin":   date_fin,
         "f_statut_paiement": statut_paiement_f,
+        "f_type_programme": type_programme_f,
         # Transmises brutes : le template les serialise avec json_script, qui
         # echappe <, > et &, contrairement a json.dumps.
         "evol_labels":       evol_labels,

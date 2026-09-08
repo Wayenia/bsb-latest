@@ -103,7 +103,65 @@
     </div>
 </section>
 
-{% comment %} Carousel Formations Actives {% endcomment %}
+{% comment %} Accède à la formation de ton choix — tuiles par catégorie de programme {% endcomment %}
+<section id="categories" class="py-16 bg-white overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-bsb-primary mb-4">Accède à la formation de ton choix</h2>
+            <div class="bsb-rule mx-auto mb-4"></div>
+            <p class="text-bsb-muted text-lg">Chaque programme a son propre parcours d'inscription.</p>
+        </div>
+
+        <div class="grid grid-flow-col auto-cols-[15rem] sm:auto-cols-[16rem] gap-5 overflow-x-auto pb-4 snap-x
+                    lg:grid-flow-row lg:auto-cols-auto lg:grid-cols-5 lg:overflow-visible">
+            {% for cat in categories_accueil %}
+            <div class="relative snap-start flex flex-col {{ cat.fond }} rounded-3xl p-5
+                        {% if cat.lien %}hover:shadow-xl transition-shadow duration-300{% endif %}">
+                <h3 class="text-center font-extrabold uppercase text-[13px] leading-tight {{ cat.titre_couleur }} min-h-[3.25rem] flex items-center justify-center">
+                    {{ cat.titre_court }}
+                </h3>
+
+                {% comment %} Hexagone : bloc d'accent décalé + photo (visuel provisoire) {% endcomment %}
+                <div class="relative mx-auto my-5 w-32 h-36">
+                    <div class="absolute inset-0 translate-x-1.5 translate-y-1.5 {{ cat.accent }} bsb-hex"></div>
+                    <div class="absolute inset-0 bsb-hex overflow-hidden">
+                        <img src="{% static cat.image %}" alt="" class="w-full h-full object-cover">
+                    </div>
+                </div>
+
+                <dl class="flex-1 text-xs text-bsb-muted space-y-0.5 mb-4 text-center">
+                    {% if cat.dispo %}
+                        <div>{{ cat.nb_metiers }}
+                            {% if cat.cle == 'reconversion' %}pack{{ cat.nb_metiers|pluralize }}{% else %}métier{{ cat.nb_metiers|pluralize }}{% endif %}
+                            ouvert{{ cat.nb_metiers|pluralize }}</div>
+                        {% if cat.annee %}<div>Année {{ cat.annee }}</div>{% endif %}
+                        {% if cat.date_limite %}<div class="font-bold text-bsb-primary">Date limite d'inscription : {{ cat.date_limite|date:"d/m/Y" }}</div>{% endif %}
+                    {% endif %}
+                </dl>
+
+                <div class="text-center">
+                    {% if cat.dispo %}
+                        <span class="block w-full px-4 py-2.5 bg-bsb-primary text-white font-bold rounded-xl text-sm">S'inscrire</span>
+                        <a href="{{ cat.lien }}" aria-label="S'inscrire — {{ cat.titre }}"
+                           class="absolute inset-0 rounded-3xl focus:outline-none focus:ring-2 focus:ring-bsb-primary focus:ring-offset-2"></a>
+                    {% elif not cat.parcours_ouvert %}
+                        <p class="text-sm font-bold text-bsb-muted py-2.5">Ouverture prochaine</p>
+                    {% else %}
+                        <p class="text-sm font-bold text-red-600 py-2.5">Pas de programme</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{% comment %}
+  Ancien carrousel « Formations en cours » — conservé mais désactivé le temps
+  de valider les nouvelles tuiles ci-dessus. Pour le réactiver : retirer le
+  bloc « if False » / « endif » qui l'entoure.
+{% endcomment %}
+{% if False %}
 <section class="py-16 bg-bsb-cream overflow-hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12">
@@ -198,6 +256,7 @@
         </div>
     </div>
 </section>
+{% endif %}
 
 {% comment %} Mission  {% endcomment %}
 <section class="py-16 bg-white">

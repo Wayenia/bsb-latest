@@ -8,6 +8,20 @@
   {% include 'partials/inscription_stepper.html' with etape=1 %}
 
   <div class="mb-6">
+    {% if parcours_dedie and libelle_parcours %}
+    <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">S'inscrire — {{ libelle_parcours }}</h1>
+    <p class="mt-1 text-sm text-bsb-muted">
+      {% if selected_type_programme == 'reconversion' %}
+        Choisissez l'année de formation, la ville, puis le pack auquel vous souhaitez vous inscrire.
+      {% else %}
+        Choisissez l'année de formation, le centre, puis le métier auquel vous souhaitez vous inscrire.
+      {% endif %}
+    </p>
+    <a href="{% url 'courses:home' %}#categories" class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-bsb-primary hover:text-bsb-dark">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      Choisir un autre programme
+    </a>
+    {% else %}
     <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">S'inscrire à une formation</h1>
     <p class="mt-1 text-sm text-bsb-muted">
       {% if selected_type_programme == 'reconversion' %}
@@ -16,9 +30,24 @@
         Choisissez l'année de formation, le type de programme, le centre, puis le métier auquel vous souhaitez vous inscrire.
       {% endif %}
     </p>
+    {% endif %}
   </div>
 
   <form method="get" class="bg-white px-6 py-6 border border-slate-200 rounded-2xl shadow-sm mb-6 space-y-5">
+    {% if parcours_dedie %}
+    <input type="hidden" name="type_programme" value="{{ selected_type_programme }}">
+    {% if selected_type_formation %}<input type="hidden" name="type_formation" value="{{ selected_type_formation }}">{% endif %}
+    <div>
+      <label class="block text-sm font-bold text-gray-700 mb-1.5">Année de formation <span class="text-red-600">*</span></label>
+      <select name="annee" data-auto-submit
+              class="block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold">
+        <option value="">---Sélectionnez une année---</option>
+        {% for annee in annees %}
+        <option value="{{ annee.id }}" {% if selected_annee_id == annee.id|stringformat:"s" %}selected{% endif %}>{{ annee.libelle_anne }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% else %}
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
       <div>
         <label class="block text-sm font-bold text-gray-700 mb-1.5">Année de formation <span class="text-red-600">*</span></label>
@@ -41,6 +70,7 @@
         </select>
       </div>
     </div>
+    {% endif %}
 
     {% if selected_type_programme == 'reconversion' %}
     {% comment %} ── Reconversion : ville -> pack (centre masqué) ── {% endcomment %}

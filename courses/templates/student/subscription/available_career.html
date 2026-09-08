@@ -70,9 +70,12 @@
     <div class="bg-white px-4 py-4 border border-gray-200 rounded-lg mb-4 flex flex-col sm:flex-row gap-3">
       <div class="relative flex-1">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          
+
         </div>
         {{ filter.form.formation }}
+      </div>
+      <div class="sm:w-56">
+        {{ filter.form.type_programme }}
       </div>
       <div class="sm:w-56">
         {{ filter.form.centre }}
@@ -84,8 +87,16 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
     {% for career in available_career %}
     <article class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
-      {% comment %} Titre du métier {% endcomment %}
+      {% comment %} Titre du métier + type de programme {% endcomment %}
       <div class="mb-3">
+        {% if career.type_programme %}
+        <span class="inline-block mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wide
+          {% if career.type_programme == 'reconversion' %}bg-emerald-50 text-emerald-800
+          {% elif career.type_programme == 'vacances_utiles' %}bg-amber-50 text-amber-700
+          {% else %}bg-sky-50 text-sky-800{% endif %}">
+          {{ career.get_type_programme_display }}
+        </span>
+        {% endif %}
         <h3 class="text-base sm:text-lg font-bold text-bsb-ink leading-snug">{{ career.filiere.nom_filiere }}</h3>
       </div>
 
@@ -115,11 +126,23 @@
 
       {% comment %} Actions + details {% endcomment %}
       <div class="mt-auto pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2.5">
-        <a href="{% url 'courses:subscribe_selection' %}"
+        {% if career.type_programme == 'vacances_utiles' %}
+        <span class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-500 text-sm font-bold rounded-lg">
+          Bientôt disponible
+        </span>
+        {% elif career.est_reconversion %}
+        <a href="{% url 'courses:subscribe_selection' %}?type_programme=reconversion{% if career.annee_prog_id %}&annee={{ career.annee_prog_id }}{% endif %}{% if career.centre.province.chef_lieu %}&ville={{ career.centre.province.chef_lieu|urlencode }}{% endif %}"
            class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-bsb-red to-bsb-dark hover:brightness-110 text-white text-sm font-bold rounded-lg transition-all">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
           S'inscrire
         </a>
+        {% else %}
+        <a href="{% url 'courses:subscribe_selection' %}?type_programme=formation{% if career.type_formation %}&type_formation={{ career.type_formation }}{% endif %}{% if career.annee_prog_id %}&annee={{ career.annee_prog_id }}{% endif %}&centre={{ career.centre_id }}"
+           class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-bsb-red to-bsb-dark hover:brightness-110 text-white text-sm font-bold rounded-lg transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          S'inscrire
+        </a>
+        {% endif %}
         <details class="ml-auto group">
           <summary class="cursor-pointer list-none inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-bsb-muted hover:text-bsb-ink hover:bg-slate-50 transition-colors">
             Voir les détails
@@ -159,17 +182,17 @@
     </p>
     <nav class="inline-flex rounded-lg shadow-sm overflow-hidden border border-slate-200 divide-x divide-slate-200">
       {% if available_career.has_previous %}
-      <a href="?centre={{ request.GET.centre }}&page={{ available_career.previous_page_number }}" class="px-3 py-2 bg-white text-sm text-bsb-ink hover:bg-slate-50 transition-colors">Précédent</a>
+      <a href="{% querystring page=available_career.previous_page_number %}" class="px-3 py-2 bg-white text-sm text-bsb-ink hover:bg-slate-50 transition-colors">Précédent</a>
       {% endif %}
       {% for num in available_career.paginator.page_range %}
         {% if available_career.number == num %}
         <span class="px-4 py-2 bg-bsb-gold text-white text-sm font-bold">{{ num }}</span>
         {% else %}
-        <a href="?centre={{ request.GET.centre }}&page={{ num }}" class="px-4 py-2 bg-white text-sm text-bsb-ink hover:bg-slate-50 transition-colors">{{ num }}</a>
+        <a href="{% querystring page=num %}" class="px-4 py-2 bg-white text-sm text-bsb-ink hover:bg-slate-50 transition-colors">{{ num }}</a>
         {% endif %}
       {% endfor %}
       {% if available_career.has_next %}
-      <a href="?centre={{ request.GET.centre }}&page={{ available_career.next_page_number }}" class="px-3 py-2 bg-white text-sm text-bsb-ink hover:bg-slate-50 transition-colors">Suivant</a>
+      <a href="{% querystring page=available_career.next_page_number %}" class="px-3 py-2 bg-white text-sm text-bsb-ink hover:bg-slate-50 transition-colors">Suivant</a>
       {% endif %}
     </nav>
   </div>

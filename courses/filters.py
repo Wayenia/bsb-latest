@@ -1,4 +1,5 @@
-from .models import TITRE_PROFESSIONNEL_CHOICE, CentreEtFiliere,Filiere,CentreFormation
+from .models import (TITRE_PROFESSIONNEL_CHOICE, CentreEtFiliere, Filiere,
+                     CentreFormation, TYPE_PROGRAMME_CHOICE)
 import django_filters
 from django.forms.widgets import Select,TextInput
 
@@ -7,6 +8,17 @@ class CentreFormationFilter(django_filters.FilterSet):
         queryset=CentreFormation.objects.all(),
         label="Centre de formation",
         empty_label="---Tous les centres---",
+        widget=Select(attrs={
+            'class': 'block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold',
+            'data-autosubmit': 'true'
+        })
+    )
+
+    type_programme=django_filters.ChoiceFilter(
+        field_name='type_programme',
+        choices=TYPE_PROGRAMME_CHOICE,
+        label="Type de programme",
+        empty_label="---Tous les programmes---",
         widget=Select(attrs={
             'class': 'block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold',
             'data-autosubmit': 'true'
@@ -24,7 +36,7 @@ class CentreFormationFilter(django_filters.FilterSet):
 
     class Meta:
         model=CentreEtFiliere
-        fields=['centre']
+        fields=['centre', 'type_programme']
 
 class FiliereFilter(django_filters.FilterSet):
     recherche = django_filters.CharFilter(
