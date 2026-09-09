@@ -880,11 +880,23 @@ class Paiement(models.Model):
         if not self.numero_quittance:
             annee = timezone.now().year
             code_centre = self._code_centre()
-            dernier = Paiement.objects.filter(
-                numero_quittance__startswith=f"QUIT-{annee}-{code_centre}-"
-            ).count() + 1
-            for _ in range(20):
-                self.numero_quittance = f"QUIT-{annee}-{code_centre}-{dernier:04d}"
+            prefixe = f"QUIT-{annee}-{code_centre}-"
+            # Suivant du PLUS GRAND numero deja attribue (annules compris) : un
+            # numero de quittance officiel n'est jamais reutilise, meme si une
+            # ligne venait a disparaitre. `count()` seul rouvrirait un numero
+            # apres une suppression.
+            existants = Paiement.objects.filter(
+                numero_quittance__startswith=prefixe
+            ).values_list('numero_quittance', flat=True)
+            dernier = 0
+            for num in existants:
+                try:
+                    dernier = max(dernier, int(num.rsplit('-', 1)[-1]))
+                except (ValueError, AttributeError):
+                    pass
+            dernier += 1
+            for _ in range(50):
+                self.numero_quittance = f"{prefixe}{dernier:04d}"
                 try:
                     with transaction.atomic():
                         return super().save(*args, **kwargs)

@@ -506,74 +506,89 @@ def recap_view(request):
 
     career = get_object_or_404(CentreEtFiliere, id=career_id)
 
-    if request.method == 'POST': # double safety
-        if Inscription.objects.filter(
-            eleve=request.user.eleve,
-            formation=career
-            ).exclude(statut='rejete').exists():
-            messages.error(request, 'Vous avez déjà déposé une demande d\'inscription pour cette formation.')
-            return redirect('courses:my_subscriptions')
+    # La formation choisie doit toujours être ouverte AU MOMENT DE L'ENVOI :
+    # elle a pu être désactivée ou sa date limite dépassée pendant que
+    # l'apprenant remplissait le formulaire (ou en cas de POST rejoué).
+    date_limite = career.date_limite_inscription
+    if not career.is_active or (date_limite and date_limite < timezone.now()):
+        messages.error(
+            request,
+            "Cette formation n'est plus ouverte aux inscriptions. "
+            "Consultez les formations disponibles."
+        )
+        for cle in ('career_id', 'student_data', 'uploaded_files', 'from_rejected_id'):
+            request.session.pop(cle, None)
+        return redirect('courses:available_career')
 
-        if career.type_formation == 'initiale':
-            # Seule une inscription deja validee bloque de nouvelles demandes ;
-            # les demandes en attente peuvent coexister.
-            conflit = Inscription.objects.filter(
+    if request.method == 'POST': # double safety
+        from django.db import transaction
+        # Deux envois concurrents du même apprenant ne doivent pas créer deux
+        # dossiers : on sérialise en verrouillant la ligne apprenant, puis on
+        # (re)vérifie les règles et on crée le dossier dans la même transaction.
+        with transaction.atomic():
+            Eleve.objects.select_for_update().get(pk=request.user.eleve.pk)
+
+            if Inscription.objects.filter(
                 eleve=request.user.eleve,
-                annee_scolaire=career.annee_prog,
-                formation__type_formation='initiale',
-                statut__in=['valide', 'valide_paye'],
-            ).exclude(formation=career).select_related(
-                'formation__filiere', 'formation__centre'
-            ).first()
-            if conflit:
-                messages.error(
-                    request,
-                    "Vous avez déjà une inscription validée en Formation Initiale "
-                    f"({conflit.formation.filiere} - {conflit.formation.centre}) pour cette année de formation. "
-                    "Une nouvelle inscription en Formation Initiale n'est pas autorisée la même année."
-                )
+                formation=career
+                ).exclude(statut='rejete').exists():
+                messages.error(request, 'Vous avez déjà déposé une demande d\'inscription pour cette formation.')
                 return redirect('courses:my_subscriptions')
 
-        from_rejected_id = request.session.get('from_rejected_id')
-        rejected_inscription = None
-        if from_rejected_id:
-            rejected_inscription = Inscription.objects.filter(
-                id=from_rejected_id, eleve=request.user.eleve, statut='rejete'
-            ).first()
+            if career.type_formation == 'initiale':
+                # Seule une inscription deja validee bloque de nouvelles demandes ;
+                # les demandes en attente peuvent coexister.
+                conflit = Inscription.objects.filter(
+                    eleve=request.user.eleve,
+                    annee_scolaire=career.annee_prog,
+                    formation__type_formation='initiale',
+                    statut__in=['valide', 'valide_paye', 'Valide'],
+                ).exclude(formation=career).select_related(
+                    'formation__filiere', 'formation__centre'
+                ).first()
+                if conflit:
+                    messages.error(
+                        request,
+                        "Vous avez déjà une inscription validée en Formation Initiale "
+                        f"({conflit.formation.filiere} - {conflit.formation.centre}) pour cette année de formation. "
+                        "Une nouvelle inscription en Formation Initiale n'est pas autorisée la même année."
+                    )
+                    return redirect('courses:my_subscriptions')
 
-        # Create inscription
-        inscription=Inscription.objects.create(
-            eleve=request.user.eleve,
-            formation=career,
-            statut='en_cours',
-            annee_scolaire=career.annee_prog,  # ← récupérée depuis la formation
-            type_personne_contact=student_data.get('type_personne_contact', ''),
-            personne_contact_nom=student_data.get('nom_personne', ''),
-            personne_contact_prenom=student_data.get('prenom_personne', ''),
-            personne_contact_fonction=student_data.get('fonction', ''),
-            personne_contact_tel=student_data.get('contact', ''),
-            personne_contact_email=student_data.get('email_personne', ''),
-            organisation_nom=student_data.get('organisation_nom', ''),
-            organisation_adresse=student_data.get('organisation_adresse', ''),
-            organisation_tel=student_data.get('organisation_tel', ''),
-            organisation_email=student_data.get('organisation_email', ''),
-            id_inscription_rejeter=rejected_inscription,
-        )
-        for libelle,fic in uploaded_files.items():
-            try:
+            from_rejected_id = request.session.get('from_rejected_id')
+            rejected_inscription = None
+            if from_rejected_id:
+                rejected_inscription = Inscription.objects.filter(
+                    id=from_rejected_id, eleve=request.user.eleve, statut='rejete'
+                ).first()
 
-                docs=PieceJointeInscription.objects.get(
-                    formation=career,
-                    libelle_piece=libelle
-                )
-                doc=DocumentEleve(
-                    inscription=inscription,
-                    piece_requise=docs,
-                )
-                doc.piece.name=fic['path']
-                doc.save()
-            except PieceJointeInscription.DoesNotExist:
-             continue
+            inscription = Inscription.objects.create(
+                eleve=request.user.eleve,
+                formation=career,
+                statut='en_cours',
+                annee_scolaire=career.annee_prog,  # ← récupérée depuis la formation
+                type_personne_contact=student_data.get('type_personne_contact', ''),
+                personne_contact_nom=student_data.get('nom_personne', ''),
+                personne_contact_prenom=student_data.get('prenom_personne', ''),
+                personne_contact_fonction=student_data.get('fonction', ''),
+                personne_contact_tel=student_data.get('contact', ''),
+                personne_contact_email=student_data.get('email_personne', ''),
+                organisation_nom=student_data.get('organisation_nom', ''),
+                organisation_adresse=student_data.get('organisation_adresse', ''),
+                organisation_tel=student_data.get('organisation_tel', ''),
+                organisation_email=student_data.get('organisation_email', ''),
+                id_inscription_rejeter=rejected_inscription,
+            )
+            for libelle, fic in uploaded_files.items():
+                try:
+                    docs = PieceJointeInscription.objects.get(
+                        formation=career, libelle_piece=libelle
+                    )
+                    doc = DocumentEleve(inscription=inscription, piece_requise=docs)
+                    doc.piece.name = fic['path']
+                    doc.save()
+                except PieceJointeInscription.DoesNotExist:
+                    continue
 
         # finally clear session data
         for key in ['career_id', 'student_data', 'uploaded_files', 'from_rejected_id']:
@@ -2816,7 +2831,7 @@ def export_csv(request):
         for i, insc in enumerate(
             inscriptions_qs.select_related(
                 "eleve", "formation__filiere", "formation__centre__direction", "annee_scolaire"
-            ).order_by("-date_inscription"), 1
+            ).prefetch_related("dettes__paiements").order_by("-date_inscription"), 1
         ):
             writer.writerow([
                 i,
@@ -2829,7 +2844,7 @@ def export_csv(request):
                 insc.formation.centre.nom_centre if insc.formation and insc.formation.centre else "—",
                 insc.formation.centre.direction.nom_direction if insc.formation and insc.formation.centre and insc.formation.centre.direction else "—",
                 insc.annee_scolaire.libelle_anne if insc.annee_scolaire else "—",
-                insc.get_statut_display(),
+                insc.libelle_statut_paiement,
                 insc.date_inscription.strftime("%d/%m/%Y") if insc.date_inscription else "—",
             ])
 
@@ -2915,7 +2930,7 @@ def export_excel(request):
         for i, insc in enumerate(
             inscriptions_qs.select_related(
                 "eleve","formation__filiere","formation__centre__direction","annee_scolaire"
-            ).order_by("-date_inscription"), 1
+            ).prefetch_related("dettes__paiements").order_by("-date_inscription"), 1
         ):
             ws.append([
                 i,
@@ -2928,7 +2943,7 @@ def export_excel(request):
                 insc.formation.centre.nom_centre if insc.formation and insc.formation.centre else "—",
                 insc.formation.centre.direction.nom_direction if insc.formation and insc.formation.centre and insc.formation.centre.direction else "—",
                 insc.annee_scolaire.libelle_anne if insc.annee_scolaire else "—",
-                insc.get_statut_display(),
+                insc.libelle_statut_paiement,
                 insc.date_inscription.strftime("%d/%m/%Y") if insc.date_inscription else "—",
             ])
         for col in ws.columns:
@@ -4372,14 +4387,14 @@ def formateur_dashboard(request):
     # Vraiement inscrits = ont payé au moins quelque chose
     total_vrais = Inscription.objects.filter(
         formation__in=formations,
-        dettes__paiements__isnull=False
+        dettes__paiements__annule=False
     ).distinct().count()
 
     # Stats par filière
     stats_filieres = []
     for formation in formations:
         inscrits = Inscription.objects.filter(formation=formation)
-        vrais = inscrits.filter(dettes__paiements__isnull=False).distinct()
+        vrais = inscrits.filter(dettes__paiements__annule=False).distinct()
         stats_filieres.append({
             'formation': formation,
             'total_inscrits': inscrits.count(),
@@ -4464,7 +4479,7 @@ def formateur_etudiants(request, formation_id):
 
     if statut_filter == 'vrais':
         inscriptions = inscriptions.filter(
-            dettes__paiements__isnull=False
+            dettes__paiements__annule=False
         ).distinct()
     elif statut_filter == 'valide':
         inscriptions = inscriptions.filter(
@@ -4535,7 +4550,7 @@ def formateur_export(request, formation_id, format):
         )
     if statut_filter == 'vrais':
         inscriptions = inscriptions.filter(
-            dettes__paiements__isnull=False
+            dettes__paiements__annule=False
         ).distinct()
     elif statut_filter == 'valide':
         inscriptions = inscriptions.filter(
@@ -4557,7 +4572,7 @@ def formateur_export(request, formation_id, format):
             'Sexe': insc.eleve.get_sexe_display() if hasattr(insc.eleve, 'get_sexe_display') else insc.eleve.sexe,
             'Téléphone': insc.eleve.tel or '—',
             'Email': insc.eleve.email or '—',
-            'Statut inscription': insc.get_statut_display(),
+            'Statut inscription': insc.libelle_statut_paiement,
             'Total dû (FCFA)': total_du,
             'Total payé (FCFA)': total_paye,
             'Reste (FCFA)': total_du - total_paye,

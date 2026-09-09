@@ -876,10 +876,31 @@ def payment_update(request, id):
 
 @require_permission('courses.gerer_paiements')
 def payment_delete(request, id):
-    payment = get_object_or_404(Paiement, id=id)
+    """Un versement n'est jamais supprimé de la base : le supprimer libérerait
+    son numéro de quittance, qui serait réattribué à un autre encaissement
+    (deux quittances officielles au même numéro). On l'ANNULE : la ligne reste,
+    le numéro reste réservé, mais le montant n'est plus compté."""
+    from .views import _annuler_paiement, _est_dernier_versement_inscription
+    payment = get_object_or_404(
+        Paiement.objects.select_related('dette__inscription__eleve'), id=id
+    )
     if request.method == 'POST':
-        payment.delete()
-        messages.success(request, 'Paiement supprimé avec succès!')
+        if payment.annule:
+            messages.info(request, "Ce versement est déjà annulé.")
+            return redirect('bsb_admin:payment_list')
+        motif = (request.POST.get('motif_annulation') or '').strip()
+        if not motif:
+            messages.error(request, "Un motif est obligatoire pour annuler un versement.")
+            return render(request, 'admin/payment/confirm_delete.html', {'object': payment})
+        if not _est_dernier_versement_inscription(payment):
+            messages.error(
+                request,
+                "Impossible d'annuler ce versement : des versements plus récents existent "
+                "sur cette inscription. Annulez-les d'abord, du plus récent au plus ancien."
+            )
+            return redirect('bsb_admin:payment_list')
+        nb = _annuler_paiement(payment, request.user, motif)
+        messages.success(request, f"Versement annulé ({nb} paiement{'s' if nb > 1 else ''}).")
         return redirect('bsb_admin:payment_list')
     return render(request, 'admin/payment/confirm_delete.html', {'object': payment})
 
