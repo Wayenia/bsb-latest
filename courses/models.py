@@ -866,6 +866,7 @@ class Paiement(models.Model):
         permissions = [
             ("encaisser_paiement", "Encaisser un paiement"),
             ("gerer_paiements", "Modifier/supprimer un paiement"),
+            ("annuler_paiement", "Annuler un versement encaissé"),
         ]
 
     def __str__(self):

@@ -874,7 +874,7 @@ def payment_update(request, id):
     return render(request, 'admin/payment/form.html', {'form': form, 'action': 'Modifier', 'object': payment})
 
 
-@require_permission('courses.gerer_paiements')
+@require_permission('courses.annuler_paiement')
 def payment_delete(request, id):
     """Un versement n'est jamais supprimé de la base : le supprimer libérerait
     son numéro de quittance, qui serait réattribué à un autre encaissement
@@ -1622,6 +1622,7 @@ MATRIX_PERMISSIONS = [
     ('rejeter_inscription', "Rejeter une candidature", 'courses', 'Inscriptions'),
     ('encaisser_paiement', "Encaisser un paiement", 'courses', 'Paiements de scolarité'),
     ('gerer_paiements', "Modifier/supprimer un paiement", 'courses', 'Paiements de scolarité'),
+    ('annuler_paiement', "Annuler un versement encaissé (dernier mouvement)", 'courses', 'Paiements de scolarité'),
     ('rechercher_tous_centres', "Rechercher un apprenant dans tous les centres (paiements)", 'courses', 'Paiements de scolarité'),
     ('telecharger_pieces', "Télécharger les pièces jointes des candidats", 'courses', 'Inscriptions'),
     ('voir_statistiques', "Voir les statistiques", 'courses', 'Statistiques et exports'),

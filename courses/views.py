@@ -3842,14 +3842,11 @@ def stats_annuler_paiement_view(request, paiement_id):
 
     # Autorisation evaluee avant le filtre sur la methode : sans la permission,
     # le refus doit etre un 403 y compris en GET, donc visible et journalise.
-    # `encaisser_paiement` suffit : la garde LIFO ci-dessous limite de toute
-    # facon l'annulation au tout dernier mouvement — defaire son propre
-    # encaissement recent fait partie de l'encaissement, pas de la gestion des
-    # paiements (obs. DSI : caissier bloque pour un reglement « en un coup »).
-    if not (request.user.is_superuser
-            or request.user.has_perm('courses.gerer_paiements')
-            or request.user.has_perm('courses.encaisser_paiement')):
-        raise PermissionDenied("Vous n'avez pas la permission d'annuler un paiement.")
+    # Permission dediee « annuler_paiement » (RH -> Permissions, theme
+    # « Paiements de scolarite ») : la garde LIFO ci-dessous limite de toute
+    # facon l'annulation au tout dernier mouvement de l'inscription.
+    if not (request.user.is_superuser or request.user.has_perm('courses.annuler_paiement')):
+        raise PermissionDenied("Vous n'avez pas la permission d'annuler un versement.")
 
     if request.method != 'POST':
         return redirect(redirect_url)
