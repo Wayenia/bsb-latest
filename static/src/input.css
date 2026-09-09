@@ -261,12 +261,15 @@
 .bsb-chiffres__node--total      { --node-c: var(--c-total); }
 .bsb-chiffres__node--regions    { --node-c: var(--c-regions); }
 
-/* ---- Disposition radiale (grand ecran) ---- */
+/* ---- Disposition radiale (grand ecran) ----
+   Largeur figee a 60rem (= la largeur utile a 1024px) pour que la geometrie
+   des fleches vers le moyeu reste exacte. */
 @media (min-width: 1024px) {
   .bsb-chiffres {
     display: block;
     position: relative;
-    max-width: 62rem;
+    width: 60rem;
+    max-width: 100%;
     height: 47rem;
     margin: 0 auto;
   }
@@ -278,8 +281,10 @@
     width: 11rem;
     height: 11rem;
     font-size: 1rem;
+    z-index: 2;
   }
   .bsb-chiffres__node { position: absolute; width: 12.5rem; }
+  .bsb-chiffres__badge { z-index: 1; }
   .bsb-chiffres__note { max-width: 12.5rem; }
 
   /* 3 rangees x 2 colonnes autour du moyeu central. */
@@ -290,23 +295,29 @@
   .bsb-chiffres__node--formateurs { left: 18%; bottom: 0; }
   .bsb-chiffres__node--regions    { right: 18%; bottom: 0; }
 
-  /* La fleche des bulles laterales pointe vers le moyeu. */
-  .bsb-chiffres__node--domaines .bsb-chiffres__badge::after {
-    left: -14px; bottom: auto; top: 50%; transform: translateY(-50%);
-    border-width: 13px 15px 13px 0;
-    border-color: transparent var(--node-c) transparent transparent;
-  }
-  .bsb-chiffres__node--total .bsb-chiffres__badge::after {
-    left: auto; right: -14px; bottom: auto; top: 50%; transform: translateY(-50%);
-    border-width: 13px 0 13px 15px;
+  /* Fleche allongee : base large contre la bulle, pointe qui effleure le
+     cercle central. Triangle horizontal (pointe vers +X, longueur --tail-l)
+     decale de 60px pour degager le bord de la bulle, puis pivote vers le
+     moyeu (--tail-a). */
+  .bsb-chiffres__badge::after {
+    left: 50%;
+    top: 50%;
+    right: auto;
+    bottom: auto;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 13px 0 13px var(--tail-l, 60px);
     border-color: transparent transparent transparent var(--node-c);
+    transform-origin: 0 0;
+    transform: rotate(var(--tail-a, 0deg)) translateX(60px) translateY(-13px);
   }
-  .bsb-chiffres__node--regions .bsb-chiffres__badge::after,
-  .bsb-chiffres__node--formateurs .bsb-chiffres__badge::after {
-    bottom: auto; top: -14px;
-    border-width: 0 13px 15px 13px;
-    border-color: transparent transparent var(--node-c) transparent;
-  }
+  .bsb-chiffres__node--centres    { --tail-a: 41deg;   --tail-l: 308px; }
+  .bsb-chiffres__node--metiers    { --tail-a: 139deg;  --tail-l: 308px; }
+  .bsb-chiffres__node--total      { --tail-a: 10deg;   --tail-l: 227px; }
+  .bsb-chiffres__node--domaines   { --tail-a: 170deg;  --tail-l: 227px; }
+  .bsb-chiffres__node--formateurs { --tail-a: -49deg;  --tail-l: 152px; }
+  .bsb-chiffres__node--regions    { --tail-a: -131deg; --tail-l: 152px; }
 }
 
 /* ==========================================================================
