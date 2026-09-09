@@ -425,9 +425,10 @@
 
     {% if guide_aide %}
     {% comment %} Bouton flottant « Aide » : ouvre le guide d'utilisation du profil
-       courant (PDF et/ou vidéo). Visible partout, y compris hors connexion. {% endcomment %}
+       courant (PDF et/ou vidéo). Visible partout, y compris hors connexion. Se
+       place au-dessus du bouton Yupaan-IA quand celui-ci est présent. {% endcomment %}
     <button type="button" id="guide-fab"
-            class="fixed z-50 bottom-6 left-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-bsb-primary text-white shadow-lg hover:shadow-xl hover:bg-bsb-dark ring-4 ring-white flex items-center justify-center transition-all"
+            class="fixed z-50 right-6 {% if assistant_dispo %}bottom-24 sm:bottom-28{% else %}bottom-6{% endif %} h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-bsb-primary text-white shadow-lg hover:shadow-xl hover:bg-bsb-dark ring-4 ring-white flex items-center justify-center transition-all"
             title="{{ guide_aide.titre_affiche }}" aria-haspopup="dialog" aria-controls="guide-modal">
         <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.5A2.5 2.5 0 1 1 14.5 9c0 1.5-2.5 2-2.5 4M12 17h.01"/>
