@@ -26,9 +26,11 @@
                 <td class="px-4 py-3 text-gray-900">{{ a.texte }}{% if a.lien %} <span class="text-xs text-gray-400">↗</span>{% endif %}</td>
                 <td class="px-4 py-3 text-gray-500">{{ a.ordre }}</td>
                 <td class="px-4 py-3">{% if a.actif %}<span class="text-green-600 font-semibold">Actif</span>{% else %}<span class="text-gray-400">Inactif</span>{% endif %}</td>
-                <td class="px-4 py-3 text-right whitespace-nowrap">
-                    <a href="{% url 'bsb_admin:bande_annonce_update' a.pk %}" class="bo-oeil" title="Modifier">Modifier</a>
-                    <a href="{% url 'bsb_admin:bande_annonce_delete' a.pk %}" class="bo-oeil text-bsb-red" title="Supprimer">Supprimer</a>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-2">
+                        <a href="{% url 'bsb_admin:bande_annonce_update' a.pk %}" class="bo-btn-secondary bo-btn-sm">Modifier</a>
+                        <a href="{% url 'bsb_admin:bande_annonce_delete' a.pk %}" class="bo-btn-danger bo-btn-sm">Supprimer</a>
+                    </div>
                 </td>
             </tr>
             {% endfor %}

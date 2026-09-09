@@ -26,9 +26,9 @@
                     <p class="font-bold text-gray-900 truncate">{{ p.nom }}</p>
                     <p class="text-xs text-gray-500">Ordre {{ p.ordre }} · {% if p.actif %}actif{% else %}inactif{% endif %}</p>
                 </div>
-                <div class="text-right whitespace-nowrap">
-                    <a href="{% url 'bsb_admin:partenaire_update' p.pk %}" class="bo-oeil">Modifier</a>
-                    <a href="{% url 'bsb_admin:partenaire_delete' p.pk %}" class="bo-oeil text-bsb-red">Supprimer</a>
+                <div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
+                    <a href="{% url 'bsb_admin:partenaire_update' p.pk %}" class="bo-btn-secondary bo-btn-sm">Modifier</a>
+                    <a href="{% url 'bsb_admin:partenaire_delete' p.pk %}" class="bo-btn-danger bo-btn-sm">Supprimer</a>
                 </div>
             </div>
             {% endfor %}
