@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{%block title%} Inscriptions|BSB {% endblock%}
+{%block title%} Souscriptions|BSB {% endblock%}
 
 
 {%block content%}
@@ -11,16 +11,16 @@
     <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 class="text-3xl font-black text-gray-900 flex items-center">
-                Inscriptions
+                Souscriptions
             </h1>
-            <p class="mt-2 text-sm text-gray-600">Liste des inscriptions</p>
+            <p class="mt-2 text-sm text-gray-600">Liste des souscriptions</p>
         </div>
         <div class="mt-4 sm:mt-0">
           <a href="{% url 'bsb_admin:subscription_en_cours' %}"
                 class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white text-sm font-semibold rounded-lg shadow hover:bg-yellow-600 transition-all">
                     
                     
-                    Valider inscription
+                    Valider une souscription
             </a>
         </div>
     </div>
@@ -57,7 +57,7 @@
 
     {% comment %} Table Card {% endcomment %}
     {% if mode == 'accordeon' %}
-    {% comment %} Accordéon centres -> inscriptions (même principe que régions -> provinces) {% endcomment %}
+    {% comment %} Accordéon centres -> souscriptions (même principe que régions -> provinces) {% endcomment %}
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {% if centres_page %}
         <div class="divide-y divide-gray-100">
@@ -68,7 +68,7 @@
                         {% if centre_ouvert.id == centre.id %}
                         <a href="?page={{ centres_page.number }}"
                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-300 transition-all shadow-sm"
-                           title="Masquer les inscriptions">
+                           title="Masquer les souscriptions">
                             <svg class="w-4 h-4 transition-transform rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                             </svg>
@@ -76,7 +76,7 @@
                         {% else %}
                         <a href="?centre={{ centre.id }}&page={{ centres_page.number }}"
                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-300 transition-all shadow-sm"
-                           title="Afficher les inscriptions">
+                           title="Afficher les souscriptions">
                             <svg class="w-4 h-4 transition-transform" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                             </svg>
@@ -85,7 +85,7 @@
                         <div>
                             <span class="text-sm font-bold text-gray-900">{{ centre.nom_centre }}</span>
                             <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
-                                {{ centre.nb_inscriptions }} inscription{{ centre.nb_inscriptions|pluralize }}
+                                {{ centre.nb_inscriptions }} souscription{{ centre.nb_inscriptions|pluralize }}
                             </span>
                         </div>
                     </div>
@@ -96,7 +96,7 @@
                     {% endif %}
                 </div>
 
-                {% comment %} Inscriptions du centre déplié {% endcomment %}
+                {% comment %} Souscriptions du centre déplié {% endcomment %}
                 <div id="c{{ centre.id }}" class="{% if centre_ouvert.id != centre.id %}hidden{% endif %} bg-gray-50 border-t border-gray-100">
                     {% if centre_ouvert.id == centre.id %}
                         {% if subscriptions %}
@@ -133,7 +133,7 @@
                                         <td class="px-6 py-3.5 text-right text-sm font-medium">
                                             <div class="flex items-center justify-end gap-1">
                                                 {% comment %}La caissière consulte mais ne modifie pas les
-                                                inscriptions : on masque les actions plutôt que d'afficher
+                                                souscriptions : on masque les actions plutôt que d'afficher
                                                 des boutons qui renvoient un refus.{% endcomment %}
                                                 {% if user.user_type == 'caissier' %}
                                                 <span class="text-xs text-gray-400 italic">Consultation</span>
@@ -146,9 +146,9 @@
                                                    title="Supprimer">{% include 'partials/icon_delete.html' %}</a>
                                                 {% else %}
                                                 <span class="inline-flex items-center gap-1 p-1.5 rounded-lg text-gray-300 cursor-not-allowed"
-                                                      title="Inscription validée : modification impossible">{% include 'partials/icon_edit.html' %}</span>
+                                                      title="Souscription validée : modification impossible">{% include 'partials/icon_edit.html' %}</span>
                                                 <span class="inline-flex items-center gap-1 p-1.5 rounded-lg text-gray-300 cursor-not-allowed"
-                                                      title="Inscription validée : suppression impossible">{% include 'partials/icon_delete.html' %}</span>
+                                                      title="Souscription validée : suppression impossible">{% include 'partials/icon_delete.html' %}</span>
                                                 {% endif %}
                                             </div>
                                         </td>
@@ -158,7 +158,7 @@
                             </table>
                         </div>
 
-                        {% comment %} Pagination des inscriptions du centre déplié {% endcomment %}
+                        {% comment %} Pagination des souscriptions du centre déplié {% endcomment %}
                         {% if subscriptions.has_other_pages %}
                         <div class="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
                             <p class="text-xs text-gray-500">
@@ -186,7 +186,7 @@
                         {% endif %}
                         {% else %}
                         <div class="px-16 py-5 text-sm text-gray-400 italic">
-                            Aucune inscription pour ce centre.
+                            Aucune souscription pour ce centre.
                         </div>
                         {% endif %}
                     {% endif %}
@@ -354,7 +354,7 @@
         {% else %}
         <div class="text-center py-12">
             
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucune inscription trouvée</h3>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucune souscription trouvée</h3>
         </div>
         {% endif %}
     </div>

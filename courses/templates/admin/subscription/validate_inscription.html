@@ -7,13 +7,13 @@
     {% comment %} Messages {% endcomment %}
     {% include 'partials/messages.html' %}
 
-    {% comment %} GCard pour un aperçu des insciptions à valider {% endcomment %}
+    {% comment %} GCard pour un aperçu des souscriptions à valider {% endcomment %}
  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4">
          <div class="p-3 bg-green-100 rounded-xl">
             
         </div>
         <div>
-            <p class="text-sm text-gray-700 font-bold">Inscriptions Non validés</p>
+            <p class="text-sm text-gray-700 font-bold">Souscriptions non validées</p>
             <p class="text-3xl font-black text-gray-900">{{ numbers }}</p>
          </div>
      
@@ -63,7 +63,7 @@
                             Formation
                         </th>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                            Date d'Inscrition
+                            Date de souscription
                         </th>
                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                            Année de formation
@@ -90,7 +90,7 @@
                         <td class="px-6 py-4" data-label="Formation">
                             <span class="text-sm font-medium text-gray-900">{{ s.formation}}</span>
                         </td>
-                        <td class="px-6 py-4" data-label="Date d'Inscrition">
+                        <td class="px-6 py-4" data-label="Date de souscription">
                             <span class="text-sm font-medium text-gray-900">{{ s.date_inscription}}</span>
                         </td>
                          <td class="px-6 py-4" data-label="Année de formation">
@@ -111,7 +111,7 @@
                                 </a>
                                 {% if s.formation.est_reconversion and not perms.courses.valider_inscription_reconversion %}
                                 <button type="button" disabled
-                                        title="Vous n'avez pas la permission de valider une inscription en programme Reconversion."
+                                        title="Vous n'avez pas la permission de valider une souscription en programme Reconversion."
                                         class="px-3 py-2 bg-gray-200 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed">
                                     Valider
                                 </button>
@@ -190,7 +190,7 @@
         {% else %}
         <div class="text-center py-12">
             
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucune Soucriptionn trouvée</h3>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucune souscription trouvée</h3>
         </div>
         {% endif %}
     </div>

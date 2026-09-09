@@ -656,7 +656,7 @@ def subscription_create(request):
         form = InscriptionForm(request.POST)
         if form.is_valid():
             inscription = form.save()
-            messages.success(request, 'Inscription créée avec succès!')
+            messages.success(request, 'Souscription créée avec succès !')
             return redirect('bsb_admin:subscription_list')
     else:
         form = InscriptionForm()
@@ -667,13 +667,13 @@ def subscription_create(request):
 def subscription_update(request, id):
     subscription = get_object_or_404(Inscription, id=id)
     if subscription.statut not in ('en_cours', 'rejete'):
-        messages.error(request, "Cette inscription est validée : elle ne peut plus être modifiée.")
+        messages.error(request, "Cette souscription est validée : elle ne peut plus être modifiée.")
         return redirect('bsb_admin:subscription_list')
     if request.method == 'POST':
         form = InscriptionForm(request.POST, instance=subscription)
         if form.is_valid():
             subscription = form.save()
-            messages.success(request, 'Inscription modifiée avec succès!')
+            messages.success(request, 'Souscription modifiée avec succès !')
             return redirect('bsb_admin:subscription_list')
     else:
         form = InscriptionForm(instance=subscription)
@@ -683,11 +683,11 @@ def subscription_update(request, id):
 def subscription_delete(request, id):
     subscription = get_object_or_404(Inscription, id=id)
     if subscription.statut not in ('en_cours', 'rejete'):
-        messages.error(request, "Cette inscription est validée : elle ne peut plus être supprimée.")
+        messages.error(request, "Cette souscription est validée : elle ne peut plus être supprimée.")
         return redirect('bsb_admin:subscription_list')
     if request.method == 'POST':
         subscription.delete()
-        messages.success(request, 'Inscription supprimée avec succès!')
+        messages.success(request, 'Souscription supprimée avec succès !')
         return redirect('bsb_admin:subscription_list')
     return render(request, 'admin/subscription/confirm_delete.html', {'object': subscription})
 
@@ -698,7 +698,7 @@ def subscription_detail(request,id):
     subscription=get_object_or_404(Inscription.objects.select_related('eleve','formation__centre'),id=id)
     centres_qs, _, scope = _get_scope(request.user)
     if scope != "global" and (not subscription.formation_id or not centres_qs.filter(pk=subscription.formation.centre_id).exists()):
-        raise PermissionDenied("Vous n'avez pas accès à cette inscription.")
+        raise PermissionDenied("Vous n'avez pas accès à cette souscription.")
     eleve_docs=DocumentEleve.objects.select_related('piece_requise').filter(inscription=subscription)
     return render(request,'admin/subscription/inscription_detail.html',{'detail':subscription,'eleve_docs':eleve_docs})
 
@@ -708,7 +708,7 @@ def gerer_inscription(request,id):
      subscription=get_object_or_404(Inscription.objects.select_related('formation__centre','eleve'),id=id)
      centres_qs, _, scope = _get_scope(request.user)
      if scope != "global" and (not subscription.formation_id or not centres_qs.filter(pk=subscription.formation.centre_id).exists()):
-         raise PermissionDenied("Vous n'avez pas accès à cette inscription.")
+         raise PermissionDenied("Vous n'avez pas accès à cette souscription.")
      if request.method == 'POST':
          action=request.POST.get('action')
          if action == 'valide':
@@ -716,7 +716,7 @@ def gerer_inscription(request,id):
                      and not request.user.has_perm('courses.valider_inscription_reconversion')):
                  messages.error(
                      request,
-                     "Vous n'avez pas la permission de valider une inscription en programme Reconversion."
+                     "Vous n'avez pas la permission de valider une souscription en programme Reconversion."
                  )
                  return redirect("bsb_admin:subscription_en_cours")
              if subscription.formation and subscription.formation.type_formation == 'initiale':
@@ -731,14 +731,14 @@ def gerer_inscription(request,id):
                  if conflit:
                      messages.error(
                          request,
-                         "Cet apprenant a déjà une inscription validée en Formation Initiale "
+                         "Cet apprenant a déjà une souscription validée en Formation Initiale "
                          f"({conflit.formation.filiere} - {conflit.formation.centre}) pour cette année de formation."
                      )
                      return redirect("bsb_admin:subscription_en_cours")
              subscription.statut='valide'
              subscription.date_validation=timezone.now()
              subscription.motif_rejet=None
-             messages.success(request, "Inscription validée et dettes générées.")
+             messages.success(request, "Souscription validée et dettes générées.")
              subscription.save()
      return redirect("bsb_admin:subscription_en_cours")
 
@@ -747,7 +747,7 @@ def rejeter_inscription(request,id):
     subscription=get_object_or_404(Inscription.objects.select_related('formation__centre','eleve'),id=id)
     centres_qs, _, scope = _get_scope(request.user)
     if scope != "global" and (not subscription.formation_id or not centres_qs.filter(pk=subscription.formation.centre_id).exists()):
-        raise PermissionDenied("Vous n'avez pas accès à cette inscription.")
+        raise PermissionDenied("Vous n'avez pas accès à cette souscription.")
 
     if request.method == 'POST':
         motif=request.POST.get('motif')
@@ -759,7 +759,7 @@ def rejeter_inscription(request,id):
         subscription.motif_rejet = motif
         subscription.date_validation = timezone.now()
         subscription.save()
-        messages.warning(request, "Inscription rejetée")
+        messages.warning(request, "Souscription rejetée")
         return redirect("bsb_admin:subscription_en_cours")
 
     return render(request, "admin/subscription/rejeter_inscription.html", {"subscription": subscription})

@@ -65,7 +65,7 @@ GROUPES = [
     {
         'cle': 'scolarite', 'titre': 'Scolarité', 'couleur': 'or', 'icone': 'dossier',
         'liens': [
-            _lien('bsb_admin:subscription_list', 'Inscriptions', 'courses.voir_inscriptions', '/bsb/subscriptions'),
+            _lien('bsb_admin:subscription_list', 'Souscriptions', 'courses.voir_inscriptions', '/bsb/subscriptions'),
             _lien('bsb_admin:eleve_list', 'Apprenants', 'accounts.gerer_eleves', '/bsb/eleves'),
             _lien('courses:paiement_list', 'Encaissements scolarité', 'courses.encaisser_paiement', '/membre/centre/paiement'),
         ],
