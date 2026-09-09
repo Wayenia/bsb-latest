@@ -85,6 +85,7 @@ TEMPLATES = [
                 'django.template.context_processors.csp',
                 'config.context_processors.navigation',
                 'config.context_processors.annonces',
+                'config.context_processors.guide_aide',
             ],
         },
     },
@@ -230,6 +231,10 @@ SECURE_CSP = {
     "font-src": [CSP.SELF],
     "connect-src": [CSP.SELF],
     "frame-ancestors": [CSP.SELF],
+    # PDF des guides d'utilisation (meme origine) + lecteurs video YouTube / Vimeo
+    # integres dans la fenetre d'aide (bouton flottant). Ces lecteurs ne peuvent
+    # pas executer de script dans notre origine.
+    "frame-src": [CSP.SELF, "https://www.youtube-nocookie.com", "https://player.vimeo.com"],
     "base-uri": [CSP.SELF],
     "form-action": [CSP.SELF],
     "object-src": [CSP.NONE],

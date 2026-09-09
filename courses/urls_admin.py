@@ -112,6 +112,8 @@ urlpatterns = [
     path('partenaires/creer', views_admin.partenaire_create, name='partenaire_create'),
     path('partenaires/<int:pk>/modifier', views_admin.partenaire_update, name='partenaire_update'),
     path('partenaires/<int:pk>/supprimer', views_admin.partenaire_delete, name='partenaire_delete'),
+    path('guides', views_admin.guide_list, name='guide_list'),
+    path('guides/<str:profil>', views_admin.guide_update, name='guide_update'),
 
     #Année scolaire
     path('annee/create',views_admin.annee_create,name='annee_create'),

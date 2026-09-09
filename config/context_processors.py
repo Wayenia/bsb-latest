@@ -68,6 +68,27 @@ def annonces(request):
         return {'annonces_defilantes': []}
 
 
+def guide_aide(request):
+    """Guide d'utilisation proposé par le bouton flottant « Aide ». Le profil
+    connecté détermine le guide ; un visiteur non connecté voit celui du profil
+    « eleve » (apprenant). Rien n'est renvoyé si le guide n'a pas de contenu."""
+    try:
+        from courses.models import GuideUtilisation
+    except Exception:
+        return {'guide_aide': None}
+    utilisateur = getattr(request, 'user', None)
+    if getattr(utilisateur, 'is_authenticated', False):
+        profil = getattr(utilisateur, 'user_type', 'eleve') or 'eleve'
+    else:
+        profil = 'eleve'
+    try:
+        guide = GuideUtilisation.objects.filter(profil=profil, actif=True).first()
+    except Exception:
+        # Table absente (migration en cours).
+        return {'guide_aide': None}
+    return {'guide_aide': guide if guide and guide.a_du_contenu else None}
+
+
 def navigation(request):
     utilisateur = getattr(request, 'user', None)
     dispo = _assistant_dispo(utilisateur)

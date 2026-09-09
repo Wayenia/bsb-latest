@@ -1610,6 +1610,7 @@ MATRIX_PERMISSIONS = [
     ('gerer_annees', "Gérer les années de formation", 'courses', "Configuration de l'offre"),
     ('gerer_equipe', "Gérer le Directeur Général et l'équipe (page « À propos »)", 'courses', 'Site public'),
     ('gerer_carrousel', "Gérer le contenu de la page d'accueil (carrousels, bande-annonce, partenaires)", 'courses', 'Site public'),
+    ('gerer_guides', "Gérer les guides d'utilisation (PDF / vidéo par profil)", 'courses', 'Site public'),
     ('gerer_agents', "Gérer les comptes utilisateurs", 'accounts', 'Comptes et accès'),
     ('gerer_eleves', "Gérer les comptes apprenants", 'accounts', 'Comptes et accès'),
     ('gerer_permissions', "Gérer les permissions", 'accounts', 'Comptes et accès'),
@@ -2028,3 +2029,50 @@ def partenaire_delete(request, pk):
         messages.success(request, "Partenaire supprimé.")
         return redirect('bsb_admin:partenaire_list')
     return render(request, 'admin/partenaire/confirm_delete.html', {'objet': obj})
+
+
+# == GUIDES D'UTILISATION (PDF / vidéo par profil) ===========================
+# Alimentent le bouton flottant « Aide » : chaque profil a son guide ; les
+# visiteurs non connectés voient celui du profil « eleve ».
+from .models import GuideUtilisation
+from .forms import GuideUtilisationForm
+
+
+@require_permission('courses.gerer_guides')
+def guide_list(request):
+    existants = {g.profil: g for g in GuideUtilisation.objects.all()}
+    lignes = [
+        {'profil': profil, 'libelle': libelle, 'obj': existants.get(profil)}
+        for profil, libelle in GuideUtilisation.PROFIL_CHOICES
+    ]
+    return render(request, 'admin/guide/list.html', {'lignes': lignes})
+
+
+@require_permission('courses.gerer_guides')
+def guide_update(request, profil):
+    libelles = dict(GuideUtilisation.PROFIL_CHOICES)
+    if profil not in libelles:
+        raise Http404("Profil inconnu.")
+    obj = GuideUtilisation.objects.filter(profil=profil).first() or GuideUtilisation(profil=profil)
+
+    if request.method == 'POST':
+        if 'supprimer_pdf' in request.POST and obj.pk and obj.fichier_pdf:
+            obj.fichier_pdf.delete(save=True)
+            messages.success(request, "PDF retiré.")
+            return redirect('bsb_admin:guide_list')
+        form = GuideUtilisationForm(request.POST, request.FILES, instance=obj)
+        if form.is_valid():
+            guide = form.save(commit=False)
+            guide.profil = profil
+            guide.save()
+            messages.success(request, f"Guide « {libelles[profil]} » enregistré.")
+            return redirect('bsb_admin:guide_list')
+        messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
+    else:
+        form = GuideUtilisationForm(instance=obj)
+
+    return render(request, 'admin/guide/form.html', {
+        'form': form,
+        'objet': obj,
+        'libelle': libelles[profil],
+    })

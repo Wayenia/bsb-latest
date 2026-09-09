@@ -423,6 +423,122 @@
     </script>
     {% endif %}
 
+    {% if guide_aide %}
+    {% comment %} Bouton flottant « Aide » : ouvre le guide d'utilisation du profil
+       courant (PDF et/ou vidéo). Visible partout, y compris hors connexion. {% endcomment %}
+    <button type="button" id="guide-fab"
+            class="fixed z-50 bottom-6 left-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-bsb-primary text-white shadow-lg hover:shadow-xl hover:bg-bsb-dark ring-4 ring-white flex items-center justify-center transition-all"
+            title="{{ guide_aide.titre_affiche }}" aria-haspopup="dialog" aria-controls="guide-modal">
+        <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.5A2.5 2.5 0 1 1 14.5 9c0 1.5-2.5 2-2.5 4M12 17h.01"/>
+            <circle cx="12" cy="12" r="9.5"/>
+        </svg>
+        <span class="sr-only">Ouvrir le guide d'utilisation</span>
+    </button>
+
+    <div id="guide-modal" class="fixed inset-0 z-[85] hidden" role="dialog" aria-modal="true" aria-label="{{ guide_aide.titre_affiche }}">
+        <div id="guide-backdrop" class="absolute inset-0 bg-black/50"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-3 sm:p-5">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+                <div class="flex items-center gap-3 px-5 py-3 border-b border-gray-200 shrink-0">
+                    <h2 class="font-black text-bsb-ink leading-tight flex-1 min-w-0 truncate">{{ guide_aide.titre_affiche }}</h2>
+                    {% if guide_aide.video_embed_url and guide_aide.fichier_pdf %}
+                    <div class="shrink-0 inline-flex rounded-lg bg-gray-100 p-0.5" role="tablist">
+                        <button type="button" data-guide-tab="video" class="px-3 py-1.5 text-xs font-bold rounded-md text-gray-600" role="tab">Vidéo</button>
+                        <button type="button" data-guide-tab="pdf" class="px-3 py-1.5 text-xs font-bold rounded-md text-gray-600" role="tab">Document</button>
+                    </div>
+                    {% endif %}
+                    <button type="button" id="guide-close" class="shrink-0 w-9 h-9 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-800 flex items-center justify-center" aria-label="Fermer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+                    </button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                    {% if guide_aide.video_embed_url %}
+                    <div data-guide-pane="video" class="w-full rounded-xl overflow-hidden bg-black aspect-video">
+                        <iframe id="guide-video" data-src="{{ guide_aide.video_embed_url }}" class="w-full h-full" title="Vidéo — {{ guide_aide.titre_affiche }}"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"
+                                referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                    </div>
+                    {% elif guide_aide.video_url %}
+                    <a href="{{ guide_aide.video_url }}" target="_blank" rel="noopener noreferrer"
+                       class="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-bsb-primary text-white font-bold hover:bg-bsb-dark transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                        Regarder la vidéo
+                    </a>
+                    {% endif %}
+
+                    {% if guide_aide.fichier_pdf %}
+                    <div data-guide-pane="pdf" class="space-y-3">
+                        <iframe id="guide-pdf" data-src="{{ guide_aide.fichier_pdf.url }}#view=FitH" class="w-full {% if guide_aide.video_embed_url %}h-[64vh]{% else %}h-[68vh]{% endif %} rounded-xl border border-gray-200 bg-white"
+                                title="Document — {{ guide_aide.titre_affiche }}" loading="lazy"></iframe>
+                        <div class="flex flex-wrap gap-3">
+                            <a href="{{ guide_aide.fichier_pdf.url }}" target="_blank" rel="noopener"
+                               class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                Ouvrir dans un onglet
+                            </a>
+                            <a href="{{ guide_aide.fichier_pdf.url }}" download
+                               class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                Télécharger le PDF
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script nonce="{{ csp_nonce }}">
+    (function () {
+        var fab = document.getElementById('guide-fab');
+        var modal = document.getElementById('guide-modal');
+        if (!fab || !modal) return;
+        var closeBtn = document.getElementById('guide-close');
+        var backdrop = document.getElementById('guide-backdrop');
+        var frames = modal.querySelectorAll('iframe[data-src]');
+        var loaded = false;
+
+        var tabs = modal.querySelectorAll('[data-guide-tab]');
+        var panes = modal.querySelectorAll('[data-guide-pane]');
+        function activer(nom) {
+            panes.forEach(function (p) { p.hidden = p.getAttribute('data-guide-pane') !== nom; });
+            tabs.forEach(function (t) {
+                var on = t.getAttribute('data-guide-tab') === nom;
+                t.classList.toggle('bg-white', on);
+                t.classList.toggle('shadow-sm', on);
+                t.classList.toggle('text-bsb-ink', on);
+                t.classList.toggle('text-gray-600', !on);
+            });
+        }
+        tabs.forEach(function (t) {
+            t.addEventListener('click', function () { activer(t.getAttribute('data-guide-tab')); });
+        });
+        if (tabs.length) activer('video');
+
+        function open() {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            if (!loaded) {
+                frames.forEach(function (f) { f.src = f.getAttribute('data-src'); });
+                loaded = true;
+            }
+            if (closeBtn) closeBtn.focus();
+        }
+        function close() {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+            fab.focus();
+        }
+        fab.addEventListener('click', open);
+        if (closeBtn) closeBtn.addEventListener('click', close);
+        if (backdrop) backdrop.addEventListener('click', close);
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+        });
+    })();
+    </script>
+    {% endif %}
+
 {% endblock body %}
 </body>
 </html>

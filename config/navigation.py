@@ -133,6 +133,7 @@ GROUPES = [
             _lien('bsb_admin:carrousel_list', "Carrousels de l'accueil", 'courses.gerer_carrousel', '/bsb/carrousels'),
             _lien('bsb_admin:bande_annonce_list', "Bande-annonce de l'accueil", 'courses.gerer_carrousel', '/bsb/bande-annonce'),
             _lien('bsb_admin:partenaire_list', "Partenaires (accueil)", 'courses.gerer_carrousel', '/bsb/partenaires'),
+            _lien('bsb_admin:guide_list', "Guides d'utilisation", 'courses.gerer_guides', '/bsb/guides'),
         ],
     },
 ]

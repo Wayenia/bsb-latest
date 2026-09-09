@@ -5,7 +5,8 @@ from django.contrib.auth.password_validation import validate_password
 from .models import (
     TITRE_PROFESSIONNEL_CHOICE, TYPE_PROGRAMME_CHOICE, Direction_reg, Filiere, CentreFormation, Module,
     Frais, Cours, Inscription, Paiement, CentreEtFiliere,PieceJointeInscription,TypeFrais,
-    AnneeScolaire, TrancheFrais, Region, DG, Membre, CarrouselAccueil, BandeAnnonce, Partenaire
+    AnneeScolaire, TrancheFrais, Region, DG, Membre, CarrouselAccueil, BandeAnnonce, Partenaire,
+    GuideUtilisation
 )
 from django.forms import inlineformset_factory
 
@@ -1548,4 +1549,44 @@ class PartenaireForm(forms.ModelForm):
         if logo and hasattr(logo, 'name') and not logo.name.lower().endswith('.svg'):
             return _valider_photo(logo)
         return logo
+
+
+class GuideUtilisationForm(forms.ModelForm):
+    """Titre / PDF / lien vidéo d'un guide d'utilisation, pour un profil donné.
+    Le profil est fixé par l'URL, il n'apparaît pas dans le formulaire."""
+
+    TAILLE_MAX_PDF = 20 * 1024 * 1024  # 20 Mo
+
+    class Meta:
+        model = GuideUtilisation
+        fields = ['titre', 'fichier_pdf', 'video_url', 'actif']
+        widgets = {
+            'titre': forms.TextInput(attrs={
+                'class': _CLASSES_CHAMP,
+                'placeholder': "Laisser vide pour un titre automatique",
+            }),
+            # FileInput (et non ClearableFileInput) : le retrait passe par le
+            # bouton « Retirer le PDF » de l'écran, pas par une case « Effacer ».
+            'fichier_pdf': forms.FileInput(attrs={
+                'class': 'block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 '
+                         'file:rounded-lg file:border-0 file:bg-gray-100 file:text-gray-700 '
+                         'file:font-semibold hover:file:bg-gray-200 file:cursor-pointer',
+                'accept': '.pdf,application/pdf',
+            }),
+            'video_url': forms.URLInput(attrs={
+                'class': _CLASSES_CHAMP,
+                'placeholder': 'https://www.youtube.com/watch?v=…',
+            }),
+        }
+
+    def clean_fichier_pdf(self):
+        pdf = self.cleaned_data.get('fichier_pdf')
+        if pdf and hasattr(pdf, 'size') and hasattr(pdf, 'read'):
+            if pdf.size > self.TAILLE_MAX_PDF:
+                raise forms.ValidationError("Le PDF ne doit pas dépasser 20 Mo.")
+            entete = pdf.read(5)
+            pdf.seek(0)
+            if not entete.startswith(b'%PDF-'):
+                raise forms.ValidationError("Le fichier n'est pas un PDF valide.")
+        return pdf
 

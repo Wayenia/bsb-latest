@@ -1006,3 +1006,78 @@ class Partenaire(models.Model):
 
     def __str__(self):
         return self.nom
+
+
+class GuideUtilisation(models.Model):
+    """Guide d'utilisation (PDF et/ou vidéo) proposé via le bouton flottant «
+    Aide », adapté au profil de la personne connectée. Les visiteurs non
+    connectés voient le guide du profil « eleve »."""
+
+    # Aligné sur accounts.Utilisateur.USER_TYPE ; « eleve » sert aussi de guide
+    # par défaut pour les visiteurs non connectés.
+    PROFIL_CHOICES = [
+        ("eleve", "Apprenant (et visiteurs non connectés)"),
+        ("formateur", "Formateur"),
+        ("gestionnaire", "Directeur de Centre"),
+        ("caissier", "Caissière / Caissier"),
+        ("agent_comptable", "Agent Comptable"),
+        ("membre", "Membre de l'administration"),
+        ("dir", "Directeur Inter-régional"),
+        ("deps", "Direction des Études, de la Planification et des Statistiques"),
+        ("daf", "Directeur Administratif et Financier"),
+        ("dg", "Directeur Général"),
+        ("admin", "Administrateur"),
+    ]
+
+    profil = models.CharField(
+        max_length=20, choices=PROFIL_CHOICES, unique=True,
+        verbose_name="Profil concerné")
+    titre = models.CharField(
+        max_length=150, blank=True, verbose_name="Titre affiché",
+        help_text="Laisser vide pour un titre automatique (« Guide — <profil> »).")
+    fichier_pdf = models.FileField(
+        upload_to="guides/", blank=True, null=True,
+        validators=[FileExtensionValidator(["pdf"])],
+        verbose_name="Guide PDF",
+        help_text="Fichier PDF. Laisser vide s'il n'y a pas de document.")
+    video_url = models.URLField(
+        blank=True, verbose_name="Lien vidéo",
+        help_text="YouTube ou Vimeo (intégré directement), ou tout autre lien "
+                  "(ouvert dans un nouvel onglet). Laisser vide s'il n'y a pas de vidéo.")
+    actif = models.BooleanField(
+        default=True, verbose_name="Visible",
+        help_text="Décochez pour masquer temporairement le guide de ce profil.")
+    date_maj = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Guide d'utilisation"
+        verbose_name_plural = "Guides d'utilisation"
+        ordering = ["profil"]
+        permissions = [("gerer_guides", "Gérer les guides d'utilisation")]
+
+    def __str__(self):
+        return self.titre_affiche
+
+    @property
+    def titre_affiche(self):
+        return self.titre.strip() or f"Guide — {self.get_profil_display()}"
+
+    @property
+    def a_du_contenu(self):
+        return bool(self.fichier_pdf) or bool(self.video_url.strip())
+
+    @property
+    def video_embed_url(self):
+        """URL d'intégration si la vidéo est hébergée sur YouTube ou Vimeo,
+        sinon None (le lien brut est alors proposé dans un nouvel onglet)."""
+        import re
+        u = (self.video_url or "").strip()
+        if not u:
+            return None
+        m = re.search(r"(?:youtube\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/)|youtu\.be/)([\w-]{6,})", u)
+        if m:
+            return f"https://www.youtube-nocookie.com/embed/{m.group(1)}"
+        m = re.search(r"vimeo\.com/(?:video/)?(\d+)", u)
+        if m:
+            return f"https://player.vimeo.com/video/{m.group(1)}"
+        return None

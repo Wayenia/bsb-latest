@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Guides d'utilisation | BSB{% endblock %}
+{% block content %}
+<div class="bo-shell max-w-5xl">
+    {% include 'partials/messages.html' %}
+
+    <div class="bo-header">
+        <div>
+            <h1 class="bo-title">Guides d'utilisation</h1>
+            <p class="bo-subtitle max-w-2xl">
+                Un guide par profil, en PDF et/ou en vidéo. Il s'ouvre depuis le bouton
+                flottant « Aide » présent sur toutes les pages : chaque personne voit le
+                guide de son profil, et les visiteurs non connectés voient celui de
+                l'apprenant.
+            </p>
+        </div>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+        {% for ligne in lignes %}
+        <div class="bo-card overflow-hidden">
+            <div class="p-4">
+                <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Profil</p>
+                <p class="font-bold text-gray-900 leading-snug">{{ ligne.libelle }}</p>
+
+                <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                    {% if ligne.obj.fichier_pdf %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">PDF</span>
+                    {% endif %}
+                    {% if ligne.obj.video_url %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-800">Vidéo</span>
+                    {% endif %}
+                    {% if not ligne.obj or not ligne.obj.a_du_contenu %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">Aucun contenu</span>
+                    {% elif not ligne.obj.actif %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Masqué</span>
+                    {% endif %}
+                </div>
+
+                {% if ligne.obj and ligne.obj.a_du_contenu %}
+                <p class="mt-1.5 text-xs text-gray-500 truncate">« {{ ligne.obj.titre_affiche }} »</p>
+                {% endif %}
+            </div>
+            <div class="px-4 py-3 border-t border-gray-100 bg-gray-50 text-right">
+                <a href="{% url 'bsb_admin:guide_update' ligne.profil %}" class="bo-btn-primary bo-btn-sm">Modifier</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
