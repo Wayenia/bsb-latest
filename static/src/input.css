@@ -164,6 +164,152 @@
 }
 
 /* ==========================================================================
+   « Burkina Suudu Bawdè en chiffres » — infographie radiale (accueil)
+   Reprend la maquette fournie : un moyeu central + des bulles colorees
+   (une par indicateur) avec icone, nombre et annotation.
+   ========================================================================== */
+.bsb-chiffres {
+  --c-centres:    #e0a526;
+  --c-metiers:    #8d8d8d;
+  --c-domaines:   #63b34a;
+  --c-formateurs: #8a5a00;
+  --c-total:      #c1272d;
+  --c-regions:    #e8720c;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 2.25rem 1.5rem;
+  max-width: 22rem;
+  margin: 0 auto;
+}
+@media (min-width: 640px) {
+  .bsb-chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 40rem; }
+}
+
+.bsb-chiffres__hub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 9.5rem;
+  height: 9.5rem;
+  border-radius: 9999px;
+  background: #f0a500;
+  border: 11px solid #dcdcdc;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.bsb-chiffres__hub .bsb-chiffres__year { display: block; color: #b71c1c; margin-top: 0.15rem; }
+@media (min-width: 640px) { .bsb-chiffres__hub { grid-column: span 2; } }
+
+.bsb-chiffres__node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.bsb-chiffres__badge {
+  position: relative;
+  width: 8.5rem;
+  height: 8.5rem;
+  border-radius: 1.35rem;
+  background: var(--node-c);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  box-shadow: 0 12px 22px -10px rgb(0 0 0 / 0.4);
+}
+.bsb-chiffres__badge::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  transform: translateX(-50%);
+  border-width: 15px 13px 0 13px;
+  border-style: solid;
+  border-color: var(--node-c) transparent transparent transparent;
+}
+.bsb-chiffres__icon { width: 2.5rem; height: 2.5rem; }
+.bsb-chiffres__num { font-size: 1.9rem; font-weight: 800; line-height: 1; }
+.bsb-chiffres__label {
+  margin-top: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+  color: var(--node-c);
+}
+.bsb-chiffres__note {
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: #6b7280;
+  max-width: 15rem;
+}
+
+.bsb-chiffres__node--centres    { --node-c: var(--c-centres); }
+.bsb-chiffres__node--metiers    { --node-c: var(--c-metiers); }
+.bsb-chiffres__node--domaines   { --node-c: var(--c-domaines); }
+.bsb-chiffres__node--formateurs { --node-c: var(--c-formateurs); }
+.bsb-chiffres__node--total      { --node-c: var(--c-total); }
+.bsb-chiffres__node--regions    { --node-c: var(--c-regions); }
+
+/* ---- Disposition radiale (grand ecran) ---- */
+@media (min-width: 1024px) {
+  .bsb-chiffres {
+    display: block;
+    position: relative;
+    max-width: 62rem;
+    height: 47rem;
+    margin: 0 auto;
+  }
+  .bsb-chiffres__hub {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 11rem;
+    height: 11rem;
+    font-size: 1rem;
+  }
+  .bsb-chiffres__node { position: absolute; width: 12.5rem; }
+  .bsb-chiffres__note { max-width: 12.5rem; }
+
+  /* 3 rangees x 2 colonnes autour du moyeu central. */
+  .bsb-chiffres__node--centres    { left: 3%;  top: 0; }
+  .bsb-chiffres__node--metiers    { right: 3%; top: 0; }
+  .bsb-chiffres__node--total      { left: 0;   top: 32%; }
+  .bsb-chiffres__node--domaines   { right: 0;  top: 32%; }
+  .bsb-chiffres__node--formateurs { left: 18%; bottom: 0; }
+  .bsb-chiffres__node--regions    { right: 18%; bottom: 0; }
+
+  /* La fleche des bulles laterales pointe vers le moyeu. */
+  .bsb-chiffres__node--domaines .bsb-chiffres__badge::after {
+    left: -14px; bottom: auto; top: 50%; transform: translateY(-50%);
+    border-width: 13px 15px 13px 0;
+    border-color: transparent var(--node-c) transparent transparent;
+  }
+  .bsb-chiffres__node--total .bsb-chiffres__badge::after {
+    left: auto; right: -14px; bottom: auto; top: 50%; transform: translateY(-50%);
+    border-width: 13px 0 13px 15px;
+    border-color: transparent transparent transparent var(--node-c);
+  }
+  .bsb-chiffres__node--regions .bsb-chiffres__badge::after,
+  .bsb-chiffres__node--formateurs .bsb-chiffres__badge::after {
+    bottom: auto; top: -14px;
+    border-width: 0 13px 15px 13px;
+    border-color: transparent transparent var(--node-c) transparent;
+  }
+}
+
+/* ==========================================================================
    Systeme de composants du BACK-OFFICE (prefixe bo-)
    --------------------------------------------------------------------------
    Reserve aux ecrans sous /bsb/ et aux espaces de travail des agents. Les
@@ -755,6 +901,10 @@
   }
   .bo-oeil svg { @apply h-4 w-4; }
   .bo-oeil[aria-expanded="true"] { @apply bg-bsb-cream text-bsb-red; }
+  /* Bouton-icone d'action dans une liste (Modifier / Supprimer). */
+  .bo-oeil--danger {
+    @apply text-red-500 hover:bg-red-50 hover:text-red-700 focus-visible:ring-red-500;
+  }
 
   .bo-detail-ligne > td { @apply bg-bsb-cream/60 px-4 py-3; }
   .bo-detail {
