@@ -42,17 +42,11 @@
         </div>
         <div class="bg-green-50 rounded-xl shadow p-5 border border-green-100 text-center">
             <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Soldées</p>
-            <p class="text-2xl font-black text-green-600">
-               
-                    {{ soldees}}
-                
-            </p>
+            <p class="text-2xl font-black text-green-600">{{ soldees|default:"0" }}</p>
         </div>
         <div class="bg-red-50 rounded-xl shadow p-5 border border-red-100 text-center">
             <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Non soldées</p>
-            <p class="text-2xl font-black text-red-600">
-                {% for d in dettes %}{% if d.etat_dette == 'non_soldé' %}·{% endif %}{% endfor %}
-            </p>
+            <p class="text-2xl font-black text-red-600">{{ non_soldees|default:"0" }}</p>
         </div>
     </div>
 

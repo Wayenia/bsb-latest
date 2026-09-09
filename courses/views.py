@@ -717,12 +717,17 @@ def liste_paiement(request):
     })
               
 # ── EN-TÊTE OFFICIEL PARTAGÉ POUR LES PDF GÉNÉRÉS ─────────────────────────────
-def _pdf_header_lines(centre=None, direction=None):
+def _pdf_header_lines(centre=None, direction=None, remplacer_dg=False):
     """Retourne (lignes_gauche, lignes_droite) de l'en-tête officiel.
 
     `direction` (Direction_reg) et `centre` (CentreFormation) sont optionnels :
     si absents, l'en-tête s'arrête à "Direction Générale" (cas d'un rapport
     non circonscrit à une direction/un centre précis).
+
+    `remplacer_dg` : quand on descend à une direction/un centre, remplacer
+    « DIRECTION GENERALE » par la direction inter-régionale (et le centre) —
+    c'est cette entité qui édite la pièce, pas la Direction Générale (obs. DSI
+    sur le rapport des inscrits).
     """
     left = [
         "MINISTÈRE DE L'ENSEIGNEMENT SECONDAIRE",
@@ -733,6 +738,9 @@ def _pdf_header_lines(centre=None, direction=None):
         "DIRECTION GENERALE",
     ]
     resolved_direction = direction or (centre.direction if centre else None)
+    if remplacer_dg and (resolved_direction or centre):
+        left.pop()  # retire « DIRECTION GENERALE »
+        left.pop()  # retire le séparateur qui la précédait
     if resolved_direction:
         left.append("**********")
         left.append(resolved_direction.nom_direction.upper())
@@ -914,16 +922,13 @@ def telecharger_attestation(request, id):
     directeur_centre = MembreAdministration.objects.filter(
         structure=centre, user_type='gestionnaire'
     ).first()
-    directeur_nom = f"{directeur_centre.prenom} {directeur_centre.nom}" if directeur_centre else "Le Directeur du centre"
-    if directeur_centre and directeur_centre.sexe == 'f':
-        directeur_civilite = "Mme"
-        directeur_titre = "Directrice"
-        directeur_titre_article = "La Directrice"
-    else:
-        # Formes masculines par defaut, y compris poste vacant ou genre inconnu.
-        directeur_civilite = "M." if directeur_centre else ""
-        directeur_titre = "Directeur"
-        directeur_titre_article = "Le Directeur"
+    directeur_nom = f"{directeur_centre.prenom} {directeur_centre.nom}" if directeur_centre else "Le Directeur / La Directrice du centre"
+    # Formes épicènes : le genre du responsable de centre n'est pas fiable en
+    # base (obs. DSI) — on n'affiche donc ni « M. » ni « Mme », et on emploie
+    # « Directeur/trice » / « LE DIRECTEUR / LA DIRECTRICE ».
+    directeur_civilite = ""
+    directeur_titre = "Directeur/trice"
+    directeur_titre_article = "LE DIRECTEUR / LA DIRECTRICE"
     ville = centre.province.chef_lieu if centre.province_id else centre.nom_centre
 
     # Modele officiel (par defaut), reversible en 'classique' via DOC_MODELE.
@@ -2371,23 +2376,27 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
     return inscriptions_qs, dettes_qs, paiements_qs, filters
 
 
-def _resume_filtres_stats(filters, exclure_filiere=False):
+def _resume_filtres_stats(filters, exclure_filiere=False, exclure=()):
     """Phrase récapitulant les filtres actifs du tableau de bord statistiques,
     reprise dans les fichiers exportés (CSV/Excel/PDF) pour que leur contenu
     reste traçable une fois détaché de l'écran qui les a produits.
 
     `exclure_filiere` : ne pas répéter le métier (le PDF des inscriptions
-    l'affiche déjà sur sa propre ligne)."""
+    l'affiche déjà sur sa propre ligne).
+    `exclure` : jeu de clés (`centre`, `direction`, `region`, `type_programme`)
+    à ne pas faire figurer — utilisé par le PDF des inscrits, dont l'en-tête
+    officiel porte déjà le centre/la direction et où le type de programme ne
+    doit jamais apparaître."""
     from .models import Region
     from accounts.models import Utilisateur
 
     parties = []
 
-    if filters.get("centre_id"):
+    if filters.get("centre_id") and "centre" not in exclure:
         centre = CentreFormation.objects.filter(pk=filters["centre_id"]).first()
         parties.append(f"Centre : {centre.nom_centre if centre else '—'}")
 
-    if filters.get("direction_id"):
+    if filters.get("direction_id") and "direction" not in exclure:
         direction = Direction_reg.objects.filter(pk=filters["direction_id"]).first()
         parties.append(f"Direction : {direction.nom_direction if direction else '—'}")
 
@@ -2399,7 +2408,7 @@ def _resume_filtres_stats(filters, exclure_filiere=False):
         annee = AnneeScolaire.objects.filter(pk=filters["annee_id"]).first()
         parties.append(f"Année de formation : {annee.libelle_anne if annee else '—'}")
 
-    if filters.get("type_programme_f"):
+    if filters.get("type_programme_f") and "type_programme" not in exclure:
         from .models import TYPE_PROGRAMME_CHOICE
         tp_labels = dict(TYPE_PROGRAMME_CHOICE)
         parties.append(f"Type de programme : {tp_labels.get(filters['type_programme_f'], filters['type_programme_f'])}")
@@ -2408,7 +2417,7 @@ def _resume_filtres_stats(filters, exclure_filiere=False):
         statut_labels = dict(Inscription.STATUT_CHOICE)
         parties.append(f"Statut inscription : {statut_labels.get(filters['statut_f'], filters['statut_f'])}")
 
-    if filters.get("region_id"):
+    if filters.get("region_id") and "region" not in exclure:
         region = Region.objects.filter(pk=filters["region_id"]).first()
         parties.append(f"Région : {region.nom_region if region else '—'}")
 
@@ -2966,8 +2975,9 @@ def export_pdf(request):
 
     def base_table_style(header_rows=1):
         return TableStyle([
-            ("BACKGROUND",  (0, 0), (-1, header_rows-1), rouge),
-            ("TEXTCOLOR",   (0, 0), (-1, header_rows-1), rl_colors.white),
+            # En-tête du tableau en « zone or » (obs. DSI), texte sombre pour le contraste.
+            ("BACKGROUND",  (0, 0), (-1, header_rows-1), or_cl),
+            ("TEXTCOLOR",   (0, 0), (-1, header_rows-1), rl_colors.HexColor("#1F2937")),
             ("FONTNAME",    (0, 0), (-1, header_rows-1), "Helvetica-Bold"),
             ("FONTSIZE",    (0, 0), (-1, header_rows-1), 9),
             ("ROWBACKGROUNDS", (0, header_rows), (-1, -1), [rl_colors.white, gris]),
@@ -2982,9 +2992,20 @@ def export_pdf(request):
     story = []
     now = timezone.now().strftime("%d/%m/%Y %H:%M")
 
+    # L'en-tête officiel suit le PÉRIMÈTRE DU FILTRE, pas celui de l'imprimeur :
+    # un filtre « Centre » descend l'en-tête jusqu'à ce centre (et sa direction)
+    # même si c'est un agent national qui télécharge ; un filtre « Direction »
+    # descend jusqu'à cette direction ; sinon l'en-tête s'arrête à la Direction
+    # Générale.
+    _centre_entete = CentreFormation.objects.filter(pk=filters["centre_id"]).select_related("direction").first() if filters.get("centre_id") else None
+    _direction_entete = None
+    if _centre_entete is None and filters.get("direction_id"):
+        _direction_entete = Direction_reg.objects.filter(pk=filters["direction_id"]).first()
+    if _centre_entete is None and _direction_entete is None:
+        _centre_entete = centres_scope.first() if scope == "centre" else None
+        _direction_entete = directions_scope.first() if scope == "direction" else None
     header_left, header_right = _pdf_header_lines(
-        centre=centres_scope.first() if scope == "centre" else None,
-        direction=directions_scope.first() if scope == "direction" else None,
+        centre=_centre_entete, direction=_direction_entete, remplacer_dg=True,
     )
     header_line_style = ParagraphStyle(
         "pdf_header_line", parent=styles["Normal"],
@@ -3008,28 +3029,35 @@ def export_pdf(request):
 
     if export_type == "inscriptions":
         story.append(Paragraph("Rapport des Inscriptions — BSB", title_style))
-        story.append(Paragraph(f"Généré le {now}  |  {inscriptions_qs.count()} inscription(s)", sub_style))
         _filtre_filiere = bool(filters.get("filiere_id"))
         if _filtre_filiere:
             _filiere_filtree = Filiere.objects.filter(pk=filters["filiere_id"]).first()
             if _filiere_filtree:
                 story.append(Paragraph(f"Métier : {_filiere_filtree.nom_filiere}", sub_style))
-        # Métier seul : la ligne « Filtres appliqués » ne dirait que « Métier : … »,
-        # déjà affiché juste au-dessus — on l'omet. Métier + autres filtres : on
-        # l'affiche sans répéter le métier.
-        _resume = _resume_filtres_stats(filters, exclure_filiere=_filtre_filiere)
-        if not (_filtre_filiere and _resume == "Aucun filtre appliqué"):
-            story.append(Paragraph(f"Filtres appliqués : {_resume}", filtres_style))
+        # Pas de libellé « Filtres appliqués : », rien si aucun filtre, et on ne
+        # répète ni le centre/la direction (déjà dans l'en-tête) ni le type de
+        # programme (obs. DSI).
+        _resume = _resume_filtres_stats(
+            filters, exclure_filiere=_filtre_filiere,
+            exclure=("centre", "direction", "region", "type_programme"),
+        )
+        if _resume != "Aucun filtre appliqué":
+            story.append(Paragraph(_resume, filtres_style))
 
         data = [["N°", "Nom(s) et prénom(s)", "Matricule", "Statut"]]
         for i, insc in enumerate(
-            inscriptions_qs.select_related("eleve").order_by("-date_inscription")[:500], 1
+            inscriptions_qs.select_related("eleve")
+            .prefetch_related("dettes__paiements")
+            .order_by("-date_inscription")[:500], 1
         ):
             data.append([
                 str(i),
                 cell(f"{insc.eleve.nom} {insc.eleve.prenom}") if insc.eleve else "—",
                 cell(insc.eleve.matricule) if insc.eleve and insc.eleve.matricule else "—",
-                cell(insc.get_statut_display()),
+                # Statut réel : reflète l'encaissement (soldé -> « Validé - Payé »),
+                # pas seulement le champ `statut` qui reste « valide » après un
+                # paiement complet (obs. DSI).
+                cell(insc.libelle_statut_paiement),
             ])
 
         col_widths = [1.5*cm, 12*cm, 6*cm, 6.5*cm]
@@ -3064,11 +3092,18 @@ def export_pdf(request):
         t.setStyle(base_table_style())
         story.append(t)
 
-    signataire = {
-        "centre": "Le Gestionnaire du centre",
-        "direction": "Le Directeur Inter-Régional",
-        "global": "Le Directeur Général",
-    }.get(scope, "Le Directeur Général")
+    # Signataire aligné sur le périmètre du filtre (comme l'en-tête), pas sur
+    # celui de l'imprimeur (obs. DSI).
+    if _centre_entete is not None:
+        signataire = "Le Directeur / La Directrice du Centre"
+    elif _direction_entete is not None:
+        signataire = "Le Directeur Inter-Régional / La Directrice Inter-Régionale"
+    else:
+        signataire = {
+            "centre": "Le Directeur / La Directrice du Centre",
+            "direction": "Le Directeur Inter-Régional / La Directrice Inter-Régionale",
+            "global": "Le Directeur Général / La Directrice Générale",
+        }.get(scope, "Le Directeur Général / La Directrice Générale")
     signature_style = ParagraphStyle(
         "signature_bsb", parent=styles["Normal"], fontSize=10,
         alignment=2, spaceBefore=28,
@@ -3193,6 +3228,21 @@ def stats_dettes_eleve_view(request, eleve_id):
             if dernier:
                 quittance_groupe_id = dernier.groupe_id
 
+        # Dernier mouvement d'encaissement de l'inscription : annulable en LIFO
+        # directement depuis cet écran. Couvre les règlements « en un coup »
+        # (frais de dossier seul, Reconversion) où il n'y a pas de tranche à
+        # rouvrir. Comme le bouton vise toujours le mouvement le plus récent,
+        # aucun risque d'annuler dans le désordre.
+        dernier_paiement = max(
+            (p for d in insc.dettes.all() for p in d.paiements.all() if not p.annule),
+            key=lambda p: p.date_paiement, default=None,
+        )
+        dernier_lot_total = 0
+        if dernier_paiement:
+            dernier_lot_total = sum(
+                p.montant_paiement for p in _paiements_du_lot(dernier_paiement)
+            )
+
         inscriptions_dettes.append({
             'inscription': insc,
             'dettes': dettes_data,
@@ -3202,6 +3252,8 @@ def stats_dettes_eleve_view(request, eleve_id):
             'dossier_impaye': dossier_impaye,
             'primordiale_bloquante_reste': primordiale_bloquante_reste,
             'quittance_groupe_id': quittance_groupe_id,
+            'dernier_paiement_date': dernier_paiement.date_paiement if dernier_paiement else None,
+            'dernier_lot_total': dernier_lot_total,
         })
 
     return render(request, 'member/statistiques/stats_dettes_eleve.html', {
@@ -3769,6 +3821,45 @@ def stats_annuler_paiement_view(request, paiement_id):
 
     nb = _annuler_paiement(paiement, request.user, motif)
     messages.success(request, f"Versement annulé ({nb} paiement{'s' if nb > 1 else ''}).")
+    return redirect(redirect_url)
+
+
+@login_required
+def stats_annuler_dernier_versement_view(request, inscription_id):
+    """Annule le dernier mouvement d'encaissement d'une inscription, depuis
+    l'écran des dettes de l'apprenant. Prévu pour les règlements « en un coup »
+    (frais de dossier réglé seul, Reconversion) : le bouton vise toujours le
+    versement le plus récent, donc l'annulation reste strictement LIFO."""
+    inscription = get_object_or_404(
+        Inscription.objects.select_related('eleve'), id=inscription_id
+    )
+    dette0 = inscription.dettes.select_related(
+        'inscription__formation__centre', 'inscription__eleve'
+    ).first()
+    if dette0 is None or not _can_access_dette_finances(request.user, dette0):
+        raise PermissionDenied("Vous n'avez pas accès aux informations financières de cette inscription.")
+    if not (request.user.is_superuser or request.user.has_perm('courses.gerer_paiements')):
+        raise PermissionDenied("Vous n'avez pas la permission d'annuler un versement.")
+
+    redirect_url = f"{reverse('courses:stats_dettes_eleve', args=[inscription.eleve_id])}?inscription={inscription.id}"
+    if request.method != 'POST':
+        return redirect(redirect_url)
+
+    motif = request.POST.get('motif_annulation', '').strip()
+    if not motif:
+        messages.error(request, "Un motif est obligatoire pour annuler un versement.")
+        return redirect(redirect_url)
+
+    dernier = max(
+        (p for d in inscription.dettes.all() for p in d.paiements.all() if not p.annule),
+        key=lambda p: p.date_paiement, default=None,
+    )
+    if dernier is None:
+        messages.info(request, "Aucun versement à annuler pour cette inscription.")
+        return redirect(redirect_url)
+
+    nb = _annuler_paiement(dernier, request.user, motif)
+    messages.success(request, f"Dernier versement annulé ({nb} paiement{'s' if nb > 1 else ''}).")
     return redirect(redirect_url)
 
 

@@ -97,6 +97,9 @@ urlpatterns = [
     path('statistiques/paiement/<int:paiement_id>/annuler',
          views.stats_annuler_paiement_view,
          name='stats_annuler_paiement'),
+    path('statistiques/inscription/<int:inscription_id>/annuler-dernier-versement',
+         views.stats_annuler_dernier_versement_view,
+         name='stats_annuler_dernier_versement'),
 
     # ── Quittance d'une tranche (liste des paiements) ─────────────────────────
     path('statistiques/paiement/dette/<int:dette_id>/tranche/<int:tranche>/',

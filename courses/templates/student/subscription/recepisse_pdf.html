@@ -183,7 +183,7 @@
   {% comment %} STATUT {% endcomment %}
   <div class="ligne">
     <span class="label">Statut de la demande :</span>
-    <span class="valeur"><span class="statut-badge statut-{{ inscription.statut }}">{{ inscription.get_statut_display }}</span></span>
+    <span class="valeur"><span class="statut-badge statut-{{ inscription.statut }}">{{ inscription.libelle_statut_paiement }}</span></span>
   </div>
   {% if inscription.statut == 'rejete' %}
   <div class="ligne">
