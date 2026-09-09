@@ -9,7 +9,10 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
     <div>
       <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink">Formations disponibles</h1>
-      <p class="mt-1 text-sm text-bsb-muted">Choisissez un métier et déposez votre candidature.</p>
+      {% if libelle_liste %}
+      <p class="mt-1 text-sm font-semibold text-bsb-primary">{{ libelle_liste }}</p>
+      {% endif %}
+      <p class="mt-1 text-sm text-bsb-muted">Déroulez un métier pour voir les détails, puis cliquez sur « S'inscrire ».</p>
     </div>
     {% if user.is_authenticated %}
     <a href="{% url 'courses:my_subscriptions' %}"
@@ -74,9 +77,14 @@
         </div>
         {{ filter.form.formation }}
       </div>
+      {% if not libelle_liste %}
       <div class="sm:w-56">
         {{ filter.form.type_programme }}
       </div>
+      {% else %}
+      <input type="hidden" name="type_programme" value="{{ request.GET.type_programme }}">
+      {% if request.GET.type_formation %}<input type="hidden" name="type_formation" value="{{ request.GET.type_formation }}">{% endif %}
+      {% endif %}
       <div class="sm:w-56">
         {{ filter.form.ville }}
       </div>

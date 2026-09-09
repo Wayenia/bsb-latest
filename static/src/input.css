@@ -150,6 +150,19 @@
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }
 
+/* Bandeau défilant des partenaires (« Ils nous font confiance ») */
+.bsb-marquee { overflow: hidden; }
+.bsb-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: bsb-marquee-scroll 32s linear infinite;
+}
+.bsb-marquee:hover .bsb-marquee__track { animation-play-state: paused; }
+@keyframes bsb-marquee-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
 /* ==========================================================================
    Systeme de composants du BACK-OFFICE (prefixe bo-)
    --------------------------------------------------------------------------

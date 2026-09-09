@@ -238,18 +238,16 @@
                  class="btn-quittance text-sm">
                 Quittance
               </a>
-              {% if not p.annule and perms.courses.gerer_paiements %}
-                {% if p.annulable %}
+              {% if not p.annule and p.annulable and perms.courses.encaisser_paiement or not p.annule and p.annulable and perms.courses.gerer_paiements %}
                 <button type="button" class="text-sm text-red-600 hover:underline ml-2"
                         data-action="ouvrir-annulation" data-annulation-paiement="{{ p.id }}" data-annulation-libelle="{{ p.numero_quittance|default:p.tranche }}">
                   Annuler ce versement
                 </button>
-                {% else %}
+              {% elif not p.annule and not p.annulable and perms.courses.gerer_paiements %}
                 <button type="button" class="text-sm text-gray-300 cursor-not-allowed ml-2" disabled
                         title="Des versements plus récents existent sur cette inscription — annulez-les d'abord, du plus récent au plus ancien.">
                   Annuler ce versement
                 </button>
-                {% endif %}
               {% endif %}
             </td>
           </tr>

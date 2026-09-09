@@ -254,9 +254,40 @@ def available_career_view(request):
         .filter(Q(date_limite_inscription__isnull=True) | Q(date_limite_inscription__gte=timezone.now()))
         .prefetch_related('frais_set').annotate(total_frais=Sum('frais__montant'))
         .select_related('centre', 'centre__province', 'filiere', 'annee_prog')
-        .order_by('-date_creation')
+        .order_by('filiere__nom_filiere', '-date_creation')
     )
-    #Ici on doit récupéré le id de la formtion lié a fil et centre pour l'affecter le frais   
+
+    # Filtre issu de la tuile de l'accueil (bouton « Découvrir ») : chaque tuile
+    # ouvre la liste propre à son programme (obs. DSI). Le libellé sert de
+    # sous-titre à la page.
+    from .models import TYPE_FORMATION_CHOICE, TYPE_PROGRAMME_CHOICE
+    tf = (request.GET.get('type_formation') or '').strip()
+    tp = (request.GET.get('type_programme') or '').strip()
+    libelle_liste = ''
+    if tp in dict(TYPE_PROGRAMME_CHOICE):
+        available_career = available_career.filter(type_programme=tp)
+        libelle_liste = LIBELLES_CATEGORIE.get(tp, dict(TYPE_PROGRAMME_CHOICE)[tp])
+    if tf in dict(TYPE_FORMATION_CHOICE):
+        available_career = available_career.filter(type_formation=tf)
+        libelle_liste = TITRES_TUILE.get(tf, "Formations " + dict(TYPE_FORMATION_CHOICE)[tf].lower())
+
+    # « La liste des différents métiers » (obs. DSI) : hors Reconversion (qui se
+    # choisit par ville), on ne montre qu'une carte par métier — l'apprenant
+    # choisira le centre à l'inscription — même si le filtre « centre »/« ville »
+    # n'est pas posé.
+    if tp != 'reconversion' and not request.GET.get('centre') and not request.GET.get('ville'):
+        ids = list(
+            available_career.values('id', 'filiere_id', 'date_creation')
+            .order_by('filiere_id', '-date_creation')
+        )
+        garde = set()
+        vus = set()
+        for row in ids:
+            if row['filiere_id'] in vus:
+                continue
+            vus.add(row['filiere_id'])
+            garde.add(row['id'])
+        available_career = available_career.filter(id__in=garde)
 
     f=CentreFormationFilter(request.GET,queryset=available_career)
     paginator=Paginator(f.qs,10)
@@ -276,6 +307,7 @@ def available_career_view(request):
     context = {
         'available_career': available_career,
         'filter': f,
+        'libelle_liste': libelle_liste,
         'curricula_q': curricula_q,
         'curricula_results': curricula_results,
     }
@@ -922,13 +954,19 @@ def telecharger_attestation(request, id):
     directeur_centre = MembreAdministration.objects.filter(
         structure=centre, user_type='gestionnaire'
     ).first()
-    directeur_nom = f"{directeur_centre.prenom} {directeur_centre.nom}" if directeur_centre else "Le Directeur / La Directrice du centre"
-    # Formes épicènes : le genre du responsable de centre n'est pas fiable en
-    # base (obs. DSI) — on n'affiche donc ni « M. » ni « Mme », et on emploie
-    # « Directeur/trice » / « LE DIRECTEUR / LA DIRECTRICE ».
-    directeur_civilite = ""
-    directeur_titre = "Directeur/trice"
-    directeur_titre_article = "LE DIRECTEUR / LA DIRECTRICE"
+    directeur_nom = f"{directeur_centre.prenom} {directeur_centre.nom}" if directeur_centre else "Le Directeur du centre"
+    # Civilité et fonction accordées au genre du responsable de centre
+    # (obs. DSI « prendre en compte le genre »). Comparaison insensible à la
+    # casse : les données peuvent contenir « F » aussi bien que « f ».
+    sexe = (getattr(directeur_centre, 'sexe', '') or '').strip().lower()
+    if directeur_centre and sexe == 'f':
+        directeur_civilite = "Mme"
+        directeur_titre = "Directrice"
+        directeur_titre_article = "La Directrice"
+    else:
+        directeur_civilite = "M." if directeur_centre else ""
+        directeur_titre = "Directeur"
+        directeur_titre_article = "Le Directeur"
     ville = centre.province.chef_lieu if centre.province_id else centre.nom_centre
 
     # Modele officiel (par defaut), reversible en 'classique' via DOC_MODELE.
@@ -1964,7 +2002,9 @@ def home(request):
     from .models import CarrouselAccueil
     perso = {c.cle: c for c in CarrouselAccueil.objects.all()}
 
-    base_url = reverse('courses:subscribe_selection')
+    # Le bouton « Découvrir » d'une tuile mène à la page « Formations
+    # disponibles » filtrée sur le programme concerné (obs. DSI).
+    base_url = reverse('courses:available_career')
     definitions = [
         ('initiale',              'formation',       'initiale'),
         ('continue',              'formation',       'continue'),
@@ -3228,21 +3268,6 @@ def stats_dettes_eleve_view(request, eleve_id):
             if dernier:
                 quittance_groupe_id = dernier.groupe_id
 
-        # Dernier mouvement d'encaissement de l'inscription : annulable en LIFO
-        # directement depuis cet écran. Couvre les règlements « en un coup »
-        # (frais de dossier seul, Reconversion) où il n'y a pas de tranche à
-        # rouvrir. Comme le bouton vise toujours le mouvement le plus récent,
-        # aucun risque d'annuler dans le désordre.
-        dernier_paiement = max(
-            (p for d in insc.dettes.all() for p in d.paiements.all() if not p.annule),
-            key=lambda p: p.date_paiement, default=None,
-        )
-        dernier_lot_total = 0
-        if dernier_paiement:
-            dernier_lot_total = sum(
-                p.montant_paiement for p in _paiements_du_lot(dernier_paiement)
-            )
-
         inscriptions_dettes.append({
             'inscription': insc,
             'dettes': dettes_data,
@@ -3252,8 +3277,6 @@ def stats_dettes_eleve_view(request, eleve_id):
             'dossier_impaye': dossier_impaye,
             'primordiale_bloquante_reste': primordiale_bloquante_reste,
             'quittance_groupe_id': quittance_groupe_id,
-            'dernier_paiement_date': dernier_paiement.date_paiement if dernier_paiement else None,
-            'dernier_lot_total': dernier_lot_total,
         })
 
     return render(request, 'member/statistiques/stats_dettes_eleve.html', {
@@ -3796,7 +3819,13 @@ def stats_annuler_paiement_view(request, paiement_id):
 
     # Autorisation evaluee avant le filtre sur la methode : sans la permission,
     # le refus doit etre un 403 y compris en GET, donc visible et journalise.
-    if not (request.user.is_superuser or request.user.has_perm('courses.gerer_paiements')):
+    # `encaisser_paiement` suffit : la garde LIFO ci-dessous limite de toute
+    # facon l'annulation au tout dernier mouvement — defaire son propre
+    # encaissement recent fait partie de l'encaissement, pas de la gestion des
+    # paiements (obs. DSI : caissier bloque pour un reglement « en un coup »).
+    if not (request.user.is_superuser
+            or request.user.has_perm('courses.gerer_paiements')
+            or request.user.has_perm('courses.encaisser_paiement')):
         raise PermissionDenied("Vous n'avez pas la permission d'annuler un paiement.")
 
     if request.method != 'POST':
@@ -3821,45 +3850,6 @@ def stats_annuler_paiement_view(request, paiement_id):
 
     nb = _annuler_paiement(paiement, request.user, motif)
     messages.success(request, f"Versement annulé ({nb} paiement{'s' if nb > 1 else ''}).")
-    return redirect(redirect_url)
-
-
-@login_required
-def stats_annuler_dernier_versement_view(request, inscription_id):
-    """Annule le dernier mouvement d'encaissement d'une inscription, depuis
-    l'écran des dettes de l'apprenant. Prévu pour les règlements « en un coup »
-    (frais de dossier réglé seul, Reconversion) : le bouton vise toujours le
-    versement le plus récent, donc l'annulation reste strictement LIFO."""
-    inscription = get_object_or_404(
-        Inscription.objects.select_related('eleve'), id=inscription_id
-    )
-    dette0 = inscription.dettes.select_related(
-        'inscription__formation__centre', 'inscription__eleve'
-    ).first()
-    if dette0 is None or not _can_access_dette_finances(request.user, dette0):
-        raise PermissionDenied("Vous n'avez pas accès aux informations financières de cette inscription.")
-    if not (request.user.is_superuser or request.user.has_perm('courses.gerer_paiements')):
-        raise PermissionDenied("Vous n'avez pas la permission d'annuler un versement.")
-
-    redirect_url = f"{reverse('courses:stats_dettes_eleve', args=[inscription.eleve_id])}?inscription={inscription.id}"
-    if request.method != 'POST':
-        return redirect(redirect_url)
-
-    motif = request.POST.get('motif_annulation', '').strip()
-    if not motif:
-        messages.error(request, "Un motif est obligatoire pour annuler un versement.")
-        return redirect(redirect_url)
-
-    dernier = max(
-        (p for d in inscription.dettes.all() for p in d.paiements.all() if not p.annule),
-        key=lambda p: p.date_paiement, default=None,
-    )
-    if dernier is None:
-        messages.info(request, "Aucun versement à annuler pour cette inscription.")
-        return redirect(redirect_url)
-
-    nb = _annuler_paiement(dernier, request.user, motif)
-    messages.success(request, f"Dernier versement annulé ({nb} paiement{'s' if nb > 1 else ''}).")
     return redirect(redirect_url)
 
 

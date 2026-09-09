@@ -164,16 +164,6 @@
             Télécharger la quittance
           </a>
         {% endif %}
-        {% if item.dernier_paiement_date and perms.courses.gerer_paiements %}
-          <button type="button"
-                  class="btn-detail bg-white border border-[#fca5a5] text-[#b91c1c] hover:bg-[#fef2f2]"
-                  data-action="annul-dernier"
-                  data-annul-url="{% url 'courses:stats_annuler_dernier_versement' item.inscription.id %}"
-                  data-annul-montant="{{ item.dernier_lot_total|floatformat:0 }}"
-                  data-annul-date="{{ item.dernier_paiement_date|date:'d/m/Y à H:i' }}">
-            Annuler le dernier versement
-          </button>
-        {% endif %}
       </div>
     </div>
 
@@ -388,32 +378,6 @@
   </div>
 </div>
 
-{% comment %} MODAL ANNULER LE DERNIER VERSEMENT (règlement « en un coup », Reconversion…) {% endcomment %}
-<div id="modal-annul-dernier" class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(0,0,0,0.45)]">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-    <div class="flex justify-between items-center mb-[1rem]">
-      <h2 class="font-[800] text-[1.1rem] text-[#374151] m-[0]">Annuler le dernier versement</h2>
-      <button type="button" data-action="fermer-annul-dernier" class="border-0 bg-transparent text-[1.4rem] leading-[1] text-[#9ca3af] cursor-pointer">&times;</button>
-    </div>
-    <p id="modal-annul-dernier-info" class="text-[.85rem] text-[#6b7280] mb-[.6rem]"></p>
-    <p class="text-[.78rem] text-[#b91c1c] font-[600] mb-[1rem]">
-      Seul le versement le plus récent de l'inscription peut être annulé (ordre inverse de l'encaissement).
-      Les quittances déjà émises restent en base à titre d'audit.
-    </p>
-    <form method="post" id="form-annul-dernier" action="">
-      {% csrf_token %}
-      <label class="block text-[.82rem] font-[600] text-[#374151] mb-[.3rem]">Motif de l'annulation <span class="text-[#dc2626]">*</span></label>
-      <textarea name="motif_annulation" rows="3" required
-                class="w-[100%] p-[.55rem_.75rem] border border-[2px] border-[#e2e8f0] rounded-[8px] text-[.9rem] mb-[1rem]"
-                placeholder="Ex. erreur de saisie du montant"></textarea>
-      <div class="flex gap-[.6rem]">
-        <button type="button" data-action="fermer-annul-dernier" class="flex-[1] p-[.6rem] rounded-[8px] border border-[2px] border-[#e2e8f0] bg-[#fff] text-[#374151] font-[600] text-[.85rem] cursor-pointer">Retour</button>
-        <button type="submit" class="flex-[2] p-[.6rem] rounded-[8px] border-0 bg-[#dc2626] text-[#fff] font-[700] text-[.85rem] cursor-pointer">Confirmer l'annulation</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 <script nonce="{{ csp_nonce }}">
 function toggleInsc(header) {
   const body = header.nextElementSibling;
@@ -463,23 +427,6 @@ function fermerModalPaiement() {
 
 document.getElementById('modal-paiement-tranche').addEventListener('click', function(e) {
   if (e.target === this) fermerModalPaiement();
-});
-
-function ouvrirModalAnnulDernier(opts) {
-  document.getElementById('form-annul-dernier').action = opts.url;
-  document.getElementById('modal-annul-dernier-info').textContent =
-    'Versement du ' + opts.date + ' — ' + Number(opts.montant).toLocaleString('fr-FR') + ' FCFA.';
-  const modal = document.getElementById('modal-annul-dernier');
-  modal.classList.remove('hidden');
-  modal.classList.add('flex');
-}
-function fermerModalAnnulDernier() {
-  const modal = document.getElementById('modal-annul-dernier');
-  modal.classList.add('hidden');
-  modal.classList.remove('flex');
-}
-document.getElementById('modal-annul-dernier').addEventListener('click', function(e) {
-  if (e.target === this) fermerModalAnnulDernier();
 });
 
 let modalSolderMax = 0;
@@ -590,16 +537,6 @@ document.addEventListener('click', function (e) {
       break;
     case 'fermer-solder':
       fermerModalSolder();
-      break;
-    case 'annul-dernier':
-      ouvrirModalAnnulDernier({
-        url: el.dataset.annulUrl,
-        montant: Number(el.dataset.annulMontant),
-        date: el.dataset.annulDate
-      });
-      break;
-    case 'fermer-annul-dernier':
-      fermerModalAnnulDernier();
       break;
   }
 });
