@@ -95,13 +95,14 @@ IMAGES_CATEGORIE = {
 }
 
 # Habillage des tuiles de l'accueil : (fond, couleur du titre, bloc d'accent
-# derrière l'hexagone). Repris des teintes de la maquette fournie.
+# derrière l'hexagone). Charte unifiée sur le jaune or de la plateforme.
+_THEME_TUILE = ('bg-amber-50', 'text-bsb-gold', 'bg-bsb-gold')
 THEMES_CATEGORIE = {
-    'initiale':              ('bg-sky-50',     'text-bsb-primary',  'bg-bsb-primary'),
-    'continue':              ('bg-amber-50',   'text-sky-800',      'bg-sky-700'),
-    'modulaire_qualifiante': ('bg-sky-50',     'text-amber-700',    'bg-amber-500'),
-    'reconversion':          ('bg-emerald-50', 'text-emerald-800',  'bg-emerald-800'),
-    'vacances_utiles':       ('bg-amber-50',   'text-amber-600',    'bg-amber-400'),
+    'initiale':              _THEME_TUILE,
+    'continue':              _THEME_TUILE,
+    'modulaire_qualifiante': _THEME_TUILE,
+    'reconversion':          _THEME_TUILE,
+    'vacances_utiles':       _THEME_TUILE,
 }
 
 

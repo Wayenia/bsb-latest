@@ -97,69 +97,51 @@
   {% if available_career %}
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
     {% for career in available_career %}
-    <article class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
-      {% comment %} Titre du métier + type de programme {% endcomment %}
-      <div class="mb-3">
-        {% if career.type_programme %}
-        <span class="inline-block mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wide
-          {% if career.type_programme == 'reconversion' %}bg-emerald-50 text-emerald-800
-          {% elif career.type_programme == 'vacances_utiles' %}bg-amber-50 text-amber-700
-          {% else %}bg-sky-50 text-sky-800{% endif %}">
-          {{ career.get_type_programme_display }}
-        </span>
-        {% endif %}
-        <h3 class="text-base sm:text-lg font-bold text-bsb-ink leading-snug">{{ career.filiere.nom_filiere }}</h3>
-      </div>
-
-      {% comment %} Infos cles : durée, frais, (ville si Reconversion), titre professionnel {% endcomment %}
-      <div class="flex flex-wrap items-center gap-2 mb-4">
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          {{ career.duree_display }}
-        </span>
-        {% if career.total_frais %}
-        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-          {{ career.total_frais|floatformat:0|intcomma }} FCFA
-        </span>
-        {% endif %}
-        {% if career.est_reconversion %}
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 max-w-full">
-          <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <span class="truncate">{{ career.centre.province.chef_lieu }}</span>
-        </span>
-        {% endif %}
-        {% if career.filiere.titre_professionnel %}
-        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-          {{ career.filiere.get_titre_professionnel_display }}
-        </span>
-        {% endif %}
-      </div>
-
-      {% comment %} Actions + details {% endcomment %}
-      <div class="mt-auto pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2.5">
-        {% if career.type_programme == 'vacances_utiles' %}
-        <span class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-500 text-sm font-bold rounded-lg">
-          Bientôt disponible
-        </span>
-        {% elif career.est_reconversion %}
-        <a href="{% url 'courses:subscribe_selection' %}?type_programme=reconversion{% if career.annee_prog_id %}&annee={{ career.annee_prog_id }}{% endif %}{% if career.centre.province.chef_lieu %}&ville={{ career.centre.province.chef_lieu|urlencode }}{% endif %}"
-           class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-bsb-red to-bsb-dark hover:brightness-110 text-white text-sm font-bold rounded-lg transition-all">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-          S'inscrire
-        </a>
-        {% else %}
-        <a href="{% url 'courses:subscribe_selection' %}?type_programme=formation{% if career.type_formation %}&type_formation={{ career.type_formation }}{% endif %}{% if career.annee_prog_id %}&annee={{ career.annee_prog_id }}{% endif %}&centre={{ career.centre_id }}"
-           class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-bsb-red to-bsb-dark hover:brightness-110 text-white text-sm font-bold rounded-lg transition-all">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-          S'inscrire
-        </a>
-        {% endif %}
-        <details class="ml-auto group">
-          <summary class="cursor-pointer list-none inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-bsb-muted hover:text-bsb-ink hover:bg-slate-50 transition-colors">
-            Voir les détails
+    <article class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+      <details class="group">
+        {% comment %} Replié : uniquement l'intitulé du métier + « Voir les détails ». {% endcomment %}
+        <summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden flex items-center justify-between gap-4 p-5">
+          <div class="min-w-0">
+            {% if career.type_programme %}
+            <span class="inline-block mb-1 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wide bg-amber-50 text-bsb-gold">
+              {{ career.get_type_programme_display }}
+            </span>
+            {% endif %}
+            <h3 class="text-base sm:text-lg font-bold text-bsb-ink leading-snug">{{ career.filiere.nom_filiere }}</h3>
+          </div>
+          <span class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-bsb-muted group-hover:text-bsb-ink group-hover:bg-slate-50 transition-colors">
+            <span class="group-open:hidden">Voir les détails</span>
+            <span class="hidden group-open:inline">Réduire</span>
             <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-          </summary>
-          <div class="mt-3 w-full rounded-xl bg-slate-50 border border-slate-100 p-4 text-sm space-y-2">
+          </span>
+        </summary>
+
+        {% comment %} Déplié : infos, détails, puis « S'inscrire ». {% endcomment %}
+        <div class="px-5 pb-5 pt-1 border-t border-slate-100 space-y-4">
+          <div class="flex flex-wrap items-center gap-2 pt-4">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              {{ career.duree_display }}
+            </span>
+            {% if career.total_frais %}
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+              {{ career.total_frais|floatformat:0|intcomma }} FCFA
+            </span>
+            {% endif %}
+            {% if career.est_reconversion %}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 max-w-full">
+              <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span class="truncate">{{ career.centre.province.chef_lieu }}</span>
+            </span>
+            {% endif %}
+            {% if career.filiere.titre_professionnel %}
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+              {{ career.filiere.get_titre_professionnel_display }}
+            </span>
+            {% endif %}
+          </div>
+
+          <div class="rounded-xl bg-slate-50 border border-slate-100 p-4 text-sm space-y-2">
             <div class="flex justify-between gap-3">
               <span class="text-bsb-muted">Conditions d'accès</span>
               <span class="font-semibold text-bsb-ink text-right">{{ career.filiere.niveau_diplome|default:"Non précisé" }}</span>
@@ -179,8 +161,29 @@
             </div>
             {% endif %}
           </div>
-        </details>
-      </div>
+
+          {% comment %} S'inscrire {% endcomment %}
+          <div>
+            {% if career.type_programme == 'vacances_utiles' %}
+            <span class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-100 text-slate-500 text-sm font-bold rounded-lg">
+              Bientôt disponible
+            </span>
+            {% elif career.est_reconversion %}
+            <a href="{% url 'courses:subscribe_selection' %}?type_programme=reconversion{% if career.annee_prog_id %}&annee={{ career.annee_prog_id }}{% endif %}{% if career.centre.province.chef_lieu %}&ville={{ career.centre.province.chef_lieu|urlencode }}{% endif %}"
+               class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-bsb-red to-bsb-dark hover:brightness-110 text-white text-sm font-bold rounded-lg transition-all">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              S'inscrire
+            </a>
+            {% else %}
+            <a href="{% url 'courses:subscribe_selection' %}?type_programme=formation{% if career.type_formation %}&type_formation={{ career.type_formation }}{% endif %}{% if career.annee_prog_id %}&annee={{ career.annee_prog_id }}{% endif %}&centre={{ career.centre_id }}"
+               class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-bsb-red to-bsb-dark hover:brightness-110 text-white text-sm font-bold rounded-lg transition-all">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              S'inscrire
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </details>
     </article>
     {% endfor %}
   </div>
