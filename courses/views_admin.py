@@ -1609,7 +1609,7 @@ MATRIX_PERMISSIONS = [
     ('gerer_frais', "Gérer les frais et types de frais", 'courses', "Configuration de l'offre"),
     ('gerer_annees', "Gérer les années de formation", 'courses', "Configuration de l'offre"),
     ('gerer_equipe', "Gérer le Directeur Général et l'équipe (page « À propos »)", 'courses', 'Site public'),
-    ('gerer_carrousel', "Gérer les carrousels de la page d'accueil", 'courses', 'Site public'),
+    ('gerer_carrousel', "Gérer le contenu de la page d'accueil (carrousels, bande-annonce, partenaires)", 'courses', 'Site public'),
     ('gerer_agents', "Gérer les comptes utilisateurs", 'accounts', 'Comptes et accès'),
     ('gerer_eleves', "Gérer les comptes apprenants", 'accounts', 'Comptes et accès'),
     ('gerer_permissions', "Gérer les permissions", 'accounts', 'Comptes et accès'),
