@@ -276,10 +276,12 @@ BO_NAVIGATION = env('BO_NAVIGATION', default='sidebar')
 # permet de reafficher sans toucher au code (voir courses/ui.py).
 BO_UI = env('BO_UI', default='nouveau')
 
-# Modele des documents PDF generes (quittances, recus...). 'officiel' = mise en
-# page officielle facon quittance administrative ; 'classique' = ancien rendu.
+# Modele des documents PDF generes (attestation, recepisse, quittance).
+# 'classique' = gabarits WeasyPrint historiques (courses/templates/student/…),
+# c'est le rendu retenu par la DSI ; 'officiel' = variante « acte administratif »
+# (filigrane marbre + QR, documents/quittance_officielle.html).
 # Reversible sans redeploiement via ./.bascules/bascule_doc.sh (README 9.8).
-DOC_MODELE = env('DOC_MODELE', default='officiel')
+DOC_MODELE = env('DOC_MODELE', default='classique')
 
 # Assistant IA local (application `assistant`), lecture seule. 'off' par defaut.
 # Reversible sans redeploiement via ./.bascules/bascule_ai.sh (assistant/README.md).

@@ -26,7 +26,7 @@ ecrire() {
 }
 
 if [ $# -eq 0 ]; then
-    echo "Documents : $(lire DOC_MODELE officiel)"
+    echo "Documents : $(lire DOC_MODELE classique)"
     echo "Usage : ./.bascules/bascule_doc.sh [officiel|classique]"
     exit 0
 fi

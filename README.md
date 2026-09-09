@@ -731,14 +731,14 @@ unique est `templates/documents/quittance_officielle.html`, alimenté dynamiquem
 un contexte (titre, parties, colonnes, total, mentions) construit dans les vues.
 
 Ce format est **réversible sans redéploiement**, comme le back-office. Le réglage
-`DOC_MODELE` (lu depuis `.env`, `officiel` par défaut, ou `classique`) commande le
-rendu ; chaque vue teste ce réglage et retombe sur son ancien tracé (ReportLab A5 pour
-les quittances, WeasyPrint d'origine pour les autres) quand il vaut `classique`.
+`DOC_MODELE` (lu depuis `.env`, **`classique` par défaut** — rendu retenu par la DSI —
+ou `officiel`) commande le rendu ; chaque vue teste ce réglage et sert le gabarit
+WeasyPrint d'origine (`courses/templates/student/…`) quand il vaut `classique`.
 
 ```bash
 ./.bascules/bascule_doc.sh             # affiche l'état courant
-./.bascules/bascule_doc.sh officiel    # format officiel (défaut)
-./.bascules/bascule_doc.sh classique   # retour intégral aux anciens tracés
+./.bascules/bascule_doc.sh classique   # gabarits WeasyPrint d'origine (défaut)
+./.bascules/bascule_doc.sh officiel    # variante « acte administratif » (marbre + QR)
 ```
 
 La police du rendu officiel est **Liberation Sans** (métrique Arial), installée dans
