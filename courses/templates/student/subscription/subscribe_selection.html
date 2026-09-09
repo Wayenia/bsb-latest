@@ -137,7 +137,7 @@
     <div id="metier-details" class="hidden bg-bsb-cream border border-amber-200 rounded-xl p-5 space-y-1.5">
       <p class="text-sm text-gray-700"> Durée : <span id="detail-duree" class="font-semibold"></span></p>
       <p class="text-sm text-gray-700"> Conditions d'accès : <span id="detail-niveau" class="font-semibold"></span></p>
-      <p class="text-sm text-gray-700"> Titre professionnel : <span id="detail-titre" class="font-semibold"></span></p>
+      <p class="text-sm text-gray-700 hidden" id="detail-titre-wrap"> Titre professionnel : <span id="detail-titre" class="font-semibold"></span></p>
       <p class="text-sm text-gray-700"> Frais de scolarité : <span id="detail-frais" class="font-semibold"></span></p>
       <p class="text-sm hidden" id="detail-date-limite-wrap"> Date limite d'inscription : <span id="detail-date-limite" class="font-semibold text-red-700"></span></p>
       <p class="text-sm hidden" id="detail-communique-wrap">
@@ -184,7 +184,9 @@
     }
     document.getElementById('detail-duree').textContent = career.duree || '—';
     document.getElementById('detail-niveau').textContent = career.niveau_diplome || '—';
-    document.getElementById('detail-titre').textContent = career.titre_professionnel || '—';
+    // Titre professionnel : masqué quand la formation n'en a pas (ex. packs Reconversion).
+    document.getElementById('detail-titre').textContent = career.titre_professionnel || '';
+    document.getElementById('detail-titre-wrap').classList.toggle('hidden', !career.titre_professionnel);
     document.getElementById('detail-frais').textContent = career.total_frais ? (career.total_frais.toLocaleString('en-US') + ' FCFA') : '—';
 
     const dateLimiteWrap = document.getElementById('detail-date-limite-wrap');
