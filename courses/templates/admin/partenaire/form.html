@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}{{ libelle }} | BSB{% endblock %}
+{% block content %}
+<div class="bo-shell max-w-2xl">
+    {% include 'partials/messages.html' %}
+    <nav class="bo-breadcrumb">
+        <a href="{% url 'bsb_admin:partenaire_list' %}">Partenaires</a>
+        <span class="bo-breadcrumb-sep">/</span>
+        <span class="text-gray-900">{% if objet %}Modifier{% else %}Ajouter{% endif %}</span>
+    </nav>
+    <div class="bo-card">
+        <div class="bo-card-header"><h1 class="bo-card-title">{% if objet %}Modifier le partenaire{% else %}Ajouter un partenaire{% endif %}</h1></div>
+        <form method="post" enctype="multipart/form-data" class="bo-card-body">
+            {% csrf_token %}
+            {% if form.non_field_errors %}<div class="bo-note-danger mb-5">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
+            {% for field in form %}
+            <div class="bo-field">
+                <label for="{{ field.id_for_label }}" class="bo-label">{{ field.label }}{% if field.field.required %}<span class="bo-req">*</span>{% endif %}</label>
+                {% if field.name == 'logo' and objet.logo %}
+                <div class="flex items-center gap-3 mb-2">
+                    <img src="{{ objet.logo.url }}" alt="" class="w-16 h-16 object-contain border border-gray-200 rounded-lg bg-gray-50">
+                    <span class="text-xs text-gray-500">Logo actuel — laisser vide pour le conserver.</span>
+                </div>
+                {% endif %}
+                {{ field }}
+                {% if field.help_text %}<p class="bo-help">{{ field.help_text }}</p>{% endif %}
+                {% for e in field.errors %}<p class="bo-error">{{ e }}</p>{% endfor %}
+            </div>
+            {% endfor %}
+            <div class="flex flex-wrap gap-3 pt-2">
+                <button type="submit" class="bo-btn-primary">Enregistrer</button>
+                <a href="{% url 'bsb_admin:partenaire_list' %}" class="bo-btn-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Supprimer | BSB{% endblock %}
+{% block content %}
+<div class="bo-shell max-w-xl">
+    {% include 'partials/messages.html' %}
+    <div class="bo-card">
+        <div class="bo-card-header"><h1 class="bo-card-title">Confirmer la suppression</h1></div>
+        <div class="bo-card-body">
+            <p class="text-gray-900">« {{ objet.texte }} »</p>
+            <div class="bo-note-danger mt-5">Cette action est <strong>irréversible</strong>.</div>
+            <form method="post" class="flex flex-wrap gap-3 mt-6">
+                {% csrf_token %}
+                <a href="{% url 'bsb_admin:bande_annonce_list' %}" class="bo-btn-secondary">Annuler</a>
+                <button type="submit" class="bo-btn-danger">Supprimer définitivement</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

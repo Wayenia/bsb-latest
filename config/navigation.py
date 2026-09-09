@@ -131,6 +131,8 @@ GROUPES = [
             _lien('bsb_admin:type_frais_list', 'Types de frais', 'courses.gerer_frais', '/bsb/type-frais'),
             _lien('bsb_admin:annee_list', 'Années de formation', 'courses.gerer_annees', '/bsb/annees'),
             _lien('bsb_admin:carrousel_list', "Carrousels de l'accueil", 'courses.gerer_carrousel', '/bsb/carrousels'),
+            _lien('bsb_admin:bande_annonce_list', "Bande-annonce de l'accueil", 'courses.gerer_carrousel', '/bsb/bande-annonce'),
+            _lien('bsb_admin:partenaire_list', "Partenaires (accueil)", 'courses.gerer_carrousel', '/bsb/partenaires'),
         ],
     },
 ]

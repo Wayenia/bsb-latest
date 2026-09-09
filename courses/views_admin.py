@@ -1929,3 +1929,81 @@ def carrousel_update(request, cle):
         'titre_defaut': TITRES_TUILE.get(cle, libelles[cle]),
         'image_defaut': IMAGES_CATEGORIE.get(cle, ''),
     })
+
+
+# == BANDE-ANNONCE & PARTENAIRES DE L'ACCUEIL ================================
+from .forms import BandeAnnonceForm, PartenaireForm
+from .models import BandeAnnonce, Partenaire
+
+
+def _crud_contenu_accueil(request, form_class, instance, gabarit, url_liste, libelle):
+    if request.method == 'POST':
+        form = form_class(request.POST, request.FILES, instance=instance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"{libelle} enregistré.")
+            return redirect(url_liste)
+        messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
+    else:
+        form = form_class(instance=instance)
+    return render(request, gabarit, {'form': form, 'objet': instance, 'libelle': libelle})
+
+
+@require_permission('courses.gerer_carrousel')
+def bande_annonce_list(request):
+    return render(request, 'admin/bande_annonce/list.html',
+                  {'annonces': BandeAnnonce.objects.all()})
+
+
+@require_permission('courses.gerer_carrousel')
+def bande_annonce_create(request):
+    return _crud_contenu_accueil(request, BandeAnnonceForm, None,
+                                 'admin/bande_annonce/form.html',
+                                 'bsb_admin:bande_annonce_list', "Bande-annonce")
+
+
+@require_permission('courses.gerer_carrousel')
+def bande_annonce_update(request, pk):
+    return _crud_contenu_accueil(request, BandeAnnonceForm, get_object_or_404(BandeAnnonce, pk=pk),
+                                 'admin/bande_annonce/form.html',
+                                 'bsb_admin:bande_annonce_list', "Bande-annonce")
+
+
+@require_permission('courses.gerer_carrousel')
+def bande_annonce_delete(request, pk):
+    obj = get_object_or_404(BandeAnnonce, pk=pk)
+    if request.method == 'POST':
+        obj.delete()
+        messages.success(request, "Bande-annonce supprimée.")
+        return redirect('bsb_admin:bande_annonce_list')
+    return render(request, 'admin/bande_annonce/confirm_delete.html', {'objet': obj})
+
+
+@require_permission('courses.gerer_carrousel')
+def partenaire_list(request):
+    return render(request, 'admin/partenaire/list.html',
+                  {'partenaires': Partenaire.objects.all()})
+
+
+@require_permission('courses.gerer_carrousel')
+def partenaire_create(request):
+    return _crud_contenu_accueil(request, PartenaireForm, None,
+                                 'admin/partenaire/form.html',
+                                 'bsb_admin:partenaire_list', "Partenaire")
+
+
+@require_permission('courses.gerer_carrousel')
+def partenaire_update(request, pk):
+    return _crud_contenu_accueil(request, PartenaireForm, get_object_or_404(Partenaire, pk=pk),
+                                 'admin/partenaire/form.html',
+                                 'bsb_admin:partenaire_list', "Partenaire")
+
+
+@require_permission('courses.gerer_carrousel')
+def partenaire_delete(request, pk):
+    obj = get_object_or_404(Partenaire, pk=pk)
+    if request.method == 'POST':
+        obj.delete()
+        messages.success(request, "Partenaire supprimé.")
+        return redirect('bsb_admin:partenaire_list')
+    return render(request, 'admin/partenaire/confirm_delete.html', {'objet': obj})

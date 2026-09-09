@@ -5,7 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from .models import (
     TITRE_PROFESSIONNEL_CHOICE, TYPE_PROGRAMME_CHOICE, Direction_reg, Filiere, CentreFormation, Module,
     Frais, Cours, Inscription, Paiement, CentreEtFiliere,PieceJointeInscription,TypeFrais,
-    AnneeScolaire, TrancheFrais, Region, DG, Membre, CarrouselAccueil
+    AnneeScolaire, TrancheFrais, Region, DG, Membre, CarrouselAccueil, BandeAnnonce, Partenaire
 )
 from django.forms import inlineformset_factory
 
@@ -1518,4 +1518,34 @@ class CarrouselAccueilForm(forms.ModelForm):
 
     def clean_image(self):
         return _valider_photo(self.cleaned_data.get('image'))
+
+
+class BandeAnnonceForm(forms.ModelForm):
+    class Meta:
+        model = BandeAnnonce
+        fields = ['texte', 'lien', 'ordre', 'actif']
+        widgets = {
+            'texte': forms.TextInput(attrs={'class': _CLASSES_CHAMP,
+                                            'placeholder': 'Ex. Rentrée 2026 : inscriptions ouvertes jusqu’au 10 octobre'}),
+            'lien': forms.URLInput(attrs={'class': _CLASSES_CHAMP, 'placeholder': 'https://…'}),
+            'ordre': forms.NumberInput(attrs={'class': _CLASSES_CHAMP, 'min': 0}),
+        }
+
+
+class PartenaireForm(forms.ModelForm):
+    class Meta:
+        model = Partenaire
+        fields = ['nom', 'logo', 'lien', 'ordre', 'actif']
+        widgets = {
+            'nom': forms.TextInput(attrs={'class': _CLASSES_CHAMP}),
+            'lien': forms.URLInput(attrs={'class': _CLASSES_CHAMP, 'placeholder': 'https://…'}),
+            'ordre': forms.NumberInput(attrs={'class': _CLASSES_CHAMP, 'min': 0}),
+        }
+
+    def clean_logo(self):
+        logo = self.cleaned_data.get('logo')
+        # Le SVG n'a pas de signature binaire fixe : on ne valide que les bitmaps.
+        if logo and hasattr(logo, 'name') and not logo.name.lower().endswith('.svg'):
+            return _valider_photo(logo)
+        return logo
 

@@ -101,9 +101,17 @@ urlpatterns = [
     path('programmings/import', views_admin.programming_import, name='programming_import'),
 
 
-    # CARROUSELS DE LA PAGE D'ACCUEIL
+    # CONTENU DE LA PAGE D'ACCUEIL
     path('carrousels', views_admin.carrousel_list, name='carrousel_list'),
     path('carrousels/<str:cle>', views_admin.carrousel_update, name='carrousel_update'),
+    path('bande-annonce', views_admin.bande_annonce_list, name='bande_annonce_list'),
+    path('bande-annonce/creer', views_admin.bande_annonce_create, name='bande_annonce_create'),
+    path('bande-annonce/<int:pk>/modifier', views_admin.bande_annonce_update, name='bande_annonce_update'),
+    path('bande-annonce/<int:pk>/supprimer', views_admin.bande_annonce_delete, name='bande_annonce_delete'),
+    path('partenaires', views_admin.partenaire_list, name='partenaire_list'),
+    path('partenaires/creer', views_admin.partenaire_create, name='partenaire_create'),
+    path('partenaires/<int:pk>/modifier', views_admin.partenaire_update, name='partenaire_update'),
+    path('partenaires/<int:pk>/supprimer', views_admin.partenaire_delete, name='partenaire_delete'),
 
     #Année scolaire
     path('annee/create',views_admin.annee_create,name='annee_create'),

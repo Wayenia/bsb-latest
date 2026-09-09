@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Partenaires | BSB{% endblock %}
+{% block content %}
+<div class="bo-shell max-w-4xl">
+    {% include 'partials/messages.html' %}
+    <div class="bo-header">
+        <div>
+            <h1 class="bo-title">Partenaires</h1>
+            <p class="bo-subtitle max-w-2xl">
+                Logos affichés dans la section « Ils nous font confiance » de la page d'accueil.
+                Tant qu'aucun partenaire actif n'est enregistré, la section n'apparaît pas.
+            </p>
+        </div>
+        <a href="{% url 'bsb_admin:partenaire_create' %}" class="bo-btn-primary">Ajouter un partenaire</a>
+    </div>
+
+    <div class="bo-card">
+        {% if partenaires %}
+        <div class="grid gap-3 sm:grid-cols-2 p-4">
+            {% for p in partenaires %}
+            <div class="flex items-center gap-4 border border-gray-100 rounded-xl p-3">
+                <div class="w-16 h-16 shrink-0 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center overflow-hidden">
+                    <img src="{{ p.logo.url }}" alt="" class="max-w-full max-h-full object-contain">
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="font-bold text-gray-900 truncate">{{ p.nom }}</p>
+                    <p class="text-xs text-gray-500">Ordre {{ p.ordre }} · {% if p.actif %}actif{% else %}inactif{% endif %}</p>
+                </div>
+                <div class="text-right whitespace-nowrap">
+                    <a href="{% url 'bsb_admin:partenaire_update' p.pk %}" class="bo-oeil">Modifier</a>
+                    <a href="{% url 'bsb_admin:partenaire_delete' p.pk %}" class="bo-oeil text-bsb-red">Supprimer</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="px-5 py-10 text-center">
+            <p class="bo-empty-title">Aucun partenaire</p>
+            <p class="text-sm text-gray-500 mt-1">La section « Ils nous font confiance » n'apparaît pas sur l'accueil.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

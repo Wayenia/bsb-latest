@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Bande-annonce de l'accueil | BSB{% endblock %}
+{% block content %}
+<div class="bo-shell max-w-4xl">
+    {% include 'partials/messages.html' %}
+    <div class="bo-header">
+        <div>
+            <h1 class="bo-title">Bande-annonce de l'accueil</h1>
+            <p class="bo-subtitle max-w-2xl">
+                Messages qui défilent dans le bandeau de la page d'accueil (sous les boutons du hero).
+                S'il n'y a aucun message actif, le bandeau n'apparaît pas.
+            </p>
+        </div>
+        <a href="{% url 'bsb_admin:bande_annonce_create' %}" class="bo-btn-primary">Ajouter un message</a>
+    </div>
+
+    <div class="bo-card">
+        {% if annonces %}
+        <table class="w-full text-sm">
+            <thead><tr class="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-100">
+                <th class="px-4 py-3">Message</th><th class="px-4 py-3">Ordre</th><th class="px-4 py-3">État</th><th class="px-4 py-3"></th>
+            </tr></thead>
+            <tbody>
+            {% for a in annonces %}
+            <tr class="border-b border-gray-50">
+                <td class="px-4 py-3 text-gray-900">{{ a.texte }}{% if a.lien %} <span class="text-xs text-gray-400">↗</span>{% endif %}</td>
+                <td class="px-4 py-3 text-gray-500">{{ a.ordre }}</td>
+                <td class="px-4 py-3">{% if a.actif %}<span class="text-green-600 font-semibold">Actif</span>{% else %}<span class="text-gray-400">Inactif</span>{% endif %}</td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                    <a href="{% url 'bsb_admin:bande_annonce_update' a.pk %}" class="bo-oeil" title="Modifier">Modifier</a>
+                    <a href="{% url 'bsb_admin:bande_annonce_delete' a.pk %}" class="bo-oeil text-bsb-red" title="Supprimer">Supprimer</a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="px-5 py-10 text-center">
+            <p class="bo-empty-title">Aucun message</p>
+            <p class="text-sm text-gray-500 mt-1">Le bandeau de l'accueil reste masqué tant qu'aucun message actif n'existe.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

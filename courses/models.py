@@ -944,7 +944,53 @@ class CarrouselAccueil(models.Model):
         verbose_name = "Carrousel de l'accueil"
         verbose_name_plural = "Carrousels de l'accueil"
         ordering = ["cle"]
-        permissions = [("gerer_carrousel", "Gérer les carrousels de l'accueil")]
+        permissions = [("gerer_carrousel", "Gérer le contenu de la page d'accueil")]
 
     def __str__(self):
         return self.get_cle_display()
+
+
+class BandeAnnonce(models.Model):
+    """Bande-annonce du bandeau d'accueil (zone sous les boutons du hero).
+    Gérée par les administrateurs ; si aucune entrée active, la zone n'apparaît
+    pas."""
+
+    texte = models.CharField(max_length=220, verbose_name="Texte de l'annonce")
+    lien = models.URLField(blank=True, verbose_name="Lien (facultatif)",
+                           help_text="URL vers laquelle pointe l'annonce.")
+    ordre = models.PositiveIntegerField(default=0, verbose_name="Ordre d'affichage")
+    actif = models.BooleanField(default=True, verbose_name="Actif")
+    date_maj = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Bande-annonce de l'accueil"
+        verbose_name_plural = "Bandes-annonces de l'accueil"
+        ordering = ["ordre", "-date_maj"]
+
+    def __str__(self):
+        return self.texte[:60]
+
+
+class Partenaire(models.Model):
+    """Partenaire affiché dans la section « Ils nous font confiance » de
+    l'accueil. Section masquée tant qu'aucun partenaire actif n'existe."""
+
+    nom = models.CharField(max_length=150, verbose_name="Nom du partenaire")
+    logo = models.ImageField(
+        upload_to="accueil/partenaires/",
+        validators=[FileExtensionValidator(["jpg", "jpeg", "png", "webp", "svg"])],
+        verbose_name="Logo",
+        help_text="JPG, JPEG, PNG, WEBP ou SVG. Fond transparent conseillé.",
+    )
+    lien = models.URLField(blank=True, verbose_name="Site web (facultatif)")
+    ordre = models.PositiveIntegerField(default=0, verbose_name="Ordre d'affichage")
+    actif = models.BooleanField(default=True, verbose_name="Actif")
+    date_maj = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Partenaire"
+        verbose_name_plural = "Partenaires"
+        ordering = ["ordre", "nom"]
+
+    def __str__(self):
+        return self.nom

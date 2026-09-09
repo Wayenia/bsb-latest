@@ -2011,9 +2011,12 @@ def home(request):
             'accent': accent,
         })
 
+    from .models import BandeAnnonce, Partenaire
     return render(request, "third_pages/home.html", {
         'active_careers': active_careers,
         'categories_accueil': categories_accueil,
+        'bandes_annonce': BandeAnnonce.objects.filter(actif=True),
+        'partenaires': Partenaire.objects.filter(actif=True),
     })
 
 # ABOUT
