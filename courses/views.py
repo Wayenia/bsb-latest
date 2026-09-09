@@ -938,7 +938,11 @@ def telecharger_attestation(request, id):
         messages.error(request, "Action non autorisée.")
         return redirect('courses:my_subscriptions')
 
-    a_un_paiement = Paiement.objects.filter(dette__inscription=inscription).exists()
+    # Un versement annulé ne compte pas : payer puis annuler ne doit pas
+    # ouvrir l'accès à l'attestation (obs. DSI — contournement).
+    a_un_paiement = Paiement.objects.filter(
+        dette__inscription=inscription, annule=False
+    ).exists()
     if not a_un_paiement:
         messages.error(
             request,
@@ -1420,10 +1424,13 @@ def my_subscriptions(request):
     page = request.GET.get('page')
     subscriptions = paginator.get_page(page)
 
-    # Attestation téléchargeable seulement si au moins un paiement existe
-    # (voir dettes__paiements préchargé ci-dessus — pas de requête par ligne).
+    # Attestation téléchargeable seulement si au moins un versement NON ANNULÉ
+    # existe : payer puis annuler ne rouvre pas l'accès (obs. DSI).
+    # (dettes__paiements est préchargé ci-dessus — pas de requête par ligne.)
     for insc in subscriptions:
-        insc.has_payment = any(dette.paiements.all() for dette in insc.dettes.all())
+        insc.has_payment = any(
+            not p.annule for dette in insc.dettes.all() for p in dette.paiements.all()
+        )
         # Dossier valide entierement solde : le bouton "payer" devient "consulter".
         total_du = sum(d.montant_total for d in insc.dettes.all())
         total_paye = sum(d.montant_paye() for d in insc.dettes.all())
