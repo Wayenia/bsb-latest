@@ -140,6 +140,10 @@
   padding-left: 100%;
   animation: bsb-ticker-scroll 12s linear infinite;
 }
+/* Bande-annonce du hero : plusieurs messages a la suite -> defilement plus
+   lent pour rester confortable a lire. */
+.bsb-ticker--annonce .bsb-ticker__inner { animation-duration: 34s; }
+.bsb-ticker:hover .bsb-ticker__inner { animation-play-state: paused; }
 @keyframes bsb-ticker-scroll {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-100%); }
@@ -150,12 +154,13 @@
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }
 
-/* Bandeau défilant des partenaires (« Ils nous font confiance ») */
+/* Bandeau défilant des partenaires (« Ils nous font confiance ») — utilisé
+   seulement au-delà de 8 partenaires ; en deçà, ils sont centrés et fixes. */
 .bsb-marquee { overflow: hidden; }
 .bsb-marquee__track {
   display: flex;
   width: max-content;
-  animation: bsb-marquee-scroll 32s linear infinite;
+  animation: bsb-marquee-scroll 48s linear infinite;
 }
 .bsb-marquee:hover .bsb-marquee__track { animation-play-state: paused; }
 @keyframes bsb-marquee-scroll {
