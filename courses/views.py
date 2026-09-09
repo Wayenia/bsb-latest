@@ -2024,9 +2024,9 @@ def home(request):
     from .models import CarrouselAccueil
     perso = {c.cle: c for c in CarrouselAccueil.objects.all()}
 
-    # Le bouton « Découvrir » d'une tuile mène à la page « Formations
-    # disponibles » filtrée sur le programme concerné (obs. DSI).
-    base_url = reverse('courses:available_career')
+    # La tuile (bouton « S'inscrire ») ouvre le parcours d'inscription dédié
+    # au programme concerné (année → centre/ville → métier/pack).
+    base_url = reverse('courses:subscribe_selection')
     definitions = [
         ('initiale',              'formation',       'initiale'),
         ('continue',              'formation',       'continue'),
