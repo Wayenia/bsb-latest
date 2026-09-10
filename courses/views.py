@@ -756,12 +756,47 @@ def effectuer_paiment(request, id):
 # une exception sur un visiteur anonyme ou un agent, soit une 500 au lieu d'un refus.
 @require_role('eleve')
 def liste_paiement(request):
-    paiements=Paiement.objects.filter(dette__inscription__eleve=request.user.eleve).select_related('dette','dette__inscription','dette__inscription__eleve').order_by('-date_paiement')
-    paginator=Paginator(paiements,10)
-    page=request.GET.get('page')
-    paiements=paginator.get_page(page)
+    from collections import Counter
+    liste = list(
+        Paiement.objects.filter(dette__inscription__eleve=request.user.eleve)
+        .select_related(
+            'dette__frais_formation__type_frais',
+            'dette__inscription__formation__filiere',
+            'dette__inscription__formation__centre',
+        )
+        .order_by('-date_paiement', 'id')
+    )
+    # Versements créés ensemble (même groupe_id) — ex. règlement intégral d'une
+    # inscription Reconversion : un seul bloc, une seule quittance groupée.
+    tailles = Counter(p.groupe_id for p in liste if p.groupe_id)
+    vus = set()
+    items = []
+    for pmt in liste:
+        gid = pmt.groupe_id
+        # Un lot : plusieurs versements créés ensemble, ou un règlement intégral
+        # (Reconversion) — dans les deux cas, une seule quittance groupée.
+        est_integral = pmt.dette.inscription.paiement_integral_obligatoire
+        if gid and (tailles[gid] > 1 or est_integral):
+            if gid in vus:
+                continue
+            vus.add(gid)
+            membres = [x for x in liste if x.groupe_id == gid]
+            items.append({
+                'groupe': True,
+                'groupe_id': gid,
+                'date': pmt.date_paiement,
+                'formation': pmt.dette.inscription.formation,
+                'mode': pmt.get_mode_paiement_display(),
+                'annule': all(m.annule for m in membres),
+                'montant': sum(m.montant_paiement for m in membres if not m.annule),
+                'frais': ", ".join(str(m.dette.frais_formation.type_frais) for m in membres),
+            })
+        else:
+            items.append({'groupe': False, 'p': pmt})
+
+    paginator = Paginator(items, 10)
     return render(request, 'student/paiement/mes_paiements.html', {
-        'paiements': paiements,
+        'paiements': paginator.get_page(request.GET.get('page')),
     })
               
 # ── EN-TÊTE OFFICIEL PARTAGÉ POUR LES PDF GÉNÉRÉS ─────────────────────────────
@@ -3928,6 +3963,163 @@ def stats_download_quittance_view(request, paiement_id):
 
 
 # ── QUITTANCE GROUPÉE (règlement intégral, ex. inscription Reconversion) ──────
+def _quittance_groupe_classique_pdf(paiements):
+    """Quittance groupée — format « classique » (A5, ReportLab), même style que
+    la quittance d'un versement isolé (_quittance_classique_pdf) : une ligne par
+    type de frais réglé, puis le total. Document de référence unique côté
+    apprenant comme côté agent."""
+    import qrcode
+    premier = paiements[0]
+    inscription = premier.dette.inscription
+    eleve = inscription.eleve
+    annule = all(p.annule for p in paiements)
+
+    dettes_vues = {}
+    for p in paiements:
+        dettes_vues.setdefault(p.dette_id, p.dette)
+    total_du = sum(d.montant_total for d in dettes_vues.values())
+    total_paye = sum(p.montant_paiement for p in paiements)
+    reste = sum(max(d.reste_a_payer(), 0) for d in dettes_vues.values())
+
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A5)
+    width, height = A5
+    favicon_path = os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
+    _draw_pdf_watermark(p, width, height, favicon_path)
+    header_left, header_right = _pdf_header_lines(inscription.formation.centre)
+    line_h = 0.28 * cm
+    y_left = height - 0.6 * cm
+    p.setFont("Helvetica-Bold", 5.5)
+    for line in header_left:
+        p.drawString(0.6 * cm, y_left, line)
+        y_left -= line_h
+    y_right = height - 0.6 * cm
+    for line in header_right:
+        p.drawRightString(width - 0.6 * cm, y_right, line)
+        y_right -= line_h
+    try:
+        p.drawImage(ImageReader(favicon_path), x=width / 2 - 0.9 * cm, y=height - 2.2 * cm,
+                    width=1.8 * cm, height=1.8 * cm, preserveAspectRatio=True, mask='auto')
+    except Exception:
+        pass
+
+    p.setFont("Helvetica-Bold", 14)
+    p.drawCentredString(width / 2, height - 3.8 * cm, "QUITTANCE DE PAIEMENT")
+    p.setFont("Helvetica", 9)
+    p.drawCentredString(width / 2, height - 4.4 * cm, "Burkina Suudu Bawdè — règlement intégral")
+
+    if annule:
+        p.saveState()
+        p.setFillColor(colors.red)
+        p.setFillAlpha(0.35)
+        p.setFont("Helvetica-Bold", 34)
+        p.translate(width / 2, height / 2)
+        p.rotate(30)
+        p.drawCentredString(0, 0, "ANNULÉE")
+        p.restoreState()
+
+    y = height - 5.2 * cm
+    p.setLineWidth(0.8)
+    p.line(1.5 * cm, y, width - 1.5 * cm, y)
+
+    def ligne(label, valeur, y_pos):
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(1.5 * cm, y_pos, label)
+        p.setFont("Helvetica", 10)
+        valeur = str(valeur)
+        max_width = (width - 1.5 * cm) - 7 * cm
+        if p.stringWidth(valeur, "Helvetica", 10) <= max_width:
+            p.drawString(7 * cm, y_pos, valeur)
+            return y_pos - 0.5 * cm
+        mots, lignes, courante = valeur.split(), [], ""
+        for mot in mots:
+            essai = f"{courante} {mot}".strip()
+            if p.stringWidth(essai, "Helvetica", 10) <= max_width:
+                courante = essai
+            else:
+                if courante:
+                    lignes.append(courante)
+                courante = mot
+        if courante:
+            lignes.append(courante)
+        for i, texte in enumerate(lignes):
+            p.drawString(7 * cm, y_pos - i * 0.42 * cm, texte)
+        return y_pos - len(lignes) * 0.42 * cm - 0.1 * cm
+
+    def separateur(y_pos):
+        p.setLineWidth(0.3)
+        p.setDash(3, 3)
+        p.line(1.5 * cm, y_pos, width - 1.5 * cm, y_pos)
+        p.setDash()
+        return y_pos - 0.5 * cm
+
+    y -= 0.5 * cm
+    y = ligne("Numéro de quittance :", premier.numero_quittance, y)
+    y = ligne("Date de paiement :", premier.date_paiement.strftime("%d/%m/%Y à %H:%M"), y)
+    y = separateur(y - 0.3 * cm)
+
+    y = ligne("Apprenant :", f"{eleve.nom} {eleve.prenom}", y)
+    y = ligne("Matricule :", eleve.matricule or "—", y)
+    y = ligne("Centre de Formation :", str(inscription.formation.centre), y)
+    y = ligne("Métier :", str(inscription.formation.filiere), y)
+    y = ligne("Année de formation :", str(inscription.annee_scolaire or "—"), y)
+    y = ligne("Mode de paiement :", premier.get_mode_paiement_display(), y)
+    y = separateur(y - 0.3 * cm)
+
+    p.setFont("Helvetica-Bold", 9)
+    p.drawString(1.5 * cm, y, "Frais réglés")
+    p.drawRightString(width - 1.5 * cm, y, "Montant")
+    y -= 0.45 * cm
+    p.setFont("Helvetica", 9)
+    for pmt in paiements:
+        p.drawString(1.7 * cm, y, str(pmt.dette.frais_formation.type_frais.libelle))
+        p.drawRightString(width - 1.5 * cm, y, f"{pmt.montant_paiement:,.0f} FCFA")
+        y -= 0.42 * cm
+    y -= 0.1 * cm
+    p.setLineWidth(0.5)
+    p.line(1.5 * cm, y, width - 1.5 * cm, y)
+    y -= 0.5 * cm
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(1.5 * cm, y, "Montant total payé :")
+    p.drawRightString(width - 1.5 * cm, y, f"{total_paye:,.0f} FCFA")
+    y = separateur(y - 0.8 * cm)
+
+    y = ligne("Total dû :", f"{total_du:,.0f} FCFA", y)
+    y = ligne("Total payé :", f"{total_paye:,.0f} FCFA", y)
+    y = ligne("Reste à payer :", f"{reste:,.0f} FCFA", y)
+
+    qr_data = (
+        f"Quittance : {premier.numero_quittance}\n"
+        f"Date : {premier.date_paiement.strftime('%d/%m/%Y à %H:%M')}\n"
+        f"Apprenant : {eleve.nom} {eleve.prenom}\n"
+        f"Centre : {inscription.formation.centre}\n"
+        f"Métier : {inscription.formation.filiere}\n"
+        f"Année de formation : {inscription.annee_scolaire}\n"
+        + "".join(f"{pm.dette.frais_formation.type_frais.libelle} : {pm.montant_paiement:,.0f} FCFA\n" for pm in paiements)
+        + f"Montant total payé : {total_paye:,.0f} FCFA\n"
+        f"Reste à payer : {reste:,.0f} FCFA"
+    )
+    qr = qrcode.QRCode(version=1, box_size=4, border=2)
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    qr_buffer = io.BytesIO()
+    qr.make_image(fill_color="black", back_color="white").save(qr_buffer, format='PNG')
+    qr_buffer.seek(0)
+    qr_size = 3 * cm
+    qr_y = max(y - 0.3 * cm - qr_size, 0.9 * cm)
+    p.drawImage(ImageReader(qr_buffer), x=(width - qr_size) / 2, y=qr_y, width=qr_size, height=qr_size)
+    p.setFont("Helvetica-Oblique", 7)
+    p.setFillColor(colors.grey)
+    p.drawCentredString(width / 2, qr_y - 0.25 * cm, "Scannez pour vérifier")
+    p.setFont("Helvetica-Oblique", 6)
+    p.drawRightString(width - 1.5 * cm, max(qr_y - 0.65 * cm, 0.3 * cm),
+                      f"BSB — généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
 def _quittance_groupe_officielle_pdf(request, paiements):
     """Quittance unique regroupant tous les versements d'un même lot
     d'encaissement (`groupe_id`) : une ligne par type de frais, un total. Sert
@@ -4000,7 +4192,11 @@ def stats_download_quittance_groupe_view(request, groupe_id):
     if not _can_access_dette_finances(request.user, paiements[0].dette):
         raise PermissionDenied("Vous n'avez pas accès à cette quittance.")
 
-    reponse = HttpResponse(_quittance_groupe_officielle_pdf(request, paiements), content_type='application/pdf')
+    if getattr(settings, 'DOC_MODELE', 'officiel') != 'classique':
+        contenu = _quittance_groupe_officielle_pdf(request, paiements)
+    else:
+        contenu = _quittance_groupe_classique_pdf(paiements)
+    reponse = HttpResponse(contenu, content_type='application/pdf')
     reponse['Content-Disposition'] = f'attachment; filename="quittance_{paiements[0].numero_quittance}.pdf"'
     return reponse
 
