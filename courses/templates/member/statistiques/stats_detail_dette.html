@@ -120,8 +120,9 @@
   </div>
   {% endif %}
 
-  {% comment %} Tranches du type de frais {% endcomment %}
-  {% if tranches_data %}
+  {% comment %} Tranches du type de frais — masquées pour un règlement intégral
+     (Reconversion) : l'encaissement s'y fait en une fois, pas tranche par tranche. {% endcomment %}
+  {% if tranches_data and not integral %}
   <div class="page-card p-4 mb-4">
     <div class="font-bold mb-3 text-[#374151] text-[1.05rem]">
       Tranches de « {{ dette.frais_formation.type_frais.libelle }} »
@@ -179,15 +180,21 @@
       <div class="font-bold text-[#374151] text-[1.05rem]">
         Historique des paiements
       </div>
-      {% if not tranches_data and dette.etat_dette != 'soldé' %}
-        {% if bloquee %}
-        <button class="btn-payer" disabled title="Réglez d'abord la tranche primordiale bloquante d'un autre type de frais">
-          Enregistrer un paiement
-        </button>
-        {% else %}
+      {% if dette.etat_dette != 'soldé' %}
+        {% if integral %}
         <button class="btn-payer" data-action="ouvrir-paiement">
-          Enregistrer un paiement
+          Enregistrer le paiement
         </button>
+        {% elif not tranches_data %}
+          {% if bloquee %}
+          <button class="btn-payer" disabled title="Réglez d'abord la tranche primordiale bloquante d'un autre type de frais">
+            Enregistrer un paiement
+          </button>
+          {% else %}
+          <button class="btn-payer" data-action="ouvrir-paiement">
+            Enregistrer un paiement
+          </button>
+          {% endif %}
         {% endif %}
       {% endif %}
     </div>
@@ -287,7 +294,10 @@
       <button type="button" data-action="fermer-paiement" class="text-white text-xl leading-none bg-transparent border-0 cursor-pointer">&times;</button>
     </div>
 
-    <form method="post" id="formPaiement" enctype="multipart/form-data" class="flex flex-col min-h-[0]">
+    {% comment %} Reconversion : le versement solde toute l'inscription en une
+       fois (endpoint dédié) ; sinon on encaisse sur cette dette. {% endcomment %}
+    <form method="post" id="formPaiement" enctype="multipart/form-data" class="flex flex-col min-h-[0]"
+          {% if integral %}action="{% url 'courses:stats_encaisser_solde_inscription' inscription.id %}"{% endif %}>
       {% csrf_token %}
       <div class="p-4 overflow-y-auto">
 
@@ -311,7 +321,10 @@
 
         {% comment %} Tranche à régler {% endcomment %}
         <div class="py-2 px-3 mb-3 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 text-[.88rem]">
-          {% if tranche_cible %}
+          {% if integral %}
+            <strong>Programme Reconversion</strong> — l'inscription se règle en une seule fois,
+            tous frais confondus : montant dû <strong>{{ reste_total_inscription|floatformat:0|intcomma }} FCFA</strong>.
+          {% elif tranche_cible %}
             À régler maintenant : <strong>{{ tranche_cible.libelle }}</strong>
             {% if tranche_cible.est_primordiale %}(primordiale){% endif %}
             — montant dû : <strong>{{ montant_cible|floatformat:0|intcomma }} FCFA</strong>
@@ -335,13 +348,16 @@
           </label>
           <div class="flex">
             <input type="number" name="montant_paiement" id="montantInput"
-                   class="form-control-custom rounded-[10px_0_0_10px]"
+                   class="form-control-custom rounded-[10px_0_0_10px]{% if integral %} bg-[#f3f4f6]{% endif %}"
                    placeholder="Ex: 25000"
-                   min="1" max="{{ montant_cible|floatformat:0 }}"
+                   {% if integral %}value="{{ reste_total_inscription|floatformat:0 }}" readonly min="{{ reste_total_inscription|floatformat:0 }}" max="{{ reste_total_inscription|floatformat:0 }}"{% else %}min="1" max="{{ montant_cible|floatformat:0 }}"{% endif %}
                    step="1" required>
             <span class="inline-flex items-center px-3 bg-white text-gray-500 border border-[2px] border-[#e2e8f0] border-l-0 rounded-[0_10px_10px_0]">FCFA</span>
           </div>
-          <div class="text-sm text-gray-500 mt-1">Montant maximum : {{ montant_cible|floatformat:0|intcomma }} FCFA (tranche/frais en cours).</div>
+          <div class="text-sm text-gray-500 mt-1">
+            {% if integral %}Montant verrouillé : le règlement Reconversion se fait en une seule fois.
+            {% else %}Montant maximum : {{ montant_cible|floatformat:0|intcomma }} FCFA (tranche/frais en cours).{% endif %}
+          </div>
           <div class="text-sm text-red-600 mt-1 hidden" id="montantError"></div>
         </div>
 
@@ -397,6 +413,9 @@
 <script nonce="{{ csp_nonce }}">
 const estPrimordiale = {{ tranche_cible.est_primordiale|yesno:"true,false" }};
 const montantCible = {{ montant_cible|floatformat:0 }};
+const integral = {{ integral|yesno:"true,false" }};
+const estFraisDossier = {{ est_frais_dossier|yesno:"true,false" }};
+const resteTotalInscription = {{ reste_total_inscription|floatformat:0 }};
 
 function ouvrirModalPaiement() {
   const modal = document.getElementById('modalPaiement');
@@ -415,9 +434,9 @@ document.getElementById('modalPaiement').addEventListener('click', function(e) {
 });
 
 function toggleDerogation() {
-  const input = document.getElementById('montantInput');
   const wrap = document.getElementById('derogationWrap');
-  const val = parseFloat(input.value);
+  if (integral) { wrap.classList.add('hidden'); return; }
+  const val = parseFloat(document.getElementById('montantInput').value);
   const sousPaiement = estPrimordiale && val > 0 && val < montantCible;
   wrap.classList.toggle('hidden', !sousPaiement);
 }
@@ -431,19 +450,48 @@ document.getElementById('formPaiement').addEventListener('submit', function(e) {
   input.classList.remove('is-invalid');
   errDiv.classList.add('hidden');
 
-  if (!val || val <= 0) {
+  function bloquer(msg) {
     e.preventDefault();
     input.classList.add('is-invalid');
-    errDiv.textContent = "Le montant doit être supérieur à 0.";
+    errDiv.textContent = msg;
     errDiv.classList.remove('hidden');
+  }
+
+  if (!val || val <= 0) {
+    bloquer("Le montant doit être supérieur à 0.");
     return;
   }
-  if (val > montantCible) {
-    e.preventDefault();
-    input.classList.add('is-invalid');
-    errDiv.textContent = `Le montant ne peut pas dépasser le montant dû pour la tranche/frais en cours (${montantCible.toLocaleString('fr-FR')} FCFA).`;
-    errDiv.classList.remove('hidden');
+
+  // Reconversion : montant verrouillé au total de l'inscription.
+  if (integral) {
+    if (val !== resteTotalInscription) {
+      bloquer(`Le règlement Reconversion porte sur la totalité : ${resteTotalInscription.toLocaleString('fr-FR')} FCFA.`);
+    }
     return;
+  }
+
+  if (val > montantCible) {
+    bloquer(`Le montant ne peut pas dépasser le montant dû pour la tranche/frais en cours (${montantCible.toLocaleString('fr-FR')} FCFA).`);
+    return;
+  }
+
+  // Un frais de dossier se règle intégralement, en une fois.
+  if (estFraisDossier && val < montantCible) {
+    bloquer(`Le frais de dossier doit être réglé intégralement en un seul versement (montant dû : ${montantCible.toLocaleString('fr-FR')} FCFA).`);
+    return;
+  }
+
+  // Tranche primordiale sous-payée : motif + pièce jointe obligatoires.
+  const wrap = document.getElementById('derogationWrap');
+  if (!wrap.classList.contains('hidden')) {
+    const motif = (document.getElementById('motifDerogation').value || '').trim();
+    const piece = document.getElementById('pieceJointeDerogation').files.length;
+    if (!motif || !piece) {
+      e.preventDefault();
+      errDiv.textContent = "Encaissement impossible : un motif et une pièce jointe justificative sont obligatoires pour un règlement inférieur au montant dû de la tranche primordiale.";
+      errDiv.classList.remove('hidden');
+      return;
+    }
   }
 });
 </script>
@@ -498,9 +546,13 @@ function fermerModalAnnulation() {
 document.getElementById('modalAnnulation').addEventListener('click', function (e) {
   if (e.target === this) fermerModalAnnulation();
 });
+</script>
+{% endif %}
 
-{% comment %} Délégation des clics : toujours présente, que la dette soit soldée
-   ou non. Les fonctions du modal d'encaissement peuvent être absentes. {% endcomment %}
+{% comment %} Délégation des clics — TOUJOURS rendue : elle ouvre aussi bien le
+   modal d'encaissement (dette sans aucun versement) que le modal d'annulation
+   (dette soldée). Chaque cas est protégé par un test d'existence. {% endcomment %}
+<script nonce="{{ csp_nonce }}">
 document.addEventListener('click', function (e) {
   if (!e.target.closest) return;
   var el = e.target.closest('[data-action]');
@@ -513,14 +565,13 @@ document.addEventListener('click', function (e) {
       if (typeof fermerModalPaiement === 'function') fermerModalPaiement();
       break;
     case 'ouvrir-annulation':
-      ouvrirModalAnnulation(Number(el.dataset.annulationPaiement),
-                            el.dataset.annulationLibelle);
+      if (typeof ouvrirModalAnnulation === 'function')
+        ouvrirModalAnnulation(Number(el.dataset.annulationPaiement), el.dataset.annulationLibelle);
       break;
     case 'fermer-annulation':
-      fermerModalAnnulation();
+      if (typeof fermerModalAnnulation === 'function') fermerModalAnnulation();
       break;
   }
 });
 </script>
-{% endif %}
 {% endblock %}
