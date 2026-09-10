@@ -35,11 +35,20 @@
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
                        id="id_recherche" autocomplete="off">
             </div>
+            <div class="sm:w-56">
+                <select name="type_programme" data-auto-submit
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition">
+                    <option value="">Tous les types de programme</option>
+                    {% for cle, libelle in types_programme %}
+                    <option value="{{ cle }}" {% if type_programme == cle %}selected{% endif %}>{{ libelle }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             <button type="submit"
                     class="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white text-sm font-semibold rounded-lg transition-all">
                 Rechercher
             </button>
-            {% if recherche %}
+            {% if recherche or type_programme %}
             <a href="{% url 'bsb_admin:subscription_en_cours' %}"
                class="inline-flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition"
                title="Réinitialiser les filtres">
@@ -143,12 +152,12 @@
             <div class="flex items-center justify-between">
                 <div class="flex-1 flex justify-between sm:hidden">
                     {% if subscriptions.has_previous %}
-                    <a href="?page={{ subscriptions.previous_page_number }}&recherche={{ recherche }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <a href="?page={{ subscriptions.previous_page_number }}&recherche={{ recherche }}&type_programme={{ type_programme }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                         Précédent
                     </a>
                     {% endif %}
                     {% if subscriptions.has_next %}
-                    <a href="?page={{ subscriptions.next_page_number }}&recherche={{ recherche }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <a href="?page={{ subscriptions.next_page_number }}&recherche={{ recherche }}&type_programme={{ type_programme }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                         Suivant
                     </a>
                     {% endif %}
@@ -162,7 +171,7 @@
                     <div>
                         <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                             {% if subscriptions.has_previous %}
-                            <a href="?page={{ subscriptions.previous_page_number }}&recherche={{ recherche }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Précédent</a>
+                            <a href="?page={{ subscriptions.previous_page_number }}&recherche={{ recherche }}&type_programme={{ type_programme }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Précédent</a>
                             {% endif %}
 
                             {% for num in subscriptions.paginator.page_range %}
@@ -171,14 +180,14 @@
                                     {{ num }}
                                 </span>
                                 {% else %}
-                                <a href="?page={{ num }}&recherche={{ recherche }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                <a href="?page={{ num }}&recherche={{ recherche }}&type_programme={{ type_programme }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
                                     {{ num }}
                                 </a>
                                 {% endif %}
                             {% endfor %}
 
                             {% if subscriptions.has_next %}
-                            <a href="?page={{ subscriptions.next_page_number }}&recherche={{ recherche }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Suivant</a>
+                            <a href="?page={{ subscriptions.next_page_number }}&recherche={{ recherche }}&type_programme={{ type_programme }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Suivant</a>
                             {% endif %}
                         </nav>
                     </div>

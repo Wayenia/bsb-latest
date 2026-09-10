@@ -717,7 +717,7 @@ def effectuer_paiment(request, id):
                 if not motif or not piece_jointe:
                     messages.error(
                         request,
-                        "Un motif et une pièce jointe justificative sont obligatoires pour valider un "
+                        "Encaissement impossible ! Un motif et une pièce jointe justificative sont obligatoires pour valider un "
                         "règlement inférieur au montant dû de la tranche primordiale."
                     )
                     return render(request, 'student/paiement/form.html', {
@@ -975,18 +975,11 @@ def telecharger_attestation(request, id):
         structure=centre, user_type='gestionnaire'
     ).first()
     directeur_nom = f"{directeur_centre.prenom} {directeur_centre.nom}" if directeur_centre else "Le Directeur du centre"
-    # Civilité et fonction accordées au genre du responsable de centre
-    # (obs. DSI « prendre en compte le genre »). Comparaison insensible à la
-    # casse : les données peuvent contenir « F » aussi bien que « f ».
-    sexe = (getattr(directeur_centre, 'sexe', '') or '').strip().lower()
-    if directeur_centre and sexe == 'f':
-        directeur_civilite = "Mme"
-        directeur_titre = "Directrice"
-        directeur_titre_article = "La Directrice"
-    else:
-        directeur_civilite = "M." if directeur_centre else ""
-        directeur_titre = "Directeur"
-        directeur_titre_article = "Le Directeur"
+    # Formules non genrées : le genre du responsable de centre n'apparaît pas
+    # sur les documents (ni civilité, ni « Directrice », ni « La »).
+    directeur_civilite = ""
+    directeur_titre = "Directeur"
+    directeur_titre_article = "Le Directeur"
     ville = centre.province.chef_lieu if centre.province_id else centre.nom_centre
 
     # Modele officiel (par defaut), reversible en 'classique' via DOC_MODELE.
@@ -3158,15 +3151,15 @@ def export_pdf(request):
     # Signataire aligné sur le périmètre du filtre (comme l'en-tête), pas sur
     # celui de l'imprimeur (obs. DSI).
     if _centre_entete is not None:
-        signataire = "Le Directeur / La Directrice du Centre"
+        signataire = "Le Directeur du Centre"
     elif _direction_entete is not None:
-        signataire = "Le Directeur Inter-Régional / La Directrice Inter-Régionale"
+        signataire = "Le Directeur Inter-Régional"
     else:
         signataire = {
-            "centre": "Le Directeur / La Directrice du Centre",
-            "direction": "Le Directeur Inter-Régional / La Directrice Inter-Régionale",
-            "global": "Le Directeur Général / La Directrice Générale",
-        }.get(scope, "Le Directeur Général / La Directrice Générale")
+            "centre": "Le Directeur du Centre",
+            "direction": "Le Directeur Inter-Régional",
+            "global": "Le Directeur Général",
+        }.get(scope, "Le Directeur Général")
     signature_style = ParagraphStyle(
         "signature_bsb", parent=styles["Normal"], fontSize=10,
         alignment=2, spaceBefore=28,
@@ -3466,7 +3459,7 @@ def stats_encaisser_solde_dette_view(request, dette_id):
         if not motif_derogation or not piece_jointe_derogation:
             messages.error(
                 request,
-                "Un motif et une pièce jointe justificative sont obligatoires pour valider un "
+                "Encaissement impossible ! Un motif et une pièce jointe justificative sont obligatoires pour valider un "
                 "règlement inférieur au montant dû de la tranche primordiale."
             )
             return redirect(redirect_url)
@@ -3597,7 +3590,7 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
                 if tranche_cible and tranche_cible.est_primordiale and restant < dette.reste_pour_tranche(tranche_cible):
                     if not motif_derogation or not piece_jointe_derogation:
                         raise _CascadeInterrompue(
-                            "Un motif et une pièce jointe justificative sont obligatoires pour valider un "
+                            "Encaissement impossible ! Un motif et une pièce jointe justificative sont obligatoires pour valider un "
                             f"règlement inférieur au montant dû de la tranche primordiale de « {dette.frais_formation.type_frais} »."
                         )
                     motif, piece = motif_derogation, piece_jointe_derogation
@@ -3702,7 +3695,7 @@ def stats_detail_dette_view(request, dette_id):
             if not motif_derogation or not piece_jointe_derogation:
                 messages.error(
                     request,
-                    "Un motif et une pièce jointe justificative sont obligatoires pour valider un "
+                    "Encaissement impossible ! Un motif et une pièce jointe justificative sont obligatoires pour valider un "
                     "règlement inférieur au montant dû de la tranche primordiale."
                 )
                 return redirect('courses:stats_detail_dette', dette_id=dette_id)

@@ -783,6 +783,11 @@ def inscription__en_cours_view(request):
             Q(eleve__matricule__icontains=recherche)
         )
 
+    from .models import TYPE_PROGRAMME_CHOICE
+    type_programme = request.GET.get('type_programme', '').strip()
+    if type_programme in dict(TYPE_PROGRAMME_CHOICE):
+        subscriptions = subscriptions.filter(formation__type_programme=type_programme)
+
     paginator=Paginator(subscriptions,10)
     page=request.GET.get('page')
     subscriptions = paginator.get_page(page)
@@ -791,6 +796,8 @@ def inscription__en_cours_view(request):
         'subscriptions':subscriptions,
         'numbers':inscrit_non_valide,
         'recherche': recherche,
+        'type_programme': type_programme,
+        'types_programme': TYPE_PROGRAMME_CHOICE,
     })
 
 # PAYMENT CRUD
