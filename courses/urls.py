@@ -102,6 +102,9 @@ urlpatterns = [
     path('statistiques/paiement/dette/<int:dette_id>/tranche/<int:tranche>/',
          views.stats_quittance_tranche_view,
          name='stats_quittance_tranche'),
+    path('statistiques/paiement/dette/<int:dette_id>/tranche/<int:tranche>/quittance',
+         views.stats_download_quittance_tranche_view,
+         name='stats_download_quittance_tranche'),
  
     # ── Téléchargement PDF d'une quittance ────────────────────────────────────
     path('statistiques/paiement/quittance/<int:paiement_id>/pdf/',

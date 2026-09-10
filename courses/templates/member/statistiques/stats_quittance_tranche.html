@@ -47,7 +47,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
       </span>
-      <div class="min-w-0">
+      <div class="min-w-0 flex-1">
         <h2 class="font-black text-lg md:text-xl leading-tight text-bsb-ink">
           Quittance — Tranche {{ tranche }}
         </h2>
@@ -57,6 +57,14 @@
           {{ dette.inscription.formation.centre.nom_centre }}
         </p>
       </div>
+      {% if a_quittance %}
+      <a href="{% url 'courses:stats_download_quittance_tranche' dette.id tranche %}"
+         class="btn-dl shrink-0 inline-flex items-center gap-2 !px-4 !py-2.5"
+         title="Télécharger la quittance PDF de cette tranche">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+        Télécharger la quittance
+      </a>
+      {% endif %}
     </div>
   </div>
 

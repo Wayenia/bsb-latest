@@ -3918,7 +3918,186 @@ def stats_quittance_tranche_view(request, dette_id, tranche):
         'tranche': tranche,
         'paiements': paiements,
         'est_apprenant': est_apprenant,
+        # Quittance de la tranche : uniquement si au moins un versement non annulé.
+        'a_quittance': any(not p.annule for p in paiements),
     })
+
+
+def _quittance_tranche_classique_pdf(dette, tranche, paiements):
+    """Quittance d'une tranche — format « classique » (A5, ReportLab), même style
+    que la quittance d'un versement isolé : le détail des versements non annulés
+    de la tranche, puis leur total et le récapitulatif de la dette."""
+    import qrcode
+    inscription = dette.inscription
+    eleve = inscription.eleve
+    premier, dernier = paiements[0], paiements[-1]
+    total_tranche = sum(p.montant_paiement for p in paiements)
+    tranche_label = premier.tranche_frais.libelle if premier.tranche_frais else f"Tranche {tranche}"
+    numeros = ", ".join(p.numero_quittance for p in paiements)
+
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A5)
+    width, height = A5
+    favicon_path = os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
+    _draw_pdf_watermark(p, width, height, favicon_path)
+    header_left, header_right = _pdf_header_lines(inscription.formation.centre)
+    line_h = 0.28 * cm
+    y_left = height - 0.6 * cm
+    p.setFont("Helvetica-Bold", 5.5)
+    for line in header_left:
+        p.drawString(0.6 * cm, y_left, line)
+        y_left -= line_h
+    y_right = height - 0.6 * cm
+    for line in header_right:
+        p.drawRightString(width - 0.6 * cm, y_right, line)
+        y_right -= line_h
+    try:
+        p.drawImage(ImageReader(favicon_path), x=width / 2 - 0.9 * cm, y=height - 2.2 * cm,
+                    width=1.8 * cm, height=1.8 * cm, preserveAspectRatio=True, mask='auto')
+    except Exception:
+        pass
+
+    p.setFont("Helvetica-Bold", 14)
+    p.drawCentredString(width / 2, height - 3.8 * cm, "QUITTANCE DE PAIEMENT")
+    p.setFont("Helvetica", 9)
+    p.drawCentredString(width / 2, height - 4.4 * cm, f"Burkina Suudu Bawdè — {tranche_label}")
+
+    y = height - 5.2 * cm
+    p.setLineWidth(0.8)
+    p.line(1.5 * cm, y, width - 1.5 * cm, y)
+
+    def ligne(label, valeur, y_pos):
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(1.5 * cm, y_pos, label)
+        p.setFont("Helvetica", 10)
+        valeur = str(valeur)
+        max_width = (width - 1.5 * cm) - 7 * cm
+        if p.stringWidth(valeur, "Helvetica", 10) <= max_width:
+            p.drawString(7 * cm, y_pos, valeur)
+            return y_pos - 0.5 * cm
+        mots, lignes, courante = valeur.split(), [], ""
+        for mot in mots:
+            essai = f"{courante} {mot}".strip()
+            if p.stringWidth(essai, "Helvetica", 10) <= max_width:
+                courante = essai
+            else:
+                if courante:
+                    lignes.append(courante)
+                courante = mot
+        if courante:
+            lignes.append(courante)
+        for i, texte in enumerate(lignes):
+            p.drawString(7 * cm, y_pos - i * 0.42 * cm, texte)
+        return y_pos - len(lignes) * 0.42 * cm - 0.1 * cm
+
+    def separateur(y_pos):
+        p.setLineWidth(0.3)
+        p.setDash(3, 3)
+        p.line(1.5 * cm, y_pos, width - 1.5 * cm, y_pos)
+        p.setDash()
+        return y_pos - 0.5 * cm
+
+    y -= 0.5 * cm
+    y = ligne("N° de quittance :", numeros, y)
+    y = ligne("Date de paiement :", dernier.date_paiement.strftime("%d/%m/%Y à %H:%M"), y)
+    y = separateur(y - 0.3 * cm)
+
+    y = ligne("Apprenant :", f"{eleve.nom} {eleve.prenom}", y)
+    y = ligne("Matricule :", eleve.matricule or "—", y)
+    y = ligne("Centre de Formation :", str(inscription.formation.centre), y)
+    y = ligne("Métier :", str(inscription.formation.filiere), y)
+    y = ligne("Année de formation :", str(inscription.annee_scolaire or "—"), y)
+    y = ligne("Type de frais :", str(dette.frais_formation.type_frais.libelle), y)
+    y = ligne("Tranche :", tranche_label, y)
+    y = separateur(y - 0.3 * cm)
+
+    p.setFont("Helvetica-Bold", 9)
+    p.drawString(1.5 * cm, y, "Versement" if len(paiements) == 1 else "Versements de la tranche")
+    p.drawRightString(width - 1.5 * cm, y, "Montant")
+    y -= 0.45 * cm
+    p.setFont("Helvetica", 9)
+    for pmt in paiements:
+        p.drawString(1.7 * cm, y, f"{pmt.date_paiement:%d/%m/%Y} — {pmt.get_mode_paiement_display()}")
+        p.drawRightString(width - 1.5 * cm, y, f"{pmt.montant_paiement:,.0f} FCFA")
+        y -= 0.42 * cm
+    y -= 0.1 * cm
+    p.setLineWidth(0.5)
+    p.line(1.5 * cm, y, width - 1.5 * cm, y)
+    y -= 0.5 * cm
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(1.5 * cm, y, f"Montant payé ({tranche_label}) :")
+    p.drawRightString(width - 1.5 * cm, y, f"{total_tranche:,.0f} FCFA")
+    y = separateur(y - 0.8 * cm)
+
+    y = ligne("Total dû :", f"{dette.montant_total:,.0f} FCFA", y)
+    y = ligne("Total payé :", f"{dette.montant_paye():,.0f} FCFA", y)
+    y = ligne("Reste à payer :", f"{dette.reste_a_payer():,.0f} FCFA", y)
+    y = ligne("État de la dette :", dette.get_etat_dette_display(), y)
+
+    qr_data = (
+        f"Quittance : {numeros}\n"
+        f"Date : {dernier.date_paiement.strftime('%d/%m/%Y à %H:%M')}\n"
+        f"Apprenant : {eleve.nom} {eleve.prenom}\n"
+        f"Centre : {inscription.formation.centre}\n"
+        f"Métier : {inscription.formation.filiere}\n"
+        f"Type de frais : {dette.frais_formation.type_frais.libelle}\n"
+        f"Tranche : {tranche_label}\n"
+        f"Montant payé (tranche) : {total_tranche:,.0f} FCFA\n"
+        f"Total payé : {dette.montant_paye():,.0f} FCFA\n"
+        f"Reste à payer : {dette.reste_a_payer():,.0f} FCFA"
+    )
+    qr = qrcode.QRCode(version=1, box_size=4, border=2)
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    qr_buffer = io.BytesIO()
+    qr.make_image(fill_color="black", back_color="white").save(qr_buffer, format='PNG')
+    qr_buffer.seek(0)
+    qr_size = 3 * cm
+    qr_y = max(y - 0.3 * cm - qr_size, 0.9 * cm)
+    p.drawImage(ImageReader(qr_buffer), x=(width - qr_size) / 2, y=qr_y, width=qr_size, height=qr_size)
+    p.setFont("Helvetica-Oblique", 7)
+    p.setFillColor(colors.grey)
+    p.drawCentredString(width / 2, qr_y - 0.25 * cm, "Scannez pour vérifier")
+    p.setFont("Helvetica-Oblique", 6)
+    p.drawRightString(width - 1.5 * cm, max(qr_y - 0.65 * cm, 0.3 * cm),
+                      f"BSB — généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+@login_required
+def stats_download_quittance_tranche_view(request, dette_id, tranche):
+    from django.http import Http404
+    dette = get_object_or_404(
+        Dette.objects.select_related(
+            'inscription__eleve',
+            'inscription__formation__filiere',
+            'inscription__formation__centre__direction',
+            'inscription__annee_scolaire',
+            'frais_formation__type_frais',
+        ),
+        id=dette_id
+    )
+    if not _can_access_dette_finances(request.user, dette):
+        raise PermissionDenied("Vous n'avez pas accès à cette quittance.")
+
+    paiements = list(
+        dette.paiements.filter(tranche=tranche, annule=False).order_by('date_paiement', 'id')
+    )
+    if not paiements:
+        raise Http404("Aucun versement encaissé pour cette tranche.")
+
+    if getattr(settings, 'DOC_MODELE', 'officiel') != 'classique':
+        contenu = _quittance_groupe_officielle_pdf(request, paiements)
+    else:
+        contenu = _quittance_tranche_classique_pdf(dette, tranche, paiements)
+    reponse = HttpResponse(contenu, content_type='application/pdf')
+    reponse['Content-Disposition'] = (
+        f'attachment; filename="quittance_{paiements[0].numero_quittance}.pdf"'
+    )
+    return reponse
 
 
 # ── TÉLÉCHARGER QUITTANCE PDF (réutilisable) ──────────────────────────────────
