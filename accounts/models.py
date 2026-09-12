@@ -5,7 +5,7 @@ import string
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator, FileExtensionValidator
+from django.core.validators import RegexValidator, FileExtensionValidator, MinValueValidator
 
 # Garde-fou serveur au format E.164 ; le nombre de chiffres par pays est valide
 # cote client par intl-tel-input.
@@ -434,7 +434,8 @@ class Prestation_prestation(models.Model):
 
     prix_unitaire = models.DecimalField(
         max_digits=12,
-        decimal_places=2
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
     )
 
     actif = models.BooleanField(default=True)
@@ -543,16 +544,18 @@ class LigneFacture_prestation(models.Model):
         on_delete=models.PROTECT
     )
 
-    quantite=models.PositiveIntegerField(default=1)
+    quantite=models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
 
     prix_unitaire=models.DecimalField(
         max_digits=12,
-        decimal_places=2
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
     )
 
     montant=models.DecimalField(
         max_digits=12,
-        decimal_places=2
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
     )
 
     def save(self, *args, **kwargs):
