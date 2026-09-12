@@ -36,4 +36,39 @@
     var f = evt.target.closest('form[data-confirm]');
     if (f && !window.confirm(f.getAttribute('data-confirm'))) evt.preventDefault();
   });
+
+  // Champs « montant » (paiements, frais, prestations...) : nombre entier
+  // positif uniquement -- aucun signe, symbole ni lettre, saisi ou collé.
+  // Portée par nom/id (montant, prix) plutôt qu'un data-attribute : couvre
+  // aussi les champs générés dynamiquement (lignes de frais ajoutées en JS)
+  // sans qu'il faille penser à les marquer un par un.
+  function estChampMontant(el) {
+    return !!el && el.tagName === 'INPUT' && /montant|prix/i.test((el.name || '') + (el.id || ''));
+  }
+
+  document.addEventListener('keydown', function (evt) {
+    if (!estChampMontant(evt.target)) return;
+    // Navigation (flèches, Tab, Retour arrière...) et raccourcis (Ctrl/Cmd+X/C/V/A)
+    // ont un nom de touche de plusieurs caractères ou une touche de contrôle enfoncée.
+    if (evt.ctrlKey || evt.metaKey || evt.key.length > 1) return;
+    if (!/[0-9]/.test(evt.key)) evt.preventDefault();
+  });
+
+  document.addEventListener('input', function (evt) {
+    if (!estChampMontant(evt.target)) return;
+    var propre = evt.target.value.replace(/[^0-9]/g, '');
+    if (propre !== evt.target.value) evt.target.value = propre;
+  });
+
+  document.addEventListener('paste', function (evt) {
+    if (!estChampMontant(evt.target)) return;
+    var presse_papier = evt.clipboardData || window.clipboardData;
+    var texte = presse_papier ? presse_papier.getData('text') : '';
+    if (/[^0-9]/.test(texte)) {
+      evt.preventDefault();
+      var champ = evt.target;
+      champ.value = texte.replace(/[^0-9]/g, '');
+      champ.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
 })();

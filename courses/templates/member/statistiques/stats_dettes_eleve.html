@@ -7,12 +7,12 @@
 <style nonce="{{ csp_nonce }}">
   .stats-body { background:#f4f6fb; min-height:100vh; padding:2rem 1rem; }
   .page-card { background:#fff; border-radius:16px; box-shadow:0 2px 16px rgba(55, 65, 81,.09); padding:1.5rem; margin-bottom:1.5rem; }
-  .avatar { width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#374151,#6b7280);color:#fff;font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+  .avatar { width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ca8a04,#fbc02d);color:#fff;font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
   .btn-back { display:inline-flex;align-items:center;gap:.5rem;padding:.45rem 1rem;border-radius:10px;border:2px solid #e2e8f0;background:#fff;color:#374151;font-weight:600;font-size:.88rem;text-decoration:none;transition:all .15s; }
   .btn-back:hover { border-color:#6b7280;color:#6b7280; }
 
   .insc-header {
-    background:linear-gradient(135deg,#374151,#6b7280);
+    background:linear-gradient(135deg,#ca8a04,#fbc02d);
     color:#fff;border-radius:12px;padding:1rem 1.25rem;
     display:flex;justify-content:space-between;align-items:center;
     cursor:pointer;user-select:none;gap:1rem;flex-wrap:wrap;
@@ -38,7 +38,7 @@
   .badge-solde { background:#d1fae5;color:#065f46;padding:.28em .75em;border-radius:20px;font-size:.76rem;font-weight:700; }
   .badge-nonsolde { background:#fee2e2;color:#991b1b;padding:.28em .75em;border-radius:20px;font-size:.76rem;font-weight:700; }
 
-  .btn-detail { display:inline-flex;align-items:center;gap:.4rem;padding:.38rem .9rem;border-radius:8px;background:linear-gradient(135deg,#374151,#6b7280);color:#fff;font-size:.82rem;font-weight:700;text-decoration:none;border:none;transition:all .15s; }
+  .btn-detail { display:inline-flex;align-items:center;gap:.4rem;padding:.38rem .9rem;border-radius:8px;background:linear-gradient(135deg,#ca8a04,#fbc02d);color:#fff;font-size:.82rem;font-weight:700;text-decoration:none;border:none;transition:all .15s; }
   .btn-detail:hover { opacity:.88;color:#fff;transform:translateY(-1px); }
 
   .tranches-toggle { display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;border-top:1px dashed #e2e8f0;margin-top:.5rem;padding-top:.6rem; }
@@ -134,13 +134,13 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
             </svg>
-            Régler l'inscription
+            Encaisser l'inscription
           </button>
           {% elif item.dossier_impaye %}
           <button type="button" class="btn-detail bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed"
                   data-action="aucune"
-                  disabled title="Réglez d'abord entièrement le frais de dossier (bouton « Solder ce frais ») avant de pouvoir solder l'inscription">
-            Solder l'inscription
+                  disabled title="Réglez d'abord entièrement le frais de dossier (bouton « Encaisser ce frais ») avant de pouvoir encaisser l'inscription">
+            Encaisser l'inscription
           </button>
           {% else %}
           <button type="button" class="btn-detail inline-flex items-center gap-1.5 bg-gradient-to-br from-bsb-red to-bsb-gold text-white shadow-sm hover:brightness-105"
@@ -152,7 +152,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
             </svg>
-            Solder l'inscription
+            Encaisser l'inscription
           </button>
           {% endif %}
         {% elif item.quittance_groupe_id %}
@@ -201,7 +201,7 @@
             {% if dette.etat_dette == 'soldé' %}
               <button class="btn-payer-tranche" disabled title="Dette déjà soldée">Soldée</button>
             {% else %}
-              <span class="text-[.75rem] text-[#9ca3af] italic">Réglé via « Régler l'inscription »</span>
+              <span class="text-[.75rem] text-[#9ca3af] italic">Réglé via « Encaisser l'inscription »</span>
             {% endif %}
           </div>
           {% elif dette.tranches %}
@@ -248,12 +248,12 @@
               {% if dette.bloquee %}
               <button type="button" class="btn-detail bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed"
                       disabled title="Réglez d'abord la tranche primordiale bloquante d'un autre type de frais">
-                Solder ce frais
+                Encaisser ce frais
               </button>
               {% else %}
               <button type="button" class="btn-detail bg-[linear-gradient(135deg,#059669,#10b981)]"
                       data-action="solder" data-solder-url="{% url 'courses:stats_encaisser_solde_dette' dette.id %}" data-solder-cible="{{ dette.frais_formation.type_frais }}" data-solder-max="{{ dette.reste|floatformat:0 }}" data-solder-primordiale="{% if dette.tranche_cible_primordiale %}{{ dette.montant_a_payer|floatformat:0 }}{% else %}0{% endif %}">
-                Solder ce frais
+                Encaisser ce frais
               </button>
               {% endif %}
             {% endif %}
@@ -314,13 +314,13 @@
       </div>
       <div class="flex gap-[.6rem]">
         <button type="button" data-action="fermer-paiement" class="flex-[1] p-[.6rem] rounded-[8px] border border-[2px] border-[#e2e8f0] bg-[#fff] text-[#374151] font-[600] text-[.85rem] cursor-pointer">Annuler</button>
-        <button type="submit" class="flex-[2] p-[.6rem] rounded-[8px] border-0 bg-[#059669] text-[#fff] font-[700] text-[.85rem] cursor-pointer">Confirmer</button>
+        <button type="submit" class="flex-[2] p-[.6rem] rounded-[8px] border-0 bg-[#059669] text-[#fff] font-[700] text-[.85rem] cursor-pointer">Encaisser le paiement</button>
       </div>
     </form>
   </div>
 </div>
 
-{% comment %} MODAL SOLDER (réutilisé pour "Solder ce frais" et "Solder l'inscription") {% endcomment %}
+{% comment %} MODAL SOLDER (réutilisé pour "Encaisser ce frais" et "Encaisser l'inscription") {% endcomment %}
 <div id="modal-solder" class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(0,0,0,0.45)]">
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
     <div class="flex justify-between items-center mb-[1rem]">
@@ -372,7 +372,7 @@
       </div>
       <div class="flex gap-[.6rem]">
         <button type="button" data-action="fermer-solder" class="flex-[1] p-[.6rem] rounded-[8px] border border-[2px] border-[#e2e8f0] bg-[#fff] text-[#374151] font-[600] text-[.85rem] cursor-pointer">Annuler</button>
-        <button type="submit" class="flex-[2] p-[.6rem] rounded-[8px] border-0 bg-[#059669] text-[#fff] font-[700] text-[.85rem] cursor-pointer">Valider le paiement</button>
+        <button type="submit" class="flex-[2] p-[.6rem] rounded-[8px] border-0 bg-[#059669] text-[#fff] font-[700] text-[.85rem] cursor-pointer">Encaisser</button>
       </div>
     </form>
   </div>

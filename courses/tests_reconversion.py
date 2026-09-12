@@ -162,8 +162,8 @@ class EncaissementTests(ReconversionBase):
             reverse('courses:stats_dettes_eleve', args=[self.eleve.id]) + f"?inscription={insc.id}"
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "Régler l'inscription")
-        self.assertNotContains(resp, "Solder ce frais")
+        self.assertContains(resp, "Encaisser l'inscription")
+        self.assertNotContains(resp, "Encaisser ce frais")
         # Après règlement intégral : bouton de quittance groupée.
         self.client.post(
             reverse('courses:stats_encaisser_solde_inscription', args=[insc.id]),

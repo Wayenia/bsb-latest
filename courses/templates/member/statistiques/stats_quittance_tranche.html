@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static humanize %}
 
-{% block title %}Quittance — Tranche {{ tranche }} | BSB{% endblock %}
+{% block title %}{% if est_frais_dossier %}Quittance{% else %}Quittance — Tranche {{ tranche }}{% endif %} | BSB{% endblock %}
 
 {% block extra_css %}
 <style nonce="{{ csp_nonce }}">
@@ -29,8 +29,10 @@
     <a href="{% url 'courses:stats_dettes_eleve' eleve.id %}" class="hover:text-gray-700">{{ eleve.nom }} {{ eleve.prenom }}</a>
     <span class="mx-1">/</span>
     <a href="{% url 'courses:stats_detail_dette' dette.id %}" class="hover:text-gray-700">{{ dette.frais_formation.type_frais.libelle }}</a>
+    {% if not est_frais_dossier %}
     <span class="mx-1">/</span>
     <span class="text-gray-700">Tranche {{ tranche }}</span>
+    {% endif %}
   </nav>
 
   <div class="page-card p-4 md:p-5 mb-4">
@@ -49,7 +51,7 @@
       </span>
       <div class="min-w-0 flex-1">
         <h2 class="font-black text-lg md:text-xl leading-tight text-bsb-ink">
-          Quittance — Tranche {{ tranche }}
+          {% if est_frais_dossier %}Quittance{% else %}Quittance — Tranche {{ tranche }}{% endif %}
         </h2>
         <p class="text-gray-500 text-sm mt-0.5 break-words">
           {{ dette.frais_formation.type_frais.libelle }} •
@@ -60,7 +62,7 @@
       {% if a_quittance %}
       <a href="{% url 'courses:stats_download_quittance_tranche' dette.id tranche %}"
          class="btn-dl shrink-0 inline-flex items-center gap-2 !px-4 !py-2.5"
-         title="Télécharger la quittance PDF de cette tranche">
+         title="{% if est_frais_dossier %}Télécharger la quittance PDF{% else %}Télécharger la quittance PDF de cette tranche{% endif %}">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
         Télécharger la quittance
       </a>
@@ -98,10 +100,12 @@
           <span class="text-gray-500 text-sm">Type de frais</span>
           <span class="text-sm font-semibold">{{ dette.frais_formation.type_frais.libelle }}</span>
         </div>
+        {% if not est_frais_dossier %}
         <div class="info-row flex justify-between">
           <span class="text-gray-500 text-sm">Tranche</span>
           <span class="tranche-badge">Tranche {{ tranche }}</span>
         </div>
+        {% endif %}
         <hr class="border-gray-200">
         <div class="flex justify-between">
           <span class="text-gray-500 text-sm">Total dû</span>
@@ -122,7 +126,7 @@
     <div class="lg:col-span-8">
       <div class="page-card p-4">
         <div class="font-bold mb-3 text-[#374151] text-[1.05rem]">
-          Paiements de la tranche {{ tranche }}
+          {% if est_frais_dossier %}Paiements{% else %}Paiements de la tranche {{ tranche }}{% endif %}
         </div>
 
         {% if paiements %}
@@ -175,7 +179,7 @@
             </tbody>
             <tfoot>
               <tr class="bg-gray-50 font-bold">
-                <td class="py-2" colspan="2">Total tranche {{ tranche }}</td>
+                <td class="py-2" colspan="2">{% if est_frais_dossier %}Total{% else %}Total tranche {{ tranche }}{% endif %}</td>
                 <td class="py-2 text-emerald-600">
                   {% with total=0 %}
                     {% for p in paiements %}

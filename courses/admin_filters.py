@@ -1,6 +1,6 @@
 import django_filters
 from django.db.models import Q
-from .models import TITRE_PROFESSIONNEL_CHOICE, TYPE_PROGRAMME_CHOICE, CentreFormation,Filiere,CentreEtFiliere,Inscription
+from .models import TITRE_PROFESSIONNEL_CHOICE, PROGRAMME_FILTRE_CHOICES, lookups_filtre_programme, CentreFormation,Filiere,CentreEtFiliere,Inscription
 from django.forms.widgets import TextInput,Select
 
 
@@ -16,15 +16,18 @@ class FormationFilter(django_filters.FilterSet):
     )
 
     type_programme=django_filters.ChoiceFilter(
-        field_name='type_programme',
-        choices=TYPE_PROGRAMME_CHOICE,
+        choices=PROGRAMME_FILTRE_CHOICES,
         label="Type de programme",
         empty_label="---Tous les programmes---",
+        method='filtrer_programme',
         widget=Select(attrs={
             'class': 'block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold',
             'data-autosubmit': 'true'
         })
     )
+
+    def filtrer_programme(self, queryset, name, value):
+        return queryset.filter(**lookups_filtre_programme(value))
 
     formation=django_filters.CharFilter(
         field_name='filiere__nom_filiere',

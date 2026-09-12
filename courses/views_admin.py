@@ -783,10 +783,13 @@ def inscription__en_cours_view(request):
             Q(eleve__matricule__icontains=recherche)
         )
 
-    from .models import TYPE_PROGRAMME_CHOICE
+    from .models import PROGRAMME_FILTRE_CHOICES, lookups_filtre_programme
     type_programme = request.GET.get('type_programme', '').strip()
-    if type_programme in dict(TYPE_PROGRAMME_CHOICE):
-        subscriptions = subscriptions.filter(formation__type_programme=type_programme)
+    lookups = lookups_filtre_programme(type_programme, prefixe='formation__')
+    if lookups:
+        subscriptions = subscriptions.filter(**lookups)
+    else:
+        type_programme = ''
 
     paginator=Paginator(subscriptions,10)
     page=request.GET.get('page')
@@ -797,7 +800,7 @@ def inscription__en_cours_view(request):
         'numbers':inscrit_non_valide,
         'recherche': recherche,
         'type_programme': type_programme,
-        'types_programme': TYPE_PROGRAMME_CHOICE,
+        'types_programme': PROGRAMME_FILTRE_CHOICES,
     })
 
 # PAYMENT CRUD
@@ -1193,11 +1196,12 @@ def programming_list(request):
     # barre affichait tous les numeros et debordait, rendant les dernieres
     # pages inatteignables.
     page_range = paginator.get_elided_page_range(programs.number, on_each_side=2, on_ends=1)
+    from .models import PROGRAMME_FILTRE_CHOICES
     return render(request,'admin/programming/list.html',{
         'programs':programs, 'filter':f, 'page_range':page_range,
         'annees': AnneeScolaire.objects.order_by('-date_creation'),
         'centres_lot': centres_qs.order_by('nom_centre'),
-        'types_programme': CentreEtFiliere._meta.get_field('type_programme').choices,
+        'types_programme': PROGRAMME_FILTRE_CHOICES,
     })
 
 
@@ -1240,10 +1244,11 @@ def programming_bulk_toggle(request):
     else:
         portee.append("tous les centres")
 
-    valides = dict(CentreEtFiliere._meta.get_field('type_programme').choices)
-    if type_programme in valides:
-        qs = qs.filter(type_programme=type_programme)
-        portee.append(valides[type_programme])
+    from .models import PROGRAMME_FILTRE_CHOICES, lookups_filtre_programme
+    lookups = lookups_filtre_programme(type_programme)
+    if lookups:
+        qs = qs.filter(**lookups)
+        portee.append(dict(PROGRAMME_FILTRE_CHOICES)[type_programme])
     else:
         portee.append("tous programmes")
 

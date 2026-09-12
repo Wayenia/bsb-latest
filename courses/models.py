@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.db import models
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator
 from accounts.models import phone_validator
 from django.utils import timezone
 
@@ -297,6 +297,37 @@ TYPE_PROGRAMME_CHOICE = [
     ("reconversion", "Reconversion"),
 ]
 
+# Filtre « Type de programme » affiché sur les écrans de recherche/rapport
+# (Programmations, Formations disponibles, Souscriptions à valider,
+# Statistiques) : un seul menu qui combine `type_programme` et
+# `type_formation`, pour que « Modulaire qualifiante » / « Initiale » /
+# « Continue » ne recouvrent que le programme Formation — pas la
+# Reconversion, dont les packs sont eux aussi `type_formation` =
+# "modulaire_qualifiante" (elle a sa propre option « Reconversion »).
+PROGRAMME_FILTRE_CHOICES = [
+    ("vacances_utiles", "Vacances utiles"),
+    ("modulaire_qualifiante", "Modulaire qualifiante"),
+    ("initiale", "Initiale"),
+    ("continue", "Continue"),
+    ("reconversion", "Reconversion"),
+]
+
+
+def lookups_filtre_programme(valeur, prefixe=""):
+    """Traduit une valeur de PROGRAMME_FILTRE_CHOICES en lookups Django vers
+    un CentreEtFiliere, `prefixe` étant le chemin jusqu'à lui depuis le
+    queryset filtré (ex. "formation__" depuis une Inscription,
+    "inscription__formation__" depuis une Dette). Renvoie {} si `valeur` ne
+    correspond à aucune option (« Tous les programmes »)."""
+    if valeur in ("vacances_utiles", "reconversion"):
+        return {f"{prefixe}type_programme": valeur}
+    if valeur in ("modulaire_qualifiante", "initiale", "continue"):
+        return {
+            f"{prefixe}type_formation": valeur,
+            f"{prefixe}type_programme": "formation",
+        }
+    return {}
+
 
 def _format_duree_en_jours(total_jours):
     """Formate un nombre de jours en texte lisible ("15 jrs", "9 mois",
@@ -516,7 +547,7 @@ class TrancheFrais(models.Model):
 class Frais(TimeStampModel):
     formation=models.ForeignKey(CentreEtFiliere,on_delete=models.CASCADE,verbose_name="Formations",null=True)
     type_frais=models.ForeignKey(TypeFrais,on_delete=models.CASCADE,verbose_name="Frais",default="Scolarité")
-    montant = models.FloatField(verbose_name="Motant")
+    montant = models.FloatField(verbose_name="Motant", validators=[MinValueValidator(0)])
 
     def __str__(self):
         return f"{self.formation} {self.type_frais} {self.montant}"
@@ -810,7 +841,7 @@ class Paiement(models.Model):
         ("espece", "Espèce"),
     ]
     dette=models.ForeignKey(Dette,on_delete=models.CASCADE,verbose_name="Dettes",related_name='paiements',null=True)
-    montant_paiement = models.FloatField(verbose_name="Montant")
+    montant_paiement = models.FloatField(verbose_name="Montant", validators=[MinValueValidator(0)])
     date_paiement = models.DateTimeField(default=timezone.now ,verbose_name="Date de Paiement")
     mode_paiement = models.CharField(max_length=30, choices=PAYMENT_MODE, default="espece", verbose_name="Mode de paiement")
     tranche = models.IntegerField(verbose_name="Tranche de paiement")

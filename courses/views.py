@@ -20,6 +20,7 @@ from openpyxl.cell.cell import MergedCell
 from courses.forms import PersonalInfoForm,PaiementForm
 from .models import (CentreEtFiliere, Filiere, Inscription, PieceJointeInscription
     ,DocumentEleve,Paiement,Dette,CentreFormation,AnneeScolaire,Module
+    ,PROGRAMME_FILTRE_CHOICES
     )
 from .forms import FiliereForm
 from .filters import CentreFormationFilter, FiliereFilter
@@ -258,24 +259,16 @@ def available_career_view(request):
         .order_by('filiere__nom_filiere', '-date_creation')
     )
 
-    # Filtre issu de la tuile de l'accueil (bouton « Découvrir ») : chaque tuile
-    # ouvre la liste propre à son programme (obs. DSI). Le libellé sert de
-    # sous-titre à la page.
-    from .models import TYPE_FORMATION_CHOICE, TYPE_PROGRAMME_CHOICE
-    tf = (request.GET.get('type_formation') or '').strip()
-    tp = (request.GET.get('type_programme') or '').strip()
+    # Le filtre « Type de programme » visible sur la page (PROGRAMME_FILTRE_CHOICES,
+    # cf. CentreFormationFilter) couvre Vacances utiles / Modulaire qualifiante /
+    # Initiale / Continue ; il n'a pas de sous-titre dédié.
     libelle_liste = ''
-    if tp in dict(TYPE_PROGRAMME_CHOICE):
-        available_career = available_career.filter(type_programme=tp)
-        libelle_liste = LIBELLES_CATEGORIE.get(tp, dict(TYPE_PROGRAMME_CHOICE)[tp])
-    if tf in dict(TYPE_FORMATION_CHOICE):
-        available_career = available_career.filter(type_formation=tf)
-        libelle_liste = TITRES_TUILE.get(tf, "Formations " + dict(TYPE_FORMATION_CHOICE)[tf].lower())
 
     # « La liste des différents métiers » (obs. DSI) : hors Reconversion (qui se
     # choisit par ville), on ne montre qu'une carte par métier — l'apprenant
     # choisira le centre à l'inscription — même si le filtre « centre »/« ville »
     # n'est pas posé.
+    tp = (request.GET.get('type_programme') or '').strip()
     if tp != 'reconversion' and not request.GET.get('centre') and not request.GET.get('ville'):
         ids = list(
             available_career.values('id', 'filiere_id', 'date_creation')
@@ -651,7 +644,7 @@ def effectuer_paiment(request, id):
         messages.error(
             request,
             "Cette inscription (Reconversion) se règle en une seule fois, tous frais confondus, "
-            "via « Régler l'inscription »."
+            "via « Encaisser l'inscription »."
         )
         return redirect(
             f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}"
@@ -1122,6 +1115,9 @@ def _quittance_officielle_pdf(request, paiement):
     inscription = dette.inscription
     eleve = inscription.eleve
     centre = inscription.formation.centre
+    # Un frais de dossier se règle intégralement, sans tranche : la colonne
+    # « Tranche » n'a pas de sens à afficher pour lui.
+    est_frais_dossier = dette.frais_formation.type_frais.est_frais_de_dossier
     tranche_label = paiement.tranche_frais.libelle if paiement.tranche_frais else f"Tranche {paiement.tranche}"
     from accounts.utils import montant_en_lettres
     fcfa = lambda v: f"{v:,.0f} FCFA".replace(",", " ")
@@ -1129,6 +1125,16 @@ def _quittance_officielle_pdf(request, paiement):
 
     # QR compact (peu dense) : identifiant + montant + date suffisent au controle.
     qr_texte = f"BSB|QUIT|{paiement.numero_quittance}|{paiement.montant_paiement:.0f}|{paiement.date_paiement:%d%m%Y}"
+    colonnes = [{'libelle': "Type de frais"}]
+    ligne = [{'valeur': dette.frais_formation.type_frais.libelle}]
+    if not est_frais_dossier:
+        colonnes.append({'libelle': "Tranche"})
+        ligne.append({'valeur': tranche_label})
+    colonnes += [{'libelle': "Montant dû", 'num': True}, {'libelle': "Montant payé", 'num': True}]
+    ligne += [
+        {'valeur': fcfa(dette.montant_total), 'num': True},
+        {'valeur': fcfa(paiement.montant_paiement), 'num': True},
+    ]
     contexte = {
         'qr_uri': _qr_data_uri(qr_texte),
         'annulee': paiement.annule,
@@ -1142,13 +1148,8 @@ def _quittance_officielle_pdf(request, paiement):
         'partie_droite': {'titre': "Bénéficiaire", 'lignes': [
             "Burkina Suudu Bawdè", str(centre),
             centre.direction.nom_direction if centre and centre.direction else ""]},
-        'colonnes': [{'libelle': "Type de frais"}, {'libelle': "Tranche"},
-                     {'libelle': "Montant dû", 'num': True}, {'libelle': "Montant payé", 'num': True}],
-        'lignes': [[
-            {'valeur': dette.frais_formation.type_frais.libelle},
-            {'valeur': tranche_label},
-            {'valeur': fcfa(dette.montant_total), 'num': True},
-            {'valeur': fcfa(paiement.montant_paiement), 'num': True}]],
+        'colonnes': colonnes,
+        'lignes': [ligne],
         'total': fcfa(paiement.montant_paiement),
         'reglement': [
             ("Mode de règlement", paiement.get_mode_paiement_display()),
@@ -1326,9 +1327,13 @@ def _quittance_classique_pdf(paiement):
     y = ligne("Année de formation :", str(inscription.annee_scolaire or "—"), y)
     y = separateur(y - 0.3 * cm)
 
+    est_frais_dossier = dette.frais_formation.type_frais.est_frais_de_dossier
     tranche_label = paiement.tranche_frais.libelle if paiement.tranche_frais else f"Tranche {paiement.tranche}"
     y = ligne("Type de frais :", str(dette.frais_formation.type_frais.libelle), y)
-    y = ligne("Tranche :", tranche_label, y)
+    # Un frais de dossier se règle intégralement, sans tranche : la mention
+    # « Tranche » n'a pas de sens à afficher pour lui.
+    if not est_frais_dossier:
+        y = ligne("Tranche :", tranche_label, y)
     y = ligne("Mode de paiement :", paiement.get_mode_paiement_display(), y)
     p.setFont("Helvetica-Bold", 12)
     p.drawString(1.5 * cm, y, "Montant payé :")
@@ -1348,8 +1353,8 @@ def _quittance_classique_pdf(paiement):
         f"Métier : {inscription.formation.filiere}\n"
         f"Année de formation : {inscription.annee_scolaire}\n"
         f"Type de frais : {dette.frais_formation.type_frais.libelle}\n"
-        f"Tranche : {tranche_label}\n"
-        f"Mode de paiement : {paiement.get_mode_paiement_display()}\n"
+        + ("" if est_frais_dossier else f"Tranche : {tranche_label}\n")
+        + f"Mode de paiement : {paiement.get_mode_paiement_display()}\n"
         f"Montant payé : {paiement.montant_paiement:,.0f} FCFA\n"
         f"Total dû : {dette.montant_total:,.0f} FCFA\n"
         f"Total payé : {dette.montant_paye():,.0f} FCFA\n"
@@ -2381,11 +2386,12 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
         dettes_qs = dettes_qs.filter(inscription__annee_scolaire_id=annee_id)
         paiements_qs = paiements_qs.filter(dette__inscription__annee_scolaire_id=annee_id)
 
-    from .models import TYPE_PROGRAMME_CHOICE
-    if type_programme_f in dict(TYPE_PROGRAMME_CHOICE):
-        inscriptions_qs = inscriptions_qs.filter(formation__type_programme=type_programme_f)
-        dettes_qs = dettes_qs.filter(inscription__formation__type_programme=type_programme_f)
-        paiements_qs = paiements_qs.filter(dette__inscription__formation__type_programme=type_programme_f)
+    from .models import lookups_filtre_programme
+    lookups_prog = lookups_filtre_programme(type_programme_f, prefixe='formation__')
+    if lookups_prog:
+        inscriptions_qs = inscriptions_qs.filter(**lookups_prog)
+        dettes_qs = dettes_qs.filter(**lookups_filtre_programme(type_programme_f, prefixe='inscription__formation__'))
+        paiements_qs = paiements_qs.filter(**lookups_filtre_programme(type_programme_f, prefixe='dette__inscription__formation__'))
     else:
         type_programme_f = ""
 
@@ -2444,6 +2450,25 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
     return inscriptions_qs, dettes_qs, paiements_qs, filters
 
 
+def _centres_recouvrement(centres_scope, scope, direction_id=None, centre_id=None, region_id=None):
+    """Centres à faire apparaître dans le tableau/l'export « recouvrement par
+    centre » — narrowés par les mêmes filtres géographiques que
+    dettes_qs/paiements_qs (direction, centre, région).
+
+    Sans ça, le tableau listait TOUS les centres du périmètre quel que soit le
+    filtre Centre/Direction choisi : seuls les montants de la ligne étaient
+    filtrés, pas l'ensemble des centres énumérés (obs. terrain, export
+    « rapport_recouvrement »). Partagée entre l'écran et les 3 exports
+    (CSV/Excel/PDF) pour qu'ils restent alignés entre eux."""
+    if direction_id and scope == "global":
+        centres_scope = centres_scope.filter(direction_id=direction_id)
+    if centre_id and scope in ("global", "direction"):
+        centres_scope = centres_scope.filter(pk=centre_id)
+    if region_id:
+        centres_scope = centres_scope.filter(province__region_id=region_id)
+    return centres_scope
+
+
 def _resume_filtres_stats(filters, exclure_filiere=False, exclure=()):
     """Phrase récapitulant les filtres actifs du tableau de bord statistiques,
     reprise dans les fichiers exportés (CSV/Excel/PDF) pour que leur contenu
@@ -2477,8 +2502,8 @@ def _resume_filtres_stats(filters, exclure_filiere=False, exclure=()):
         parties.append(f"Année de formation : {annee.libelle_anne if annee else '—'}")
 
     if filters.get("type_programme_f") and "type_programme" not in exclure:
-        from .models import TYPE_PROGRAMME_CHOICE
-        tp_labels = dict(TYPE_PROGRAMME_CHOICE)
+        from .models import PROGRAMME_FILTRE_CHOICES
+        tp_labels = dict(PROGRAMME_FILTRE_CHOICES)
         parties.append(f"Type de programme : {tp_labels.get(filters['type_programme_f'], filters['type_programme_f'])}")
 
     if filters.get("statut_f"):
@@ -2679,8 +2704,12 @@ def statistiques_view(request):
     ]
 
     # ── Taux de recouvrement par centre ───────────────────────────────────────
+    # centres_scope est déjà narrowé par direction (ligne ci-dessus, pour le
+    # dropdown « Centre ») ; on applique en plus le filtre Centre/Région pour
+    # que la table n'énumère que les centres réellement concernés.
     recouvrement_centres = []
-    for centre in centres_scope.order_by("nom_centre"):
+    centres_pour_recouvrement = _centres_recouvrement(centres_scope, scope, direction_id, centre_id, region_id)
+    for centre in centres_pour_recouvrement.order_by("nom_centre"):
         c_dettes    = dettes_qs.filter(inscription__formation__centre=centre)
         c_paiements = paiements_qs.filter(dette__inscription__formation__centre=centre)
         c_du  = c_dettes.aggregate(s=Sum("montant_total"))["s"] or 0
@@ -2785,7 +2814,7 @@ def statistiques_view(request):
         "annees":     AnneeScolaire.objects.all().order_by("-libelle_anne"),
         "regions":    regions_scope.order_by("nom_region"),
         "genres":     Utilisateur.SEXE_CHOICE,
-        "types_programme": CentreEtFiliere._meta.get_field("type_programme").choices,
+        "types_programme": PROGRAMME_FILTRE_CHOICES,
         # Valeurs actives des filtres
         "f_centre":     centre_id,
         "f_direction":  direction_id,
@@ -2877,7 +2906,10 @@ def export_csv(request):
 
     elif export_type == "recouvrement":
         writer.writerow(["Centre", "Direction", "Total dû (FCFA)", "Encaissé (FCFA)", "Restant (FCFA)", "Taux (%)"])
-        for centre in centres_scope.order_by("nom_centre"):
+        centres_pour_recouvrement = _centres_recouvrement(
+            centres_scope, scope, filters["direction_id"], filters["centre_id"], filters["region_id"]
+        )
+        for centre in centres_pour_recouvrement.order_by("nom_centre"):
             c_dettes    = dettes_qs.filter(inscription__formation__centre=centre)
             c_paiements = paiements_qs.filter(dette__inscription__formation__centre=centre)
             c_du   = c_dettes.aggregate(s=Sum("montant_total"))["s"] or 0
@@ -2961,7 +2993,10 @@ def export_excel(request):
         headers = ["Centre","Direction","Total dû (FCFA)","Encaissé (FCFA)","Restant (FCFA)","Taux (%)"]
         ws.append(headers)
         style_header(ws[ws.max_row])
-        for centre in centres_scope.order_by("nom_centre"):
+        centres_pour_recouvrement = _centres_recouvrement(
+            centres_scope, scope, filters["direction_id"], filters["centre_id"], filters["region_id"]
+        )
+        for centre in centres_pour_recouvrement.order_by("nom_centre"):
             c_dettes    = dettes_qs.filter(inscription__formation__centre=centre)
             c_paiements = paiements_qs.filter(dette__inscription__formation__centre=centre)
             c_du   = c_dettes.aggregate(s=Sum("montant_total"))["s"] or 0
@@ -3139,7 +3174,10 @@ def export_pdf(request):
         story.append(Paragraph(f"Filtres appliqués : {_resume_filtres_stats(filters)}", filtres_style))
 
         data = [["Centre", "Direction", "Total dû (FCFA)", "Encaissé (FCFA)", "Restant (FCFA)", "Taux (%)"]]
-        for centre in centres_scope.order_by("nom_centre"):
+        centres_pour_recouvrement = _centres_recouvrement(
+            centres_scope, scope, filters["direction_id"], filters["centre_id"], filters["region_id"]
+        )
+        for centre in centres_pour_recouvrement.order_by("nom_centre"):
             c_dettes    = dettes_qs.filter(inscription__formation__centre=centre)
             c_paiements = paiements_qs.filter(dette__inscription__formation__centre=centre)
             c_du   = c_dettes.aggregate(s=Sum("montant_total"))["s"] or 0
@@ -3422,7 +3460,7 @@ def stats_encaisser_solde_dette_view(request, dette_id):
         messages.error(
             request,
             "Cette inscription (Reconversion) se règle en une seule fois, tous frais confondus, "
-            "via « Régler l'inscription »."
+            "via « Encaisser l'inscription »."
         )
         return redirect(redirect_url)
 
@@ -3527,7 +3565,7 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
             messages.error(
                 request,
                 f"Réglez d'abord entièrement le frais de dossier « {dette_dossier_impayee.frais_formation.type_frais} » "
-                "(bouton « Solder ce frais ») avant de pouvoir solder l'inscription."
+                "(bouton « Encaisser ce frais ») avant de pouvoir encaisser l'inscription."
             )
             return redirect(redirect_url)
 
@@ -3651,7 +3689,7 @@ def stats_detail_dette_view(request, dette_id):
             messages.error(
                 request,
                 "Cette inscription (Reconversion) se règle en une seule fois, tous frais confondus, "
-                "via « Régler l'inscription »."
+                "via « Encaisser l'inscription »."
             )
             return redirect(
                 f"{reverse('courses:stats_dettes_eleve', args=[dette.inscription.eleve_id])}?inscription={dette.inscription_id}"
@@ -3918,6 +3956,9 @@ def stats_quittance_tranche_view(request, dette_id, tranche):
         'tranche': tranche,
         'paiements': paiements,
         'est_apprenant': est_apprenant,
+        # Un frais de dossier se règle intégralement, sans tranche : la page
+        # ne doit mentionner aucune « tranche » pour lui.
+        'est_frais_dossier': dette.frais_formation.type_frais.est_frais_de_dossier,
         # Quittance de la tranche : uniquement si au moins un versement non annulé.
         'a_quittance': any(not p.annule for p in paiements),
     })
@@ -3932,6 +3973,9 @@ def _quittance_tranche_classique_pdf(dette, tranche, paiements):
     eleve = inscription.eleve
     premier, dernier = paiements[0], paiements[-1]
     total_tranche = sum(p.montant_paiement for p in paiements)
+    # Un frais de dossier se règle intégralement, sans tranche : la mention
+    # « Tranche » n'a pas de sens à afficher pour lui.
+    est_frais_dossier = dette.frais_formation.type_frais.est_frais_de_dossier
     tranche_label = premier.tranche_frais.libelle if premier.tranche_frais else f"Tranche {tranche}"
     numeros = ", ".join(p.numero_quittance for p in paiements)
 
@@ -3960,7 +4004,8 @@ def _quittance_tranche_classique_pdf(dette, tranche, paiements):
     p.setFont("Helvetica-Bold", 14)
     p.drawCentredString(width / 2, height - 3.8 * cm, "QUITTANCE DE PAIEMENT")
     p.setFont("Helvetica", 9)
-    p.drawCentredString(width / 2, height - 4.4 * cm, f"Burkina Suudu Bawdè — {tranche_label}")
+    sous_titre = "Burkina Suudu Bawdè" if est_frais_dossier else f"Burkina Suudu Bawdè — {tranche_label}"
+    p.drawCentredString(width / 2, height - 4.4 * cm, sous_titre)
 
     y = height - 5.2 * cm
     p.setLineWidth(0.8)
@@ -4008,11 +4053,16 @@ def _quittance_tranche_classique_pdf(dette, tranche, paiements):
     y = ligne("Métier :", str(inscription.formation.filiere), y)
     y = ligne("Année de formation :", str(inscription.annee_scolaire or "—"), y)
     y = ligne("Type de frais :", str(dette.frais_formation.type_frais.libelle), y)
-    y = ligne("Tranche :", tranche_label, y)
+    if not est_frais_dossier:
+        y = ligne("Tranche :", tranche_label, y)
     y = separateur(y - 0.3 * cm)
 
     p.setFont("Helvetica-Bold", 9)
-    p.drawString(1.5 * cm, y, "Versement" if len(paiements) == 1 else "Versements de la tranche")
+    if est_frais_dossier:
+        entete_versements = "Versement" if len(paiements) == 1 else "Versements"
+    else:
+        entete_versements = "Versement" if len(paiements) == 1 else "Versements de la tranche"
+    p.drawString(1.5 * cm, y, entete_versements)
     p.drawRightString(width - 1.5 * cm, y, "Montant")
     y -= 0.45 * cm
     p.setFont("Helvetica", 9)
@@ -4025,7 +4075,8 @@ def _quittance_tranche_classique_pdf(dette, tranche, paiements):
     p.line(1.5 * cm, y, width - 1.5 * cm, y)
     y -= 0.5 * cm
     p.setFont("Helvetica-Bold", 12)
-    p.drawString(1.5 * cm, y, f"Montant payé ({tranche_label}) :")
+    libelle_montant = "Montant payé :" if est_frais_dossier else f"Montant payé ({tranche_label}) :"
+    p.drawString(1.5 * cm, y, libelle_montant)
     p.drawRightString(width - 1.5 * cm, y, f"{total_tranche:,.0f} FCFA")
     y = separateur(y - 0.8 * cm)
 
@@ -4041,8 +4092,8 @@ def _quittance_tranche_classique_pdf(dette, tranche, paiements):
         f"Centre : {inscription.formation.centre}\n"
         f"Métier : {inscription.formation.filiere}\n"
         f"Type de frais : {dette.frais_formation.type_frais.libelle}\n"
-        f"Tranche : {tranche_label}\n"
-        f"Montant payé (tranche) : {total_tranche:,.0f} FCFA\n"
+        + ("" if est_frais_dossier else f"Tranche : {tranche_label}\n")
+        + f"Montant payé : {total_tranche:,.0f} FCFA\n"
         f"Total payé : {dette.montant_paye():,.0f} FCFA\n"
         f"Reste à payer : {dette.reste_a_payer():,.0f} FCFA"
     )
@@ -5297,21 +5348,28 @@ def page_notifications(request):
             # motif_rejet est du texte libre saisi par un agent.
             if total_frais:
                 message = format_html(
+                    "<strong>DOSSIER VALIDÉ</strong><br><br>"
                     "✅ Félicitations ! Votre dossier d'inscription à la formation "
-                    "<strong>{}</strong> a été <strong>validé</strong>. "
-                    "Pour finaliser votre inscription, vous devez payer "
-                    "<strong>75% du montant de la formation</strong>, soit <strong>{} FCFA</strong>. "
-                    "Rendez-vous dans la section <em>Mes inscriptions</em> pour procéder au paiement.",
+                    "<strong>{}</strong> a été <strong>validé</strong>.<br><br>"
+                    "Pour finaliser votre inscription, vous devez payer au minimum "
+                    "<strong>75% du montant de la formation</strong>, soit <strong>{} FCFA</strong>.<br><br>"
+                    "Veuillez télécharger votre récépissé de validation qui doit être présenté à la "
+                    "caisse de tout centre de BSB pour procéder au paiement, qui doit se faire au "
+                    "plus tard dans 7 jours à compter de la date de validation du dossier.",
                     inscription.formation.filiere,
                     # Pre-formate : format_html rejette une spec numerique.
                     f"{total_frais * 0.75:,.0f}",
                 )
             else:
                 message = format_html(
+                    "<strong>DOSSIER VALIDÉ</strong><br><br>"
                     "✅ Félicitations ! Votre dossier d'inscription à la formation "
-                    "<strong>{}</strong> a été <strong>validé</strong>. "
-                    "Rendez-vous dans la section <em>Mes inscriptions</em> pour procéder "
-                    "au paiement (75% du montant dû).",
+                    "<strong>{}</strong> a été <strong>validé</strong>.<br><br>"
+                    "Pour finaliser votre inscription, vous devez payer au minimum "
+                    "<strong>75% du montant dû</strong>.<br><br>"
+                    "Veuillez télécharger votre récépissé de validation qui doit être présenté à la "
+                    "caisse de tout centre de BSB pour procéder au paiement, qui doit se faire au "
+                    "plus tard dans 7 jours à compter de la date de validation du dossier.",
                     inscription.formation.filiere,
                 )
 
