@@ -593,7 +593,7 @@ def course_delete(request, id):
 @require_permission('courses.voir_inscriptions')
 def subscription_list(request):
     subscriptions = Inscription.objects.select_related('eleve', 'formation__centre')\
-    .exclude(statut="en-cours")\
+    .exclude(statut="en_cours")\
     .order_by('-date_inscription')
     centres_qs, _, scope = _get_scope(request.user)
     multi_centre = scope == "global" or scope == "direction"
@@ -623,9 +623,13 @@ def subscription_list(request):
 
     # Accordeon centres -> inscriptions : les deux niveaux sont pagines
     # separement (?centre= et ?ipage=), sans recharger la liste des centres.
+    # .order_by() neutre indispensable avant le regroupement : f.qs herite du
+    # tri par date_inscription, que Django ajouterait sinon au GROUP BY —
+    # chaque inscription devient alors son propre groupe et le compte affiche
+    # toujours 1 par centre au lieu du total reel.
     compte_par_centre = {
         row['formation__centre_id']: row['n']
-        for row in f.qs.values('formation__centre_id').annotate(n=Count('id'))
+        for row in f.qs.order_by().values('formation__centre_id').annotate(n=Count('id'))
     }
     centres_annotes = list(centres_qs.order_by('nom_centre'))
     for c in centres_annotes:
