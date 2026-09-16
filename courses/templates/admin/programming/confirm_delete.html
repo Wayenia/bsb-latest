@@ -56,9 +56,25 @@
             </div>
 
             {% comment %} Warning Message {% endcomment %}
+            {% if nb_souscriptions %}
+            <div class="mt-6 bg-red-50 border-l-4 border-red-400 p-4">
+                <div class="flex">
+                    <div>
+                        <h3 class="text-sm font-medium text-red-800">Suppression impossible</h3>
+                        <p class="mt-1 text-sm text-red-700">
+                            {{ nb_souscriptions }} souscription{{ nb_souscriptions|pluralize }} {{ nb_souscriptions|pluralize:"est,sont" }} rattachée{{ nb_souscriptions|pluralize }} à cette programmation.
+                            La supprimer les rendrait orphelines (elles disparaîtraient de la liste des
+                            souscriptions par centre) sans les effacer réellement. Désactivez plutôt cette
+                            programmation (bouton « Désactiver un ensemble » sur la liste, ou le formulaire
+                            de modification) pour qu'elle n'accepte plus de nouvelles souscriptions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% else %}
             <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
                 <div class="flex">
-                    
+
                     <div>
                         <h3 class="text-sm font-medium text-yellow-800">Éléments associés</h3>
                         <p class="mt-1 text-sm text-yellow-700">
@@ -67,11 +83,12 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
             {% comment %} Question {% endcomment %}
             <div class="mt-8">
                 <p class="text-center text-lg font-semibold text-gray-900">
-                    Êtes-vous sûr de vouloir supprimer cette direction régionale ?
+                    Êtes-vous sûr de vouloir supprimer cette programmation ?
                 </p>
             </div>
         </div>
@@ -82,7 +99,8 @@
                class="px-8 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-100 transition-all">
                 Non, annuler
             </a>
-            
+
+            {% if not nb_souscriptions %}
             <form method="POST" class="inline">
                 {% csrf_token %}
                 <button type="submit"
@@ -90,6 +108,7 @@
                     Oui, supprimer définitivement
                 </button>
             </form>
+            {% endif %}
         </div>
     </div>
 </div>

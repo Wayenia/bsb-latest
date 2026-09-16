@@ -39,8 +39,14 @@
                 <select name="statut"
                         class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
                         data-auto-submit>
-                    <option value="">Tous les statuts</option>
-                    <option value="en_cours" {% if filter.form.statut.value == 'en_cours' %}selected{% endif %}>En cours de traitement</option>
+                    {% comment %}
+                    Par défaut (aucun paramètre "statut" dans l'URL), la page ne montre
+                    que les souscriptions en cours de traitement — cf. subscription_list.
+                    "Tous les statuts" (valeur "tous") n'est pas un vrai statut : il sert
+                    uniquement à neutraliser ce filtrage par défaut côté vue.
+                    {% endcomment %}
+                    <option value="en_cours" {% if not request.GET.statut or filter.form.statut.value == 'en_cours' %}selected{% endif %}>En cours de traitement</option>
+                    <option value="tous" {% if request.GET.statut == 'tous' %}selected{% endif %}>Tous les statuts</option>
                     <option value="valide" {% if filter.form.statut.value == 'valide' %}selected{% endif %}>Validé</option>
                     <option value="rejete" {% if filter.form.statut.value == 'rejete' %}selected{% endif %}>Rejeté</option>
                 </select>
@@ -84,8 +90,9 @@
                         {% endif %}
                         <div>
                             <span class="text-sm font-bold text-gray-900">{{ centre.nom_centre }}</span>
-                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
-                                {{ centre.nb_inscriptions }} souscription{{ centre.nb_inscriptions|pluralize }}
+                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800"
+                                  title="Souscription{{ centre.nb_inscriptions|pluralize }} en cours de traitement — en attente de validation ou de rejet">
+                                {{ centre.nb_inscriptions }} en attente
                             </span>
                         </div>
                     </div>

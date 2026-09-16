@@ -593,7 +593,6 @@ def course_delete(request, id):
 @require_permission('courses.voir_inscriptions')
 def subscription_list(request):
     subscriptions = Inscription.objects.select_related('eleve', 'formation__centre')\
-    .exclude(statut="en_cours")\
     .order_by('-date_inscription')
     centres_qs, _, scope = _get_scope(request.user)
     multi_centre = scope == "global" or scope == "direction"
@@ -601,13 +600,26 @@ def subscription_list(request):
         centre_ids = list(centres_qs.values_list("id", flat=True))
         subscriptions = subscriptions.filter(formation__centre_id__in=centre_ids)
 
-    f=SubscriptionFilter(request.GET,queryset=subscriptions)
+    # Par défaut (aucun statut choisi dans le filtre), cette page montre ce
+    # qui reste à traiter : les souscriptions « en cours ». Choisir un statut
+    # précis dans le filtre — y compris « Tous les statuts », valeur "tous"
+    # qui n'existe pas comme vrai statut et neutralise donc simplement ce
+    # filtre — élargit la recherche. Sans ce filtrage par défaut, le compte
+    # par centre mélangeait aussi les dossiers déjà validés/rejetés.
+    statut_get = request.GET.get('statut', '').strip()
+    if not statut_get:
+        subscriptions = subscriptions.filter(statut="en_cours")
+
+    get_params = request.GET.copy()
+    if statut_get == 'tous':
+        get_params['statut'] = ''
+    f=SubscriptionFilter(get_params,queryset=subscriptions)
 
     centre_id = request.GET.get('centre', '').strip()
     if not multi_centre:
         centre_id = ''
     filtre_actif = bool(
-        request.GET.get('recherche') or request.GET.get('statut') or request.GET.get('formation')
+        request.GET.get('recherche') or statut_get or request.GET.get('formation')
     )
 
     # Filtre (recherche/statut/formation) actif, ou portée mono-centre :
@@ -1340,11 +1352,28 @@ def update_pregramming(request, id):
 def programming_delete(request, id):
     centres_qs, _, _ = _get_scope(request.user)
     program = get_object_or_404(CentreEtFiliere, id=id, centre__in=centres_qs)
+    # `Inscription.formation` est en SET_NULL : supprimer une programmation qui
+    # a déjà des souscriptions les orpheline silencieusement (formation=NULL)
+    # au lieu de les supprimer — elles disparaissent alors de tous les écrans
+    # groupés par centre (ex. /bsb/subscriptions) sans qu'aucun message
+    # n'explique pourquoi. On bloque et on renvoie vers la désactivation.
+    nb_souscriptions = program.inscription_set.count()
     if request.method == 'POST':
+        if nb_souscriptions:
+            messages.error(
+                request,
+                f"Impossible de supprimer cette programmation : {nb_souscriptions} "
+                "souscription(s) y sont rattachées. Désactivez-la plutôt "
+                "(bouton « Désactiver un ensemble » ou le formulaire de modification)."
+            )
+            return redirect('bsb_admin:programming_list')
         program.delete()
         messages.success(request, 'Programme supprimé avec succès!')
         return redirect('bsb_admin:programming_list')
-    return render(request, 'admin/programming/confirm_delete.html', {'object': program})
+    return render(request, 'admin/programming/confirm_delete.html', {
+        'object': program,
+        'nb_souscriptions': nb_souscriptions,
+    })
 
 
 @require_permission('courses.gerer_programmations')
