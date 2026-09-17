@@ -1415,6 +1415,7 @@ ALL_AGENT_TYPES = [
     'admin',
     'daf',
     'membre',
+    'dg',
 ]
 
 TYPE_LABELS = [
@@ -1427,6 +1428,7 @@ TYPE_LABELS = [
     ('admin',           'Administrateur'),
     ('daf',             'Directeur Administratif et Financier'),
     ('membre',          "Membre de l'administration"),
+    ('dg',              'Directeur Général'),
 ]
 
 
@@ -1610,7 +1612,8 @@ def eleve_list(request):
         qs = qs.filter(
             Q(nom__icontains=recherche) |
             Q(prenom__icontains=recherche) |
-            Q(numero_identifiant__icontains=recherche)
+            Q(numero_identifiant__icontains=recherche) |
+            Q(email__icontains=recherche)
         )
 
     paginator = Paginator(qs, 10)
