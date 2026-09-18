@@ -1123,6 +1123,16 @@ def _quittance_officielle_pdf(request, paiement):
     fcfa = lambda v: f"{v:,.0f} FCFA".replace(",", " ")
     montant_lettres = lambda v: f"{montant_en_lettres(v)} ({fcfa(v)})"
 
+    # Etat "a la date de ce versement", pas l'etat actuel/en direct de la
+    # dette : sinon cette quittance re-telechargee apres qu'un AUTRE versement
+    # a ete encaisse affiche a tort la dette comme entierement soldee sans
+    # jamais mentionner ce second versement.
+    montant_paye_snapshot = dette.paiements.filter(
+        annule=False, date_paiement__lte=paiement.date_paiement
+    ).aggregate(s=Sum('montant_paiement'))['s'] or 0
+    reste_snapshot = max(dette.montant_total - montant_paye_snapshot, 0)
+    etat_snapshot = dict(dette.STATUT_CHOICES)['soldé' if reste_snapshot <= 0 else 'non_soldé']
+
     # QR compact (peu dense) : identifiant + montant + date suffisent au controle.
     qr_texte = f"BSB|QUIT|{paiement.numero_quittance}|{paiement.montant_paiement:.0f}|{paiement.date_paiement:%d%m%Y}"
     colonnes = [{'libelle': "Type de frais"}]
@@ -1154,9 +1164,9 @@ def _quittance_officielle_pdf(request, paiement):
         'reglement': [
             ("Mode de règlement", paiement.get_mode_paiement_display()),
             ("Total dû", fcfa(dette.montant_total)),
-            ("Total payé", fcfa(dette.montant_paye())),
-            ("Reste à payer", fcfa(dette.reste_a_payer())),
-            ("État de la dette", dette.get_etat_dette_display())],
+            ("Total payé", fcfa(montant_paye_snapshot)),
+            ("Reste à payer", fcfa(reste_snapshot)),
+            ("État de la dette", etat_snapshot)],
         'formule': f"Arrêtée la présente quittance à la somme de {montant_lettres(paiement.montant_paiement)}.",
     }
     return _document_officiel_pdf(request, contexte)
@@ -1340,10 +1350,20 @@ def _quittance_classique_pdf(paiement):
     p.drawString(7 * cm, y, f"{paiement.montant_paiement:,.0f} FCFA")
     y = separateur(y - 1.0 * cm)
 
+    # Etat "a la date de ce versement", pas l'etat actuel/en direct de la
+    # dette : sinon cette quittance re-telechargee apres qu'un AUTRE versement
+    # a ete encaisse affiche a tort la dette comme entierement soldee sans
+    # jamais mentionner ce second versement.
+    montant_paye_snapshot = dette.paiements.filter(
+        annule=False, date_paiement__lte=paiement.date_paiement
+    ).aggregate(s=Sum('montant_paiement'))['s'] or 0
+    reste_snapshot = max(dette.montant_total - montant_paye_snapshot, 0)
+    etat_snapshot = dict(dette.STATUT_CHOICES)['soldé' if reste_snapshot <= 0 else 'non_soldé']
+
     y = ligne("Total dû :", f"{dette.montant_total:,.0f} FCFA", y)
-    y = ligne("Total payé :", f"{dette.montant_paye():,.0f} FCFA", y)
-    y = ligne("Reste à payer :", f"{dette.reste_a_payer():,.0f} FCFA", y)
-    y = ligne("État de la dette :", dette.get_etat_dette_display(), y)
+    y = ligne("Total payé :", f"{montant_paye_snapshot:,.0f} FCFA", y)
+    y = ligne("Reste à payer :", f"{reste_snapshot:,.0f} FCFA", y)
+    y = ligne("État de la dette :", etat_snapshot, y)
 
     qr_data = (
         f"Quittance : {paiement.numero_quittance}\n"
@@ -1357,9 +1377,9 @@ def _quittance_classique_pdf(paiement):
         + f"Mode de paiement : {paiement.get_mode_paiement_display()}\n"
         f"Montant payé : {paiement.montant_paiement:,.0f} FCFA\n"
         f"Total dû : {dette.montant_total:,.0f} FCFA\n"
-        f"Total payé : {dette.montant_paye():,.0f} FCFA\n"
-        f"Reste à payer : {dette.reste_a_payer():,.0f} FCFA\n"
-        f"État : {dette.get_etat_dette_display()}"
+        f"Total payé : {montant_paye_snapshot:,.0f} FCFA\n"
+        f"Reste à payer : {reste_snapshot:,.0f} FCFA\n"
+        f"État : {etat_snapshot}"
     )
     qr = qrcode.QRCode(version=1, box_size=4, border=2)
     qr.add_data(qr_data)
@@ -2413,12 +2433,16 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
     if date_debut:
         inscriptions_qs = inscriptions_qs.filter(date_inscription__date__gte=date_debut)
         dettes_qs = dettes_qs.filter(inscription__date_inscription__date__gte=date_debut)
-        paiements_qs = paiements_qs.filter(dette__inscription__date_inscription__date__gte=date_debut)
+        # Les encaissements se filtrent par leur propre date de versement, pas
+        # par la date d'inscription de l'eleve (souvent bien anterieure) :
+        # sinon "Du"/"Au" = aujourd'hui exclut les paiements du jour d'un
+        # eleve inscrit plus tot, et renvoie 0 partout.
+        paiements_qs = paiements_qs.filter(date_paiement__date__gte=date_debut)
 
     if date_fin:
         inscriptions_qs = inscriptions_qs.filter(date_inscription__date__lte=date_fin)
         dettes_qs = dettes_qs.filter(inscription__date_inscription__date__lte=date_fin)
-        paiements_qs = paiements_qs.filter(dette__inscription__date_inscription__date__lte=date_fin)
+        paiements_qs = paiements_qs.filter(date_paiement__date__lte=date_fin)
 
     # Calcule en Python puis applique en id__in : sommer deux relations inverses
     # dans un seul annotate() multiplierait les montants.
@@ -3783,8 +3807,17 @@ def stats_detail_dette_view(request, dette_id):
     paiements = list(
         dette.paiements.select_related('dette__inscription').order_by('-date_paiement', '-tranche')
     )
+    # Versements crees ensemble (meme groupe_id, ex. "Encaisser ce frais" qui
+    # solde plusieurs tranches d'un coup) : une seule quittance groupee a
+    # telecharger pour tout le lot, plutot qu'une quittance par tranche - meme
+    # logique que liste_paiement (page "Mes paiements" de l'apprenant).
+    from collections import Counter
+    _tailles_groupe = Counter(p.groupe_id for p in paiements if not p.annule and p.groupe_id)
     for p in paiements:
         p.annulable = (not p.annule) and _est_dernier_versement_inscription(p)
+        p.quittance_groupe_id = (
+            p.groupe_id if (not p.annule and p.groupe_id and _tailles_groupe[p.groupe_id] > 1) else None
+        )
     montant_paye = dette.montant_paye()
     reste = dette.reste_a_payer()
     taux = (montant_paye / dette.montant_total * 100) if dette.montant_total > 0 else 0
@@ -4080,10 +4113,20 @@ def _quittance_tranche_classique_pdf(dette, tranche, paiements):
     p.drawRightString(width - 1.5 * cm, y, f"{total_tranche:,.0f} FCFA")
     y = separateur(y - 0.8 * cm)
 
+    # Etat "a la date de ce versement", pas l'etat actuel/en direct de la
+    # dette : sinon une quittance de tranche re-telechargee apres qu'une AUTRE
+    # tranche a ete payee separement affiche a tort la dette comme entierement
+    # soldee sans jamais mentionner ce second versement.
+    montant_paye_snapshot = dette.paiements.filter(
+        annule=False, date_paiement__lte=dernier.date_paiement
+    ).aggregate(s=Sum('montant_paiement'))['s'] or 0
+    reste_snapshot = max(dette.montant_total - montant_paye_snapshot, 0)
+    etat_snapshot = dict(dette.STATUT_CHOICES)['soldé' if reste_snapshot <= 0 else 'non_soldé']
+
     y = ligne("Total dû :", f"{dette.montant_total:,.0f} FCFA", y)
-    y = ligne("Total payé :", f"{dette.montant_paye():,.0f} FCFA", y)
-    y = ligne("Reste à payer :", f"{dette.reste_a_payer():,.0f} FCFA", y)
-    y = ligne("État de la dette :", dette.get_etat_dette_display(), y)
+    y = ligne("Total payé :", f"{montant_paye_snapshot:,.0f} FCFA", y)
+    y = ligne("Reste à payer :", f"{reste_snapshot:,.0f} FCFA", y)
+    y = ligne("État de la dette :", etat_snapshot, y)
 
     qr_data = (
         f"Quittance : {numeros}\n"
@@ -4094,8 +4137,8 @@ def _quittance_tranche_classique_pdf(dette, tranche, paiements):
         f"Type de frais : {dette.frais_formation.type_frais.libelle}\n"
         + ("" if est_frais_dossier else f"Tranche : {tranche_label}\n")
         + f"Montant payé : {total_tranche:,.0f} FCFA\n"
-        f"Total payé : {dette.montant_paye():,.0f} FCFA\n"
-        f"Reste à payer : {dette.reste_a_payer():,.0f} FCFA"
+        f"Total payé : {montant_paye_snapshot:,.0f} FCFA\n"
+        f"Reste à payer : {reste_snapshot:,.0f} FCFA"
     )
     qr = qrcode.QRCode(version=1, box_size=4, border=2)
     qr.add_data(qr_data)

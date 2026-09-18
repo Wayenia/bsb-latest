@@ -241,10 +241,17 @@
               {% endif %}
             </td>
             <td class="py-2 text-right whitespace-nowrap">
+              {% if p.quittance_groupe_id %}
+              <a href="{% url 'courses:stats_download_quittance_groupe' p.quittance_groupe_id %}"
+                 class="btn-quittance text-sm" title="Versements regles ensemble : une seule quittance pour le lot">
+                Quittance (lot)
+              </a>
+              {% else %}
               <a href="{% url 'courses:stats_quittance_tranche' dette.id p.tranche %}"
                  class="btn-quittance text-sm">
                 Quittance
               </a>
+              {% endif %}
               {% if not p.annule and perms.courses.annuler_paiement %}
                 {% if p.annulable %}
                 <button type="button" class="text-sm text-red-600 hover:underline ml-2"

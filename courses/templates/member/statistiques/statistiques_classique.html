@@ -324,12 +324,14 @@
 
         <div>
           <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Du</label>
-          <input type="date" name="date_debut" value="{{ f_date_debut|default:'' }}" class="form-control">
+          <input type="date" name="date_debut" id="id_date_debut" data-fr-mirror value="{{ f_date_debut|default:'' }}" class="form-control">
+          <span id="id_date_debut_fr" class="block text-xs text-gray-500 mt-0.5"></span>
         </div>
 
         <div>
           <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Au</label>
-          <input type="date" name="date_fin" value="{{ f_date_fin|default:'' }}" class="form-control">
+          <input type="date" name="date_fin" id="id_date_fin" data-fr-mirror value="{{ f_date_fin|default:'' }}" class="form-control">
+          <span id="id_date_fin_fr" class="block text-xs text-gray-500 mt-0.5"></span>
         </div>
 
         <div class="flex gap-2">
@@ -730,6 +732,21 @@
 {{ top_filieres_count|json_script:"data-metiers-valeurs" }}
 
 <script nonce="{{ csp_nonce }}">
+// ── Affichage francais (jj/mm/aaaa) sous les champs Du/Au ──────────────────
+// input[type=date] affiche son texte selon la langue du navigateur/OS, pas
+// selon lang="fr" de la page (limitation native, non contournable en CSS) :
+// on double donc d'un texte jj/mm/aaaa toujours francais sous le champ.
+document.querySelectorAll('input[type="date"][data-fr-mirror]').forEach((input) => {
+  const cible = document.getElementById(input.id + '_fr');
+  if (!cible) return;
+  const rafraichir = () => {
+    const [an, mois, jour] = (input.value || '').split('-');
+    cible.textContent = (an && mois && jour) ? `${jour}/${mois}/${an}` : '';
+  };
+  rafraichir();
+  input.addEventListener('input', rafraichir);
+});
+
 // ── Data depuis Django ─────────────────────────────────────────────────────
 const lireDonnees = (id) => JSON.parse(document.getElementById(id).textContent);
 
