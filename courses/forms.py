@@ -9,6 +9,7 @@ from .models import (
     GuideUtilisation
 )
 from django.forms import inlineformset_factory
+from accounts.models import Eleve as _Eleve
 
 
 def max_date_naissance():
@@ -108,14 +109,10 @@ class PersonalInfoForm(forms.Form):
         })
     )
 
-    NIVEAU_SCOLAIRE_CHOICES = [
-        ('', 'Sélectionnez…'),
-        ('cp1', 'CP1'), ('cp2', 'CP2'), ('ce1', 'CE1'), ('ce2', 'CE2'),
-        ('cm1', 'CM1'), ('cm2', 'CM2'),
-        ('6e', '6ème'), ('5e', '5ème'), ('4e', '4ème'), ('3e', '3ème'),
-        ('2nde', '2nde'), ('1ere', '1ère'), ('terminale', 'Terminale'),
-        ('licence', 'Licence'), ('maitrise', 'Maîtrise'),
-    ]
+    # Reprend telles quelles les valeurs de accounts.models.Utilisateur
+    # (source de verite unique) : les deux listes avaient diverge, un ajout
+    # ici ne faisait plus remonter aux eleves inscrits via ce formulaire.
+    NIVEAU_SCOLAIRE_CHOICES = [('', 'Sélectionnez…')] + list(_Eleve.NIVEAU_SCOLAIRE_CHOICES)
     niveau_scolaire = forms.ChoiceField(
         label='Niveau scolaire',
         choices=NIVEAU_SCOLAIRE_CHOICES,

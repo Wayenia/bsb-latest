@@ -150,6 +150,10 @@ class Eleve(Utilisateur):
         ("2nde", "2nde"),
         ("1ere", "1ère"),
         ("terminale", "Terminale"),
+        ("cqp", "CQP"),
+        ("bqp", "BQP"),
+        ("bpt", "BPT"),
+        ("bpts", "BPTS"),
         ("licence", "Licence"),
         ("maitrise", "Maîtrise"),
     ]
