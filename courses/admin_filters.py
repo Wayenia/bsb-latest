@@ -91,6 +91,16 @@ class SubscriptionFilter(django_filters.FilterSet):
             'data-autosubmit': 'true'
         })
     )
+    type_programme = django_filters.ChoiceFilter(
+        choices=PROGRAMME_FILTRE_CHOICES,
+        label="Type de programme",
+        empty_label="---Tous les programmes---",
+        method='filtrer_programme',
+        widget=Select(attrs={
+            'class': 'block w-full py-2 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bsb-gold focus:border-bsb-gold',
+            'data-auto-submit': 'true'
+        })
+    )
 
     def filter_recherche(self, queryset, name, value):
         return queryset.filter(
@@ -99,6 +109,9 @@ class SubscriptionFilter(django_filters.FilterSet):
             Q(eleve__matricule__icontains=value)
         )
 
+    def filtrer_programme(self, queryset, name, value):
+        return queryset.filter(**lookups_filtre_programme(value, prefixe='formation__'))
+
     class Meta:
         model=Inscription
-        fields=['recherche', 'formation', 'statut']
+        fields=['recherche', 'formation', 'statut', 'type_programme']

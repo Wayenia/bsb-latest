@@ -10,6 +10,7 @@ import csv
 import io
 import os
 import uuid
+from urllib.parse import urlencode
 from django.db.models import Q, Sum, Count
 from accounts.models import Utilisateur, Formateur, MembreAdministration, HistoriqueConnexion
 from .forms import AgentForm
@@ -620,17 +621,32 @@ def subscription_list(request):
         centre_id = ''
     filtre_actif = bool(
         request.GET.get('recherche') or statut_get or request.GET.get('formation')
+        or request.GET.get('type_programme')
     )
 
-    # Filtre (recherche/statut/formation) actif, ou portée mono-centre :
+    # Querystring des filtres actifs, construite une seule fois : chaque lien
+    # de pagination la reutilise telle quelle, pour qu'un filtre ne soit plus
+    # jamais perdu en changeant de page (c'etait le cas de type_programme,
+    # ajoute apres coup sans mettre a jour les liens - meme risque pour tout
+    # futur filtre si on retombe sur des parametres cites a la main).
+    FILTRE_PARAMS = ('recherche', 'statut', 'formation', 'type_programme')
+    qs_filtres = urlencode({k: v for k, v in request.GET.items() if k in FILTRE_PARAMS and v})
+
+    # Filtre (recherche/statut/formation/type_programme) actif, ou portée mono-centre :
     # liste plate, comme avant.
     if filtre_actif or not multi_centre:
         paginator = Paginator(f.qs, 10)
         subscriptions = paginator.get_page(request.GET.get('page'))
+        # Pagination "elidee" (1 … 8 9 [10] 11 12 … 42) : reste lisible meme
+        # avec des centaines de pages, au lieu d'un lien par page sans limite.
+        page_range = subscriptions.paginator.get_elided_page_range(subscriptions.number, on_each_side=2, on_ends=1)
         return render(request, 'admin/subscription/list.html', {
             'mode': 'plat',
             'subscriptions': subscriptions,
             'filter': f,
+            'qs_filtres': qs_filtres,
+            'page_range': page_range,
+            'ellipsis': Paginator.ELLIPSIS,
         })
 
     # Accordeon centres -> inscriptions : les deux niveaux sont pagines
@@ -648,15 +664,18 @@ def subscription_list(request):
         c.nb_inscriptions = compte_par_centre.get(c.id, 0)
     paginator = Paginator(centres_annotes, 10)
     centres_page = paginator.get_page(request.GET.get('page'))
+    centres_page_range = centres_page.paginator.get_elided_page_range(centres_page.number, on_each_side=2, on_ends=1)
 
     centre_ouvert = None
     subscriptions = None
+    subscriptions_page_range = None
     if centre_id:
         centre_ouvert = centres_qs.filter(pk=centre_id).first()
         if centre_ouvert:
             iqs = f.qs.filter(formation__centre_id=centre_ouvert.id)
             ipaginator = Paginator(iqs, 10)
             subscriptions = ipaginator.get_page(request.GET.get('ipage'))
+            subscriptions_page_range = subscriptions.paginator.get_elided_page_range(subscriptions.number, on_each_side=2, on_ends=1)
 
     return render(request, 'admin/subscription/list.html', {
         'mode': 'accordeon',
@@ -664,6 +683,10 @@ def subscription_list(request):
         'centre_ouvert': centre_ouvert,
         'subscriptions': subscriptions,
         'filter': f,
+        'qs_filtres': qs_filtres,
+        'centres_page_range': centres_page_range,
+        'subscriptions_page_range': subscriptions_page_range,
+        'ellipsis': Paginator.ELLIPSIS,
     })
 
 @require_permission('courses.valider_inscription')
