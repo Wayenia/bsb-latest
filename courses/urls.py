@@ -55,6 +55,9 @@ urlpatterns = [
     #Liste de paiement de membre en fait
     path('membre/centre/paiement/list-paiement',views.paiement_list,name='paiement_list'),
     path('membre/centre/paiement/historique',views.paiement_historique,name='paiement_historique'),
+    path('membre/centre/paiement/historique/export/csv',views.paiement_historique_export_csv,name='paiement_historique_export_csv'),
+    path('membre/centre/paiement/historique/export/excel',views.paiement_historique_export_excel,name='paiement_historique_export_excel'),
+    path('membre/centre/paiement/historique/export/pdf',views.paiement_historique_export_pdf,name='paiement_historique_export_pdf'),
     #path('member/dashboard/center/<int:id>', views.member_dashboard, name='member_dashboard'),
 
     # HELPER

@@ -609,6 +609,19 @@
           </tr>
           {% endfor %}
         </tbody>
+        {% if recouvrement_centres %}
+        <tfoot>
+          <tr class="font-bold bg-gray-50">
+            <td>Total</td>
+            {% if scope in "global direction" %}<td></td>{% endif %}
+            <td class="text-right">{{ recouvrement_total.inscrits }}</td>
+            <td class="text-right text-sm"><span class="fmt-amount">{{ recouvrement_total.total_du|floatformat:0 }}</span> F</td>
+            <td class="text-right text-sm text-[#16A34A]"><span class="fmt-amount">{{ recouvrement_total.encaisse|floatformat:0 }}</span> F</td>
+            <td class="text-right text-sm text-[var(--rouge)]"><span class="fmt-amount">{{ recouvrement_total.restant|floatformat:0 }}</span> F</td>
+            <td>{{ recouvrement_total.taux }}%</td>
+          </tr>
+        </tfoot>
+        {% endif %}
       </table>
     </div>
     {% if recouvrement_centres.has_other_pages %}

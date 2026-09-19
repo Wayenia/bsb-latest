@@ -1856,14 +1856,20 @@ def paiement_list(request):
     })
 
 
-@require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
-def paiement_historique(request):
-    """
-    Historique des paiements, dans le périmètre de l'utilisateur connecté
-    (même logique de portée que paiement_list — voir _get_scope).
-    """
-    centres_qs, _directions_qs, scope = _get_scope(request.user)
-    multi_centre = scope in ('global', 'direction')
+SCOPE_LABELS_PAIEMENT = {
+    'global': "tous les centres",
+    'direction': "les centres de votre direction",
+    'centre': "votre centre",
+    'none': "aucun centre (aucune structure ne vous est rattachée)",
+}
+
+
+def _paiements_historique_qs(request):
+    """Paiements pour l'écran « Historique des paiements » et ses exports :
+    même périmètre que partout ailleurs (_get_scope, inchangé — un caissier y
+    voit son centre comme le responsable), recherche libre (nom/prénom/
+    matricule/n° de quittance) et période (date du versement)."""
+    centres_qs, directions_qs, scope = _get_scope(request.user)
 
     paiements = Paiement.objects.select_related(
         'dette__inscription__eleve',
@@ -1889,24 +1895,362 @@ def paiement_historique(request):
             Q(numero_quittance__icontains=q)
         )
 
-    paginator = Paginator(paiements, 10)
+    date_debut = request.GET.get('date_debut', '').strip()
+    date_fin = request.GET.get('date_fin', '').strip()
+    if date_debut:
+        paiements = paiements.filter(date_paiement__date__gte=date_debut)
+    if date_fin:
+        paiements = paiements.filter(date_paiement__date__lte=date_fin)
+
+    return paiements, scope, centres_qs, directions_qs, q, date_debut, date_fin
+
+
+def _annoter_recouvrement_apprenant(paiements_qs):
+    """Ajoute à chaque paiement le total dû de son inscription et le total
+    encaissé figé à la date de CE versement (pas l'état actuel) — même
+    principe que le gel des quittances : une ligne d'historique ne doit pas
+    refléter des versements ultérieurs à elle."""
+    from django.db.models import OuterRef, Subquery
+    from django.db.models.functions import Coalesce
+
+    du_sq = (
+        Dette.objects.filter(inscription_id=OuterRef('dette__inscription_id'))
+        .values('inscription_id').annotate(total=Sum('montant_total')).values('total')
+    )
+    encaisse_sq = (
+        Paiement.objects.filter(
+            dette__inscription_id=OuterRef('dette__inscription_id'),
+            annule=False,
+            date_paiement__lte=OuterRef('date_paiement'),
+        )
+        .values('dette__inscription_id').annotate(total=Sum('montant_paiement')).values('total')
+    )
+    return paiements_qs.annotate(
+        total_du_insc=Coalesce(Subquery(du_sq), 0.0),
+        encaisse_a_date=Coalesce(Subquery(encaisse_sq), 0.0),
+    )
+
+
+def _resume_filtres_historique(q, date_debut, date_fin):
+    parties = []
+    if q:
+        parties.append(f"Recherche : « {q} »")
+    if date_debut or date_fin:
+        parties.append(f"Période : du {date_debut or '…'} au {date_fin or '…'}")
+    return " | ".join(parties) if parties else "Aucun filtre appliqué"
+
+
+@require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
+def paiement_historique(request):
+    """
+    Historique des paiements, dans le périmètre de l'utilisateur connecté
+    (même logique de portée que paiement_list — voir _get_scope). Chaque
+    ligne = un versement, avec le total dû/encaissé/reste de l'inscription
+    figé à la date de ce versement (voir _annoter_recouvrement_apprenant).
+    """
+    paiements_qs, scope, centres_qs, directions_qs, q, date_debut, date_fin = _paiements_historique_qs(request)
+    multi_centre = scope in ('global', 'direction')
+
+    # Ligne total : somme des versements non annulés sur toute la période
+    # filtrée (pas seulement la page affichée).
+    total_periode = paiements_qs.filter(annule=False).aggregate(s=Sum('montant_paiement'))['s'] or 0
+
+    paiements_qs = _annoter_recouvrement_apprenant(paiements_qs)
+    paginator = Paginator(paiements_qs, 10)
     page = request.GET.get('page')
     paiements = paginator.get_page(page)
+    for p in paiements:
+        p.reste_a_date = max((p.total_du_insc or 0) - (p.encaisse_a_date or 0), 0)
 
-    scope_labels = {
-        'global': "tous les centres",
-        'direction': "les centres de votre direction",
-        'centre': "votre centre",
-        'none': "aucun centre (aucune structure ne vous est rattachée)",
-    }
+    # Querystring des filtres actifs, pour que les liens de pagination ne les
+    # perdent pas en changeant de page.
+    from urllib.parse import urlencode
+    qs_filtres = urlencode({k: v for k, v in {'q': q, 'date_debut': date_debut, 'date_fin': date_fin}.items() if v})
 
     return render(request, 'member/paiement/historique.html', {
         'paiements': paiements,
         'scope': scope,
-        'scope_label': scope_labels.get(scope, "votre centre"),
+        'scope_label': SCOPE_LABELS_PAIEMENT.get(scope, "votre centre"),
         'multi_centre': multi_centre,
         'q': q,
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'total_periode': total_periode,
+        'qs_filtres': qs_filtres,
     })
+
+
+@require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
+def paiement_historique_export_csv(request):
+    paiements_qs, scope, centres_qs, directions_qs, q, date_debut, date_fin = _paiements_historique_qs(request)
+    paiements_qs = _annoter_recouvrement_apprenant(paiements_qs)
+
+    response = HttpResponse(content_type="text/csv; charset=utf-8-sig")
+    response["Content-Disposition"] = 'attachment; filename="historique_paiements.csv"'
+    writer = csv.writer(response, delimiter=";")
+    writer.writerow(["Filtres appliqués :", _resume_filtres_historique(q, date_debut, date_fin)])
+    writer.writerow([])
+    writer.writerow([
+        "N°", "Apprenant", "Matricule", "Centre", "Total dû (FCFA)",
+        "Total encaissé (FCFA)", "Reste (FCFA)", "Montant du versement (FCFA)",
+        "Mode", "Date", "N° Quittance", "Caissier(ère)", "Statut",
+    ])
+    total_du = total_enc = total_rest = 0
+    for i, p in enumerate(paiements_qs.order_by('-date_paiement'), 1):
+        insc = p.dette.inscription if p.dette else None
+        eleve = insc.eleve if insc else None
+        centre = insc.formation.centre if insc and insc.formation else None
+        reste = max((p.total_du_insc or 0) - (p.encaisse_a_date or 0), 0)
+        writer.writerow([
+            i,
+            f"{eleve.nom} {eleve.prenom}" if eleve else "—",
+            (eleve.matricule or "—") if eleve else "—",
+            centre.nom_centre if centre else "—",
+            p.total_du_insc,
+            p.encaisse_a_date,
+            reste,
+            p.montant_paiement,
+            p.get_mode_paiement_display(),
+            p.date_paiement.strftime("%d/%m/%Y %H:%M") if p.date_paiement else "—",
+            p.numero_quittance or "—",
+            p.cree_par.get_full_name() if p.cree_par and p.cree_par.get_full_name() else (str(p.cree_par) if p.cree_par else "—"),
+            "Annulé" if p.annule else "Actif",
+        ])
+    total_periode = paiements_qs.filter(annule=False).aggregate(s=Sum('montant_paiement'))['s'] or 0
+    writer.writerow([])
+    writer.writerow(["TOTAL ENCAISSÉ (période filtrée)", total_periode])
+    return response
+
+
+@require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
+def paiement_historique_export_excel(request):
+    paiements_qs, scope, centres_qs, directions_qs, q, date_debut, date_fin = _paiements_historique_qs(request)
+    paiements_qs = _annoter_recouvrement_apprenant(paiements_qs)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Historique paiements"
+
+    rouge_fill = PatternFill("solid", fgColor="C0392B")
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    center_align = Alignment(horizontal="center", vertical="center")
+    filtres_font = Font(italic=True, color="6B7280", size=9)
+
+    ws.append([f"Filtres appliqués : {_resume_filtres_historique(q, date_debut, date_fin)}"])
+    ws["A1"].font = filtres_font
+    ws.append([])
+    headers = [
+        "N°", "Apprenant", "Matricule", "Centre", "Total dû (FCFA)",
+        "Total encaissé (FCFA)", "Reste (FCFA)", "Montant du versement (FCFA)",
+        "Mode", "Date", "N° Quittance", "Caissier(ère)", "Statut",
+    ]
+    ws.append(headers)
+    for cell in ws[ws.max_row]:
+        cell.fill = rouge_fill
+        cell.font = header_font
+        cell.alignment = center_align
+
+    for i, p in enumerate(paiements_qs.order_by('-date_paiement'), 1):
+        insc = p.dette.inscription if p.dette else None
+        eleve = insc.eleve if insc else None
+        centre = insc.formation.centre if insc and insc.formation else None
+        reste = max((p.total_du_insc or 0) - (p.encaisse_a_date or 0), 0)
+        ws.append([
+            i,
+            f"{eleve.nom} {eleve.prenom}" if eleve else "—",
+            (eleve.matricule or "—") if eleve else "—",
+            centre.nom_centre if centre else "—",
+            p.total_du_insc,
+            p.encaisse_a_date,
+            reste,
+            p.montant_paiement,
+            p.get_mode_paiement_display(),
+            p.date_paiement.strftime("%d/%m/%Y %H:%M") if p.date_paiement else "—",
+            p.numero_quittance or "—",
+            p.cree_par.get_full_name() if p.cree_par and p.cree_par.get_full_name() else (str(p.cree_par) if p.cree_par else "—"),
+            "Annulé" if p.annule else "Actif",
+        ])
+    total_periode = paiements_qs.filter(annule=False).aggregate(s=Sum('montant_paiement'))['s'] or 0
+    ws.append([])
+    ws.append(["TOTAL ENCAISSÉ (période filtrée)", "", "", "", "", "", "", total_periode])
+    for cell in ws[ws.max_row]:
+        cell.font = Font(bold=True)
+    for col in ws.columns:
+        ws.column_dimensions[col[0].column_letter].width = 18
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="historique_paiements.xlsx"'
+    wb.save(response)
+    return response
+
+
+@require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
+def paiement_historique_export_pdf(request):
+    paiements_qs, scope, centres_qs, directions_qs, q, date_debut, date_fin = _paiements_historique_qs(request)
+    paiements_qs = _annoter_recouvrement_apprenant(paiements_qs)
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        leftMargin=1.2*cm, rightMargin=1.2*cm,
+        topMargin=2*cm, bottomMargin=1.5*cm,
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "title_bsb_hist", parent=styles["Title"], fontSize=16,
+        textColor=rl_colors.HexColor("#C0392B"), spaceAfter=12,
+    )
+    sub_style = ParagraphStyle(
+        "sub_bsb_hist", parent=styles["Normal"], fontSize=9,
+        textColor=rl_colors.HexColor("#6B7280"), spaceAfter=16,
+    )
+    cell_style = ParagraphStyle("cell_bsb_hist", parent=styles["Normal"], fontSize=7.5, leading=9)
+    filtres_style = ParagraphStyle(
+        "filtres_bsb_hist", parent=styles["Normal"], fontSize=8,
+        fontName="Helvetica-Oblique", textColor=rl_colors.HexColor("#6B7280"), spaceAfter=10,
+    )
+
+    def cell(texte):
+        return Paragraph(str(texte), cell_style)
+
+    or_cl = rl_colors.HexColor("#D4A017")
+    gris = rl_colors.HexColor("#F3F4F6")
+
+    def base_table_style(header_rows=1):
+        return TableStyle([
+            ("BACKGROUND",  (0, 0), (-1, header_rows-1), or_cl),
+            ("TEXTCOLOR",   (0, 0), (-1, header_rows-1), rl_colors.HexColor("#1F2937")),
+            ("FONTNAME",    (0, 0), (-1, header_rows-1), "Helvetica-Bold"),
+            ("FONTSIZE",    (0, 0), (-1, header_rows-1), 8),
+            ("ROWBACKGROUNDS", (0, header_rows), (-1, -1), [rl_colors.white, gris]),
+            ("FONTSIZE",    (0, header_rows), (-1, -1), 7.5),
+            ("GRID",        (0, 0), (-1, -1), 0.4, rl_colors.HexColor("#E5E7EB")),
+            ("ALIGN",       (0, 0), (-1, -1), "CENTER"),
+            ("VALIGN",      (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING",  (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ])
+
+    story = []
+    now = timezone.now().strftime("%d/%m/%Y %H:%M")
+
+    # En-tête officiel : même logique que les autres exports (export_pdf) —
+    # suit le périmètre de l'agent (centre/direction), pas de filtre centre
+    # explicite sur cette page.
+    _centre_entete = centres_qs.first() if scope == "centre" else None
+    _direction_entete = directions_qs.first() if scope == "direction" else None
+    header_left, header_right = _pdf_header_lines(
+        centre=_centre_entete, direction=_direction_entete, remplacer_dg=True,
+    )
+    header_line_style = ParagraphStyle(
+        "pdf_header_line_hist", parent=styles["Normal"], fontSize=6, leading=8,
+        alignment=1, fontName="Helvetica-Bold",
+    )
+    favicon_path = os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
+    header_table = Table(
+        [[
+            Paragraph("<br/>".join(header_left), header_line_style),
+            Image(favicon_path, width=1.6*cm, height=1.6*cm),
+            Paragraph("<br/>".join(header_right), header_line_style),
+        ]],
+        colWidths=[10*cm, 3*cm, 10*cm],
+    )
+    header_table.setStyle(TableStyle([
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 12))
+
+    story.append(Paragraph("Historique des Paiements — BSB", title_style))
+    story.append(Paragraph(f"Généré le {now}", sub_style))
+    _resume = _resume_filtres_historique(q, date_debut, date_fin)
+    if _resume != "Aucun filtre appliqué":
+        story.append(Paragraph(_resume, filtres_style))
+
+    data = [[
+        "N°", "Apprenant", "Matricule", "Centre", "Total dû", "Encaissé",
+        "Reste", "Versement", "Mode", "Date", "Quittance", "Caissier(ère)", "Statut",
+    ]]
+    for i, p in enumerate(paiements_qs.order_by('-date_paiement'), 1):
+        insc = p.dette.inscription if p.dette else None
+        eleve = insc.eleve if insc else None
+        centre = insc.formation.centre if insc and insc.formation else None
+        reste = max((p.total_du_insc or 0) - (p.encaisse_a_date or 0), 0)
+        fcfa = lambda v: f"{v:,.0f}".replace(",", " ")
+        data.append([
+            str(i),
+            cell(f"{eleve.nom} {eleve.prenom}") if eleve else "—",
+            cell(eleve.matricule) if eleve and eleve.matricule else "—",
+            cell(centre.nom_centre) if centre else "—",
+            fcfa(p.total_du_insc),
+            fcfa(p.encaisse_a_date),
+            fcfa(reste),
+            fcfa(p.montant_paiement),
+            cell(p.get_mode_paiement_display()),
+            cell(p.date_paiement.strftime("%d/%m/%Y")) if p.date_paiement else "—",
+            cell(p.numero_quittance) if p.numero_quittance else "—",
+            cell(p.cree_par.get_full_name() if p.cree_par and p.cree_par.get_full_name() else (p.cree_par or "—")),
+            "Annulé" if p.annule else "Actif",
+        ])
+    total_periode = paiements_qs.filter(annule=False).aggregate(s=Sum('montant_paiement'))['s'] or 0
+    data.append([
+        "", cell("TOTAL"), "", "", "", "", "", f"{total_periode:,.0f}".replace(",", " "),
+        "", "", "", "", "",
+    ])
+
+    col_widths = [0.8*cm, 3.3*cm, 1.9*cm, 2.9*cm, 2.1*cm, 2.1*cm, 2.1*cm, 2.1*cm,
+                  1.6*cm, 1.9*cm, 1.9*cm, 2.5*cm, 1.5*cm]
+    t = Table(data, colWidths=col_widths, repeatRows=1)
+    style = base_table_style()
+    style.add("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold")
+    style.add("BACKGROUND", (0, -1), (-1, -1), gris)
+    t.setStyle(style)
+    story.append(t)
+
+    signataire = {
+        "centre": "Le Directeur du Centre",
+        "direction": "Le Directeur Inter-Régional",
+        "global": "Le Directeur Général",
+    }.get(scope, "Le Directeur Général")
+    signature_style = ParagraphStyle(
+        "signature_bsb_hist", parent=styles["Normal"], fontSize=10, alignment=2, spaceBefore=28,
+    )
+    story.append(Paragraph(signataire, signature_style))
+
+    footer_style_left = ParagraphStyle(
+        "footer_bsb_left_hist", parent=styles["Normal"], fontSize=7,
+        textColor=rl_colors.grey, alignment=0,
+    )
+    footer_style_right = ParagraphStyle(
+        "footer_bsb_right_hist", parent=styles["Normal"], fontSize=7,
+        textColor=rl_colors.grey, alignment=2,
+    )
+    footer_table = Table(
+        [[Paragraph("BSB", footer_style_left), Paragraph(f"généré sur YU-PAAN le : {now}", footer_style_right)]],
+        colWidths=[doc.width / 2, doc.width / 2],
+    )
+    footer_table.setStyle(TableStyle([
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+    ]))
+    story.append(Spacer(1, 24))
+    story.append(footer_table)
+
+    def _watermark_page(canvas_obj, doc_obj):
+        _draw_pdf_watermark(canvas_obj, doc_obj.pagesize[0], doc_obj.pagesize[1])
+
+    doc.build(story, onFirstPage=_watermark_page, onLaterPages=_watermark_page)
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="historique_paiements.pdf"'
+    return response
 
 ############### TEACHER LEVEL #############
 
@@ -2493,6 +2837,19 @@ def _centres_recouvrement(centres_scope, scope, direction_id=None, centre_id=Non
     return centres_scope
 
 
+def _totaux_recouvrement(dettes_qs, paiements_qs):
+    """Totaux (dû/encaissé/restant/taux) pour la ligne Total des exports et
+    du tableau « recouvrement par centre » — mêmes agrégats que les KPI de
+    l'écran, recalculés ici pour que la ligne Total des exports (fonctions
+    séparées de statistiques_view) reste cohérente avec ce qui est affiché
+    au-dessus des tableaux."""
+    total_du = dettes_qs.aggregate(s=Sum("montant_total"))["s"] or 0
+    total_enc = paiements_qs.aggregate(s=Sum("montant_paiement"))["s"] or 0
+    total_rest = max(total_du - total_enc, 0)
+    taux = round(total_enc / total_du * 100, 1) if total_du > 0 else 0
+    return total_du, total_enc, total_rest, taux
+
+
 def _resume_filtres_stats(filters, exclure_filiere=False, exclure=()):
     """Phrase récapitulant les filtres actifs du tableau de bord statistiques,
     reprise dans les fichiers exportés (CSV/Excel/PDF) pour que leur contenu
@@ -2751,6 +3108,17 @@ def statistiques_view(request):
         })
     recouvrement_centres.sort(key=lambda x: x["taux"], reverse=True)
 
+    # Ligne total : sur l'ensemble des centres du filtre (pas seulement la
+    # page de 5 affichée) — reprend les KPI déjà calculés plus haut, qui
+    # portent sur les mêmes dettes_qs/paiements_qs scopés par centre/région.
+    recouvrement_total = {
+        "inscrits": sum(r["inscrits"] for r in recouvrement_centres),
+        "total_du": total_du,
+        "encaisse": total_encaisse,
+        "restant":  total_restant,
+        "taux":     taux_global,
+    }
+
     recouvrement_paginator = Paginator(recouvrement_centres, 5)
     recouvrement_page = recouvrement_paginator.get_page(request.GET.get("rpage"))
 
@@ -2827,6 +3195,7 @@ def statistiques_view(request):
         "stats":                  stats,
         "top_filieres":           top_filieres,
         "recouvrement_centres":   recouvrement_page,
+        "recouvrement_total":     recouvrement_total,
         "dernieres_inscriptions": dernieres_inscriptions,
         "querystring_recouvrement": querystring_recouvrement,
         "querystring_inscriptions": querystring_inscriptions,
@@ -2945,6 +3314,8 @@ def export_csv(request):
                 centre.direction.nom_direction if centre.direction else "—",
                 c_du, c_enc, c_rest, taux,
             ])
+        total_du, total_enc, total_rest, total_taux = _totaux_recouvrement(dettes_qs, paiements_qs)
+        writer.writerow(["TOTAL", "", total_du, total_enc, total_rest, total_taux])
 
     return response
 
@@ -3032,6 +3403,10 @@ def export_excel(request):
                 centre.direction.nom_direction if centre.direction else "—",
                 c_du, c_enc, c_rest, taux,
             ])
+        total_du, total_enc, total_rest, total_taux = _totaux_recouvrement(dettes_qs, paiements_qs)
+        ws.append(["TOTAL", "", total_du, total_enc, total_rest, total_taux])
+        for cell in ws[ws.max_row]:
+            cell.font = Font(bold=True)
         for col in ws.columns:
             ws.column_dimensions[col[0].column_letter].width = 20
 
@@ -3216,10 +3591,21 @@ def export_pdf(request):
                 f"{c_rest:,.0f}".replace(",", " "),
                 f"{taux}%",
             ])
+        total_du, total_enc, total_rest, total_taux = _totaux_recouvrement(dettes_qs, paiements_qs)
+        data.append([
+            cell("TOTAL"), "",
+            f"{total_du:,.0f}".replace(",", " "),
+            f"{total_enc:,.0f}".replace(",", " "),
+            f"{total_rest:,.0f}".replace(",", " "),
+            f"{total_taux}%",
+        ])
 
         col_widths = [5*cm, 5*cm, 4.5*cm, 4.5*cm, 4.5*cm, 3*cm]
         t = Table(data, colWidths=col_widths, repeatRows=1)
-        t.setStyle(base_table_style())
+        style = base_table_style()
+        style.add("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold")
+        style.add("BACKGROUND", (0, -1), (-1, -1), gris)
+        t.setStyle(style)
         story.append(t)
 
     # Signataire aligné sur le périmètre du filtre (comme l'en-tête), pas sur
