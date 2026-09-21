@@ -93,7 +93,8 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    {% for pmt in paiements %}
+                    {% for ligne in lignes %}
+                    {% with pmt=ligne.principal %}
                     <tr class="hover:bg-gray-50 transition-colors {% if pmt.annule %}opacity-60{% endif %}">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                             {{ pmt.dette.inscription.eleve.nom }} {{ pmt.dette.inscription.eleve.prenom }}
@@ -105,14 +106,27 @@
                         </td>
                         {% endif %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Type de frais">
-                            {{ pmt.dette.frais_formation.type_frais }}
+                            {% if ligne.est_lot %}{{ ligne.frais_label }}{% else %}{{ pmt.dette.frais_formation.type_frais }}{% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" data-label="Tranche">
+                            {% if ligne.est_lot %}
+                            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Lot ({{ ligne.versements|length }} versements)</span>
+                            {% comment %} Repris tel quel dans le panneau "colonnes masquees" de
+                               bo-tableau.js (clone du innerHTML de cette cellule) : le detail du
+                               lot apparait derriere le meme oeil que le reste, sans en ajouter un
+                               second. {% endcomment %}
+                            <div class="mt-1 space-y-0.5 text-xs text-gray-600">
+                                {% for v in ligne.versements %}
+                                <div>{{ v.dette.frais_formation.type_frais }}{% if v.tranche_frais %} — {{ v.tranche_frais.libelle }}{% endif %} : {{ v.montant_paiement|floatformat:0|intcomma }} FCFA</div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
                             {{ pmt.tranche_frais.libelle|default:"Tranche unique" }}
+                            {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right" data-label="Montant">
                             <span class="text-sm font-medium {% if pmt.annule %}bg-gray-400 line-through{% else %}bg-green-600{% endif %} text-white rounded-lg px-2 py-1">
-                                {{ pmt.montant_paiement|floatformat:0|intcomma }} FCFA
+                                {{ ligne.montant_total|floatformat:0|intcomma }} FCFA
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" data-label="Mode">{{ pmt.mode_paiement }}</td>
@@ -129,15 +143,15 @@
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">Actif</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                        <td class="px-6 py-4 whitespace-nowrap text-right bo-actions-cell">
                             <button type="button"
                                     class="text-sm font-semibold text-gray-600 hover:text-gray-900 hover:underline"
                                     {# Valeurs en data-* : un onclick= inline serait bloque par la CSP. #}
                                     data-action="detail-paiement"
                                     data-detail-apprenant="{{ pmt.dette.inscription.eleve.nom|default:'' }} {{ pmt.dette.inscription.eleve.prenom|default:'' }} ({{ pmt.dette.inscription.eleve.matricule|default:'—' }})"
-                                    data-detail-type-frais="{{ pmt.dette.frais_formation.type_frais|default:'—' }}"
-                                    data-detail-tranche="{{ pmt.tranche_frais.libelle|default:'Tranche unique' }}"
-                                    data-detail-montant="{{ pmt.montant_paiement|floatformat:0|intcomma }} FCFA"
+                                    data-detail-type-frais="{% if ligne.est_lot %}{{ ligne.frais_label }}{% else %}{{ pmt.dette.frais_formation.type_frais|default:'—' }}{% endif %}"
+                                    data-detail-tranche="{% if ligne.est_lot %}Lot ({{ ligne.versements|length }} versements){% else %}{{ pmt.tranche_frais.libelle|default:'Tranche unique' }}{% endif %}"
+                                    data-detail-montant="{{ ligne.montant_total|floatformat:0|intcomma }} FCFA"
                                     data-detail-mode="{{ pmt.mode_paiement|default:'—' }}"
                                     data-detail-date="{{ pmt.date_paiement|date:'d/m/Y H:i' }}"
                                     data-detail-cree-par="{{ pmt.cree_par|default:'—' }}"
@@ -148,17 +162,17 @@
                                     data-detail-date-annulation="{% if pmt.date_annulation %}{{ pmt.date_annulation|date:'d/m/Y H:i' }}{% endif %}">
                                 Détail
                             </button>
-                            {% if pmt.motif_derogation %}
+                            {% if ligne.derogation %}
                             <button type="button"
                                     class="text-sm font-semibold text-amber-600 hover:underline ml-2"
-                                    data-action="ouvrir-derogation" data-derogation-source="derogation-tpl-{{ pmt.id }}">
+                                    data-action="ouvrir-derogation" data-derogation-source="derogation-tpl-{{ ligne.derogation.id }}">
                                 Dérogation
                             </button>
-                            <template id="derogation-tpl-{{ pmt.id }}">
+                            <template id="derogation-tpl-{{ ligne.derogation.id }}">
                                 <p class="text-xs font-bold text-gray-500 uppercase mb-1">Motif de la dérogation</p>
-                                <p class="text-sm text-gray-800 mb-3">{{ pmt.motif_derogation|linebreaksbr }}</p>
-                                {% if pmt.piece_jointe_derogation %}
-                                <a href="{{ pmt.piece_jointe_derogation.url }}" target="_blank"
+                                <p class="text-sm text-gray-800 mb-3">{{ ligne.derogation.motif_derogation|linebreaksbr }}</p>
+                                {% if ligne.derogation.piece_jointe_derogation %}
+                                <a href="{{ ligne.derogation.piece_jointe_derogation.url }}" target="_blank"
                                    class="text-sm font-semibold text-emerald-600 hover:underline">
                                     Visualiser la pièce jointe justificative
                                 </a>
@@ -169,6 +183,7 @@
                             {% endif %}
                         </td>
                     </tr>
+                    {% endwith %}
                     {% endfor %}
                 </tbody>
             </table>

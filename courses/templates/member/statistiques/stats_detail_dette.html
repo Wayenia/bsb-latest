@@ -213,15 +213,30 @@
           </tr>
         </thead>
         <tbody>
-          {% for p in paiements %}
+          {% for ligne in lignes %}
+          {% with p=ligne.principal %}
           <tr class="border-b border-gray-100 hover:bg-gray-50 {% if p.annule %}opacity-50{% endif %}">
             <td class="py-2">
+              {% if ligne.est_lot %}
+              {% comment %} Classe distincte de .bo-oeil (memes styles en dur) : ce bouton ne
+                 doit pas etre capte par le gestionnaire de clic generique de
+                 bo-tableau.js (colonnes secondaires), qui cible .bo-oeil. {% endcomment %}
+              <button type="button"
+                      class="mr-1 inline-flex h-7 w-7 items-center justify-center rounded-md align-middle text-bsb-muted transition-colors hover:bg-bsb-cream hover:text-bsb-red focus:outline-none focus-visible:ring-2 focus-visible:ring-bsb-red"
+                      data-action="basculer-lot"
+                      data-lot-target="lot-detail-{{ forloop.counter }}" aria-expanded="false"
+                      title="Voir le détail du lot">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg>
+              </button>
+              <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Lot ({{ ligne.versements|length }} versements)</span>
+              {% else %}
               <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Tranche {{ p.tranche }}</span>
+              {% endif %}
               {% if p.annule %}
               <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700" title="{{ p.motif_annulation }}">Annulé</span>
               {% endif %}
             </td>
-            <td class="py-2 font-semibold {% if p.annule %}text-gray-400 line-through{% else %}text-emerald-600{% endif %}" data-label="Montant">{{ p.montant_paiement|floatformat:0|intcomma }} FCFA</td>
+            <td class="py-2 font-semibold {% if p.annule %}text-gray-400 line-through{% else %}text-emerald-600{% endif %}" data-label="Montant">{{ ligne.montant_total|floatformat:0|intcomma }} FCFA</td>
             <td class="py-2" data-label="Mode">
               {% if p.mode_paiement == 'mobile' %}
                 <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Mobile Money</span>
@@ -265,16 +280,16 @@
                 </button>
                 {% endif %}
               {% endif %}
-              {% if p.motif_derogation %}
+              {% if ligne.derogation %}
               <button type="button" class="text-sm text-amber-600 hover:underline ml-2"
-                      data-action="ouvrir-derogation" data-derogation-source="derogation-tpl-{{ p.id }}">
+                      data-action="ouvrir-derogation" data-derogation-source="derogation-tpl-{{ ligne.derogation.id }}">
                 Dérogation
               </button>
-              <template id="derogation-tpl-{{ p.id }}">
+              <template id="derogation-tpl-{{ ligne.derogation.id }}">
                 <p class="text-xs font-bold text-gray-500 uppercase mb-1">Motif de la dérogation</p>
-                <p class="text-sm text-gray-800 mb-3">{{ p.motif_derogation|linebreaksbr }}</p>
-                {% if p.piece_jointe_derogation %}
-                <a href="{{ p.piece_jointe_derogation.url }}" target="_blank"
+                <p class="text-sm text-gray-800 mb-3">{{ ligne.derogation.motif_derogation|linebreaksbr }}</p>
+                {% if ligne.derogation.piece_jointe_derogation %}
+                <a href="{{ ligne.derogation.piece_jointe_derogation.url }}" target="_blank"
                    class="text-sm font-semibold text-emerald-600 hover:underline">
                   Visualiser la pièce jointe justificative
                 </a>
@@ -285,6 +300,19 @@
               {% endif %}
             </td>
           </tr>
+          {% if ligne.est_lot %}
+          <tr id="lot-detail-{{ forloop.counter }}" class="bo-detail-ligne hidden">
+            <td colspan="7">
+              <dl class="bo-detail">
+                {% for v in ligne.versements %}
+                <dt>{{ v.tranche_frais.libelle|default:"Versement" }}</dt>
+                <dd>{{ v.montant_paiement|floatformat:0|intcomma }} FCFA</dd>
+                {% endfor %}
+              </dl>
+            </td>
+          </tr>
+          {% endif %}
+          {% endwith %}
           {% empty %}
           <tr>
             <td colspan="7" class="text-center text-gray-500 py-4">
@@ -644,6 +672,16 @@ document.addEventListener('click', function (e) {
       break;
     case 'fermer-derogation':
       if (typeof fermerModalDerogation === 'function') fermerModalDerogation();
+      break;
+    case 'basculer-lot':
+      var cible = document.getElementById(el.dataset.lotTarget);
+      if (cible) {
+        var ouvert = !cible.classList.contains('hidden');
+        cible.classList.toggle('hidden');
+        el.setAttribute('aria-expanded', ouvert ? 'false' : 'true');
+        el.classList.toggle('bg-bsb-cream', !ouvert);
+        el.classList.toggle('text-bsb-red', !ouvert);
+      }
       break;
   }
 });

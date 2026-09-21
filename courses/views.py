@@ -1961,6 +1961,50 @@ def _resume_filtres_historique(q, date_debut, date_fin):
     return " | ".join(parties) if parties else "Aucun filtre appliqué"
 
 
+def _grouper_paiements_par_lot(paiements):
+    """Regroupe une liste (déjà triée par -date_paiement) de Paiement par lot
+    d'encaissement (groupe_id) : les versements créés ensemble par une seule
+    action (plusieurs tranches, plusieurs frais réglés d'un coup...) forment
+    un lot et n'occupent qu'une ligne à l'affichage/export — montant cumulé,
+    une seule quittance (déjà partagée, voir Paiement.generer_numero_quittance),
+    avec le détail des versements individuels à part. Le "principal" (le plus
+    récent du lot grâce à l'ordre -date_paiement) porte déjà le total dû/
+    encaissé/reste figé après tout le lot quand ces annotations sont présentes
+    (voir _annoter_recouvrement_apprenant)."""
+    lignes = []
+    vus = set()
+    paiements = list(paiements)
+    for p in paiements:
+        if p.pk in vus:
+            continue
+        lot = [x for x in paiements if x.groupe_id == p.groupe_id] if p.groupe_id else [p]
+        for x in lot:
+            vus.add(x.pk)
+        types_frais = []
+        for x in lot:
+            libelle = str(x.dette.frais_formation.type_frais)
+            if libelle not in types_frais:
+                types_frais.append(libelle)
+        lignes.append({
+            'principal': p,
+            'versements': lot,
+            'est_lot': len(lot) > 1,
+            'montant_total': sum(x.montant_paiement for x in lot),
+            'derogation': next((x for x in lot if x.motif_derogation), None),
+            'frais_label': types_frais[0] if len(types_frais) == 1 else f"Plusieurs frais ({len(types_frais)})",
+        })
+    return lignes
+
+
+def _libelle_versement_lot(v):
+    """Étiquette d'un versement dans le détail d'un lot exporté : type de
+    frais, et tranche si renseignée."""
+    libelle = str(v.dette.frais_formation.type_frais)
+    if v.tranche_frais:
+        libelle += f" — {v.tranche_frais.libelle}"
+    return libelle
+
+
 @require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
 def paiement_historique(request):
     """
@@ -1983,6 +2027,13 @@ def paiement_historique(request):
     for p in paiements:
         p.reste_a_date = max((p.total_du_insc or 0) - (p.encaisse_a_date or 0), 0)
 
+    # Regroupement pour l'affichage : un encaissement qui touche plusieurs
+    # tranches/frais en une seule action (même groupe_id) n'occupe qu'une
+    # ligne — montant cumulé, une seule quittance — avec le détail des
+    # versements repris dans la colonne Tranche (revelée par le même œil
+    # « colonnes masquées » que le reste, voir bo-tableau.js).
+    lignes = _grouper_paiements_par_lot(paiements)
+
     # Querystring des filtres actifs, pour que les liens de pagination ne les
     # perdent pas en changeant de page.
     from urllib.parse import urlencode
@@ -1990,6 +2041,7 @@ def paiement_historique(request):
 
     return render(request, 'member/paiement/historique.html', {
         'paiements': paiements,
+        'lignes': lignes,
         'scope': scope,
         'scope_label': SCOPE_LABELS_PAIEMENT.get(scope, "votre centre"),
         'multi_centre': multi_centre,
@@ -2014,14 +2066,19 @@ def paiement_historique_export_csv(request):
     writer.writerow([
         "N°", "Apprenant", "Matricule", "Centre", "Total dû (FCFA)",
         "Total encaissé (FCFA)", "Reste (FCFA)", "Montant du versement (FCFA)",
-        "Mode", "Date", "N° Quittance", "Caissier(ère)", "Statut",
+        "Détail (frais réglés)", "Mode", "Date", "N° Quittance", "Caissier(ère)", "Statut",
     ])
-    total_du = total_enc = total_rest = 0
-    for i, p in enumerate(paiements_qs.order_by('-date_paiement'), 1):
+    lignes = _grouper_paiements_par_lot(paiements_qs.order_by('-date_paiement'))
+    for i, ligne in enumerate(lignes, 1):
+        p = ligne['principal']
         insc = p.dette.inscription if p.dette else None
         eleve = insc.eleve if insc else None
         centre = insc.formation.centre if insc and insc.formation else None
         reste = max((p.total_du_insc or 0) - (p.encaisse_a_date or 0), 0)
+        detail = "\n".join(
+            f"{_libelle_versement_lot(v)} : {v.montant_paiement:,.0f} FCFA".replace(",", " ")
+            for v in ligne['versements']
+        )
         writer.writerow([
             i,
             f"{eleve.nom} {eleve.prenom}" if eleve else "—",
@@ -2030,7 +2087,8 @@ def paiement_historique_export_csv(request):
             p.total_du_insc,
             p.encaisse_a_date,
             reste,
-            p.montant_paiement,
+            ligne['montant_total'],
+            detail,
             p.get_mode_paiement_display(),
             p.date_paiement.strftime("%d/%m/%Y %H:%M") if p.date_paiement else "—",
             p.numero_quittance or "—",
@@ -2063,7 +2121,7 @@ def paiement_historique_export_excel(request):
     headers = [
         "N°", "Apprenant", "Matricule", "Centre", "Total dû (FCFA)",
         "Total encaissé (FCFA)", "Reste (FCFA)", "Montant du versement (FCFA)",
-        "Mode", "Date", "N° Quittance", "Caissier(ère)", "Statut",
+        "Détail (frais réglés)", "Mode", "Date", "N° Quittance", "Caissier(ère)", "Statut",
     ]
     ws.append(headers)
     for cell in ws[ws.max_row]:
@@ -2071,11 +2129,18 @@ def paiement_historique_export_excel(request):
         cell.font = header_font
         cell.alignment = center_align
 
-    for i, p in enumerate(paiements_qs.order_by('-date_paiement'), 1):
+    wrap_align = Alignment(wrap_text=True, vertical="top")
+    lignes = _grouper_paiements_par_lot(paiements_qs.order_by('-date_paiement'))
+    for i, ligne in enumerate(lignes, 1):
+        p = ligne['principal']
         insc = p.dette.inscription if p.dette else None
         eleve = insc.eleve if insc else None
         centre = insc.formation.centre if insc and insc.formation else None
         reste = max((p.total_du_insc or 0) - (p.encaisse_a_date or 0), 0)
+        detail = "\n".join(
+            f"{_libelle_versement_lot(v)} : {v.montant_paiement:,.0f} FCFA".replace(",", " ")
+            for v in ligne['versements']
+        )
         ws.append([
             i,
             f"{eleve.nom} {eleve.prenom}" if eleve else "—",
@@ -2084,13 +2149,18 @@ def paiement_historique_export_excel(request):
             p.total_du_insc,
             p.encaisse_a_date,
             reste,
-            p.montant_paiement,
+            ligne['montant_total'],
+            detail,
             p.get_mode_paiement_display(),
             p.date_paiement.strftime("%d/%m/%Y %H:%M") if p.date_paiement else "—",
             p.numero_quittance or "—",
             p.cree_par.get_full_name() if p.cree_par and p.cree_par.get_full_name() else (str(p.cree_par) if p.cree_par else "—"),
             "Annulé" if p.annule else "Actif",
         ])
+        detail_cell = ws.cell(row=ws.max_row, column=9)
+        detail_cell.alignment = wrap_align
+        if ligne['est_lot']:
+            ws.row_dimensions[ws.max_row].height = 14 * len(ligne['versements'])
     total_periode = paiements_qs.filter(annule=False).aggregate(s=Sum('montant_paiement'))['s'] or 0
     ws.append([])
     ws.append(["TOTAL ENCAISSÉ (période filtrée)", "", "", "", "", "", "", total_periode])
@@ -2098,6 +2168,7 @@ def paiement_historique_export_excel(request):
         cell.font = Font(bold=True)
     for col in ws.columns:
         ws.column_dimensions[col[0].column_letter].width = 18
+    ws.column_dimensions["I"].width = 40
 
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -2195,14 +2266,19 @@ def paiement_historique_export_pdf(request):
 
     data = [[
         "N°", "Apprenant", "Matricule", "Centre", "Total dû", "Encaissé",
-        "Reste", "Versement", "Mode", "Date", "Quittance", "Caissier(ère)", "Statut",
+        "Reste", "Versement", "Détail (frais réglés)", "Mode", "Date", "Quittance", "Caissier(ère)", "Statut",
     ]]
-    for i, p in enumerate(paiements_qs.order_by('-date_paiement'), 1):
+    fcfa = lambda v: f"{v:,.0f}".replace(",", " ")
+    lignes = _grouper_paiements_par_lot(paiements_qs.order_by('-date_paiement'))
+    for i, ligne in enumerate(lignes, 1):
+        p = ligne['principal']
         insc = p.dette.inscription if p.dette else None
         eleve = insc.eleve if insc else None
         centre = insc.formation.centre if insc and insc.formation else None
         reste = max((p.total_du_insc or 0) - (p.encaisse_a_date or 0), 0)
-        fcfa = lambda v: f"{v:,.0f}".replace(",", " ")
+        detail = "<br/>".join(
+            f"{_libelle_versement_lot(v)} : {fcfa(v.montant_paiement)} FCFA" for v in ligne['versements']
+        )
         data.append([
             str(i),
             cell(f"{eleve.nom} {eleve.prenom}") if eleve else "—",
@@ -2211,7 +2287,8 @@ def paiement_historique_export_pdf(request):
             fcfa(p.total_du_insc),
             fcfa(p.encaisse_a_date),
             fcfa(reste),
-            fcfa(p.montant_paiement),
+            fcfa(ligne['montant_total']),
+            cell(detail),
             cell(p.get_mode_paiement_display()),
             cell(p.date_paiement.strftime("%d/%m/%Y")) if p.date_paiement else "—",
             cell(p.numero_quittance) if p.numero_quittance else "—",
@@ -2221,11 +2298,11 @@ def paiement_historique_export_pdf(request):
     total_periode = paiements_qs.filter(annule=False).aggregate(s=Sum('montant_paiement'))['s'] or 0
     data.append([
         "", cell("TOTAL"), "", "", "", "", "", f"{total_periode:,.0f}".replace(",", " "),
-        "", "", "", "", "",
+        "", "", "", "", "", "",
     ])
 
-    col_widths = [0.8*cm, 3.3*cm, 1.9*cm, 2.9*cm, 2.1*cm, 2.1*cm, 2.1*cm, 2.1*cm,
-                  1.6*cm, 1.9*cm, 1.9*cm, 2.5*cm, 1.5*cm]
+    col_widths = [0.7*cm, 3.0*cm, 1.6*cm, 2.5*cm, 1.9*cm, 1.9*cm, 1.9*cm, 1.9*cm,
+                  3.6*cm, 1.4*cm, 1.6*cm, 1.7*cm, 2.2*cm, 1.3*cm]
     t = Table(data, colWidths=col_widths, repeatRows=1)
     style = base_table_style()
     style.add("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold")
@@ -3547,23 +3624,34 @@ def export_pdf(request):
         if _resume != "Aucun filtre appliqué":
             story.append(Paragraph(_resume, filtres_style))
 
+        from django.utils.html import escape as _escape_xml
+
         data = [["N°", "Nom(s) et prénom(s)", "Matricule", "Statut"]]
         for i, insc in enumerate(
             inscriptions_qs.select_related("eleve")
             .prefetch_related("dettes__paiements")
             .order_by("-date_inscription")[:500], 1
         ):
+            # Statut réel : reflète l'encaissement (soldé -> « Validé - Payé »),
+            # pas seulement le champ `statut` qui reste « valide » après un
+            # paiement complet (obs. DSI). Motif de rejet et téléphone en plus
+            # sur la même colonne — la cellule (Paragraph) retourne à la ligne
+            # d'elle-même si c'est trop long pour la largeur de colonne. Texte
+            # libre (motif) échappé : Paragraph interprète un sous-ensemble de
+            # XML, un « & »/« < » non échappé ferait planter le PDF.
+            statut_lignes = [_escape_xml(insc.libelle_statut_paiement)]
+            if insc.statut == 'rejete' and insc.motif_rejet:
+                statut_lignes.append(f"Motif : {_escape_xml(insc.motif_rejet)}")
+            tel = insc.eleve.tel if insc.eleve else None
+            statut_lignes.append(f"Tél : {_escape_xml(tel)}" if tel else "Tél : —")
             data.append([
                 str(i),
                 cell(f"{insc.eleve.nom} {insc.eleve.prenom}") if insc.eleve else "—",
                 cell(insc.eleve.matricule) if insc.eleve and insc.eleve.matricule else "—",
-                # Statut réel : reflète l'encaissement (soldé -> « Validé - Payé »),
-                # pas seulement le champ `statut` qui reste « valide » après un
-                # paiement complet (obs. DSI).
-                cell(insc.libelle_statut_paiement),
+                cell("<br/>".join(statut_lignes)),
             ])
 
-        col_widths = [1.5*cm, 12*cm, 6*cm, 6.5*cm]
+        col_widths = [1.2*cm, 10*cm, 5*cm, 9.5*cm]
         t = Table(data, colWidths=col_widths, repeatRows=1)
         t.setStyle(base_table_style())
         story.append(t)
@@ -3754,7 +3842,7 @@ class _CascadeInterrompue(Exception):
         super().__init__(message)
 
 
-def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogation=None, piece_jointe_derogation=None, groupe_id=None):
+def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogation=None, piece_jointe_derogation=None, groupe_id=None, numero_quittance=None):
     """
     Encaisse `montant` sur cette dette : tranche primordiale d'abord (ou
     versement unique si le type de frais n'a pas de tranches), puis le reste
@@ -3764,9 +3852,19 @@ def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogati
     jointe supposés déjà validés par l'appelant). `groupe_id` identifie le
     lot d'encaissement (une action utilisateur peut créer plusieurs
     paiements — c'est ce lot entier qui est annulable, pas une ligne isolée).
+    Tous les paiements de ce lot partagent le même `numero_quittance` — une
+    seule quittance par action d'encaissement, même répartie sur plusieurs
+    tranches. Si non fourni, un numéro est généré ici et réutilisé pour
+    chaque paiement créé par cet appel ; l'appelant qui encaisse plusieurs
+    dettes dans la même action (même `groupe_id`) doit le générer une seule
+    fois en amont et le transmettre à chaque appel.
     Retourne (nombre de paiements créés, montant réellement encaissé,
     montant non utilisé).
     """
+    if numero_quittance is None:
+        centre = dette.inscription.formation.centre if dette.inscription.formation else None
+        numero_quittance = Paiement.generer_numero_quittance(centre)
+
     tranche_num = dette.paiements.count()
     restant = montant
     nb_paiements = 0
@@ -3782,6 +3880,7 @@ def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogati
                 dette=dette, montant_paiement=prise, mode_paiement=mode_paiement,
                 tranche=tranche_num, tranche_frais=None,
                 date_paiement=timezone.now(), cree_par=user, groupe_id=groupe_id,
+                numero_quittance=numero_quittance,
             )
             restant -= prise
             encaisse += prise
@@ -3805,6 +3904,7 @@ def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogati
                     date_paiement=timezone.now(), cree_par=user, groupe_id=groupe_id,
                     motif_derogation=motif_derogation,
                     piece_jointe_derogation=piece_jointe_derogation,
+                    numero_quittance=numero_quittance,
                 )
                 encaisse += restant
                 nb_paiements += 1
@@ -3816,6 +3916,7 @@ def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogati
                 dette=dette, montant_paiement=prise, mode_paiement=mode_paiement,
                 tranche=tranche_num, tranche_frais=t,
                 date_paiement=timezone.now(), cree_par=user, groupe_id=groupe_id,
+                numero_quittance=numero_quittance,
             )
             encaisse += prise
             nb_paiements += 1
@@ -4001,6 +4102,12 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
             return redirect(redirect_url)
 
     groupe_id = uuid.uuid4()
+    # Une seule quittance pour toute l'action, même si elle règle plusieurs
+    # dettes (frais différents) d'un coup : généré une fois ici et transmis à
+    # chaque appel de _encaisser_montant_dette ci-dessous.
+    numero_quittance = Paiement.generer_numero_quittance(
+        inscription.formation.centre if inscription.formation else None
+    )
     try:
         with transaction.atomic():
             restant = montant
@@ -4021,7 +4128,7 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
                             f"Le frais de dossier « {dette.frais_formation.type_frais} » doit être réglé "
                             f"intégralement en un seul versement (montant dû : {reste_dette:,.0f} FCFA)."
                         )
-                    nb, total, restant = _encaisser_montant_dette(dette, restant, mode, request.user, groupe_id=groupe_id)
+                    nb, total, restant = _encaisser_montant_dette(dette, restant, mode, request.user, groupe_id=groupe_id, numero_quittance=numero_quittance)
                     nb_total += nb
                     montant_total += total
                     continue
@@ -4036,7 +4143,7 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
                         )
                     motif, piece = motif_derogation, piece_jointe_derogation
 
-                nb, total, restant = _encaisser_montant_dette(dette, restant, mode, request.user, motif, piece, groupe_id=groupe_id)
+                nb, total, restant = _encaisser_montant_dette(dette, restant, mode, request.user, motif, piece, groupe_id=groupe_id, numero_quittance=numero_quittance)
                 nb_total += nb
                 montant_total += total
     except _CascadeInterrompue as exc:
@@ -4172,7 +4279,7 @@ def stats_detail_dette_view(request, dette_id):
         return redirect('courses:stats_detail_dette', dette_id=dette_id)
 
     paiements = list(
-        dette.paiements.select_related('dette__inscription').order_by('-date_paiement', '-tranche')
+        dette.paiements.select_related('dette__inscription', 'tranche_frais').order_by('-date_paiement', '-tranche')
     )
     # Versements crees ensemble (meme groupe_id, ex. "Encaisser ce frais" qui
     # solde plusieurs tranches d'un coup) : une seule quittance groupee a
@@ -4185,6 +4292,28 @@ def stats_detail_dette_view(request, dette_id):
         p.quittance_groupe_id = (
             p.groupe_id if (not p.annule and p.groupe_id and _tailles_groupe[p.groupe_id] > 1) else None
         )
+
+    # Regroupement pour l'affichage : un encaissement qui touche plusieurs
+    # tranches de cette dette en une seule action (meme groupe_id) n'occupe
+    # qu'une ligne dans l'historique — montant cumule, une seule quittance,
+    # un seul bouton d'annulation (qui annule deja tout le lot, voir
+    # _annuler_paiement) — avec le detail des versements derriere l'oeil.
+    lignes = []
+    vus = set()
+    for p in paiements:
+        if p.pk in vus:
+            continue
+        lot = [x for x in paiements if x.groupe_id == p.groupe_id] if p.groupe_id else [p]
+        for x in lot:
+            vus.add(x.pk)
+        lignes.append({
+            'principal': p,
+            'versements': lot,
+            'est_lot': len(lot) > 1,
+            'montant_total': sum(x.montant_paiement for x in lot),
+            'derogation': next((x for x in lot if x.motif_derogation), None),
+        })
+
     montant_paye = dette.montant_paye()
     reste = dette.reste_a_payer()
     taux = (montant_paye / dette.montant_total * 100) if dette.montant_total > 0 else 0
@@ -4208,6 +4337,7 @@ def stats_detail_dette_view(request, dette_id):
         'eleve': eleve,
         'inscription': inscription,
         'paiements': paiements,
+        'lignes': lignes,
         'montant_paye': montant_paye,
         'reste': max(reste, 0),
         'taux': min(round(taux, 1), 100),

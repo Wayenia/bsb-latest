@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.db import models
+from django.db.utils import IntegrityError
 from django.core.validators import FileExtensionValidator, MinValueValidator
 from accounts.models import phone_validator
 from django.utils import timezone
@@ -850,7 +851,11 @@ class Paiement(models.Model):
         verbose_name="Tranche de frais soldée",
         help_text="Tranche du type de frais à laquelle ce versement est affecté (le cas échéant)."
     )
-    numero_quittance=models.CharField(  max_length=100, unique=True,
+    # Plus unique : les paiements d'un même lot d'encaissement (groupe_id) —
+    # plusieurs tranches d'un même frais ou plusieurs frais réglés d'un coup —
+    # partagent intentionnellement le même numéro de quittance (voir
+    # generer_numero_quittance ci-dessous et _encaisser_montant_dette).
+    numero_quittance=models.CharField(  max_length=100, db_index=True,
         null=True, blank=True, verbose_name="Numéro de quittance"
         )
     motif_derogation = models.TextField(
@@ -907,36 +912,44 @@ class Paiement(models.Model):
         centre = self.dette.inscription.formation.centre if self.dette and self.dette.inscription.formation else None
         return centre.code_centre if centre and centre.code_centre else "CENTRE"
 
-    def save(self, *args, **kwargs):
-        from django.db import transaction, IntegrityError
-        if not self.numero_quittance:
-            annee = timezone.now().year
-            code_centre = self._code_centre()
-            prefixe = f"QUIT-{annee}-{code_centre}-"
-            # Suivant du PLUS GRAND numero deja attribue (annules compris) : un
-            # numero de quittance officiel n'est jamais reutilise, meme si une
-            # ligne venait a disparaitre. `count()` seul rouvrirait un numero
-            # apres une suppression.
-            existants = Paiement.objects.filter(
-                numero_quittance__startswith=prefixe
-            ).values_list('numero_quittance', flat=True)
-            dernier = 0
-            for num in existants:
-                try:
-                    dernier = max(dernier, int(num.rsplit('-', 1)[-1]))
-                except (ValueError, AttributeError):
-                    pass
+    @classmethod
+    def generer_numero_quittance(cls, centre):
+        """Numéro de quittance suivant pour ce centre, sur l'année en cours.
+        Suit le PLUS GRAND numéro déjà attribué (annulés compris) : un numéro
+        officiel n'est jamais réutilisé, même après suppression d'une ligne.
+        Appelable une seule fois par lot d'encaissement (`groupe_id`) pour que
+        tous les versements d'un même lot — plusieurs tranches d'un même frais
+        ou plusieurs frais réglés d'un coup — partagent le même numéro, au
+        lieu d'un numéro par ligne. `numero_quittance` n'étant plus contraint
+        unique en base pour permettre ce partage intentionnel, la vérification
+        d'unicité entre lots DIFFÉRENTS se fait ici, au mieux (pas de verrou)."""
+        annee = timezone.now().year
+        code_centre = centre.code_centre if centre and centre.code_centre else "CENTRE"
+        prefixe = f"QUIT-{annee}-{code_centre}-"
+        # Suivant du PLUS GRAND numero deja attribue (annules compris) : un
+        # numero de quittance officiel n'est jamais reutilise, meme si une
+        # ligne venait a disparaitre. `count()` seul rouvrirait un numero
+        # apres une suppression.
+        existants = cls.objects.filter(
+            numero_quittance__startswith=prefixe
+        ).values_list('numero_quittance', flat=True)
+        dernier = 0
+        for num in existants:
+            try:
+                dernier = max(dernier, int(num.rsplit('-', 1)[-1]))
+            except (ValueError, AttributeError):
+                pass
+        for _ in range(50):
             dernier += 1
-            for _ in range(50):
-                self.numero_quittance = f"{prefixe}{dernier:04d}"
-                try:
-                    with transaction.atomic():
-                        return super().save(*args, **kwargs)
-                except IntegrityError:
-                    self.numero_quittance = None
-                    dernier += 1
-                    continue
-            raise IntegrityError("Impossible de générer un numéro de quittance unique après plusieurs tentatives.")
+            candidat = f"{prefixe}{dernier:04d}"
+            if not cls.objects.filter(numero_quittance=candidat).exists():
+                return candidat
+        raise IntegrityError("Impossible de générer un numéro de quittance après plusieurs tentatives.")
+
+    def save(self, *args, **kwargs):
+        if not self.numero_quittance:
+            centre = self.dette.inscription.formation.centre if self.dette and self.dette.inscription.formation else None
+            self.numero_quittance = Paiement.generer_numero_quittance(centre)
         return super().save(*args, **kwargs)
         
 
