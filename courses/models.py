@@ -160,7 +160,7 @@ TITRE_PROFESSIONNEL_CHOICE = [
     ("CQP", "Certificat de Qualification Professionnelle"),
     ("BQP", "Brevet de Qualification Professionnelle"),
     ("BPT", "Brevet Professionnel de Technicien"),
-    ("BPTS", "Brevet Professionnel de Technicien Spécialiste"),
+    ("BPTS", "Brevet Professionnel de Technicien Spécialisé"),
 ]
 
 class Filiere(TimeStampModel):

@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <style>
-  @page { size: A4 landscape; margin: 1.2cm; }
+  @page { size: A4 landscape; margin: 1.2cm 1.2cm 1.6cm 1.2cm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Times New Roman', Times, serif; color: #000; font-size: 9px; }
 
@@ -34,12 +34,13 @@
   }
 
   table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  tr { page-break-inside: avoid; break-inside: avoid; }
   th, td { border: 1px solid #444; padding: 2px 3px; text-align: left; vertical-align: top; }
   th { background: #C0392B; color: #fff; font-size: 8px; text-align: center; }
   td { font-size: 8px; }
   td.centre { text-align: center; }
 
-  .pied-page { margin-top: 14px; font-size: 8px; font-style: italic; color: #444; display: flex; justify-content: space-between; }
+  .pied-page { position: fixed; bottom: -0.8cm; left: 0; right: 0; font-size: 8px; font-style: italic; color: #444; display: flex; justify-content: space-between; }
 </style>
 </head>
 <body>

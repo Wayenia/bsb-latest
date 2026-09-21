@@ -865,6 +865,24 @@ def _draw_pdf_watermark(p, width, height, favicon_path=None):
     except Exception:
         pass
 
+
+def _dessiner_footer_pdf(canvas_obj, doc_obj, genere_le):
+    """Pied de page « BSB — généré sur YU-PAAN le ... », dessiné directement
+    sur le canvas (donc répété sur CHAQUE page) — à appeler depuis le même
+    callback onFirstPage/onLaterPages que _draw_pdf_watermark. Un Paragraph
+    ajouté au flux `story`/`elements` n'apparaît qu'en bas de la dernière
+    page d'un document multi-pages, jamais sur les précédentes."""
+    canvas_obj.saveState()
+    canvas_obj.setFont("Helvetica", 7)
+    canvas_obj.setFillColor(colors.grey)
+    y = 1 * cm
+    canvas_obj.drawString(doc_obj.leftMargin, y, "BSB")
+    canvas_obj.drawRightString(
+        doc_obj.pagesize[0] - doc_obj.rightMargin, y,
+        f"généré sur YU-PAAN le : {genere_le}",
+    )
+    canvas_obj.restoreState()
+
 # ── ELEVE — Télécharger la quittance PDF ──────────────────────────────────────
 @require_role('eleve')
 def telecharger_quittance(request, id):
@@ -982,12 +1000,13 @@ def telecharger_attestation(request, id):
     directeur_centre = MembreAdministration.objects.filter(
         structure=centre, user_type='gestionnaire'
     ).first()
-    directeur_nom = f"{directeur_centre.prenom} {directeur_centre.nom}" if directeur_centre else "Le Directeur du centre"
+    directeur_nom = f"{directeur_centre.prenom} {directeur_centre.nom}" if directeur_centre else "Directeur(rice) du centre"
     # Formules non genrées : le genre du responsable de centre n'apparaît pas
-    # sur les documents (ni civilité, ni « Directrice », ni « La »).
+    # sur les documents (ni civilité « Madame »/« Monsieur », ni article genré
+    # « Le »/« La », ni forme « Directrice » seule).
     directeur_civilite = ""
-    directeur_titre = "Directeur"
-    directeur_titre_article = "Le Directeur"
+    directeur_titre = "Directeur(rice)"
+    directeur_titre_article = "Directeur(rice)"
     ville = centre.province.chef_lieu if centre.province_id else centre.nom_centre
 
     # Modele officiel (par defaut), reversible en 'classique' via DOC_MODELE.
@@ -1395,8 +1414,10 @@ def _quittance_classique_pdf(paiement):
     p.setFillColor(colors.grey)
     p.drawCentredString(width / 2, qr_y - 0.25 * cm, "Scannez pour vérifier")
     p.setFont("Helvetica-Oblique", 6)
-    p.drawRightString(width - 1.5 * cm, max(qr_y - 0.65 * cm, 0.3 * cm),
-                      f"BSB — généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
+    footer_y = max(qr_y - 0.65 * cm, 0.3 * cm)
+    p.drawString(1.5 * cm, footer_y, "BSB")
+    p.drawRightString(width - 1.5 * cm, footer_y,
+                      f"généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
     p.showPage()
     p.save()
     buffer.seek(0)
@@ -2222,29 +2243,9 @@ def paiement_historique_export_pdf(request):
     )
     story.append(Paragraph(signataire, signature_style))
 
-    footer_style_left = ParagraphStyle(
-        "footer_bsb_left_hist", parent=styles["Normal"], fontSize=7,
-        textColor=rl_colors.grey, alignment=0,
-    )
-    footer_style_right = ParagraphStyle(
-        "footer_bsb_right_hist", parent=styles["Normal"], fontSize=7,
-        textColor=rl_colors.grey, alignment=2,
-    )
-    footer_table = Table(
-        [[Paragraph("BSB", footer_style_left), Paragraph(f"généré sur YU-PAAN le : {now}", footer_style_right)]],
-        colWidths=[doc.width / 2, doc.width / 2],
-    )
-    footer_table.setStyle(TableStyle([
-        ('TOPPADDING', (0, 0), (-1, -1), 0),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-        ('LEFTPADDING', (0, 0), (-1, -1), 0),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-    ]))
-    story.append(Spacer(1, 24))
-    story.append(footer_table)
-
     def _watermark_page(canvas_obj, doc_obj):
         _draw_pdf_watermark(canvas_obj, doc_obj.pagesize[0], doc_obj.pagesize[1])
+        _dessiner_footer_pdf(canvas_obj, doc_obj, now)
 
     doc.build(story, onFirstPage=_watermark_page, onLaterPages=_watermark_page)
     buffer.seek(0)
@@ -3626,29 +3627,9 @@ def export_pdf(request):
     )
     story.append(Paragraph(signataire, signature_style))
 
-    footer_style_left = ParagraphStyle(
-        "footer_bsb_left", parent=styles["Normal"], fontSize=7,
-        textColor=rl_colors.grey, alignment=0,
-    )
-    footer_style_right = ParagraphStyle(
-        "footer_bsb_right", parent=styles["Normal"], fontSize=7,
-        textColor=rl_colors.grey, alignment=2,
-    )
-    footer_table = Table(
-        [[Paragraph("BSB", footer_style_left), Paragraph(f"généré sur YU-PAAN le : {now}", footer_style_right)]],
-        colWidths=[doc.width / 2, doc.width / 2],
-    )
-    footer_table.setStyle(TableStyle([
-        ('TOPPADDING', (0, 0), (-1, -1), 0),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-        ('LEFTPADDING', (0, 0), (-1, -1), 0),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-    ]))
-    story.append(Spacer(1, 24))
-    story.append(footer_table)
-
     def _watermark_page(canvas_obj, doc_obj):
         _draw_pdf_watermark(canvas_obj, doc_obj.pagesize[0], doc_obj.pagesize[1])
+        _dessiner_footer_pdf(canvas_obj, doc_obj, now)
 
     doc.build(story, onFirstPage=_watermark_page, onLaterPages=_watermark_page)
     buffer.seek(0)
@@ -4255,6 +4236,18 @@ def _paiements_du_lot(paiement):
     return Paiement.objects.filter(pk=paiement.pk, annule=False)
 
 
+def _libelle_ligne_quittance_groupe(pmt):
+    """Étiquette d'une ligne du tableau « Frais réglés » d'une quittance
+    groupée. Une dette sans tranche (frais de dossier, Reconversion...) se
+    règle en un bloc : le type de frais suffit à l'identifier. Une dette
+    répartie sur plusieurs tranches lors du même encaissement doit au
+    contraire distinguer chaque ligne — même type de frais sinon — d'où la
+    tranche plutôt que le type de frais dès qu'une tranche est renseignée."""
+    if pmt.tranche_frais:
+        return pmt.tranche_frais.libelle
+    return str(pmt.dette.frais_formation.type_frais.libelle)
+
+
 def _est_dernier_versement_inscription(paiement):
     """True si le lot de `paiement` est le versement non annulé le plus
     récent de son inscription — condition nécessaire pour pouvoir l'annuler
@@ -4539,8 +4532,10 @@ def _quittance_tranche_classique_pdf(dette, tranche, paiements):
     p.setFillColor(colors.grey)
     p.drawCentredString(width / 2, qr_y - 0.25 * cm, "Scannez pour vérifier")
     p.setFont("Helvetica-Oblique", 6)
-    p.drawRightString(width - 1.5 * cm, max(qr_y - 0.65 * cm, 0.3 * cm),
-                      f"BSB — généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
+    footer_y = max(qr_y - 0.65 * cm, 0.3 * cm)
+    p.drawString(1.5 * cm, footer_y, "BSB")
+    p.drawRightString(width - 1.5 * cm, footer_y,
+                      f"généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
     p.showPage()
     p.save()
     buffer.seek(0)
@@ -4731,7 +4726,7 @@ def _quittance_groupe_classique_pdf(paiements):
     y -= 0.45 * cm
     p.setFont("Helvetica", 9)
     for pmt in paiements:
-        p.drawString(1.7 * cm, y, str(pmt.dette.frais_formation.type_frais.libelle))
+        p.drawString(1.7 * cm, y, _libelle_ligne_quittance_groupe(pmt))
         p.drawRightString(width - 1.5 * cm, y, f"{pmt.montant_paiement:,.0f} FCFA")
         y -= 0.42 * cm
     y -= 0.1 * cm
@@ -4754,7 +4749,7 @@ def _quittance_groupe_classique_pdf(paiements):
         f"Centre : {inscription.formation.centre}\n"
         f"Métier : {inscription.formation.filiere}\n"
         f"Année de formation : {inscription.annee_scolaire}\n"
-        + "".join(f"{pm.dette.frais_formation.type_frais.libelle} : {pm.montant_paiement:,.0f} FCFA\n" for pm in paiements)
+        + "".join(f"{_libelle_ligne_quittance_groupe(pm)} : {pm.montant_paiement:,.0f} FCFA\n" for pm in paiements)
         + f"Montant total payé : {total_paye:,.0f} FCFA\n"
         f"Reste à payer : {reste:,.0f} FCFA"
     )
@@ -4771,8 +4766,10 @@ def _quittance_groupe_classique_pdf(paiements):
     p.setFillColor(colors.grey)
     p.drawCentredString(width / 2, qr_y - 0.25 * cm, "Scannez pour vérifier")
     p.setFont("Helvetica-Oblique", 6)
-    p.drawRightString(width - 1.5 * cm, max(qr_y - 0.65 * cm, 0.3 * cm),
-                      f"BSB — généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
+    footer_y = max(qr_y - 0.65 * cm, 0.3 * cm)
+    p.drawString(1.5 * cm, footer_y, "BSB")
+    p.drawRightString(width - 1.5 * cm, footer_y,
+                      f"généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
     p.showPage()
     p.save()
     buffer.seek(0)
@@ -4815,7 +4812,7 @@ def _quittance_groupe_officielle_pdf(request, paiements):
         'colonnes': [{'libelle': "Type de frais"},
                      {'libelle': "Montant dû", 'num': True}, {'libelle': "Montant payé", 'num': True}],
         'lignes': [[
-            {'valeur': p.dette.frais_formation.type_frais.libelle},
+            {'valeur': _libelle_ligne_quittance_groupe(p)},
             {'valeur': fcfa(p.dette.montant_total), 'num': True},
             {'valeur': fcfa(p.montant_paiement), 'num': True}] for p in paiements],
         'total': fcfa(total_paye),
@@ -5463,32 +5460,11 @@ def formateur_export(request, formation_id, format):
         )
         elements.append(Paragraph(f"Le Formateur — {formateur.nom} {formateur.prenom}", signature_style))
 
-        footer_style_left = ParagraphStyle(
-            'footer_bsb_left', parent=styles['Normal'], fontSize=7,
-            textColor=rl_colors.grey, alignment=0,
-        )
-        footer_style_right = ParagraphStyle(
-            'footer_bsb_right', parent=styles['Normal'], fontSize=7,
-            textColor=rl_colors.grey, alignment=2,
-        )
-        footer_table = Table(
-            [[
-                Paragraph("BSB", footer_style_left),
-                Paragraph(f"généré sur YU-PAAN le : {timezone.now().strftime('%d/%m/%Y à %H:%M')}", footer_style_right),
-            ]],
-            colWidths=[doc.width / 2, doc.width / 2],
-        )
-        footer_table.setStyle(TableStyle([
-            ('TOPPADDING', (0, 0), (-1, -1), 0),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-            ('LEFTPADDING', (0, 0), (-1, -1), 0),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-        ]))
-        elements.append(Spacer(1, 24))
-        elements.append(footer_table)
+        now_fe = timezone.now().strftime('%d/%m/%Y à %H:%M')
 
         def _watermark_page_fe(canvas_obj, doc_obj):
             _draw_pdf_watermark(canvas_obj, doc_obj.pagesize[0], doc_obj.pagesize[1], favicon_path)
+            _dessiner_footer_pdf(canvas_obj, doc_obj, now_fe)
 
         doc.build(elements, onFirstPage=_watermark_page_fe, onLaterPages=_watermark_page_fe)
         buffer.seek(0)
