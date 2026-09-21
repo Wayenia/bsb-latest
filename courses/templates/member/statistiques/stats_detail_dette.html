@@ -265,6 +265,24 @@
                 </button>
                 {% endif %}
               {% endif %}
+              {% if p.motif_derogation %}
+              <button type="button" class="text-sm text-amber-600 hover:underline ml-2"
+                      data-action="ouvrir-derogation" data-derogation-source="derogation-tpl-{{ p.id }}">
+                Dérogation
+              </button>
+              <template id="derogation-tpl-{{ p.id }}">
+                <p class="text-xs font-bold text-gray-500 uppercase mb-1">Motif de la dérogation</p>
+                <p class="text-sm text-gray-800 mb-3">{{ p.motif_derogation|linebreaksbr }}</p>
+                {% if p.piece_jointe_derogation %}
+                <a href="{{ p.piece_jointe_derogation.url }}" target="_blank"
+                   class="text-sm font-semibold text-emerald-600 hover:underline">
+                  Visualiser la pièce jointe justificative
+                </a>
+                {% else %}
+                <p class="text-sm text-gray-500">Aucune pièce jointe enregistrée.</p>
+                {% endif %}
+              </template>
+              {% endif %}
             </td>
           </tr>
           {% empty %}
@@ -556,6 +574,48 @@ document.getElementById('modalAnnulation').addEventListener('click', function (e
 </script>
 {% endif %}
 
+{% comment %} MODAL DÉROGATION — motif + pièce jointe fournis lors d'un
+   versement inférieur au montant dû d'une tranche primordiale. Le contenu
+   provient d'un <template> rendu côté serveur (échappé par Django) et cloné
+   tel quel, jamais reconstruit depuis une chaîne. {% endcomment %}
+<div id="modalDerogation" class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(0,0,0,0.45)]">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+    <div class="flex justify-between items-center mb-[1rem]">
+      <h2 class="font-[800] text-[1.1rem] text-[#374151] m-[0]">Dérogation du versement</h2>
+      <button type="button" data-action="fermer-derogation" class="border-0 bg-transparent text-[1.4rem] leading-[1] text-[#9ca3af] cursor-pointer">&times;</button>
+    </div>
+    <div id="modalDerogationCorps"></div>
+    <div class="flex justify-end mt-4">
+      <button type="button" data-action="fermer-derogation" class="px-4 py-2 text-sm font-semibold border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+function ouvrirModalDerogation(sourceId) {
+  var tpl = document.getElementById(sourceId);
+  if (!tpl) return;
+  var corps = document.getElementById('modalDerogationCorps');
+  corps.innerHTML = '';
+  corps.appendChild(tpl.content.cloneNode(true));
+  var modal = document.getElementById('modalDerogation');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function fermerModalDerogation() {
+  var modal = document.getElementById('modalDerogation');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+document.getElementById('modalDerogation').addEventListener('click', function (e) {
+  if (e.target === this) fermerModalDerogation();
+});
+</script>
+
 {% comment %} Délégation des clics — TOUJOURS rendue : elle ouvre aussi bien le
    modal d'encaissement (dette sans aucun versement) que le modal d'annulation
    (dette soldée). Chaque cas est protégé par un test d'existence. {% endcomment %}
@@ -577,6 +637,13 @@ document.addEventListener('click', function (e) {
       break;
     case 'fermer-annulation':
       if (typeof fermerModalAnnulation === 'function') fermerModalAnnulation();
+      break;
+    case 'ouvrir-derogation':
+      if (typeof ouvrirModalDerogation === 'function')
+        ouvrirModalDerogation(el.dataset.derogationSource);
+      break;
+    case 'fermer-derogation':
+      if (typeof fermerModalDerogation === 'function') fermerModalDerogation();
       break;
   }
 });
