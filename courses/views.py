@@ -20,7 +20,7 @@ from openpyxl.cell.cell import MergedCell
 from courses.forms import PersonalInfoForm,PaiementForm
 from .models import (CentreEtFiliere, Filiere, Inscription, PieceJointeInscription
     ,DocumentEleve,Paiement,Dette,CentreFormation,AnneeScolaire,Module
-    ,PROGRAMME_FILTRE_CHOICES
+    ,PROGRAMME_FILTRE_CHOICES,Hebergement,DemandeHebergement
     )
 from .forms import FiliereForm
 from .filters import CentreFormationFilter, FiliereFilter
@@ -966,6 +966,59 @@ def telecharger_recepisse(request, id):
     return response
 
 
+# ── RÉCÉPISSÉ DE DÉCISION SUR UNE DEMANDE D'HÉBERGEMENT (validée/rejetée) ─────
+@login_required
+def telecharger_recepisse_hebergement(request, id):
+    demande = get_object_or_404(
+        DemandeHebergement.objects.select_related(
+            'hebergement__centre__direction', 'hebergement__annee_scolaire', 'inscription__eleve',
+        ),
+        id=id
+    )
+
+    if demande.inscription.eleve != request.user.eleve:
+        messages.error(request, "Action non autorisée.")
+        return redirect('courses:my_subscriptions')
+
+    if demande.statut == 'en_attente':
+        messages.error(request, "Cette demande d'hébergement est encore en attente de décision.")
+        return redirect('courses:my_subscriptions')
+
+    centre = demande.hebergement.centre
+    header_left, header_right = _pdf_header_lines(centre)
+    numero = f"HEB-{demande.id:06d}"
+
+    if demande.statut == 'validee':
+        titre_document = "Récépissé de validation de la demande d'hébergement"
+    else:
+        titre_document = "Récépissé de rejet de la demande d'hébergement"
+
+    # Modele officiel (par defaut), reversible en 'classique' via DOC_MODELE.
+    if getattr(settings, 'DOC_MODELE', 'officiel') != 'classique':
+        reponse = HttpResponse(
+            _recepisse_hebergement_officiel_pdf(request, demande, titre_document, numero),
+            content_type='application/pdf')
+        reponse['Content-Disposition'] = f'attachment; filename="recepisse_hebergement_{demande.id}.pdf"'
+        return reponse
+
+    html_string = render_to_string('student/subscription/recepisse_hebergement_pdf.html', {
+        'demande': demande,
+        'eleve': demande.inscription.eleve,
+        'annee_scolaire': demande.hebergement.annee_scolaire,
+        'centre': centre,
+        'numero_dossier': numero,
+        'titre_document': titre_document,
+        'header_left': header_left,
+        'header_right': header_right,
+        'favicon_data_uri': _pdf_logo_data_uri(),
+    })
+    pdf_file = weasyprint.HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
+
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="recepisse_hebergement_{demande.id}.pdf"'
+    return response
+
+
 # ── ATTESTATION D'INSCRIPTION (nécessite au moins un paiement) ────────────────
 @login_required
 def telecharger_attestation(request, id):
@@ -1229,6 +1282,36 @@ def _recepisse_officiel_pdf(request, inscription, titre_document, numero_dossier
     return _document_officiel_pdf(request, contexte)
 
 
+def _recepisse_hebergement_officiel_pdf(request, demande, titre_document, numero):
+    """Récépissé de décision (validation/rejet) sur une demande d'hébergement,
+    même gabarit officiel que le récépissé d'inscription."""
+    eleve = demande.inscription.eleve
+    heb = demande.hebergement
+    date_decision = demande.date_decision or timezone.now()
+    libelle_statut = "Demande validée" if demande.statut == "validee" else "Demande rejetée"
+    formule = "Le présent récépissé atteste la décision rendue sur la demande d'hébergement."
+    if demande.statut == "rejetee" and demande.motif_rejet:
+        formule = f"Motif du rejet : {demande.motif_rejet}"
+    contexte = {
+        'titre': titre_document,
+        'numero_libelle': "Référence", 'numero': numero,
+        'date': date_decision.strftime('%d/%m/%Y'),
+        'partie_gauche': {'titre': "Apprenant", 'lignes': [
+            f"{eleve.nom} {eleve.prenom}", f"Matricule : {eleve.matricule or '—'}",
+            f"Année : {heb.annee_scolaire}"]},
+        'partie_droite': {'titre': "Centre d'hébergement", 'lignes': [
+            str(heb.centre), heb.centre.direction.nom_direction if heb.centre and heb.centre.direction else ""]},
+        'colonnes': [{'libelle': "Centre"}, {'libelle': "Année scolaire"}, {'libelle': "Statut"}],
+        'lignes': [[
+            {'valeur': str(heb.centre)},
+            {'valeur': str(heb.annee_scolaire)},
+            {'valeur': libelle_statut}]],
+        'formule': formule,
+        'qr_uri': _qr_data_uri(f"BSB|HEB|{numero}|{demande.statut}|{date_decision:%d%m%Y}"),
+    }
+    return _document_officiel_pdf(request, contexte)
+
+
 def _attestation_officielle_pdf(request, inscription, directeur_nom, directeur_titre_article, ville):
     """Attestation d'inscription au format officiel (acte signé, sans QR)."""
     from django.utils.html import escape
@@ -1449,6 +1532,24 @@ def download_quittance(request,id):
     reponse = HttpResponse(_quittance_classique_pdf(paiement), content_type='application/pdf')
     reponse['Content-Disposition'] = f'attachment; filename="quittance_{paiement.numero_quittance}.pdf"'
     return reponse
+
+
+def _hebergement_disponible_pour(insc):
+    """Hébergement actif ouvert à cette inscription (même centre/année, et
+    métiers vide ou incluant celui de l'inscription), ou None. Dossier non
+    validé = pas d'hébergement proposé. Réutilisé par student_dashboard (au
+    moins un bouton visible ?) et my_subscriptions (lequel, par inscription)."""
+    if insc.statut != 'valide' or not insc.formation_id:
+        return None
+    return Hebergement.objects.filter(
+        centre_id=insc.formation.centre_id,
+        annee_scolaire_id=insc.annee_scolaire_id,
+        statut='actif',
+    ).filter(
+        Q(metiers__isnull=True) | Q(metiers=insc.formation_id)
+    ).distinct().first()
+
+
 # STUDENT DASHBOARD
 @login_required
 def student_dashboard(request):
@@ -1462,10 +1563,24 @@ def student_dashboard(request):
         .annotate(total_frais=Sum('frais__montant'))
         .order_by('-date_lancement')
     )
+
+    # Bouton « Demande d'hébergement » à côté de « Déposer ma candidature » :
+    # visible dès qu'au moins une inscription validée a un hébergement actif
+    # disponible pour lequel aucune demande n'a encore été soumise — même
+    # condition que le bouton par inscription sur my_subscriptions, où
+    # l'apprenant choisit ensuite l'inscription/hébergement concerné.
+    peut_demander_hebergement = False
+    for insc in Inscription.objects.filter(eleve=request.user.eleve, statut='valide').select_related('formation__centre'):
+        heb = _hebergement_disponible_pour(insc)
+        if heb and not DemandeHebergement.objects.filter(hebergement=heb, inscription=insc).exists():
+            peut_demander_hebergement = True
+            break
+
     context = {
         'my_subscriptions': Inscription.objects.filter(eleve=request.user.eleve).count(),
         'available_career_count': available_career_count,
         'active_careers': active_careers,
+        'peut_demander_hebergement': peut_demander_hebergement,
     }
     return render(request, 'student/dashboard/dashboard.html', context)
 
@@ -1503,8 +1618,56 @@ def my_subscriptions(request):
         total_paye = sum(d.montant_paye() for d in insc.dettes.all())
         insc.est_solde = (insc.statut == 'valide' and total_du > 0 and total_paye >= total_du)
 
+        # Hébergement : proposé seulement si le dossier est validé et qu'un
+        # hébergement actif existe pour ce centre/cette année, ouvert à ce
+        # métier (metiers vide = ouvert à tous les métiers du centre).
+        insc.hebergement_disponible = _hebergement_disponible_pour(insc)
+        insc.demande_hebergement = None
+        if insc.hebergement_disponible:
+            insc.demande_hebergement = DemandeHebergement.objects.filter(
+                hebergement=insc.hebergement_disponible, inscription=insc
+            ).first()
+
     context = {'subscriptions': subscriptions, 'deja_reinscrites_ids': deja_reinscrites_ids}
     return render(request, 'student/dashboard/my_subscriptions.html', context)
+
+
+# DEMANDE D'HÉBERGEMENT (brief + soumission)
+@login_required
+def demande_hebergement_brief_view(request, hebergement_id, inscription_id):
+    from django.http import Http404
+
+    heb = get_object_or_404(Hebergement, pk=hebergement_id, statut='actif')
+    insc = get_object_or_404(
+        Inscription, pk=inscription_id, eleve=request.user.eleve, statut='valide'
+    )
+    # L'hébergement doit correspondre au centre/année de cette inscription et,
+    # si des métiers sont précisés, inclure celui de l'inscription (metiers
+    # vide = ouvert à tous les métiers du centre).
+    metiers_ok = not heb.metiers.exists() or heb.metiers.filter(pk=insc.formation_id).exists()
+    if insc.formation.centre_id != heb.centre_id or insc.annee_scolaire_id != heb.annee_scolaire_id or not metiers_ok:
+        raise Http404("Cet hébergement n'est pas disponible pour cette inscription.")
+
+    demande = DemandeHebergement.objects.filter(hebergement=heb, inscription=insc).first()
+
+    if request.method == 'POST' and not demande:
+        if heb.complet:
+            messages.error(request, "Cet hébergement est complet, votre demande ne peut pas être soumise.")
+            return redirect('courses:my_subscriptions')
+        DemandeHebergement.objects.create(hebergement=heb, inscription=insc)
+        messages.success(request, "Votre demande d'hébergement a été soumise avec succès. Vous serez notifié(e) de la décision.")
+        return redirect('courses:my_subscriptions')
+
+    frais_lies = list(heb.frais.all())
+    context = {
+        'hebergement': heb,
+        'inscription': insc,
+        'demande': demande,
+        'frais_lies': frais_lies,
+        'total_frais': sum(f.montant for f in frais_lies),
+    }
+    return render(request, 'student/subscription/demande_hebergement_brief.html', context)
+
 
 @login_required
 def api(request):
@@ -1739,6 +1902,17 @@ def rejeter_inscription(request,id):
 
 @require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
 def paiement_list(request):
+    return _paiement_list_core(request, hebergement_only=False)
+
+
+@require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
+def hebergement_paiement_list(request):
+    """Même écran que `paiement_list`, mais restreint aux dettes d'hébergement
+    (frais_formation.hebergement non nul) — « Scolarité / Encaisser hébergement »."""
+    return _paiement_list_core(request, hebergement_only=True)
+
+
+def _paiement_list_core(request, hebergement_only=False):
     """
     Par défaut : inscriptions dont le reste à payer est strictement positif,
     dans le périmètre de l'utilisateur connecté (son centre pour un
@@ -1805,10 +1979,17 @@ def paiement_list(request):
     # SQL sur deux niveaux de relations serait fragile.
     inscriptions_avec_reste = []
     for insc in inscriptions_qs:
-        insc.total_du = sum(d.montant_total for d in insc.dettes.all())
+        dettes = insc.dettes.all()
+        if hebergement_only:
+            dettes = [d for d in dettes if d.frais_formation_id and d.frais_formation.hebergement_id]
+            if not dettes:
+                # Pas de dette d'hébergement pour cette inscription : hors périmètre
+                # de cet écran, y compris en recherche.
+                continue
+        insc.total_du = sum(d.montant_total for d in dettes)
         insc.total_paye = sum(
             p.montant_paiement
-            for d in insc.dettes.all()
+            for d in dettes
             for p in d.paiements.all()
             if not p.annule
         )
@@ -1838,6 +2019,7 @@ def paiement_list(request):
             'scope_label': scope_labels.get(scope, "votre centre"),
             'multi_centre': multi_centre,
             'peut_rechercher_tous_centres': peut_rechercher_tous_centres,
+            'hebergement_only': hebergement_only,
         })
 
     # Accordeon centres -> inscriptions : les deux niveaux sont pagines
@@ -1874,6 +2056,7 @@ def paiement_list(request):
         'scope_label': scope_labels.get(scope, "votre centre"),
         'multi_centre': multi_centre,
         'peut_rechercher_tous_centres': peut_rechercher_tous_centres,
+        'hebergement_only': hebergement_only,
     })
 
 
@@ -1924,6 +2107,49 @@ def _paiements_historique_qs(request):
         paiements = paiements.filter(date_paiement__date__lte=date_fin)
 
     return paiements, scope, centres_qs, directions_qs, q, date_debut, date_fin
+
+
+def _appliquer_filtres_avances_historique(request, paiements_qs, centres_qs, scope):
+    """Filtres avancés « façon Statistiques » (Direction, Centre, Métier,
+    Année, Statut d'inscription, Région, Genre, Statut de paiement, Type de
+    programme) + 2 filtres propres à l'historique (Quittance, Dérogation).
+    Réutilise _apply_stats_filters pour les 9 premiers — mêmes noms de
+    paramètres GET, même comportement, garanti par construction. N'applique
+    les filtres « façon Statistiques » que si l'utilisateur a la permission
+    dédiée : ils étaient déjà soumis à permission côté Statistiques, donc un
+    caissier qui n'y a pas accès ne doit pas en hériter ici (superuser
+    toujours autorisé)."""
+    filtres_avances_actifs = request.user.is_superuser or request.user.has_perm('courses.filtrer_historique_avance')
+    filters = {}
+    if filtres_avances_actifs:
+        centre_ids = list(centres_qs.values_list('id', flat=True))
+        inscriptions_qs = Inscription.objects.filter(formation__centre_id__in=centre_ids)
+        dettes_qs = Dette.objects.filter(inscription__formation__centre_id__in=centre_ids)
+        _, _, paiements_qs, filters = _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scope)
+
+    quittance_f = request.GET.get('quittance', '').strip()
+    if quittance_f == 'annulees':
+        paiements_qs = paiements_qs.filter(annule=True)
+    elif quittance_f == 'valides':
+        paiements_qs = paiements_qs.filter(annule=False)
+
+    derogation_f = request.GET.get('derogation', '').strip()
+    if derogation_f == 'avec':
+        paiements_qs = paiements_qs.filter(motif_derogation__isnull=False).exclude(motif_derogation='')
+    elif derogation_f == 'sans':
+        paiements_qs = paiements_qs.filter(Q(motif_derogation__isnull=True) | Q(motif_derogation=''))
+
+    type_f = request.GET.get('type', '').strip()
+    if type_f == 'hebergement':
+        paiements_qs = paiements_qs.filter(dette__frais_formation__hebergement__isnull=False)
+    elif type_f == 'formation':
+        paiements_qs = paiements_qs.filter(dette__frais_formation__formation__isnull=False)
+
+    filters['quittance_f'] = quittance_f
+    filters['derogation_f'] = derogation_f
+    filters['type_f'] = type_f
+    filters['filtres_avances_actifs'] = filtres_avances_actifs
+    return paiements_qs, filters
 
 
 def _annoter_recouvrement_apprenant(paiements_qs):
@@ -2016,6 +2242,8 @@ def paiement_historique(request):
     paiements_qs, scope, centres_qs, directions_qs, q, date_debut, date_fin = _paiements_historique_qs(request)
     multi_centre = scope in ('global', 'direction')
 
+    paiements_qs, filtres_avances = _appliquer_filtres_avances_historique(request, paiements_qs, centres_qs, scope)
+
     # Ligne total : somme des versements non annulés sur toute la période
     # filtrée (pas seulement la page affichée).
     total_periode = paiements_qs.filter(annule=False).aggregate(s=Sum('montant_paiement'))['s'] or 0
@@ -2034,14 +2262,22 @@ def paiement_historique(request):
     # « colonnes masquées » que le reste, voir bo-tableau.js).
     lignes = _grouper_paiements_par_lot(paiements)
 
-    # Querystring des filtres actifs, pour que les liens de pagination ne les
-    # perdent pas en changeant de page.
-    from urllib.parse import urlencode
-    qs_filtres = urlencode({k: v for k, v in {'q': q, 'date_debut': date_debut, 'date_fin': date_fin}.items() if v})
+    # Querystring des filtres actifs (tous, pas seulement q/dates — desormais
+    # potentiellement centre/direction/filiere/... aussi), pour que les liens
+    # de pagination ne les perdent pas en changeant de page.
+    qd_filtres = request.GET.copy()
+    qd_filtres.pop('page', None)
+    qs_filtres = qd_filtres.urlencode()
 
-    return render(request, 'member/paiement/historique.html', {
+    # Pagination élidée (1, 2, 3 … 12) — Précédent/Suivant restent affichés
+    # mais grisés en bout de liste, au lieu de disparaître (cohérent avec le
+    # reste du back-office).
+    pages_elidees = paiements.paginator.get_elided_page_range(paiements.number, on_each_side=1, on_ends=1)
+
+    context = {
         'paiements': paiements,
         'lignes': lignes,
+        'pages_elidees': pages_elidees,
         'scope': scope,
         'scope_label': SCOPE_LABELS_PAIEMENT.get(scope, "votre centre"),
         'multi_centre': multi_centre,
@@ -2050,12 +2286,51 @@ def paiement_historique(request):
         'date_fin': date_fin,
         'total_periode': total_periode,
         'qs_filtres': qs_filtres,
-    })
+        'filtres_avances_actifs': filtres_avances.get('filtres_avances_actifs', False),
+        'f_quittance':  filtres_avances.get('quittance_f', ''),
+        'f_derogation': filtres_avances.get('derogation_f', ''),
+        'f_type': filtres_avances.get('type_f', ''),
+    }
+
+    if filtres_avances.get('filtres_avances_actifs'):
+        from .models import Region
+        centre_id = filtres_avances.get('centre_id')
+        direction_id = filtres_avances.get('direction_id')
+        centres_dropdown = centres_qs
+        if direction_id and scope == 'global':
+            centres_dropdown = centres_dropdown.filter(direction_id=direction_id)
+        if scope == 'global':
+            regions_dropdown = Region.objects.all()
+        else:
+            regions_dropdown = Region.objects.filter(
+                provinces__centre_formations__id__in=list(centres_qs.values_list('id', flat=True))
+            ).distinct()
+        context.update({
+            'centres':    centres_dropdown.order_by('nom_centre'),
+            'directions': directions_qs.order_by('nom_direction'),
+            'filieres':   Filiere.objects.filter(is_active=True).order_by('nom_filiere'),
+            'annees':     AnneeScolaire.objects.all().order_by('-libelle_anne'),
+            'regions':    regions_dropdown.order_by('nom_region'),
+            'genres':     Utilisateur.SEXE_CHOICE,
+            'types_programme': PROGRAMME_FILTRE_CHOICES,
+            'f_centre':     centre_id,
+            'f_direction':  direction_id,
+            'f_filiere':    filtres_avances.get('filiere_id'),
+            'f_annee':      filtres_avances.get('annee_id'),
+            'f_statut':     filtres_avances.get('statut_f'),
+            'f_region':     filtres_avances.get('region_id'),
+            'f_genre':      filtres_avances.get('genre'),
+            'f_statut_paiement': filtres_avances.get('statut_paiement_f'),
+            'f_type_programme':  filtres_avances.get('type_programme_f'),
+        })
+
+    return render(request, 'member/paiement/historique.html', context)
 
 
 @require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
 def paiement_historique_export_csv(request):
     paiements_qs, scope, centres_qs, directions_qs, q, date_debut, date_fin = _paiements_historique_qs(request)
+    paiements_qs, _ = _appliquer_filtres_avances_historique(request, paiements_qs, centres_qs, scope)
     paiements_qs = _annoter_recouvrement_apprenant(paiements_qs)
 
     response = HttpResponse(content_type="text/csv; charset=utf-8-sig")
@@ -2104,6 +2379,7 @@ def paiement_historique_export_csv(request):
 @require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
 def paiement_historique_export_excel(request):
     paiements_qs, scope, centres_qs, directions_qs, q, date_debut, date_fin = _paiements_historique_qs(request)
+    paiements_qs, _ = _appliquer_filtres_avances_historique(request, paiements_qs, centres_qs, scope)
     paiements_qs = _annoter_recouvrement_apprenant(paiements_qs)
 
     wb = Workbook()
@@ -2181,6 +2457,7 @@ def paiement_historique_export_excel(request):
 @require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
 def paiement_historique_export_pdf(request):
     paiements_qs, scope, centres_qs, directions_qs, q, date_debut, date_fin = _paiements_historique_qs(request)
+    paiements_qs, _ = _appliquer_filtres_avances_historique(request, paiements_qs, centres_qs, scope)
     paiements_qs = _annoter_recouvrement_apprenant(paiements_qs)
 
     buffer = io.BytesIO()
@@ -2807,6 +3084,7 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
     date_fin     = request.GET.get("date_fin")
     statut_paiement_f = request.GET.get("statut_paiement")
     type_programme_f  = request.GET.get("type_programme")
+    type_frais_f      = request.GET.get("type_frais")
 
     if direction_id and scope == "global":
         inscriptions_qs = inscriptions_qs.filter(formation__centre__direction_id=direction_id)
@@ -2887,11 +3165,26 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
         dettes_qs = dettes_qs.filter(inscription_id__in=ids_ok)
         paiements_qs = paiements_qs.filter(dette__inscription_id__in=ids_ok)
 
+    # Type de frais (Formation / Hébergement) : ne filtre QUE les dettes/
+    # paiements — un dossier (inscriptions_qs) n'a pas de « type », seuls les
+    # frais qui lui sont rattachés en ont un. Sans ce filtre, les montants
+    # dus/encaissés et le taux de recouvrement mélangent scolarité et
+    # hébergement dans les mêmes KPI (obs. DG).
+    if type_frais_f == "hebergement":
+        dettes_qs = dettes_qs.filter(frais_formation__hebergement__isnull=False)
+        paiements_qs = paiements_qs.filter(dette__frais_formation__hebergement__isnull=False)
+    elif type_frais_f == "formation":
+        dettes_qs = dettes_qs.filter(frais_formation__formation__isnull=False)
+        paiements_qs = paiements_qs.filter(dette__frais_formation__formation__isnull=False)
+    else:
+        type_frais_f = ""
+
     filters = {
         "centre_id": centre_id, "direction_id": direction_id, "filiere_id": filiere_id,
         "annee_id": annee_id, "statut_f": statut_f, "region_id": region_id,
         "genre": genre, "date_debut": date_debut, "date_fin": date_fin,
         "statut_paiement_f": statut_paiement_f, "type_programme_f": type_programme_f,
+        "type_frais_f": type_frais_f,
     }
     return inscriptions_qs, dettes_qs, paiements_qs, filters
 
@@ -2964,6 +3257,10 @@ def _resume_filtres_stats(filters, exclure_filiere=False, exclure=()):
         from .models import PROGRAMME_FILTRE_CHOICES
         tp_labels = dict(PROGRAMME_FILTRE_CHOICES)
         parties.append(f"Type de programme : {tp_labels.get(filters['type_programme_f'], filters['type_programme_f'])}")
+
+    if filters.get("type_frais_f") and "type_frais" not in exclure:
+        tf_labels = {"formation": "Formation", "hebergement": "Hébergement"}
+        parties.append(f"Type de frais : {tf_labels.get(filters['type_frais_f'], filters['type_frais_f'])}")
 
     if filters.get("statut_f"):
         statut_labels = dict(Inscription.STATUT_CHOICE)
@@ -3110,6 +3407,7 @@ def statistiques_view(request):
     date_fin     = filters["date_fin"]
     statut_paiement_f = filters["statut_paiement_f"]
     type_programme_f  = filters["type_programme_f"]
+    type_frais_f      = filters["type_frais_f"]
 
     # Narrowing du dropdown "centre" affiché à l'écran quand une direction est sélectionnée.
     if direction_id and scope == "global":
@@ -3137,8 +3435,12 @@ def statistiques_view(request):
         ).distinct()
 
     stats = {
-        "total_eleves":           Eleve.objects.filter(inscription__in=inscriptions_qs).distinct().count(),
-        "inscriptions_validees":  inscriptions_qs.filter(statut__in=["valide", "valide_paye", "Valide"]).count(),
+        # « Dossiers de candidature » regroupe TOUT le périmètre filtré (un
+        # dossier par inscription, y compris les réinscriptions d'un même
+        # apprenant) — pas les apprenants distincts (obs. DG : le KPI doit
+        # compter des dossiers, comme les autres compteurs de ce bloc).
+        "total_dossiers":   inscriptions_qs.count(),
+        "dossiers_valides": inscriptions_qs.filter(statut__in=["valide", "valide_paye", "Valide"]).count(),
         "inscriptions_en_cours":  inscriptions_qs.filter(statut="en_cours").count(),
         "inscriptions_rejetees":  inscriptions_qs.filter(statut="rejete").count(),
         "total_encaisse":         total_encaisse,
@@ -3162,12 +3464,48 @@ def statistiques_view(request):
         for f in top_filieres_qs
     ]
 
+    # ── Dossiers par centre (statut + avancement du paiement) ────────────────
+    # Meme perimetre que le tableau de recouvrement ci-dessous. « Soldé » /
+    # « Partiellement soldé » reprend la logique du filtre Statut de paiement
+    # (_apply_stats_filters) mais decomposee par centre plutot qu'en bloc.
+    centres_pour_recouvrement = _centres_recouvrement(centres_scope, scope, direction_id, centre_id, region_id)
+    dossiers_centres = []
+    for centre in centres_pour_recouvrement.order_by("nom_centre"):
+        c_inscriptions = inscriptions_qs.filter(formation__centre=centre)
+        soldes = partiels = 0
+        for insc in c_inscriptions.prefetch_related('dettes__paiements', 'dettes__frais_formation'):
+            dettes_i = insc.dettes.all()
+            if type_frais_f == "hebergement":
+                dettes_i = [d for d in dettes_i if d.frais_formation_id and d.frais_formation.hebergement_id]
+            elif type_frais_f == "formation":
+                dettes_i = [d for d in dettes_i if d.frais_formation_id and d.frais_formation.formation_id]
+            total_du_i = sum(d.montant_total for d in dettes_i)
+            if total_du_i <= 0:
+                continue
+            total_paye_i = sum(
+                p.montant_paiement for d in dettes_i for p in d.paiements.all() if not p.annule
+            )
+            if total_paye_i >= total_du_i:
+                soldes += 1
+            elif total_paye_i > 0:
+                partiels += 1
+        dossiers_centres.append({
+            "nom_centre": centre.nom_centre,
+            "dossiers":   c_inscriptions.count(),
+            "valides":    c_inscriptions.filter(statut__in=["valide", "valide_paye", "Valide"]).count(),
+            "rejetes":    c_inscriptions.filter(statut="rejete").count(),
+            "en_cours":   c_inscriptions.filter(statut="en_cours").count(),
+            "soldes":     soldes,
+            "partiels":   partiels,
+        })
+    dossiers_paginator = Paginator(dossiers_centres, 5)
+    dossiers_page = dossiers_paginator.get_page(request.GET.get("dpage"))
+
     # ── Taux de recouvrement par centre ───────────────────────────────────────
     # centres_scope est déjà narrowé par direction (ligne ci-dessus, pour le
     # dropdown « Centre ») ; on applique en plus le filtre Centre/Région pour
     # que la table n'énumère que les centres réellement concernés.
     recouvrement_centres = []
-    centres_pour_recouvrement = _centres_recouvrement(centres_scope, scope, direction_id, centre_id, region_id)
     for centre in centres_pour_recouvrement.order_by("nom_centre"):
         c_dettes    = dettes_qs.filter(inscription__formation__centre=centre)
         c_paiements = paiements_qs.filter(dette__inscription__formation__centre=centre)
@@ -3175,6 +3513,9 @@ def statistiques_view(request):
         c_enc = c_paiements.aggregate(s=Sum("montant_paiement"))["s"] or 0
         c_rest = max(c_du - c_enc, 0)
         taux = round(c_enc / c_du * 100, 1) if c_du > 0 else 0
+        c_derogations = c_paiements.filter(
+            annule=False, motif_derogation__isnull=False
+        ).exclude(motif_derogation="").count()
         recouvrement_centres.append({
             "nom_centre":   centre.nom_centre,
             "direction":    centre.direction.nom_direction if centre.direction else "—",
@@ -3183,8 +3524,12 @@ def statistiques_view(request):
             "restant":      c_rest,
             "taux":         taux,
             "inscrits":     inscriptions_qs.filter(formation__centre=centre).count(),
+            "derogations":  c_derogations,
         })
     recouvrement_centres.sort(key=lambda x: x["taux"], reverse=True)
+    recouvrement_par_centre_v2 = sorted(recouvrement_centres, key=lambda x: x["nom_centre"])
+    recouvrement_v2_paginator = Paginator(recouvrement_par_centre_v2, 5)
+    recouvrement_v2_page = recouvrement_v2_paginator.get_page(request.GET.get("rvpage"))
 
     # Ligne total : sur l'ensemble des centres du filtre (pas seulement la
     # page de 5 affichée) — reprend les KPI déjà calculés plus haut, qui
@@ -3195,10 +3540,20 @@ def statistiques_view(request):
         "encaisse": total_encaisse,
         "restant":  total_restant,
         "taux":     taux_global,
+        "derogations": sum(r["derogations"] for r in recouvrement_centres),
     }
 
     recouvrement_paginator = Paginator(recouvrement_centres, 5)
     recouvrement_page = recouvrement_paginator.get_page(request.GET.get("rpage"))
+
+    dossiers_total = {
+        "dossiers": sum(d["dossiers"] for d in dossiers_centres),
+        "valides":  sum(d["valides"] for d in dossiers_centres),
+        "rejetes":  sum(d["rejetes"] for d in dossiers_centres),
+        "en_cours": sum(d["en_cours"] for d in dossiers_centres),
+        "soldes":   sum(d["soldes"] for d in dossiers_centres),
+        "partiels": sum(d["partiels"] for d in dossiers_centres),
+    }
 
     # ── Évolution mensuelle inscriptions (12 derniers mois) ──────────────────
     from django.db.models.functions import TruncMonth
@@ -3259,7 +3614,7 @@ def statistiques_view(request):
             provinces__centre_formations__id__in=centre_ids_scope
         ).distinct()
 
-    # Pagination des deux sections : on conserve les filtres actifs et on retire
+    # Pagination des sections : on conserve les filtres actifs et on retire
     # seulement le parametre de page concerne.
     qd_recouvrement = request.GET.copy()
     qd_recouvrement.pop("rpage", None)
@@ -3269,6 +3624,14 @@ def statistiques_view(request):
     qd_inscriptions.pop("ipage", None)
     querystring_inscriptions = qd_inscriptions.urlencode()
 
+    qd_dossiers = request.GET.copy()
+    qd_dossiers.pop("dpage", None)
+    querystring_dossiers = qd_dossiers.urlencode()
+
+    qd_recouvrement_v2 = request.GET.copy()
+    qd_recouvrement_v2.pop("rvpage", None)
+    querystring_recouvrement_v2 = qd_recouvrement_v2.urlencode()
+
     context = {
         "stats":                  stats,
         "top_filieres":           top_filieres,
@@ -3277,6 +3640,11 @@ def statistiques_view(request):
         "dernieres_inscriptions": dernieres_inscriptions,
         "querystring_recouvrement": querystring_recouvrement,
         "querystring_inscriptions": querystring_inscriptions,
+        "dossiers_centres":       dossiers_page,
+        "dossiers_total":         dossiers_total,
+        "querystring_dossiers":   querystring_dossiers,
+        "recouvrement_v2":        recouvrement_v2_page,
+        "querystring_recouvrement_v2": querystring_recouvrement_v2,
         "scope":                  scope,
         # Filtres disponibles
         "centres":    centres_scope.order_by("nom_centre"),
@@ -3298,6 +3666,7 @@ def statistiques_view(request):
         "f_date_fin":   date_fin,
         "f_statut_paiement": statut_paiement_f,
         "f_type_programme": type_programme_f,
+        "f_type_frais": type_frais_f,
         # Transmises brutes : le template les serialise avec json_script, qui
         # echappe <, > et &, contrairement a json.dumps.
         "evol_labels":       evol_labels,
@@ -3308,6 +3677,19 @@ def statistiques_view(request):
         "top_filieres_count": [f["count"] for f in top_filieres],
     }
     return render(request, gabarit("member/statistiques/statistiques.html"), context)
+
+
+def _libelle_type_programme_export(formation):
+    """Colonne « Type de programme » des exports Inscriptions : pour une
+    formation classique (type_programme = 'formation'), la case porte le
+    Type de formation (Initiale/Continue/Qualifiante...), plus parlant que
+    le simple libellé « Formation » ; Vacances utiles/Reconversion gardent
+    leur propre libellé de type_programme."""
+    if not formation or not formation.type_programme:
+        return "—"
+    if formation.type_programme == "formation":
+        return formation.get_type_formation_display() if formation.type_formation else "—"
+    return formation.get_type_programme_display()
 
 
 # ─── Export CSV ───────────────────────────────────────────────────────────────
@@ -3333,7 +3715,7 @@ def export_csv(request):
     writer.writerow([])
 
     if export_type == "inscriptions":
-        writer.writerow(["N°", "Apprenant", "Matricule", "Sexe", "Téléphone", "Email", "Métier", "Centre", "Direction", "Année", "Statut", "Date inscription"])
+        writer.writerow(["N°", "Apprenant", "Matricule", "Sexe", "Téléphone", "Email", "Métier", "Type de programme", "Centre", "Direction", "Année", "Statut", "Date inscription"])
         for i, insc in enumerate(
             inscriptions_qs.select_related(
                 "eleve", "formation__filiere", "formation__centre__direction", "annee_scolaire"
@@ -3347,6 +3729,7 @@ def export_csv(request):
                 insc.eleve.tel if insc.eleve else "—",
                 insc.eleve.email if insc.eleve else "—",
                 insc.formation.filiere.nom_filiere if insc.formation and insc.formation.filiere else "—",
+                _libelle_type_programme_export(insc.formation),
                 insc.formation.centre.nom_centre if insc.formation and insc.formation.centre else "—",
                 insc.formation.centre.direction.nom_direction if insc.formation and insc.formation.centre and insc.formation.centre.direction else "—",
                 insc.annee_scolaire.libelle_anne if insc.annee_scolaire else "—",
@@ -3435,7 +3818,7 @@ def export_excel(request):
     if export_type == "inscriptions":
         ws.title = "Inscriptions"
         ecrire_resume_filtres()
-        headers = ["N°","Apprenant","Matricule","Sexe","Téléphone","Email","Métier","Centre","Direction","Année","Statut","Date"]
+        headers = ["N°","Apprenant","Matricule","Sexe","Téléphone","Email","Métier","Type de programme","Centre","Direction","Année","Statut","Date"]
         ws.append(headers)
         style_header(ws[ws.max_row])
         for i, insc in enumerate(
@@ -3451,6 +3834,7 @@ def export_excel(request):
                 insc.eleve.tel if insc.eleve else "—",
                 insc.eleve.email if insc.eleve else "—",
                 insc.formation.filiere.nom_filiere if insc.formation and insc.formation.filiere else "—",
+                _libelle_type_programme_export(insc.formation),
                 insc.formation.centre.nom_centre if insc.formation and insc.formation.centre else "—",
                 insc.formation.centre.direction.nom_direction if insc.formation and insc.formation.centre and insc.formation.centre.direction else "—",
                 insc.annee_scolaire.libelle_anne if insc.annee_scolaire else "—",
@@ -3626,9 +4010,9 @@ def export_pdf(request):
 
         from django.utils.html import escape as _escape_xml
 
-        data = [["N°", "Nom(s) et prénom(s)", "Matricule", "Statut"]]
+        data = [["N°", "Nom(s) et prénom(s)", "Matricule", "Type de programme", "Statut"]]
         for i, insc in enumerate(
-            inscriptions_qs.select_related("eleve")
+            inscriptions_qs.select_related("eleve", "formation")
             .prefetch_related("dettes__paiements")
             .order_by("-date_inscription")[:500], 1
         ):
@@ -3648,10 +4032,11 @@ def export_pdf(request):
                 str(i),
                 cell(f"{insc.eleve.nom} {insc.eleve.prenom}") if insc.eleve else "—",
                 cell(insc.eleve.matricule) if insc.eleve and insc.eleve.matricule else "—",
+                cell(_libelle_type_programme_export(insc.formation)),
                 cell("<br/>".join(statut_lignes)),
             ])
 
-        col_widths = [1.2*cm, 10*cm, 5*cm, 9.5*cm]
+        col_widths = [1.0*cm, 9*cm, 4.2*cm, 3.5*cm, 8.5*cm]
         t = Table(data, colWidths=col_widths, repeatRows=1)
         t.setStyle(base_table_style())
         story.append(t)
@@ -5868,6 +6253,18 @@ def page_notifications(request):
     vues = request.session.get('notifs_vues', [])
     tous_ids = list(inscriptions_notif.values_list('id', flat=True))
     request.session['notifs_vues'] = list(set(vues + tous_ids))
+
+    # Décisions sur les demandes d'hébergement : même mécanisme de suivi
+    # "vu/non vu" côté session, mais une clé dédiée (les id se recoupent
+    # avec ceux d'Inscription sinon).
+    demandes_notif = DemandeHebergement.objects.filter(
+        inscription__eleve=request.user,
+        statut__in=["validee", "rejetee"],
+    ).select_related('hebergement__centre', 'inscription__formation__filiere').order_by('-date_decision')
+
+    vues_heb = request.session.get('notifs_vues_hebergement', [])
+    tous_ids_heb = list(demandes_notif.values_list('id', flat=True))
+    request.session['notifs_vues_hebergement'] = list(set(vues_heb + tous_ids_heb))
     request.session.modified = True
 
     notifications = []
@@ -5918,25 +6315,60 @@ def page_notifications(request):
             )
 
         notifications.append({
+            "type": "inscription",
             "inscription": inscription,
             "message": message,
             "is_new": inscription.id not in vues,
+            "date": inscription.date_validation,
         })
+
+    for demande in demandes_notif:
+        if demande.statut == "validee":
+            message = format_html(
+                "<strong>HÉBERGEMENT VALIDÉ</strong><br><br>"
+                "✅ Votre demande d'hébergement au centre <strong>{}</strong> a été "
+                "<strong>validée</strong>.<br><br>"
+                "Les frais d'hébergement ont été ajoutés à votre dossier : rendez-vous sur "
+                "« Mes paiements » pour les régler.",
+                demande.hebergement.centre,
+            )
+        else:
+            message = format_html(
+                "❌ Votre demande d'hébergement au centre <strong>{}</strong> a été "
+                "<strong>rejetée</strong>. <br><strong>Motif :</strong> {}",
+                demande.hebergement.centre,
+                demande.motif_rejet or "Aucun motif précisé.",
+            )
+
+        notifications.append({
+            "type": "hebergement",
+            "demande": demande,
+            "message": message,
+            "is_new": demande.id not in vues_heb,
+            "date": demande.date_decision,
+        })
+
+    notifications.sort(key=lambda n: n["date"] or timezone.now(), reverse=True)
 
     return render(request, 'student/notifications.html', {
         'notifications': notifications,
     })
-    
-    
+
+
 @login_required
 def notifications_count(request):
     """Retourne le nombre de notifications non vues pour la cloche."""
     from django.http import JsonResponse
-    
+
     vues = request.session.get('notifs_vues', [])
+    vues_heb = request.session.get('notifs_vues_hebergement', [])
     count = Inscription.objects.filter(
         eleve=request.user,
         statut__in=["valide", "rejete"]
     ).exclude(id__in=vues).count()
-    
+    count += DemandeHebergement.objects.filter(
+        inscription__eleve=request.user,
+        statut__in=["validee", "rejetee"],
+    ).exclude(id__in=vues_heb).count()
+
     return JsonResponse({'count': count})

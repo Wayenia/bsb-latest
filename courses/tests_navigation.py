@@ -65,8 +65,8 @@ class NavigationTests(TestCase):
         superutilisateur = Utilisateur.objects.create_superuser(
             username='chef', password='x', nom='N', prenom='P', email='c@example.invalid')
         titres = [g['titre'] for g in construire_menu(superutilisateur, '/bsb/dashboard')]
-        self.assertEqual(titres[:4], [
-            'Statistiques', 'Scolarité', 'Prestation et facturation', 'Offre de formation',
+        self.assertEqual(titres[:5], [
+            'Statistiques', 'Scolarité', 'Hébergements', 'Prestation et facturation', 'Offre de formation',
         ])
         self.assertEqual(titres[-1], 'Paramétrage')
 

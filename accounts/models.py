@@ -235,18 +235,41 @@ class Eleve(Utilisateur):
 
         return matricule
 
+    # Champs qui composent numero_identifiant (voir generate_identifiant) : les
+    # modifier doit redeclencher la detection de doublon, pas seulement a la
+    # creation du compte.
+    CHAMPS_IDENTIFIANT = (
+        'date_naissance', 'lieu_naissance',
+        'type_document', 'numero_document', 'date_etablissement_document',
+    )
+
     def save(self, *args, **kwargs):
         if not self.matricule:
             self.matricule = self.generate_matricule()
 
-        if not self.numero_identifiant:
+        # A la creation, ou si l'un des champs d'identite a change depuis la
+        # derniere sauvegarde : ex. un agent corrige lieu_naissance/date_naissance
+        # d'un apprenant via EleveForm (back-office), qui n'expose pas ces
+        # champs en lecture seule contrairement a ProfilEleveForm cote
+        # apprenant. Sans ce controle, l'edition ne redeclenchait jamais la
+        # detection de doublon. Se limiter au changement reel (plutot que
+        # recalculer a chaque sauvegarde) evite de faire deriver l'identifiant
+        # des comptes anciens sur une modification sans rapport (ex. telephone).
+        identite_modifiee = not self.pk
+        if self.pk:
+            ancien = Eleve.objects.filter(pk=self.pk).values(*self.CHAMPS_IDENTIFIANT).first()
+            if ancien and any(ancien[champ] != getattr(self, champ) for champ in self.CHAMPS_IDENTIFIANT):
+                identite_modifiee = True
+
+        if identite_modifiee:
             identifiant = self.generate_identifiant()
-            if Eleve.objects.filter(numero_identifiant=identifiant).exclude(pk=self.pk).exists():
-                raise ValidationError(
-                    "Un apprenant avec les mêmes informations d'identification "
-                    "(NIP, ou nom/prénom/parents/lieu et date de naissance) existe déjà."
-                )
-            self.numero_identifiant = identifiant
+            if identifiant and identifiant != self.numero_identifiant:
+                if Eleve.objects.filter(numero_identifiant=identifiant).exclude(pk=self.pk).exists():
+                    raise ValidationError(
+                        "Un apprenant avec les mêmes informations d'identification "
+                        "(NIP, ou nom/prénom/parents/lieu et date de naissance) existe déjà."
+                    )
+                self.numero_identifiant = identifiant
 
         super().save(*args, **kwargs)
 

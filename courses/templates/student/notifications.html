@@ -14,6 +14,47 @@
     <div class="space-y-4">
       {% for notif in notifications %}
       <article class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+        {% if notif.type == 'hebergement' %}
+        {% if notif.is_new %}
+        <div class="px-5 py-1.5 text-xs font-bold uppercase tracking-wide
+          {% if notif.demande.statut == 'validee' %}bg-green-50 text-green-700 border-b border-green-100{% else %}bg-red-50 text-red-700 border-b border-red-100{% endif %}">
+          Nouveau
+        </div>
+        {% endif %}
+
+        <div class="flex items-start gap-4 p-5">
+          <div class="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center
+            {% if notif.demande.statut == 'validee' %}bg-green-50 text-bsb-green{% else %}bg-red-50 text-bsb-red{% endif %}">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+              <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full border
+                {% if notif.demande.statut == 'validee' %}bg-green-50 text-green-700 border-green-200{% else %}bg-red-50 text-red-700 border-red-200{% endif %}">
+                {% if notif.demande.statut == 'validee' %}Hébergement validé{% else %}Hébergement rejeté{% endif %}
+              </span>
+              <span class="text-xs text-bsb-muted">{{ notif.demande.date_decision|date:"d/m/Y à H\hi" }}</span>
+            </div>
+
+            {# Message deja rendu safe par format_html cote vue. Ne jamais ajouter |safe ici. #}
+            <p class="text-sm text-bsb-ink leading-relaxed">{{ notif.message }}</p>
+
+            <div class="mt-4 flex flex-wrap gap-2">
+              <a href="{% url 'courses:my_subscriptions' %}"
+                 class="inline-flex items-center gap-2 {% if notif.demande.statut == 'validee' %}bg-bsb-green hover:brightness-110 text-white{% else %}bg-white text-bsb-ink border border-slate-200 hover:bg-slate-50{% endif %} text-sm font-bold px-4 py-2 rounded-lg transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H2m0 0l7-7m-7 7l7 7"/></svg>
+                Voir mes demandes d'inscription
+              </a>
+              <a href="{% url 'courses:telecharger_recepisse_hebergement' notif.demande.id %}"
+                 class="inline-flex items-center gap-2 bg-white text-bsb-ink border border-slate-200 hover:bg-slate-50 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+                <svg class="w-4 h-4 text-bsb-muted" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+                Récépissé
+              </a>
+            </div>
+          </div>
+        </div>
+        {% else %}
         {% if notif.is_new %}
         <div class="px-5 py-1.5 text-xs font-bold uppercase tracking-wide
           {% if notif.inscription.statut == 'valide' %}bg-green-50 text-green-700 border-b border-green-100{% else %}bg-red-50 text-red-700 border-b border-red-100{% endif %}">
@@ -60,6 +101,7 @@
             </div>
           </div>
         </div>
+        {% endif %}
       </article>
       {% endfor %}
     </div>

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Demandes d'hébergement | BSB{% endblock %}
+
+{% block content %}
+<div class="bo-large mx-auto py-10 space-y-6">
+    {% include 'partials/messages.html' %}
+
+    <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Demandes d'hébergement</h1>
+            <p class="mt-2 text-sm text-gray-600">Validez ou rejetez les demandes soumises par les apprenants.</p>
+        </div>
+        <a href="{% url 'bsb_admin:hebergement_list' %}"
+           class="mt-4 sm:mt-0 inline-flex items-center px-5 py-3 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-all">
+            Retour aux hébergements
+        </a>
+    </div>
+
+    <form method="get">
+        <div class="bg-white px-4 py-4 border border-gray-200 rounded-lg mb-4 flex gap-3">
+            <div class="sm:w-64">
+                <select name="statut" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500" data-auto-submit>
+                    <option value="">— Tous les statuts —</option>
+                    <option value="en_attente" {% if f_statut == "en_attente" %}selected{% endif %}>En attente</option>
+                    <option value="validee" {% if f_statut == "validee" %}selected{% endif %}>Validée</option>
+                    <option value="rejetee" {% if f_statut == "rejetee" %}selected{% endif %}>Rejetée</option>
+                </select>
+            </div>
+        </div>
+    </form>
+
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        {% if demandes %}
+        <div class="overflow-x-auto">
+            <table class="bo-table-compacte bo-table-adaptable min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Apprenant</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Centre</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Métier</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Date</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Statut</th>
+                        <th class="px-4 py-3 text-right text-[11px] font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for d in demandes %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3" data-label="Apprenant">
+                            <span class="text-sm font-bold text-gray-900">{{ d.inscription.eleve.nom }} {{ d.inscription.eleve.prenom }}</span>
+                            <div class="text-xs text-gray-400">{{ d.inscription.eleve.matricule|default:"—" }}</div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700" data-label="Centre">{{ d.hebergement.centre.nom_centre }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700" data-label="Métier">{{ d.inscription.formation.filiere }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500" data-label="Date">{{ d.date_demande|date:"d/m/Y H:i" }}</td>
+                        <td class="px-4 py-3" data-label="Statut">
+                            {% if d.statut == 'en_attente' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">En attente</span>
+                            {% elif d.statut == 'validee' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">Validée</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">Rejetée</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right text-sm font-medium">
+                            <a href="{% url 'bsb_admin:demande_hebergement_detail' d.id %}"
+                               class="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-50 rounded-lg transition-all">Consulter</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if demandes.has_other_pages %}
+        <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6 flex items-center justify-between">
+            <p class="text-sm text-gray-700">Page {{ demandes.number }} sur {{ demandes.paginator.num_pages }}</p>
+            <nav class="flex flex-wrap items-center gap-1">
+                {% if demandes.has_previous %}
+                <a href="{% querystring page=demandes.previous_page_number %}" class="inline-flex items-center px-3 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50">Précédent</a>
+                {% else %}
+                <span class="inline-flex items-center px-3 py-2 rounded-md border border-gray-200 bg-gray-100 text-sm font-medium text-gray-300 cursor-not-allowed">Précédent</span>
+                {% endif %}
+                {% for num in page_range %}
+                    {% if num == demandes.paginator.ELLIPSIS %}
+                    <span class="inline-flex items-center px-2 py-2 text-sm text-gray-400">{{ num }}</span>
+                    {% elif num == demandes.number %}
+                    <span class="inline-flex items-center px-4 py-2 rounded-md border border-bsb-gold bg-bsb-gold text-sm font-medium text-white">{{ num }}</span>
+                    {% else %}
+                    <a href="{% querystring page=num %}" class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if demandes.has_next %}
+                <a href="{% querystring page=demandes.next_page_number %}" class="inline-flex items-center px-3 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50">Suivant</a>
+                {% else %}
+                <span class="inline-flex items-center px-3 py-2 rounded-md border border-gray-200 bg-gray-100 text-sm font-medium text-gray-300 cursor-not-allowed">Suivant</span>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-12">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucune demande</h3>
+            <p class="text-gray-600">Aucune demande d'hébergement pour l'instant.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

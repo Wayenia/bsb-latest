@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} | Hébergement BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10">
+    {% include 'partials/messages.html' %}
+
+    <div class="mb-8">
+        <div class="flex items-center mb-4">
+            <a href="{% url 'bsb_admin:hebergement_list' %}"
+               class="text-gray-600 hover:text-red-600 mr-4 transition-colors">Retour</a>
+            <div>
+                <h1 class="text-3xl font-black text-gray-900">{{ action }} un hébergement</h1>
+                <p class="text-gray-500 text-sm mt-1">Remplissez les informations ci-dessous</p>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" class="space-y-6">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+            <h3 class="text-sm font-bold text-red-800">Erreur dans le formulaire</h3>
+            <div class="mt-1 text-sm text-red-700">{{ form.non_field_errors }}</div>
+        </div>
+        {% endif %}
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
+                <h2 class="text-white font-bold text-lg">Informations générales</h2>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        {{ form.centre.label }} <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.centre }}
+                    {% if form.centre.errors %}<p class="mt-1.5 text-xs text-red-600">{{ form.centre.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        {{ form.annee_scolaire.label }} <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.annee_scolaire }}
+                    {% if form.annee_scolaire.errors %}<p class="mt-1.5 text-xs text-red-600">{{ form.annee_scolaire.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        {{ form.nombre_places.label }} <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.nombre_places }}
+                    {% if form.nombre_places.errors %}<p class="mt-1.5 text-xs text-red-600">{{ form.nombre_places.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-2">{{ form.statut.label }}</label>
+                    {{ form.statut }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">{{ form.metiers.label }}</label>
+                    <p class="text-xs text-gray-500 mb-2">{{ form.metiers.help_text }}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-4 border border-gray-200 rounded-lg bg-gray-50 max-h-64 overflow-y-auto">
+                        {% for choice in form.metiers %}
+                        <label class="flex items-center gap-2 text-sm text-gray-700">
+                            {{ choice.tag }} {{ choice.choice_label }}
+                        </label>
+                        {% empty %}
+                        <p class="text-sm text-gray-400">Aucun métier programmé pour ce centre/cette année.</p>
+                        {% endfor %}
+                    </div>
+                    {% if form.metiers.errors %}<p class="mt-1.5 text-xs text-red-600">{{ form.metiers.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 px-6 py-4 flex items-center justify-between">
+                <h2 class="text-white font-bold text-lg">Frais liés à l'hébergement</h2>
+                <button type="button" id="btn-add-frais"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-bold text-yellow-700 bg-white rounded-lg hover:bg-yellow-50 transition-all">
+                    Ajouter
+                </button>
+            </div>
+
+            {{ frais_formset.management_form }}
+            <div id="frais-container" class="p-6 space-y-3">
+                {% for frais_form in frais_formset %}
+                <div class="frais-row grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Type de frais</label>
+                        {{ frais_form.type_frais }}
+                        {{ frais_form.id }}
+                        {% if frais_form.type_frais.errors %}<p class="text-red-500 text-xs mt-1">{{ frais_form.type_frais.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Montant (FCFA)</label>
+                        {{ frais_form.montant }}
+                        {% if frais_form.montant.errors %}<p class="text-red-500 text-xs mt-1">{{ frais_form.montant.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div class="sm:col-span-2 flex justify-end">
+                        <button type="button" data-action="supprimer-ligne" data-ligne-type="frais"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all">
+                            Supprimer
+                        </button>
+                    </div>
+                    <div class="hidden">{{ frais_form.DELETE }}</div>
+                </div>
+                {% empty %}
+                <div id="frais-empty-msg" class="text-center py-6 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+                    <p class="text-sm">Aucun frais ajouté. Cliquez sur "Ajouter" pour en créer.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+            <a href="{% url 'bsb_admin:hebergement_list' %}"
+               class="inline-flex items-center gap-2 px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:border-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
+                Annuler
+            </a>
+            <button type="submit"
+                    class="inline-flex items-center gap-2 px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+                {{ action }}
+            </button>
+        </div>
+        <p class="text-xs text-gray-400 text-center">Les champs marqués <span class="text-red-500 font-bold">*</span> sont obligatoires.</p>
+    </form>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+    const FRAIS_TYPE_OPTIONS = [
+        {% for tf in type_frais_options %}
+        { value: "{{ tf.pk }}", label: "{{ tf.libelle|escapejs }}" },
+        {% endfor %}
+    ];
+</script>
+<script nonce="{{ csp_nonce }}">
+function buildSelectOptions(optionsArray, emptyLabel) {
+    let html = `<option value="">${emptyLabel}</option>`;
+    optionsArray.forEach(o => { html += `<option value="${o.value}">${o.label}</option>`; });
+    return html;
+}
+
+function ajouterLigneFrais() {
+    const totalInput = document.getElementById('id_frais-TOTAL_FORMS');
+    const idx = parseInt(totalInput.value);
+    const container = document.getElementById('frais-container');
+    const emptyMsg = document.getElementById('frais-empty-msg');
+    if (emptyMsg) emptyMsg.style.display = 'none';
+
+    const div = document.createElement('div');
+    div.innerHTML = `
+    <div class="frais-row grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all">
+        <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Type de frais</label>
+            <select name="frais-${idx}-type_frais" id="id_frais-${idx}-type_frais"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 text-sm">
+                ${buildSelectOptions(FRAIS_TYPE_OPTIONS, 'Sélectionner un type de frais')}
+            </select>
+            <input type="hidden" name="frais-${idx}-id" id="id_frais-${idx}-id">
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Montant (FCFA)</label>
+            <input type="number" name="frais-${idx}-montant" id="id_frais-${idx}-montant"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 text-sm"
+                   placeholder="Ex: 30000" min="0" step="1000">
+        </div>
+        <div class="sm:col-span-2 flex justify-end">
+            <button type="button" data-action="supprimer-ligne" data-ligne-type="frais"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all">
+                Supprimer
+            </button>
+        </div>
+        <input type="checkbox" name="frais-${idx}-DELETE" id="id_frais-${idx}-DELETE" class="hidden">
+    </div>`.trim();
+    const row = div.firstChild;
+    container.appendChild(row);
+    totalInput.value = idx + 1;
+}
+
+function supprimerLigneFrais(btn) {
+    const row = btn.closest('.frais-row');
+    const deleteChk = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+    if (deleteChk) { deleteChk.checked = true; deleteChk.disabled = false; }
+    const idField = row.querySelector('input[type="hidden"][name$="-id"]');
+    if (idField && !idField.value) {
+        row.remove();
+        const totalInput = document.getElementById('id_frais-TOTAL_FORMS');
+        totalInput.value = parseInt(totalInput.value) - 1;
+    } else {
+        row.style.display = 'none';
+    }
+}
+
+document.getElementById('btn-add-frais').addEventListener('click', ajouterLigneFrais);
+document.addEventListener('click', function (e) {
+    if (!e.target.closest) return;
+    var el = e.target.closest('[data-action="supprimer-ligne"]');
+    if (el) supprimerLigneFrais(el);
+});
+</script>
+{% endblock %}

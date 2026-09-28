@@ -44,6 +44,7 @@ ICONES = {
     'carte':     'M9 20l-5.4 2.7A1 1 0 013 21.8V6.2a1 1 0 01.6-.9L9 3m0 17l6-3m-6 3V3m6 14l5.4 2.7a1 1 0 001.6-.9V5.2a1 1 0 00-.6-.9L15 2m0 15V2M9 3l6-1',
     'reglages':  'M10.3 4.3a1 1 0 011-.8h1.4a1 1 0 011 .8l.2 1.3a7 7 0 011.6.9l1.2-.5a1 1 0 011.2.4l.7 1.2a1 1 0 01-.2 1.3l-1 .8a7 7 0 010 1.8l1 .8a1 1 0 01.2 1.3l-.7 1.2a1 1 0 01-1.2.4l-1.2-.5a7 7 0 01-1.6.9l-.2 1.3a1 1 0 01-1 .8h-1.4a1 1 0 01-1-.8l-.2-1.3a7 7 0 01-1.6-.9l-1.2.5a1 1 0 01-1.2-.4l-.7-1.2a1 1 0 01.2-1.3l1-.8a7 7 0 010-1.8l-1-.8a1 1 0 01-.2-1.3l.7-1.2a1 1 0 011.2-.4l1.2.5a7 7 0 011.6-.9l.2-1.3zM15 12a3 3 0 11-6 0 3 3 0 016 0z',
     'bouclier':  'M12 3l7 3v5c0 4.4-2.9 8.5-7 9.8-4.1-1.3-7-5.4-7-9.8V6l7-3z',
+    'maison':    'M3 12l9-8 9 8M5 10v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
 }
 
 
@@ -68,6 +69,14 @@ GROUPES = [
             _lien('bsb_admin:subscription_list', 'Souscriptions', 'courses.voir_inscriptions', '/bsb/subscriptions'),
             _lien('bsb_admin:eleve_list', 'Apprenants', 'accounts.gerer_eleves', '/bsb/eleves'),
             _lien('courses:paiement_list', 'Encaissements scolarité', 'courses.encaisser_paiement', '/membre/centre/paiement'),
+        ],
+    },
+    {
+        'cle': 'hebergement', 'titre': 'Hébergements', 'couleur': 'grenat', 'icone': 'maison',
+        'liens': [
+            _lien('bsb_admin:hebergement_list', 'Hébergements', 'courses.gerer_hebergements', '/bsb/hebergements'),
+            _lien('bsb_admin:demande_hebergement_list', "Demandes d'hébergement", 'courses.valider_demande_hebergement', '/bsb/hebergements/demandes'),
+            _lien('courses:hebergement_paiement_list', 'Encaisser hébergement', 'courses.encaisser_paiement', '/membre/centre/paiement/encaisser-hebergement'),
         ],
     },
     {

@@ -217,3 +217,34 @@ class EncaissementTests(ReconversionBase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp['Content-Type'], 'application/pdf')
+
+
+class ExportTypeProgrammeColonneTests(ReconversionBase):
+    """Export « Inscriptions » : la colonne Type de programme affiche le
+    Type de formation (Initiale/Continue/...) pour une formation classique,
+    et le libellé de type_programme (Reconversion, Vacances utiles) sinon."""
+
+    def setUp(self):
+        self.client.force_login(self.staff)
+
+    def test_csv_formation_classique_affiche_le_type_de_formation(self):
+        Inscription.objects.create(eleve=self.eleve, formation=self.form_classique, annee_scolaire=self.annee)
+        resp = self.client.get(reverse('courses:export_csv'), {'type': 'inscriptions'})
+        contenu = resp.content.decode('utf-8-sig')
+        self.assertIn(self.form_classique.get_type_formation_display(), contenu)
+        self.assertNotIn("Formation\n", contenu)
+        self.assertNotIn(";Formation;", contenu)
+
+    def test_csv_reconversion_affiche_reconversion(self):
+        Inscription.objects.create(eleve=self.eleve, formation=self.pack, annee_scolaire=self.annee)
+        resp = self.client.get(reverse('courses:export_csv'), {'type': 'inscriptions'})
+        contenu = resp.content.decode('utf-8-sig')
+        self.assertIn("Reconversion", contenu)
+
+    def test_pdf_formation_classique_affiche_le_type_de_formation(self):
+        insc = Inscription.objects.create(eleve=self.eleve, formation=self.form_classique, annee_scolaire=self.annee)
+        insc.statut = 'valide'
+        insc.save()
+        resp = self.client.get(reverse('courses:export_pdf'), {'type': 'inscriptions'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/pdf')

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
-{% block title %}Encaissements | BSB{% endblock %}
+{% block title %}{% if hebergement_only %}Encaisser hébergement{% else %}Encaissements{% endif %} | BSB{% endblock %}
 
 {% block content %}
 <div class="bo-large mx-auto py-10 space-y-6">
@@ -8,13 +8,14 @@
 
     <div class="px-4 md:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-black text-gray-900">Encaissements</h1>
+            <h1 class="text-3xl font-black text-gray-900">{% if hebergement_only %}Encaisser hébergement{% else %}Encaissements{% endif %}</h1>
             <p class="mt-2 text-sm text-gray-600">
                 {% if q %}Résultats de recherche — tous centres
+                {% elif hebergement_only %}Inscriptions avec un reste à payer sur les frais d'hébergement — {{ scope_label }}
                 {% else %}Inscriptions avec reste à payer — {{ scope_label }}{% endif %}
             </p>
         </div>
-        <a href="{% url 'courses:paiement_historique' %}"
+        <a href="{% url 'courses:paiement_historique' %}{% if hebergement_only %}?type=hebergement{% endif %}"
            class="inline-flex items-center gap-2 bg-gray-700 hover:bg-gray-800 text-white font-semibold px-5 py-3 rounded-xl shadow-sm transition-all duration-200">
             Historique paiement
         </a>
@@ -35,7 +36,7 @@
                     Rechercher
                 </button>
                 {% if q %}
-                <a href="{% url 'courses:paiement_list' %}"
+                <a href="{% if hebergement_only %}{% url 'courses:hebergement_paiement_list' %}{% else %}{% url 'courses:paiement_list' %}{% endif %}"
                    class="px-4 py-2.5 border border-gray-300 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition">
                     Réinitialiser
                 </a>
@@ -377,6 +378,7 @@
             </div>
             {% endif %}
             {% for dette in insc.dettes.all %}
+            {% if not hebergement_only or dette.frais_formation.hebergement_id %}
             <div class="border border-gray-200 rounded-lg overflow-hidden">
                 <div class="bg-gray-50 px-4 py-2 flex items-center justify-between">
                     <span class="text-xs font-bold text-gray-600 uppercase tracking-wide">
@@ -460,6 +462,7 @@
                 <p class="text-sm text-gray-400 px-4 py-3">Aucun versement pour ce type de frais.</p>
                 {% endif %}
             </div>
+            {% endif %}
             {% endfor %}
         </div>
 

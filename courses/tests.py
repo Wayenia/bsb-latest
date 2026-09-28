@@ -1,6 +1,7 @@
 from django.test import TestCase
 
-from courses.forms import PersonalInfoForm
+from courses.forms import FraisForm, PersonalInfoForm
+from courses.models import TypeFrais
 
 _BASE = {
     'nom': 'OUEDRAOGO', 'prenom': 'Ali', 'sexe': 'M',
@@ -20,3 +21,18 @@ class PersonalInfoFormTests(TestCase):
         form = PersonalInfoForm(data=dict(_BASE, type_personne_contact='parent'))
         self.assertFalse(form.is_valid())
         self.assertIn('nom_personne', form.errors)
+
+
+class FraisFormTests(TestCase):
+    """Frais.formation est devenu blank=True au niveau modele pour permettre
+    les frais d'hebergement (formation=None, hebergement rempli — cf.
+    contrainte frais_formation_xor_hebergement). Le formulaire de frais
+    « classique » (hors formset hebergement) doit garder ce champ obligatoire,
+    sinon la sauvegarde declenche un IntegrityError non rattrape (formation
+    et hebergement tous deux nuls)."""
+
+    def test_formation_reste_obligatoire(self):
+        tf = TypeFrais.objects.create(libelle="Scolarité")
+        form = FraisForm(data={'formation': '', 'type_frais': tf.id, 'montant': '50000'})
+        self.assertFalse(form.is_valid())
+        self.assertIn('formation', form.errors)

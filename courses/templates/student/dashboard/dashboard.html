@@ -73,12 +73,22 @@
     </div>
   </div>
 
-  {% comment %} Appel a l'action principal {% endcomment %}
-  <a href="{% url 'courses:available_career' %}"
-     class="flex items-center justify-center gap-2 w-full px-5 py-4 mb-8 bg-gradient-to-r from-bsb-red to-bsb-dark text-white font-bold rounded-2xl shadow-md hover:brightness-110 transition-all">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-    Déposer ma candidature
-  </a>
+  {% comment %} Appel a l'action principal : hebergement a cote si les conditions
+  sont reunies (sinon Deposer ma candidature occupe seule la ligne). {% endcomment %}
+  <div class="flex flex-col sm:flex-row gap-3 mb-8">
+    <a href="{% url 'courses:available_career' %}"
+       class="flex items-center justify-center gap-2 flex-1 px-5 py-4 bg-gradient-to-r from-bsb-red to-bsb-dark text-white font-bold rounded-2xl shadow-md hover:brightness-110 transition-all">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Déposer ma candidature
+    </a>
+    {% if peut_demander_hebergement %}
+    <a href="{% url 'courses:my_subscriptions' %}"
+       class="flex items-center justify-center gap-2 flex-1 px-5 py-4 bg-amber-50 text-bsb-ink border border-amber-200 font-bold rounded-2xl shadow-sm hover:bg-amber-100 transition-all">
+      <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Demande d'hébergement
+    </a>
+    {% endif %}
+  </div>
 
   <h2 class="text-sm font-bold uppercase tracking-wider text-bsb-muted mb-4">Consultations</h2>
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">

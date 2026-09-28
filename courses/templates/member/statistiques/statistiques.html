@@ -357,6 +357,15 @@
         </div>
 
         <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Type de frais</label>
+          <select name="type_frais" class="form-select">
+            <option value="">— Tous —</option>
+            <option value="formation" {% if f_type_frais == "formation" %}selected{% endif %}>Formation</option>
+            <option value="hebergement" {% if f_type_frais == "hebergement" %}selected{% endif %}>Hébergement</option>
+          </select>
+        </div>
+
+        <div>
           <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Genre</label>
           <select name="genre" class="form-select">
             <option value="">— Tous —</option>
@@ -439,8 +448,8 @@
           </svg>
         </div>
         <div>
-          <div class="kpi-value text-[var(--or-dark)]">{{ stats.total_eleves }}</div>
-          <div class="kpi-label">Apprenants inscrits</div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.total_dossiers }}</div>
+          <div class="kpi-label">Dossiers de candidature</div>
         </div>
       </div>
     </div>
@@ -455,8 +464,8 @@
           </svg>
         </div>
         <div>
-          <div class="kpi-value text-[var(--vert)]">{{ stats.inscriptions_validees }}</div>
-          <div class="kpi-label">Inscriptions validées</div>
+          <div class="kpi-value text-[var(--vert)]">{{ stats.dossiers_valides }}</div>
+          <div class="kpi-label">Dossiers validés</div>
         </div>
       </div>
     </div>
@@ -559,6 +568,143 @@
 
   </div>{% comment %} /grid KPI {% endcomment %}
 
+  {% comment %} ══ DOSSIERS PAR CENTRE ══════════════════════════════════════════════════ {% endcomment %}
+  <div class="section-card mb-6">
+    <div class="section-title">
+      <span class="icon-dot bg-[var(--or)]"></span>
+      Dossiers par centre
+    </div>
+    <div class="table-scroll">
+      {% comment %} Pas de bo-table-compacte : ce tableau n'a pas de colonne
+         Actions pour heberger l'oeil de reveal des colonnes masquees — avec
+         6 colonnes de donnees, la derniere finirait cachee en meme temps que
+         le bouton qui la revele. Defilement horizontal via table-scroll a la
+         place. {% endcomment %}
+      <table class="bo-table-adaptable bsb-table">
+        <thead>
+          <tr>
+            <th>Centre</th>
+            <th class="text-right">Dossiers</th>
+            <th class="text-right">Validés</th>
+            <th class="text-right">Rejetés</th>
+            <th class="text-right">En cours</th>
+            <th class="text-right">Soldés</th>
+            <th class="text-right">Partiellement soldés</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in dossiers_centres %}
+          <tr>
+            <td class="font-semibold">{{ d.nom_centre }}</td>
+            <td class="text-right" data-label="Dossiers">{{ d.dossiers }}</td>
+            <td class="text-right text-[#16A34A]" data-label="Validés">{{ d.valides }}</td>
+            <td class="text-right text-[var(--rouge)]" data-label="Rejetés">{{ d.rejetes }}</td>
+            <td class="text-right text-[var(--or-dark)]" data-label="En cours">{{ d.en_cours }}</td>
+            <td class="text-right text-[#16A34A]" data-label="Soldés">{{ d.soldes }}</td>
+            <td class="text-right" data-label="Partiellement soldés">{{ d.partiels }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-5 text-gray-500">Aucune donnée disponible</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% if dossiers_centres %}
+        <tfoot>
+          <tr class="font-bold bg-gray-50">
+            <td>Total</td>
+            <td class="text-right" data-label="Dossiers">{{ dossiers_total.dossiers }}</td>
+            <td class="text-right" data-label="Validés">{{ dossiers_total.valides }}</td>
+            <td class="text-right" data-label="Rejetés">{{ dossiers_total.rejetes }}</td>
+            <td class="text-right" data-label="En cours">{{ dossiers_total.en_cours }}</td>
+            <td class="text-right" data-label="Soldés">{{ dossiers_total.soldes }}</td>
+            <td class="text-right" data-label="Partiellement soldés">{{ dossiers_total.partiels }}</td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+    {% if dossiers_centres.has_other_pages %}
+    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+      <p class="text-sm text-gray-500">Page {{ dossiers_centres.number }} / {{ dossiers_centres.paginator.num_pages }}</p>
+      <div class="flex gap-2">
+        {% if dossiers_centres.has_previous %}
+        <a href="?{{ querystring_dossiers }}&dpage={{ dossiers_centres.previous_page_number }}"
+           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Précédent</a>
+        {% endif %}
+        {% if dossiers_centres.has_next %}
+        <a href="?{{ querystring_dossiers }}&dpage={{ dossiers_centres.next_page_number }}"
+           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Suivant</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% comment %} ══ RECOUVREMENT (CENTRE / DÛ / PAYÉ / RESTE / DÉROGATIONS) ════════════════ {% endcomment %}
+  <div class="section-card mb-6">
+    <div class="section-title">
+      <span class="icon-dot bg-[var(--rouge)]"></span>
+      Recouvrement
+    </div>
+    <div class="table-scroll">
+      {% comment %} Pas de bo-table-compacte, meme raison que le tableau
+         « Dossiers par centre » ci-dessus. {% endcomment %}
+      <table class="bo-table-adaptable bsb-table">
+        <thead>
+          <tr>
+            <th>Centre</th>
+            <th class="text-right">Montant dû</th>
+            <th class="text-right">Montant payé</th>
+            <th class="text-right">Reste</th>
+            <th class="text-right">Dérogations</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in recouvrement_v2 %}
+          <tr>
+            <td class="font-semibold">{{ r.nom_centre }}</td>
+            <td class="text-right text-sm" data-label="Montant dû"><span class="fmt-amount">{{ r.total_du|floatformat:0 }}</span> F</td>
+            <td class="text-right text-sm font-semibold text-[#16A34A]" data-label="Montant payé"><span class="fmt-amount">{{ r.encaisse|floatformat:0 }}</span> F</td>
+            <td class="text-right text-sm text-[var(--rouge)]" data-label="Reste"><span class="fmt-amount">{{ r.restant|floatformat:0 }}</span> F</td>
+            <td class="text-right" data-label="Dérogations">{{ r.derogations }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-5 text-gray-500">Aucune donnée disponible</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% if recouvrement_v2 %}
+        <tfoot>
+          <tr class="font-bold bg-gray-50">
+            <td>Total</td>
+            <td class="text-right" data-label="Montant dû"><span class="fmt-amount">{{ recouvrement_total.total_du|floatformat:0 }}</span> F</td>
+            <td class="text-right text-[#16A34A]" data-label="Montant payé"><span class="fmt-amount">{{ recouvrement_total.encaisse|floatformat:0 }}</span> F</td>
+            <td class="text-right text-[var(--rouge)]" data-label="Reste"><span class="fmt-amount">{{ recouvrement_total.restant|floatformat:0 }}</span> F</td>
+            <td class="text-right" data-label="Dérogations">{{ recouvrement_total.derogations }}</td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+    {% if recouvrement_v2.has_other_pages %}
+    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+      <p class="text-sm text-gray-500">Page {{ recouvrement_v2.number }} / {{ recouvrement_v2.paginator.num_pages }}</p>
+      <div class="flex gap-2">
+        {% if recouvrement_v2.has_previous %}
+        <a href="?{{ querystring_recouvrement_v2 }}&rvpage={{ recouvrement_v2.previous_page_number }}"
+           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Précédent</a>
+        {% endif %}
+        {% if recouvrement_v2.has_next %}
+        <a href="?{{ querystring_recouvrement_v2 }}&rvpage={{ recouvrement_v2.next_page_number }}"
+           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Suivant</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
   {% comment %} ══ GRAPHIQUES ════════════════════════════════════════════════════════════ {% endcomment %}
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
 
@@ -576,7 +722,7 @@
         <div class="flex flex-wrap gap-3 justify-center mt-4">
           <span class="flex items-center gap-1 text-sm">
             <span class="w-[12px] h-[12px] bg-[#16A34A] rounded-[3px] inline-block"></span>
-            Validées <strong class="ml-1">{{ stats.inscriptions_validees }}</strong>
+            Validées <strong class="ml-1">{{ stats.dossiers_valides }}</strong>
           </span>
           <span class="flex items-center gap-1 text-sm">
             <span class="w-[12px] h-[12px] bg-[var(--or)] rounded-[3px] inline-block"></span>
@@ -877,7 +1023,7 @@ new Chart(document.getElementById('chartStatut'), {
   data: {
     labels: ['Validées', 'En attente', 'Rejetées'],
     datasets: [{
-      data: [{{ stats.inscriptions_validees }}, {{ stats.inscriptions_en_cours }}, {{ stats.inscriptions_rejetees }}],
+      data: [{{ stats.dossiers_valides }}, {{ stats.inscriptions_en_cours }}, {{ stats.inscriptions_rejetees }}],
       backgroundColor: ['#16A34A', OR, ROUGE],
       borderWidth: 0,
       hoverOffset: 8,

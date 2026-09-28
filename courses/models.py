@@ -415,6 +415,92 @@ class CentreEtFiliere(models.Model):
         return "—"
 
 
+# ── HÉBERGEMENT ────────────────────────────────────────────────────────────
+class Hebergement(TimeStampModel):
+    """Offre d'hébergement d'un centre pour une année scolaire donnée. Les
+    frais liés (montants dus par un apprenant hébergé) sont des `Frais`
+    normaux dont `hebergement` est renseigné au lieu de `formation` — même
+    mécanisme de Dette/Paiement que pour une formation, sans rien changer à
+    l'encaissement existant."""
+    STATUT_CHOICES = [
+        ("actif", "Actif"),
+        ("inactif", "Inactif"),
+    ]
+    centre = models.ForeignKey(
+        CentreFormation, on_delete=models.CASCADE, related_name="hebergements", verbose_name="Centre"
+    )
+    annee_scolaire = models.ForeignKey(
+        AnneeScolaire, on_delete=models.CASCADE, related_name="hebergements", verbose_name="Année scolaire"
+    )
+    # Métiers éligibles : parmi les CentreEtFiliere programmés dans CE centre
+    # pour CETTE année scolaire (contrôlé au niveau formulaire — voir
+    # HebergementForm).
+    metiers = models.ManyToManyField(
+        CentreEtFiliere, related_name="hebergements_eligibles", blank=True, verbose_name="Métiers éligibles"
+    )
+    nombre_places = models.PositiveIntegerField(verbose_name="Nombre de places")
+    statut = models.CharField(max_length=10, choices=STATUT_CHOICES, default="actif", verbose_name="Statut")
+    cree_par = models.ForeignKey(
+        "accounts.Utilisateur", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="hebergements_crees", verbose_name="Créé par"
+    )
+
+    def __str__(self):
+        return f"Hébergement {self.centre} — {self.annee_scolaire}"
+
+    class Meta:
+        verbose_name = "Hébergement"
+        verbose_name_plural = "Hébergements"
+        permissions = [
+            ("gerer_hebergements", "Créer/modifier/désactiver un hébergement"),
+            ("valider_demande_hebergement", "Valider ou rejeter une demande d'hébergement"),
+        ]
+
+    @property
+    def places_prises(self):
+        return self.demandes.filter(statut="validee").count()
+
+    @property
+    def places_disponibles(self):
+        return max(self.nombre_places - self.places_prises, 0)
+
+    @property
+    def complet(self):
+        return self.places_disponibles <= 0
+
+
+class DemandeHebergement(models.Model):
+    STATUT_CHOICES = [
+        ("en_attente", "En attente"),
+        ("validee", "Validée"),
+        ("rejetee", "Rejetée"),
+    ]
+    hebergement = models.ForeignKey(Hebergement, on_delete=models.CASCADE, related_name="demandes", verbose_name="Hébergement")
+    inscription = models.ForeignKey(
+        "Inscription", on_delete=models.CASCADE, related_name="demandes_hebergement", verbose_name="Inscription"
+    )
+    statut = models.CharField(max_length=15, choices=STATUT_CHOICES, default="en_attente", verbose_name="Statut")
+    date_demande = models.DateTimeField(auto_now_add=True, verbose_name="Date de la demande")
+    date_decision = models.DateTimeField(null=True, blank=True, verbose_name="Date de la décision")
+    decide_par = models.ForeignKey(
+        "accounts.Utilisateur", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="demandes_hebergement_decidees", verbose_name="Décidé par"
+    )
+    motif_rejet = models.TextField(blank=True, null=True, verbose_name="Motif du rejet")
+
+    def __str__(self):
+        return f"Demande hébergement — {self.inscription} ({self.get_statut_display()})"
+
+    class Meta:
+        verbose_name = "Demande d'hébergement"
+        verbose_name_plural = "Demandes d'hébergement"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["hebergement", "inscription"], name="une_demande_par_inscription_et_hebergement"
+            ),
+        ]
+
+
 # ── STATISTIQUES RÉELLES — effectifs formés (saisie manuelle DSI) ─────────────
 class EffectifReel(models.Model):
     """Effectif réel (H/F) formé pour une formation (CentreEtFiliere), pour
@@ -546,18 +632,36 @@ class TrancheFrais(models.Model):
 
 # FEE
 class Frais(TimeStampModel):
-    formation=models.ForeignKey(CentreEtFiliere,on_delete=models.CASCADE,verbose_name="Formations",null=True)
+    # Un Frais se rattache SOIT a une formation SOIT a un hebergement, jamais
+    # les deux (contrainte ci-dessous) — c'est ce qui permet a Dette/Paiement
+    # et tout l'encaissement existant de fonctionner tel quel pour
+    # l'hebergement : Dette.frais_formation pointe vers ce Frais sans savoir
+    # de quel cote il vient.
+    formation=models.ForeignKey(CentreEtFiliere,on_delete=models.CASCADE,verbose_name="Formations",null=True,blank=True)
+    hebergement = models.ForeignKey(
+        Hebergement, on_delete=models.CASCADE, null=True, blank=True,
+        related_name="frais", verbose_name="Hébergement"
+    )
     type_frais=models.ForeignKey(TypeFrais,on_delete=models.CASCADE,verbose_name="Frais",default="Scolarité")
     montant = models.FloatField(verbose_name="Motant", validators=[MinValueValidator(0)])
 
     def __str__(self):
-        return f"{self.formation} {self.type_frais} {self.montant}"
-    
+        return f"{self.formation or self.hebergement} {self.type_frais} {self.montant}"
+
     class Meta:
         verbose_name = "Frais"
         verbose_name_plural = "Frais"
         permissions = [
             ("gerer_frais", "Gérer les frais et types de frais"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(formation__isnull=False, hebergement__isnull=True)
+                    | models.Q(formation__isnull=True, hebergement__isnull=False)
+                ),
+                name="frais_formation_xor_hebergement",
+            ),
         ]
 
 # SUBSCRIPTION
@@ -903,6 +1007,10 @@ class Paiement(models.Model):
             ("encaisser_paiement", "Encaisser un paiement"),
             ("gerer_paiements", "Modifier/supprimer un paiement"),
             ("annuler_paiement", "Annuler un versement encaissé"),
+            # Filtres avances (Direction, Region, Statut de paiement, Type de
+            # programme, Genre...) sur l'historique des paiements — memes
+            # champs que sur Statistiques, deja soumis a permission la-bas.
+            ("filtrer_historique_avance", "Filtrer l'historique des paiements par critères avancés"),
         ]
 
     def __str__(self):

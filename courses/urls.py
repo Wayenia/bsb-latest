@@ -33,6 +33,10 @@ urlpatterns = [
     path('student/paiement/reportlab-quitt/<int:id>',views.download_quittance,name='reportlab'),
     path('student/inscription/<int:id>/recepisse', views.telecharger_recepisse, name='telecharger_recepisse'),
     path('student/inscription/<int:id>/attestation', views.telecharger_attestation, name='telecharger_attestation'),
+    path('student/hebergement/<int:hebergement_id>/inscription/<int:inscription_id>/demander',
+         views.demande_hebergement_brief_view, name='demande_hebergement_brief'),
+    path('student/hebergement/demande/<int:id>/recepisse',
+         views.telecharger_recepisse_hebergement, name='telecharger_recepisse_hebergement'),
     # TEACHER
     path('teacher/dashboard', views.teacher_dashboard, name='teacher_dashboard'),
     
@@ -54,6 +58,7 @@ urlpatterns = [
     
     #Liste de paiement de membre en fait
     path('membre/centre/paiement/list-paiement',views.paiement_list,name='paiement_list'),
+    path('membre/centre/paiement/encaisser-hebergement',views.hebergement_paiement_list,name='hebergement_paiement_list'),
     path('membre/centre/paiement/historique',views.paiement_historique,name='paiement_historique'),
     path('membre/centre/paiement/historique/export/csv',views.paiement_historique_export_csv,name='paiement_historique_export_csv'),
     path('membre/centre/paiement/historique/export/excel',views.paiement_historique_export_excel,name='paiement_historique_export_excel'),

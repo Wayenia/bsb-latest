@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Demande d'hébergement | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+  {% include 'partials/messages.html' %}
+
+  <div class="mb-8">
+    <a href="{% url 'courses:my_subscriptions' %}" class="text-sm text-bsb-muted hover:text-bsb-ink transition-colors">&larr; Retour à mes demandes</a>
+    <h1 class="text-2xl sm:text-3xl font-black text-bsb-ink mt-2">Demande d'hébergement</h1>
+    <p class="text-sm text-bsb-muted mt-1">
+      Prenez connaissance des informations ci-dessous avant de soumettre votre demande.
+    </p>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    <div class="h-1.5 w-full bg-gradient-to-r from-bsb-gold via-bsb-red to-bsb-green"></div>
+
+    <div class="p-6 sm:p-8 space-y-8">
+
+      <section>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-bsb-red mb-4">Votre inscription</h2>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Métier</dt><dd class="font-semibold text-bsb-ink">{{ inscription.formation.filiere.nom_filiere }}</dd></div>
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Centre</dt><dd class="font-semibold text-bsb-ink">{{ hebergement.centre.nom_centre }}</dd></div>
+          <div><dt class="text-xs text-bsb-muted mb-0.5">Année scolaire</dt><dd class="font-semibold text-bsb-ink">{{ hebergement.annee_scolaire }}</dd></div>
+        </dl>
+      </section>
+
+      <div class="h-px bg-slate-100"></div>
+
+      <section>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-bsb-red mb-4">Détails de l'hébergement</h2>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+          <div>
+            <dt class="text-xs text-bsb-muted mb-0.5">Places disponibles</dt>
+            <dd class="font-semibold text-bsb-ink">{{ hebergement.places_disponibles }} / {{ hebergement.nombre_places }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-bsb-muted mb-0.5">Statut de l'offre</dt>
+            <dd class="font-semibold {% if hebergement.complet %}text-red-600{% else %}text-bsb-green{% endif %}">
+              {% if hebergement.complet %}Complet{% else %}Places disponibles{% endif %}
+            </dd>
+          </div>
+        </dl>
+
+        <div class="mt-5">
+          <h3 class="text-xs font-bold uppercase tracking-wide text-bsb-muted mb-2">Frais liés à l'hébergement</h3>
+          {% if frais_lies %}
+          <div class="rounded-xl border border-slate-200 overflow-hidden">
+            <table class="w-full text-sm">
+              <tbody class="divide-y divide-slate-100">
+                {% for f in frais_lies %}
+                <tr>
+                  <td class="px-4 py-2.5 text-bsb-ink">{{ f.type_frais }}</td>
+                  <td class="px-4 py-2.5 text-right font-semibold text-bsb-ink">{{ f.montant|floatformat:0 }} FCFA</td>
+                </tr>
+                {% endfor %}
+                <tr class="bg-slate-50">
+                  <td class="px-4 py-2.5 font-bold text-bsb-ink">Total à régler après validation</td>
+                  <td class="px-4 py-2.5 text-right font-bold text-bsb-ink">{{ total_frais|floatformat:0 }} FCFA</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-sm text-bsb-muted">Aucun frais n'est encore rattaché à cet hébergement.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <div class="h-px bg-slate-100"></div>
+
+      <section class="rounded-xl bg-amber-50 border border-amber-200 p-5">
+        <h2 class="text-sm font-bold text-amber-800 mb-2">Ce que vous devez savoir avant de postuler</h2>
+        <ul class="text-sm text-amber-900 space-y-1.5 list-disc list-inside">
+          <li>Votre demande sera examinée par le centre, qui peut la valider ou la rejeter (avec un motif).</li>
+          <li>Le nombre de places est limité ; une place est réservée uniquement après validation de votre demande.</li>
+          <li>Une fois validée, les frais d'hébergement ci-dessus seront ajoutés à votre dossier et devront être réglés au même titre que vos frais de scolarité.</li>
+          <li>Vous serez notifié(e) de la décision (validation ou rejet) dans vos notifications.</li>
+          <li>Vous ne pouvez soumettre qu'une seule demande pour cet hébergement.</li>
+        </ul>
+      </section>
+
+      {% if demande %}
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-5 text-sm text-bsb-ink">
+        Vous avez déjà soumis une demande pour cet hébergement, le statut est :
+        <span class="font-bold">{{ demande.get_statut_display }}</span>.
+      </div>
+      {% else %}
+      <form method="post" class="flex items-center justify-end gap-3 pt-2">
+        {% csrf_token %}
+        <a href="{% url 'courses:my_subscriptions' %}"
+           class="inline-flex items-center gap-2 px-6 py-3 border-2 border-slate-200 rounded-lg text-bsb-ink font-semibold hover:border-red-300 hover:text-bsb-red transition-all">
+          Annuler
+        </a>
+        <button type="submit"
+                {% if hebergement.complet %}disabled title="Hébergement complet"{% endif %}
+                class="inline-flex items-center gap-2 px-8 py-3 bg-bsb-green text-white font-bold rounded-lg shadow-lg hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+          Confirmer ma demande
+        </button>
+      </form>
+      {% if hebergement.complet %}
+      <p class="text-xs text-red-600 text-right -mt-4">Cet hébergement est complet, vous ne pouvez pas soumettre de demande pour le moment.</p>
+      {% endif %}
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

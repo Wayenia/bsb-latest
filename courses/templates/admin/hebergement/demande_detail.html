@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Demande d'hébergement | BSB{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10 space-y-6">
+    {% include 'partials/messages.html' %}
+
+    <div class="flex items-center mb-2">
+        <a href="{% url 'bsb_admin:demande_hebergement_list' %}" class="text-gray-600 hover:text-red-600 mr-4 transition-colors">Retour</a>
+        <div>
+            <h1 class="text-2xl font-black text-gray-900">Demande d'hébergement</h1>
+            <p class="text-gray-500 text-sm mt-1">
+                {% if demande.statut == 'en_attente' %}
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">En attente</span>
+                {% elif demande.statut == 'validee' %}
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">Validée le {{ demande.date_decision|date:"d/m/Y H:i" }}</span>
+                {% else %}
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">Rejetée le {{ demande.date_decision|date:"d/m/Y H:i" }}</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
+            <h2 class="text-white font-bold text-lg">Apprenant</h2>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-8">
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Nom et prénom(s)</span>
+                <span class="text-base font-medium text-gray-800">{{ eleve.nom }} {{ eleve.prenom }}</span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Matricule</span>
+                <span class="text-base font-medium text-gray-800">{{ eleve.matricule|default:"—" }}</span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Sexe</span>
+                <span class="text-base font-medium text-gray-800">{{ eleve.get_sexe_display }}</span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Téléphone</span>
+                <span class="text-base font-medium text-gray-800">{{ eleve.tel|default:"—" }}</span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Email</span>
+                <span class="text-base font-medium text-gray-800">{{ eleve.email|default:"—" }}</span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Date / lieu de naissance</span>
+                <span class="text-base font-medium text-gray-800">{{ eleve.date_naissance|date:"d/m/Y"|default:"—" }} — {{ eleve.lieu_naissance|default:"—" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-700 to-gray-800 px-6 py-4">
+            <h2 class="text-white font-bold text-lg">Inscription concernée</h2>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-8">
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Centre de formation</span>
+                <span class="text-base font-medium text-gray-800">{{ demande.inscription.formation.centre }}</span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Métier</span>
+                <span class="text-base font-medium text-gray-800">{{ demande.inscription.formation.filiere }}</span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Année scolaire</span>
+                <span class="text-base font-medium text-gray-800">{{ demande.inscription.annee_scolaire }}</span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Statut du dossier</span>
+                <span class="text-base font-medium text-gray-800">{{ demande.inscription.libelle_statut_paiement }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 px-6 py-4">
+            <h2 class="text-white font-bold text-lg">Hébergement demandé</h2>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-8">
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Centre</span>
+                <span class="text-base font-medium text-gray-800">{{ demande.hebergement.centre }}</span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Places</span>
+                <span class="text-base font-medium text-gray-800">{{ demande.hebergement.places_prises }} / {{ demande.hebergement.nombre_places }}</span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block mb-1">Frais liés</span>
+                <span class="text-base font-medium text-gray-800">
+                    {% for f in demande.hebergement.frais.all %}{{ f.type_frais }} : {{ f.montant|floatformat:0 }} F{% if not forloop.last %}, {% endif %}{% endfor %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-700 to-gray-800 px-6 py-4 flex items-center justify-between">
+            <h2 class="text-white font-bold text-lg">Documents fournis lors de l'inscription</h2>
+            {% if documents %}<span class="text-xs text-gray-200">{{ documents|length }} fichier(s)</span>{% endif %}
+        </div>
+        <div class="p-6">
+            {% if documents %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for piece in documents %}
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-700">{{ piece.piece_requise.libelle_piece|default:"Document" }}</span>
+                    {% if piece.piece %}
+                    <a href="{{ piece.piece.url }}" target="_blank"
+                       class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-bsb-red/10 text-bsb-red hover:bg-bsb-red hover:text-white transition-colors">
+                        Visualiser
+                    </a>
+                    {% else %}
+                    <span class="text-xs text-gray-400">Aucun fichier</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-400">Aucun document soumis pour cette inscription.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if demande.statut == 'en_attente' %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Décision</h2>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-bold text-gray-800 mb-2">Motif du rejet <span class="text-xs text-gray-400 font-normal">(obligatoire uniquement en cas de rejet)</span></label>
+                <textarea name="motif_rejet" rows="3"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                          placeholder="Ex : plus de place disponible, dossier incomplet..."></textarea>
+            </div>
+            <div class="flex items-center justify-end gap-3">
+                <button type="submit" name="action" value="rejeter"
+                        class="inline-flex items-center gap-2 px-6 py-3 border-2 border-red-300 text-red-700 font-bold rounded-lg hover:bg-red-50 transition-all">
+                    Rejeter
+                </button>
+                <button type="submit" name="action" value="valider"
+                        {% if demande.hebergement.complet %}disabled title="Hébergement complet"{% endif %}
+                        class="inline-flex items-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    Valider
+                </button>
+            </div>
+            {% if demande.hebergement.complet %}
+            <p class="text-xs text-red-600 text-right">Cet hébergement est complet — validez d'abord une place (augmentez le nombre de places ou rejetez une autre demande).</p>
+            {% endif %}
+        </form>
+    </div>
+    {% elif demande.statut == 'rejetee' and demande.motif_rejet %}
+    <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+        <h3 class="text-sm font-bold text-red-800 mb-1">Motif du rejet</h3>
+        <p class="text-sm text-red-700">{{ demande.motif_rejet }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

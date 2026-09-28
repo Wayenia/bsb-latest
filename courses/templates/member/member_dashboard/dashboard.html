@@ -64,7 +64,7 @@
   </div>
   {% endif %}
 
-  {% if perms.courses.voir_inscriptions or perms.courses.encaisser_paiement or perms.courses.gerer_paiements %}
+  {% if perms.courses.voir_inscriptions or perms.courses.encaisser_paiement or perms.courses.gerer_paiements or perms.courses.gerer_hebergements or perms.courses.valider_demande_hebergement %}
   <h2 class="bo-section">Scolarité et encaissements</h2>
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-6">
     {% if perms.courses.voir_inscriptions %}
@@ -73,6 +73,13 @@
     {% endif %}
     {% if perms.courses.encaisser_paiement or perms.courses.gerer_paiements %}
     <a href="{% url 'courses:paiement_list' %}" class="bo-acces bo-acces-vert">Encaissements</a>
+    <a href="{% url 'courses:hebergement_paiement_list' %}" class="bo-acces bo-acces-vert">Encaisser hébergement</a>
+    {% endif %}
+    {% if perms.courses.gerer_hebergements %}
+    <a href="{% url 'bsb_admin:hebergement_list' %}" class="bo-acces bo-acces-or">Hébergements</a>
+    {% endif %}
+    {% if perms.courses.valider_demande_hebergement %}
+    <a href="{% url 'bsb_admin:demande_hebergement_list' %}" class="bo-acces bo-acces-or">Demandes d'hébergement</a>
     {% endif %}
     {% if perms.accounts.gerer_eleves %}
     <a href="{% url 'bsb_admin:eleve_list' %}" class="bo-acces bo-acces-or">Apprenants</a>

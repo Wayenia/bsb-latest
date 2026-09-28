@@ -115,6 +115,14 @@ urlpatterns = [
     path('guides', views_admin.guide_list, name='guide_list'),
     path('guides/<str:profil>', views_admin.guide_update, name='guide_update'),
 
+    # HÉBERGEMENT
+    path('hebergements', views_admin.hebergement_list, name='hebergement_list'),
+    path('hebergements/creer', views_admin.hebergement_create, name='hebergement_create'),
+    path('hebergements/<int:id>/modifier', views_admin.hebergement_update, name='hebergement_update'),
+    path('hebergements/<int:id>/statut', views_admin.hebergement_toggle_statut, name='hebergement_toggle_statut'),
+    path('hebergements/demandes', views_admin.demande_hebergement_list, name='demande_hebergement_list'),
+    path('hebergements/demandes/<int:id>', views_admin.demande_hebergement_detail, name='demande_hebergement_detail'),
+
     #Année scolaire
     path('annee/create',views_admin.annee_create,name='annee_create'),
     path('annees',views_admin.annee_list,name='annee_list'),

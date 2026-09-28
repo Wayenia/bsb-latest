@@ -6,7 +6,7 @@ from .models import (
     TITRE_PROFESSIONNEL_CHOICE, TYPE_PROGRAMME_CHOICE, Direction_reg, Filiere, CentreFormation, Module,
     Frais, Cours, Inscription, Paiement, CentreEtFiliere,PieceJointeInscription,TypeFrais,
     AnneeScolaire, TrancheFrais, Region, DG, Membre, CarrouselAccueil, BandeAnnonce, Partenaire,
-    GuideUtilisation
+    GuideUtilisation, Hebergement, DemandeHebergement,
 )
 from django.forms import inlineformset_factory
 from accounts.models import Eleve as _Eleve
@@ -647,6 +647,12 @@ class FraisForm(BaseModelForm):
         super().__init__(*args, **kwargs)
         self.fields['type_frais'].empty_label='Sélectionner un type de frais'
         self.fields['formation'].empty_label='Sélectionner une formation'
+        # Le modele autorise formation=None depuis l'ajout de Frais.hebergement
+        # (l'un ou l'autre, jamais les deux — cf. contrainte
+        # frais_formation_xor_hebergement), mais ce formulaire-ci ne sert
+        # qu'aux frais de formation classiques : le champ reste obligatoire
+        # ici pour eviter un IntegrityError non rattrape a l'enregistrement.
+        self.fields['formation'].required = True
 
 
 # COURSE
@@ -776,6 +782,125 @@ PieceJointeFormSet = inlineformset_factory(
     validate_min=False,
     can_delete=True
 )
+
+
+# ── HÉBERGEMENT ──────────────────────────────────────────────────────────────
+class HebergementForm(BaseModelForm):
+    class Meta:
+        model = Hebergement
+        fields = ['centre', 'annee_scolaire', 'metiers', 'nombre_places', 'statut']
+        labels = {
+            'centre': 'Centre',
+            'annee_scolaire': 'Année scolaire',
+            'metiers': 'Métiers éligibles',
+            'nombre_places': 'Nombre de places',
+            'statut': 'Statut',
+        }
+        widgets = {
+            'centre': forms.Select(attrs={'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500', 'data-auto-submit': ''}),
+            'annee_scolaire': forms.Select(attrs={'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500', 'data-auto-submit': ''}),
+            'metiers': forms.CheckboxSelectMultiple,
+            'nombre_places': forms.NumberInput(attrs={'min': 1, 'placeholder': 'Ex : 30'}),
+            'statut': forms.Select(attrs={'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500'}),
+        }
+
+    def __init__(self, *args, centre_queryset=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['centre'].empty_label = "Sélectionnez un centre"
+        self.fields['annee_scolaire'].empty_label = "Sélectionnez une année"
+        if centre_queryset is not None:
+            self.fields['centre'].queryset = centre_queryset
+
+        # « Métiers éligibles » : uniquement ceux programmés dans le centre et
+        # l'année choisis — le formulaire se recharge (data-auto-submit) dès
+        # que l'un des deux change, pour re-scoper cette liste.
+        centre_id = self.data.get('centre') or self.initial.get('centre') or getattr(self.instance, 'centre_id', None)
+        annee_id = self.data.get('annee_scolaire') or self.initial.get('annee_scolaire') or getattr(self.instance, 'annee_scolaire_id', None)
+        if centre_id and annee_id:
+            self.fields['metiers'].queryset = CentreEtFiliere.objects.filter(
+                centre_id=centre_id, annee_prog_id=annee_id, is_active=True
+            ).select_related('filiere')
+        else:
+            self.fields['metiers'].queryset = CentreEtFiliere.objects.none()
+            self.fields['metiers'].help_text = "Choisissez d'abord un centre et une année scolaire."
+
+    def clean(self):
+        from django.db.models import Q
+
+        cleaned = super().clean()
+        centre = cleaned.get('centre')
+        annee = cleaned.get('annee_scolaire')
+        metiers = cleaned.get('metiers')
+        statut = cleaned.get('statut')
+        if centre and annee and metiers:
+            invalides = metiers.exclude(centre=centre, annee_prog=annee)
+            if invalides.exists():
+                raise forms.ValidationError(
+                    "Un ou plusieurs métiers choisis ne sont pas programmés dans ce centre pour cette année scolaire."
+                )
+
+        # Deux hébergements actifs qui se chevauchent (même centre/année,
+        # au moins un métier commun) rendraient le choix de l'apprenant
+        # arbitraire côté /student/my-subscriptions. « Métiers » vide = ouvert
+        # à tous les métiers du centre, donc chevauche tout autre hébergement
+        # actif de ce centre/année, quels que soient ses propres métiers.
+        if centre and annee and statut == 'actif':
+            autres = Hebergement.objects.filter(
+                centre=centre, annee_scolaire=annee, statut='actif'
+            ).prefetch_related('metiers__filiere')
+            if self.instance.pk:
+                autres = autres.exclude(pk=self.instance.pk)
+            if metiers:
+                autres = autres.filter(Q(metiers__isnull=True) | Q(metiers__in=metiers)).distinct()
+            if autres.exists():
+                metiers_ids = {m.id for m in metiers} if metiers else None
+                details = []
+                for h in autres:
+                    h_metiers = list(h.metiers.all())
+                    if metiers_ids and h_metiers:
+                        noms = [str(m.filiere) for m in h_metiers if m.id in metiers_ids]
+                    elif metiers_ids and not h_metiers:
+                        noms = [str(m.filiere) for m in metiers]
+                    elif not metiers_ids and h_metiers:
+                        noms = [str(m.filiere) for m in h_metiers]
+                    else:
+                        noms = ["tous les métiers du centre"]
+                    details.append(f"{centre} — {', '.join(noms)}")
+                raise forms.ValidationError(
+                    "Un hébergement actif existe déjà pour ce centre et cette année scolaire, sur "
+                    "le(s) métier(s) commun(s) suivant(s) : " + " ; ".join(details) + ". "
+                    "Désactivez-le ou restreignez les métiers de l'un des deux hébergements pour "
+                    "éviter le chevauchement."
+                )
+        return cleaned
+
+
+class FraisHebergementForm(BaseModelForm):
+    class Meta:
+        model = Frais
+        fields = ['type_frais', 'montant']
+        labels = {'montant': 'Montant (FCFA)'}
+        widgets = {
+            'type_frais': forms.Select(attrs={'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'}),
+            'montant': forms.NumberInput(attrs={'placeholder': '30000', 'min': '0', 'step': '1000'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['type_frais'].empty_label = 'Sélectionner un type de frais'
+
+
+FraisHebergementFormSet = inlineformset_factory(
+    Hebergement,
+    Frais,
+    form=FraisHebergementForm,
+    fk_name='hebergement',
+    extra=0,
+    min_num=1,
+    validate_min=True,
+    can_delete=True,
+)
+
 
 from accounts.models import Utilisateur, Formateur, MembreAdministration, DirecteurInterRegional, DAF, Eleve
 from django.utils import timezone
@@ -1227,7 +1352,7 @@ class EleveForm(forms.ModelForm):
             'adresse':         forms.TextInput(attrs={'placeholder': 'Ex: Secteur 12, Ouagadougou'}),
             'lieu_naissance':  forms.TextInput(attrs={'placeholder': 'Ex: Ouagadougou'}),
             'nationalite':     forms.TextInput(attrs={'placeholder': 'Ex: Burkinabè'}),
-            'niveau_scolaire': forms.TextInput(attrs={'placeholder': 'Ex: Classe de 3ème'}),
+            'niveau_scolaire': forms.Select(),
         }
 
     def __init__(self, *args, **kwargs):

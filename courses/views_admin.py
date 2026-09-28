@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404, redirect, render
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -12,6 +12,7 @@ import os
 import uuid
 from urllib.parse import urlencode
 from django.db.models import Q, Sum, Count
+from django.db import transaction
 from accounts.models import Utilisateur, Formateur, MembreAdministration, HistoriqueConnexion
 from .forms import AgentForm
 from courses.models import TypeFrais, TrancheFrais
@@ -22,12 +23,13 @@ from .ui import gabarit
 from .models import (
     Direction_reg, Filiere, CentreFormation, Module,
     Frais, Cours, Inscription, Paiement, CentreEtFiliere,PieceJointeInscription,
-    DocumentEleve,AnneeScolaire,Dette,CarrouselAccueil
+    DocumentEleve,AnneeScolaire,Dette,CarrouselAccueil, Hebergement, DemandeHebergement,
 )
 from .forms import (
     DirectionRegForm, FiliereForm, CentreFormationForm, ModuleForm,
     FraisForm, CoursForm, InscriptionForm, PaiementForm, PaiementAdminForm, CentreEtFiliereForm,
-    PieceJointeFormSet,FraisFormSet,AnneeScolaireForm, EleveForm, CarrouselAccueilForm
+    PieceJointeFormSet,FraisFormSet,AnneeScolaireForm, EleveForm, CarrouselAccueilForm,
+    HebergementForm, FraisHebergementFormSet,
 )
 from accounts.models import Eleve,Formateur
 from .admin_filters import FormationFilter,FiliereFilter,SubscriptionFilter
@@ -1654,7 +1656,15 @@ def eleve_update(request, id):
     if request.method == 'POST':
         form = EleveForm(request.POST, instance=eleve)
         if form.is_valid():
-            eleve = form.save()
+            try:
+                eleve = form.save()
+            except ValidationError as e:
+                # Eleve.save() peut refuser la modification si date_naissance/
+                # lieu_naissance/document convergent vers l'identite d'un autre
+                # apprenant (voir Eleve.save()) — a afficher proprement plutot
+                # que de laisser remonter une erreur 500.
+                messages.error(request, " ".join(e.messages))
+                return render(request, 'admin/eleve/form.html', {'form': form, 'object': eleve})
             messages.success(request, f'Apprenant « {eleve.nom} {eleve.prenom} » modifié avec succès !')
             return redirect('bsb_admin:eleve_list')
     else:
@@ -2147,4 +2157,214 @@ def guide_update(request, profil):
         'form': form,
         'objet': obj,
         'libelle': libelles[profil],
+    })
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# HÉBERGEMENT — administration
+# ═══════════════════════════════════════════════════════════════════════════
+
+@require_permission('courses.gerer_hebergements')
+def hebergement_list(request):
+    centres_qs, _, _ = _get_scope(request.user)
+    hebergements = Hebergement.objects.filter(centre__in=centres_qs).select_related(
+        'centre', 'annee_scolaire'
+    ).prefetch_related('frais').order_by('-date_creation')
+
+    centre_id = request.GET.get('centre', '').strip()
+    annee_id = request.GET.get('annee', '').strip()
+    statut_f = request.GET.get('statut', '').strip()
+    if centre_id:
+        hebergements = hebergements.filter(centre_id=centre_id)
+    if annee_id:
+        hebergements = hebergements.filter(annee_scolaire_id=annee_id)
+    if statut_f:
+        hebergements = hebergements.filter(statut=statut_f)
+
+    paginator = Paginator(hebergements, 10)
+    page = paginator.get_page(request.GET.get('page'))
+    page_range = paginator.get_elided_page_range(page.number, on_each_side=1, on_ends=1)
+
+    return render(request, 'admin/hebergement/list.html', {
+        'hebergements': page,
+        'page_range': page_range,
+        'centres': centres_qs.order_by('nom_centre'),
+        'annees': AnneeScolaire.objects.order_by('-date_creation'),
+        'f_centre': centre_id,
+        'f_annee': annee_id,
+        'f_statut': statut_f,
+    })
+
+
+@require_permission('courses.gerer_hebergements')
+def hebergement_create(request):
+    if not AnneeScolaire.objects.exists():
+        messages.warning(request, "Aucune année de formation disponible. Veuillez en créer une d'abord.")
+        return redirect('bsb_admin:annee_create')
+
+    centres_qs, _, _ = _get_scope(request.user)
+
+    if request.method == 'POST':
+        form = HebergementForm(request.POST, centre_queryset=centres_qs)
+        frais_formset = FraisHebergementFormSet(request.POST, prefix='frais')
+        if form.is_valid() and frais_formset.is_valid():
+            hebergement = form.save(commit=False)
+            hebergement.cree_par = request.user
+            hebergement.save()
+            form.save_m2m()
+            frais_formset.instance = hebergement
+            frais_formset.save()
+            messages.success(request, "Hébergement créé avec succès.")
+            return redirect('bsb_admin:hebergement_list')
+    else:
+        form = HebergementForm(centre_queryset=centres_qs)
+        frais_formset = FraisHebergementFormSet(prefix='frais')
+
+    return render(request, 'admin/hebergement/form.html', {
+        'form': form,
+        'frais_formset': frais_formset,
+        'action': 'Créer',
+        'type_frais_options': TypeFrais.objects.all(),
+    })
+
+
+@require_permission('courses.gerer_hebergements')
+def hebergement_update(request, id):
+    centres_qs, _, _ = _get_scope(request.user)
+    hebergement = get_object_or_404(Hebergement, id=id, centre__in=centres_qs)
+
+    if request.method == 'POST':
+        form = HebergementForm(request.POST, instance=hebergement, centre_queryset=centres_qs)
+        frais_formset = FraisHebergementFormSet(request.POST, instance=hebergement, prefix='frais')
+        if form.is_valid() and frais_formset.is_valid():
+            form.save()
+            frais_formset.save()
+            messages.success(request, "Hébergement modifié avec succès.")
+            return redirect('bsb_admin:hebergement_list')
+    else:
+        form = HebergementForm(instance=hebergement, centre_queryset=centres_qs)
+        frais_formset = FraisHebergementFormSet(instance=hebergement, prefix='frais')
+
+    return render(request, 'admin/hebergement/form.html', {
+        'form': form,
+        'frais_formset': frais_formset,
+        'action': 'Modifier',
+        'hebergement': hebergement,
+        'type_frais_options': TypeFrais.objects.all(),
+    })
+
+
+@require_permission('courses.gerer_hebergements')
+def hebergement_toggle_statut(request, id):
+    centres_qs, _, _ = _get_scope(request.user)
+    hebergement = get_object_or_404(Hebergement, id=id, centre__in=centres_qs)
+    if request.method == 'POST':
+        hebergement.statut = 'inactif' if hebergement.statut == 'actif' else 'actif'
+        hebergement.save()
+        messages.success(request, f"Hébergement « {hebergement} » {hebergement.get_statut_display().lower()}.")
+    return redirect('bsb_admin:hebergement_list')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DEMANDES D'HÉBERGEMENT — administration
+# ═══════════════════════════════════════════════════════════════════════════
+
+@require_permission('courses.valider_demande_hebergement')
+def demande_hebergement_list(request):
+    centres_qs, _, _ = _get_scope(request.user)
+    demandes = DemandeHebergement.objects.filter(
+        hebergement__centre__in=centres_qs
+    ).select_related(
+        'hebergement__centre', 'inscription__eleve', 'inscription__formation__filiere'
+    ).order_by('-date_demande')
+
+    statut_f = request.GET.get('statut', '').strip()
+    if statut_f:
+        demandes = demandes.filter(statut=statut_f)
+    else:
+        demandes = demandes  # tous statuts par défaut, dernières demandes en premier
+
+    paginator = Paginator(demandes, 10)
+    page = paginator.get_page(request.GET.get('page'))
+    page_range = paginator.get_elided_page_range(page.number, on_each_side=1, on_ends=1)
+
+    return render(request, 'admin/hebergement/demandes_list.html', {
+        'demandes': page,
+        'page_range': page_range,
+        'f_statut': statut_f,
+    })
+
+
+@require_permission('courses.valider_demande_hebergement')
+def demande_hebergement_detail(request, id):
+    centres_qs, _, _ = _get_scope(request.user)
+    demande = get_object_or_404(
+        DemandeHebergement.objects.select_related(
+            'hebergement__centre', 'hebergement__annee_scolaire',
+            'inscription__eleve', 'inscription__formation__filiere', 'inscription__formation__centre',
+            'inscription__annee_scolaire',
+        ),
+        id=id, hebergement__centre__in=centres_qs,
+    )
+    eleve = demande.inscription.eleve
+    documents = DocumentEleve.objects.filter(
+        inscription=demande.inscription
+    ).select_related('piece_requise')
+
+    if request.method == 'POST':
+        if demande.statut != 'en_attente':
+            messages.warning(request, "Cette demande a déjà été traitée.")
+            return redirect('bsb_admin:demande_hebergement_detail', id=id)
+
+        action = request.POST.get('action')
+        if action == 'valider':
+            # Verrouille l'hébergement (et la demande) le temps de la décision :
+            # sans ça, deux validations lancées presque simultanément pour la
+            # dernière place peuvent toutes les deux lire complet=False avant
+            # que l'une des deux n'écrive (TOCTOU), dépassant nombre_places.
+            with transaction.atomic():
+                hebergement = Hebergement.objects.select_for_update().get(pk=demande.hebergement_id)
+                demande_verrouillee = DemandeHebergement.objects.select_for_update().get(pk=demande.pk)
+                if demande_verrouillee.statut != 'en_attente':
+                    messages.warning(request, "Cette demande a déjà été traitée.")
+                    return redirect('bsb_admin:demande_hebergement_detail', id=id)
+                if hebergement.complet:
+                    messages.error(request, "Cet hébergement est complet : plus aucune place disponible.")
+                    return redirect('bsb_admin:demande_hebergement_detail', id=id)
+                demande_verrouillee.statut = 'validee'
+                demande_verrouillee.date_decision = timezone.now()
+                demande_verrouillee.decide_par = request.user
+                demande_verrouillee.save()
+                # Génère les dettes d'hébergement — même mécanisme que
+                # creer_dettes_automatiquement (signals.py) pour une inscription,
+                # rien de nouveau côté Dette/Paiement.
+                if not Dette.objects.filter(inscription=demande.inscription, frais_formation__hebergement=hebergement).exists():
+                    for frais in hebergement.frais.all():
+                        Dette.objects.create(
+                            inscription=demande.inscription,
+                            frais_formation=frais,
+                            montant_total=frais.montant,
+                            etat_dette='non_soldé',
+                        )
+            messages.success(request, f"Demande d'hébergement de {eleve} validée — dettes générées.")
+        elif action == 'rejeter':
+            motif = request.POST.get('motif_rejet', '').strip()
+            if not motif:
+                messages.error(request, "Un motif est obligatoire pour rejeter une demande.")
+                return redirect('bsb_admin:demande_hebergement_detail', id=id)
+            demande.statut = 'rejetee'
+            demande.motif_rejet = motif
+            demande.date_decision = timezone.now()
+            demande.decide_par = request.user
+            demande.save()
+            messages.success(request, f"Demande d'hébergement de {eleve} rejetée.")
+        else:
+            messages.error(request, "Action invalide.")
+            return redirect('bsb_admin:demande_hebergement_detail', id=id)
+        return redirect('bsb_admin:demande_hebergement_list')
+
+    return render(request, 'admin/hebergement/demande_detail.html', {
+        'demande': demande,
+        'eleve': eleve,
+        'documents': documents,
     })

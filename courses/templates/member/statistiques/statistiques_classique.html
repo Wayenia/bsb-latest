@@ -390,8 +390,8 @@
       <div class="flex items-center gap-3">
         <div class="kpi-icon bg-[var(--or-soft)]"></div>
         <div>
-          <div class="kpi-value text-[var(--or-dark)]">{{ stats.total_eleves }}</div>
-          <div class="kpi-label">Apprenants inscrits</div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.total_dossiers }}</div>
+          <div class="kpi-label">Dossiers de candidature</div>
         </div>
       </div>
     </div>
@@ -401,8 +401,8 @@
       <div class="flex items-center gap-3">
         <div class="kpi-icon bg-[var(--or-soft)]"></div>
         <div>
-          <div class="kpi-value text-[var(--or-dark)]">{{ stats.inscriptions_validees }}</div>
-          <div class="kpi-label">Inscriptions validées</div>
+          <div class="kpi-value text-[var(--or-dark)]">{{ stats.dossiers_valides }}</div>
+          <div class="kpi-label">Dossiers validés</div>
         </div>
       </div>
     </div>
@@ -492,7 +492,7 @@
         <div class="flex flex-wrap gap-3 justify-center mt-4">
           <span class="flex items-center gap-1 text-sm">
             <span class="w-[12px] h-[12px] bg-[#16A34A] rounded-[3px] inline-block"></span>
-            Validées <strong class="ml-1">{{ stats.inscriptions_validees }}</strong>
+            Validées <strong class="ml-1">{{ stats.dossiers_valides }}</strong>
           </span>
           <span class="flex items-center gap-1 text-sm">
             <span class="w-[12px] h-[12px] bg-[var(--or)] rounded-[3px] inline-block"></span>
@@ -782,7 +782,7 @@ new Chart(document.getElementById('chartStatut'), {
   data: {
     labels: ['Validées', 'En attente', 'Rejetées'],
     datasets: [{
-      data: [{{ stats.inscriptions_validees }}, {{ stats.inscriptions_en_cours }}, {{ stats.inscriptions_rejetees }}],
+      data: [{{ stats.dossiers_valides }}, {{ stats.inscriptions_en_cours }}, {{ stats.inscriptions_rejetees }}],
       backgroundColor: ['#16A34A', OR, ROUGE],
       borderWidth: 0,
       hoverOffset: 8,
