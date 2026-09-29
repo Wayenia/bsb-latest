@@ -682,6 +682,17 @@ class Inscription(models.Model):
     date_validation=models.DateTimeField(blank=True,null=True)
     motif_rejet=models.TextField(blank=True,null=True)
 
+    # Annulation d'une inscription déjà validée (retour à "en_cours", dettes
+    # supprimées — voir annuler_inscription) : mêmes noms de champs que sur
+    # Paiement.annule_par/motif_annulation/date_annulation, pour rester
+    # cohérent avec l'unique autre mécanisme d'annulation du site.
+    motif_annulation = models.TextField(blank=True, null=True, verbose_name="Motif de l'annulation")
+    date_annulation = models.DateTimeField(blank=True, null=True, verbose_name="Date de l'annulation")
+    annule_par = models.ForeignKey(
+        "accounts.Utilisateur", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="inscriptions_annulees", verbose_name="Annulée par"
+    )
+
     # Personne à prévenir en cas de besoin
     TYPE_PERSONNE_CONTACT_CHOICES = [
         ("parent", "Parent"),
@@ -793,6 +804,7 @@ class Inscription(models.Model):
             ("valider_inscription", "Valider une candidature"),
             ("valider_inscription_reconversion", "Valider une candidature en programme Reconversion"),
             ("rejeter_inscription", "Rejeter une candidature"),
+            ("annuler_inscription", "Annuler une inscription validée"),
         ]
 
 class Dette(models.Model):

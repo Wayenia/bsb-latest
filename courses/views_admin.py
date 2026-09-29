@@ -805,6 +805,60 @@ def rejeter_inscription(request,id):
 
     return render(request, "admin/subscription/rejeter_inscription.html", {"subscription": subscription})
 
+
+STATUTS_VALIDES_INSCRIPTION = ('valide', 'valide_paye', 'Valide')
+
+
+@require_permission('courses.annuler_inscription')
+def annuler_inscription(request, id):
+    """Annule une inscription déjà validée : retour à "en cours" et
+    suppression de ses dettes — seulement si aucun paiement (même annulé)
+    n'existe sur ces dettes, pour ne jamais perdre une trace de paiement
+    (numéro de quittance, motif d'annulation...) via le CASCADE Paiement→Dette.
+    Le signal creer_dettes_automatiquement (signals.py) recréera les dettes
+    normalement si l'inscription est revalidée par la suite."""
+    subscription = get_object_or_404(Inscription.objects.select_related('formation__centre', 'eleve'), id=id)
+    centres_qs, _, scope = _get_scope(request.user)
+    if scope != "global" and (not subscription.formation_id or not centres_qs.filter(pk=subscription.formation.centre_id).exists()):
+        raise PermissionDenied("Vous n'avez pas accès à cette souscription.")
+
+    if subscription.statut not in STATUTS_VALIDES_INSCRIPTION:
+        messages.error(request, "Seule une inscription validée peut être annulée.")
+        return redirect("bsb_admin:subscription_list")
+
+    a_un_paiement = Paiement.objects.filter(dette__inscription=subscription).exists()
+
+    if request.method == 'POST':
+        if a_un_paiement:
+            messages.error(
+                request,
+                "Impossible d'annuler cette inscription : un versement (même annulé) existe déjà sur "
+                "l'une de ses dettes. Annulez d'abord ce versement si nécessaire, en conservant sa trace."
+            )
+            return redirect("bsb_admin:subscription_list")
+
+        motif = request.POST.get('motif')
+        if not motif:
+            messages.error(request, "Veuillez renseigner le motif de l'annulation.")
+            return redirect("bsb_admin:annuler_inscription", id=id)
+
+        with transaction.atomic():
+            Dette.objects.filter(inscription=subscription).delete()
+            subscription.statut = 'en_cours'
+            subscription.date_validation = None
+            subscription.motif_rejet = None
+            subscription.motif_annulation = motif
+            subscription.date_annulation = timezone.now()
+            subscription.annule_par = request.user
+            subscription.save()
+        messages.warning(request, "Inscription annulée — ses dettes ont été supprimées.")
+        return redirect("bsb_admin:subscription_list")
+
+    return render(request, "admin/subscription/annuler_inscription.html", {
+        "subscription": subscription,
+        "a_un_paiement": a_un_paiement,
+    })
+
 #Fonction de récupération des insciptions qui ont non validés 
 @require_permission('courses.voir_inscriptions')
 def inscription__en_cours_view(request):

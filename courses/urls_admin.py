@@ -68,6 +68,7 @@ urlpatterns = [
     path('subscriptions/incriptions-a-valide',views_admin.inscription__en_cours_view,name='subscription_en_cours'),
     path('subscriptions/<int:id>/action',views_admin.gerer_inscription,name='gerer_subscription'),
     path('subscriptions/rejeter/<int:id>',views_admin.rejeter_inscription,name='rejeter_inscription'),
+    path('subscriptions/<int:id>/annuler',views_admin.annuler_inscription,name='annuler_inscription'),
 
     
     # PAYMENT
