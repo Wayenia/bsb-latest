@@ -38,7 +38,8 @@ maintenir le projet en bon état.
 **Qui utilise la plateforme.** Trois grandes catégories de personnes :
 
 - Les **élèves** (apprenants), qui s'inscrivent en ligne à une formation, suivent
-  leur dossier et paient leur scolarité.
+  leur dossier, paient leur scolarité et peuvent demander un hébergement lorsque
+  leur centre en propose un pour leur formation et leur année.
 - Le **personnel des centres et des directions** (gestionnaires, caissiers,
   formateurs, membres de l'administration, directeurs inter-régionaux, DEPS), qui
   traite les dossiers, encaisse les paiements et consulte les statistiques.
@@ -86,7 +87,8 @@ responsabilité précise :
   facturation DAF (clients, prestations, factures, encaissements).
 - **`courses`** — Le cœur métier : centres de formation, filières (métiers),
   modules, programmations de formation, inscriptions, frais, dettes, paiements de
-  scolarité, statistiques, et tout le back-office d'administration (`/bsb/`).
+  scolarité et d'hébergement, statistiques, et tout le back-office
+  d'administration (`/bsb/`).
 - **`actualites`** — Actualités publiques, abonnement à la lettre d'information et
   diffusion par courrier électronique. Cette application dispose de sa propre
   documentation : [actualites/docs/README.md](actualites/docs/README.md).
@@ -190,6 +192,13 @@ que peut faire, par exemple, un « Agent comptable », après la mise en service
 5. L'élève paie ses tranches de scolarité dans l'ordre prévu (une tranche dite
    « primordiale » doit être soldée avant que les autres puissents être réglées) et
    télécharge sa quittance (document PDF avec QR code de vérification).
+6. Si le centre propose un **hébergement** pour sa formation et son année, un
+   bouton « Demande d'hébergement » apparaît sur le tableau de bord et la liste
+   de ses dossiers. L'élève consulte un récapitulatif (frais liés, places
+   disponibles) avant de confirmer sa demande, suit la décision par
+   notification, et télécharge un récépissé une fois la demande tranchée. Une
+   fois validée, les frais d'hébergement s'ajoutent à ses dettes et se règlent
+   comme la scolarité (mêmes écrans de paiement et de quittance).
 
 ### 4.2 Formateur
 
@@ -225,6 +234,16 @@ Utilisent le back-office `/bsb/` pour :
   les droits déjà couverts par le rôle sont signalés, l'admin coche seulement ce
   qu'il accorde en supplément. Modèle additif : pour retirer un droit hérité du
   rôle, on change le rôle ou la matrice ;
+- créer des offres d'**hébergement** par centre/année/métiers (rubrique
+  « Hébergements » de la barre latérale), traiter les demandes des élèves
+  (validation → dettes générées automatiquement, ou rejet motivé) et encaisser
+  les paiements d'hébergement depuis un écran dédié, au même principe que
+  l'encaissement de la scolarité ;
+- **annuler une inscription déjà validée** depuis `/bsb/subscriptions` : ses
+  dettes sont supprimées et elle repasse « en cours de traitement » (une
+  revalidation ultérieure régénère les dettes normalement). Bloqué tant qu'un
+  paiement — même annulé — existe sur l'une de ses dettes, pour ne jamais
+  perdre sa traçabilité ;
 - suivre les statistiques et exporter les données (PDF, CSV, Excel).
 
 Le back-office présente une **barre latérale** regroupant les accès par thème
@@ -775,6 +794,26 @@ avec un **cookie de session injecté** — la session est créée côté Django 
 publiques se capturent directement, les pages connectées avec le cookie, la page du code
 OTP avec une session porteuse d'un état `otp_connexion`. Après dépôt des `.png` :
 `collectstatic`. Aucune modification du code d'authentification n'est requise.
+
+### 9.12 Hébergement — réutilisation du modèle Frais/Dette/Paiement
+
+L'hébergement n'est pas un sous-système séparé : `Frais.formation` et
+`Frais.hebergement` sont mutuellement exclusifs (contrainte base
+`frais_formation_xor_hebergement`), et une dette d'hébergement s'attache à la
+**même** inscription que les dettes de scolarité. Tout le mécanisme existant
+(encaissement, quittance, annulation de paiement, exports statistiques)
+fonctionne donc sans adaptation particulière.
+
+Le filtre « Type de frais » (Statistiques, historique des paiements) distingue
+formation et hébergement uniquement à partir de ce FK — **jamais** du libellé
+choisi dans `TypeFrais`, qui reste un champ texte libre sans lien avec cette
+distinction.
+
+Deux offres d'hébergement actives qui se chevauchent (même centre, même
+année, au moins un métier en commun) sont refusées dès la création
+(`HebergementForm.clean()`) : sans ce contrôle, l'élève ne verrait qu'une
+offre choisie arbitrairement sur son tableau de bord, l'autre restant
+invisible.
 
 ---
 
