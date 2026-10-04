@@ -224,6 +224,10 @@
   .bsb-table tbody tr:nth-child(even) { background: #FCFCFD; }
   .bsb-table tbody tr:nth-child(even):hover { background: var(--or-soft); }
   .bsb-table tbody tr:last-child td { border-bottom: none; }
+  /* Sans cette regle, la ligne Total (tfoot) retombe sur le padding par
+     defaut du navigateur — plus etroit que tbody — et ses valeurs semblent
+     mal alignees sous leur colonne. */
+  .bsb-table tfoot td { font-size: .83rem; padding: .7rem 1rem; vertical-align: middle; }
 
   /* ── Progress bar ────────────────────────────── */
   .prog-wrap { display: flex; align-items: center; gap: .6rem; }
@@ -824,7 +828,7 @@
             <td class="text-right text-sm" data-label="Total dû"><span class="fmt-amount">{{ recouvrement_total.total_du|floatformat:0 }}</span> F</td>
             <td class="text-right text-sm text-[#16A34A]" data-label="Encaissé"><span class="fmt-amount">{{ recouvrement_total.encaisse|floatformat:0 }}</span> F</td>
             <td class="text-right text-sm text-[var(--rouge)]" data-label="Restant"><span class="fmt-amount">{{ recouvrement_total.restant|floatformat:0 }}</span> F</td>
-            <td data-label="Taux de recouvrement">{{ recouvrement_total.taux }}%</td>
+            <td class="text-right" data-label="Taux de recouvrement">{{ recouvrement_total.taux }}%</td>
           </tr>
         </tfoot>
         {% endif %}
