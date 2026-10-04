@@ -3498,8 +3498,9 @@ def statistiques_view(request):
             "soldes":     soldes,
             "partiels":   partiels,
         })
-    dossiers_paginator = Paginator(dossiers_centres, 5)
-    dossiers_page = dossiers_paginator.get_page(request.GET.get("dpage"))
+    # Pas de pagination ici : "Dossiers par centre" doit lister tous les
+    # centres du périmètre filtré d'un coup (demande DG).
+    dossiers_page = dossiers_centres
 
     # ── Taux de recouvrement par centre ───────────────────────────────────────
     # centres_scope est déjà narrowé par direction (ligne ci-dessus, pour le
@@ -3528,8 +3529,9 @@ def statistiques_view(request):
         })
     recouvrement_centres.sort(key=lambda x: x["taux"], reverse=True)
     recouvrement_par_centre_v2 = sorted(recouvrement_centres, key=lambda x: x["nom_centre"])
-    recouvrement_v2_paginator = Paginator(recouvrement_par_centre_v2, 5)
-    recouvrement_v2_page = recouvrement_v2_paginator.get_page(request.GET.get("rvpage"))
+    # Pas de pagination ici non plus : "Recouvrement" doit lister tous les
+    # centres du périmètre filtré d'un coup (demande DG).
+    recouvrement_v2_page = recouvrement_par_centre_v2
 
     # Ligne total : sur l'ensemble des centres du filtre (pas seulement la
     # page de 5 affichée) — reprend les KPI déjà calculés plus haut, qui
@@ -3624,14 +3626,6 @@ def statistiques_view(request):
     qd_inscriptions.pop("ipage", None)
     querystring_inscriptions = qd_inscriptions.urlencode()
 
-    qd_dossiers = request.GET.copy()
-    qd_dossiers.pop("dpage", None)
-    querystring_dossiers = qd_dossiers.urlencode()
-
-    qd_recouvrement_v2 = request.GET.copy()
-    qd_recouvrement_v2.pop("rvpage", None)
-    querystring_recouvrement_v2 = qd_recouvrement_v2.urlencode()
-
     context = {
         "stats":                  stats,
         "top_filieres":           top_filieres,
@@ -3642,9 +3636,7 @@ def statistiques_view(request):
         "querystring_inscriptions": querystring_inscriptions,
         "dossiers_centres":       dossiers_page,
         "dossiers_total":         dossiers_total,
-        "querystring_dossiers":   querystring_dossiers,
         "recouvrement_v2":        recouvrement_v2_page,
-        "querystring_recouvrement_v2": querystring_recouvrement_v2,
         "scope":                  scope,
         # Filtres disponibles
         "centres":    centres_scope.order_by("nom_centre"),

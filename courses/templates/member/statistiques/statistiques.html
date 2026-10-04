@@ -481,7 +481,7 @@
         </div>
         <div>
           <div class="kpi-value text-[var(--or-dark)]">{{ stats.inscriptions_en_cours }}</div>
-          <div class="kpi-label">En attente de traitement</div>
+          <div class="kpi-label">Dossiers en attente de traitement</div>
         </div>
       </div>
     </div>
@@ -497,7 +497,7 @@
         </div>
         <div>
           <div class="kpi-value text-[var(--rouge-dark)]">{{ stats.inscriptions_rejetees }}</div>
-          <div class="kpi-label">Inscriptions rejetées</div>
+          <div class="kpi-label">Dossiers rejetées</div>
         </div>
       </div>
     </div>
@@ -624,21 +624,6 @@
         {% endif %}
       </table>
     </div>
-    {% if dossiers_centres.has_other_pages %}
-    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-      <p class="text-sm text-gray-500">Page {{ dossiers_centres.number }} / {{ dossiers_centres.paginator.num_pages }}</p>
-      <div class="flex gap-2">
-        {% if dossiers_centres.has_previous %}
-        <a href="?{{ querystring_dossiers }}&dpage={{ dossiers_centres.previous_page_number }}"
-           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Précédent</a>
-        {% endif %}
-        {% if dossiers_centres.has_next %}
-        <a href="?{{ querystring_dossiers }}&dpage={{ dossiers_centres.next_page_number }}"
-           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Suivant</a>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
   </div>
 
   {% comment %} ══ RECOUVREMENT (CENTRE / DÛ / PAYÉ / RESTE / DÉROGATIONS) ════════════════ {% endcomment %}
@@ -688,21 +673,6 @@
         {% endif %}
       </table>
     </div>
-    {% if recouvrement_v2.has_other_pages %}
-    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-      <p class="text-sm text-gray-500">Page {{ recouvrement_v2.number }} / {{ recouvrement_v2.paginator.num_pages }}</p>
-      <div class="flex gap-2">
-        {% if recouvrement_v2.has_previous %}
-        <a href="?{{ querystring_recouvrement_v2 }}&rvpage={{ recouvrement_v2.previous_page_number }}"
-           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Précédent</a>
-        {% endif %}
-        {% if recouvrement_v2.has_next %}
-        <a href="?{{ querystring_recouvrement_v2 }}&rvpage={{ recouvrement_v2.next_page_number }}"
-           class="px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Suivant</a>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
   </div>
 
   {% comment %} ══ GRAPHIQUES ════════════════════════════════════════════════════════════ {% endcomment %}
@@ -798,7 +768,13 @@
       </div>
     </div>
     <div class="table-scroll">
-      <table class="bo-table-compacte bo-table-adaptable bsb-table">
+      {% comment %} Pas de bo-table-compacte : ce tableau n'a pas de colonne
+         Actions pour heberger l'oeil de reveal des colonnes masquees — avec
+         7 colonnes de donnees, les colonnes au-dela de la 3e (et l'oeil
+         lui-meme) finissaient cachees sans jamais pouvoir etre revelees.
+         Defilement horizontal via table-scroll a la place (meme choix que
+         « Dossiers par centre » et « Recouvrement » ci-dessus). {% endcomment %}
+      <table class="bo-table-adaptable bsb-table">
         <thead>
           <tr>
             <th>Centre</th>

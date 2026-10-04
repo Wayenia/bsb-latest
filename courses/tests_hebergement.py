@@ -139,6 +139,13 @@ class HebergementFormOverlapTests(HebergementBase):
         form = HebergementForm(data=self._data(), instance=heb)
         self.assertTrue(form.is_valid(), form.errors)
 
+    def test_case_metiers_affiche_seulement_le_metier_pas_le_centre(self):
+        form = HebergementForm(data=self._data(metiers=[self.metier]))
+        choix = list(form.fields['metiers'].choices)
+        labels = [label for _, label in choix]
+        self.assertIn(self.filiere.nom_filiere, labels)
+        self.assertNotIn(self.centre.nom_centre, "".join(labels))
+
 
 class DashboardButtonTests(HebergementBase):
     def test_bouton_affiche_a_cote_de_deposer_candidature(self):

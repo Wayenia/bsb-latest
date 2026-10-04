@@ -824,6 +824,11 @@ class HebergementForm(BaseModelForm):
             self.fields['metiers'].queryset = CentreEtFiliere.objects.none()
             self.fields['metiers'].help_text = "Choisissez d'abord un centre et une année scolaire."
 
+        # Chaque case ne porte que le métier : le centre est déjà fixé par le
+        # formulaire (CentreEtFiliere.__str__ l'affiche aussi, utile ailleurs
+        # où une liste mélange plusieurs centres — pas ici).
+        self.fields['metiers'].label_from_instance = lambda obj: str(obj.filiere)
+
     def clean(self):
         from django.db.models import Q
 
