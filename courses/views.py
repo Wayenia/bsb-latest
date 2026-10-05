@@ -20,7 +20,7 @@ from openpyxl.cell.cell import MergedCell
 from courses.forms import PersonalInfoForm,PaiementForm
 from .models import (CentreEtFiliere, Filiere, Inscription, PieceJointeInscription
     ,DocumentEleve,Paiement,Dette,CentreFormation,AnneeScolaire,Module
-    ,PROGRAMME_FILTRE_CHOICES,Hebergement,DemandeHebergement
+    ,PROGRAMME_FILTRE_CHOICES,Hebergement,DemandeHebergement,DocumentHebergement
     )
 from .forms import FiliereForm
 from .filters import CentreFormationFilter, FiliereFilter
@@ -980,18 +980,16 @@ def telecharger_recepisse_hebergement(request, id):
         messages.error(request, "Action non autorisée.")
         return redirect('courses:my_subscriptions')
 
-    if demande.statut == 'en_attente':
-        messages.error(request, "Cette demande d'hébergement est encore en attente de décision.")
-        return redirect('courses:my_subscriptions')
-
     centre = demande.hebergement.centre
     header_left, header_right = _pdf_header_lines(centre)
     numero = f"HEB-{demande.id:06d}"
 
     if demande.statut == 'validee':
         titre_document = "Récépissé de validation de la demande d'hébergement"
-    else:
+    elif demande.statut == 'rejetee':
         titre_document = "Récépissé de rejet de la demande d'hébergement"
+    else:
+        titre_document = "Récépissé de dépôt de la demande d'hébergement"
 
     # Modele officiel (par defaut), reversible en 'classique' via DOC_MODELE.
     if getattr(settings, 'DOC_MODELE', 'officiel') != 'classique':
@@ -1287,9 +1285,14 @@ def _recepisse_hebergement_officiel_pdf(request, demande, titre_document, numero
     même gabarit officiel que le récépissé d'inscription."""
     eleve = demande.inscription.eleve
     heb = demande.hebergement
-    date_decision = demande.date_decision or timezone.now()
-    libelle_statut = "Demande validée" if demande.statut == "validee" else "Demande rejetée"
+    date_decision = demande.date_decision or demande.date_demande or timezone.now()
+    libelle_statut = {
+        "validee": "Demande validée",
+        "rejetee": "Demande rejetée",
+    }.get(demande.statut, "Demande déposée")
     formule = "Le présent récépissé atteste la décision rendue sur la demande d'hébergement."
+    if demande.statut == "en_attente":
+        formule = "Le présent récépissé atteste le dépôt de la demande d'hébergement, en attente de décision."
     if demande.statut == "rejetee" and demande.motif_rejet:
         formule = f"Motif du rejet : {demande.motif_rejet}"
     contexte = {
@@ -1534,12 +1537,25 @@ def download_quittance(request,id):
     return reponse
 
 
+def _a_paye_hors_frais_dossier(insc):
+    """Vrai si l'apprenant a au moins un versement non annulé sur une dette
+    d'un type de frais autre que « frais de dossier » pour cette inscription."""
+    return Paiement.objects.filter(
+        dette__inscription=insc,
+        annule=False,
+        dette__frais_formation__type_frais__est_frais_de_dossier=False,
+    ).exists()
+
+
 def _hebergement_disponible_pour(insc):
     """Hébergement actif ouvert à cette inscription (même centre/année, et
     métiers vide ou incluant celui de l'inscription), ou None. Dossier non
-    validé = pas d'hébergement proposé. Réutilisé par student_dashboard (au
-    moins un bouton visible ?) et my_subscriptions (lequel, par inscription)."""
+    validé, ou aucun paiement hors frais de dossier : pas d'hébergement
+    proposé. Réutilisé par student_dashboard (au moins un bouton visible ?)
+    et my_subscriptions (lequel, par inscription)."""
     if insc.statut != 'valide' or not insc.formation_id:
+        return None
+    if not _a_paye_hors_frais_dossier(insc):
         return None
     return Hebergement.objects.filter(
         centre_id=insc.formation.centre_id,
@@ -1648,15 +1664,45 @@ def demande_hebergement_brief_view(request, hebergement_id, inscription_id):
     if insc.formation.centre_id != heb.centre_id or insc.annee_scolaire_id != heb.annee_scolaire_id or not metiers_ok:
         raise Http404("Cet hébergement n'est pas disponible pour cette inscription.")
 
+    if not _a_paye_hors_frais_dossier(insc):
+        messages.error(request, "La demande d'hébergement s'ouvre après un premier paiement hors frais de dossier.")
+        return redirect('courses:my_subscriptions')
+
     demande = DemandeHebergement.objects.filter(hebergement=heb, inscription=insc).first()
+    pieces = list(heb.pieces_requises.all())
 
     if request.method == 'POST' and not demande:
         if heb.complet:
             messages.error(request, "Cet hébergement est complet, votre demande ne peut pas être soumise.")
             return redirect('courses:my_subscriptions')
-        DemandeHebergement.objects.create(hebergement=heb, inscription=insc)
-        messages.success(request, "Votre demande d'hébergement a été soumise avec succès. Vous serez notifié(e) de la décision.")
-        return redirect('courses:my_subscriptions')
+
+        # Chaque pièce obligatoire doit être fournie ; les autres sont facultatives.
+        fichiers = {}
+        erreurs = []
+        for piece in pieces:
+            fichier = request.FILES.get(f"piece_{piece.id}")
+            if not fichier:
+                if piece.est_requis:
+                    erreurs.append(f"« {piece.libelle_piece} » est obligatoire.")
+                continue
+            err = _valider_fichier_upload(fichier)
+            if err:
+                erreurs.append(f"« {piece.libelle_piece} » : {err}")
+                continue
+            fichiers[piece.id] = fichier
+        if erreurs:
+            for e in erreurs:
+                messages.error(request, e)
+        else:
+            with transaction.atomic():
+                nouvelle = DemandeHebergement.objects.create(hebergement=heb, inscription=insc)
+                for piece in pieces:
+                    if piece.id in fichiers:
+                        DocumentHebergement.objects.create(
+                            demande=nouvelle, piece_requise=piece, piece=fichiers[piece.id],
+                        )
+            messages.success(request, "Votre demande d'hébergement a été soumise avec succès. Vous serez notifié(e) de la décision.")
+            return redirect('courses:my_subscriptions')
 
     frais_lies = list(heb.frais.all())
     context = {
@@ -1665,6 +1711,7 @@ def demande_hebergement_brief_view(request, hebergement_id, inscription_id):
         'demande': demande,
         'frais_lies': frais_lies,
         'total_frais': sum(f.montant for f in frais_lies),
+        'pieces': pieces,
     }
     return render(request, 'student/subscription/demande_hebergement_brief.html', context)
 
@@ -3085,6 +3132,11 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
     statut_paiement_f = request.GET.get("statut_paiement")
     type_programme_f  = request.GET.get("type_programme")
     type_frais_f      = request.GET.get("type_frais")
+    age_min_f         = request.GET.get("age_min", "").strip()
+    age_max_f         = request.GET.get("age_max", "").strip()
+    niveau_f          = request.GET.get("niveau_scolaire", "").strip()
+    handicap_f        = request.GET.get("handicap", "").strip()
+    organisation_f    = request.GET.get("organisation", "").strip()
 
     if direction_id and scope == "global":
         inscriptions_qs = inscriptions_qs.filter(formation__centre__direction_id=direction_id)
@@ -3165,6 +3217,44 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
         dettes_qs = dettes_qs.filter(inscription_id__in=ids_ok)
         paiements_qs = paiements_qs.filter(dette__inscription_id__in=ids_ok)
 
+    # Profil de l'apprenant (âge, niveau, handicap) et parrain/organisation :
+    # mêmes principes que les autres filtres — appliqués aux trois querysets.
+    eleve_lookups = {}
+    if age_min_f.isdigit() or age_max_f.isdigit():
+        from datetime import date as _date, timedelta as _td
+        aujourd_hui = _date.today()
+        def _anniversaire_il_y_a(ans):
+            try:
+                return aujourd_hui.replace(year=aujourd_hui.year - ans)
+            except ValueError:  # 29 février
+                return aujourd_hui.replace(year=aujourd_hui.year - ans, day=28)
+        if age_min_f.isdigit():
+            eleve_lookups["date_naissance__lte"] = _anniversaire_il_y_a(int(age_min_f))
+        if age_max_f.isdigit():
+            eleve_lookups["date_naissance__gt"] = _anniversaire_il_y_a(int(age_max_f) + 1)
+    if niveau_f:
+        eleve_lookups["niveau_scolaire"] = niveau_f
+    if handicap_f == "oui":
+        eleve_lookups["a_handicap"] = True
+    elif handicap_f == "non":
+        eleve_lookups["a_handicap"] = False
+
+    if eleve_lookups:
+        inscriptions_qs = inscriptions_qs.filter(**{f"eleve__{k}": v for k, v in eleve_lookups.items()})
+        dettes_qs = dettes_qs.filter(**{f"inscription__eleve__{k}": v for k, v in eleve_lookups.items()})
+        paiements_qs = paiements_qs.filter(**{f"dette__inscription__eleve__{k}": v for k, v in eleve_lookups.items()})
+
+    if organisation_f in ("oui", "non"):
+        sans_org = Q(organisation_nom__isnull=True) | Q(organisation_nom="")
+        if organisation_f == "oui":
+            inscriptions_qs = inscriptions_qs.exclude(sans_org)
+            dettes_qs = dettes_qs.exclude(Q(inscription__organisation_nom__isnull=True) | Q(inscription__organisation_nom=""))
+            paiements_qs = paiements_qs.exclude(Q(dette__inscription__organisation_nom__isnull=True) | Q(dette__inscription__organisation_nom=""))
+        else:
+            inscriptions_qs = inscriptions_qs.filter(sans_org)
+            dettes_qs = dettes_qs.filter(Q(inscription__organisation_nom__isnull=True) | Q(inscription__organisation_nom=""))
+            paiements_qs = paiements_qs.filter(Q(dette__inscription__organisation_nom__isnull=True) | Q(dette__inscription__organisation_nom=""))
+
     # Type de frais (Formation / Hébergement) : ne filtre QUE les dettes/
     # paiements — un dossier (inscriptions_qs) n'a pas de « type », seuls les
     # frais qui lui sont rattachés en ont un. Sans ce filtre, les montants
@@ -3185,6 +3275,11 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
         "genre": genre, "date_debut": date_debut, "date_fin": date_fin,
         "statut_paiement_f": statut_paiement_f, "type_programme_f": type_programme_f,
         "type_frais_f": type_frais_f,
+        "age_min_f": age_min_f if age_min_f.isdigit() else "",
+        "age_max_f": age_max_f if age_max_f.isdigit() else "",
+        "niveau_f": niveau_f,
+        "handicap_f": handicap_f if handicap_f in ("oui", "non") else "",
+        "organisation_f": organisation_f if organisation_f in ("oui", "non") else "",
     }
     return inscriptions_qs, dettes_qs, paiements_qs, filters
 
@@ -3659,6 +3754,12 @@ def statistiques_view(request):
         "f_statut_paiement": statut_paiement_f,
         "f_type_programme": type_programme_f,
         "f_type_frais": type_frais_f,
+        "f_age_min": filters["age_min_f"],
+        "f_age_max": filters["age_max_f"],
+        "f_niveau_scolaire": filters["niveau_f"],
+        "f_handicap": filters["handicap_f"],
+        "f_organisation": filters["organisation_f"],
+        "niveaux_scolaires": Eleve.NIVEAU_SCOLAIRE_CHOICES,
         # Transmises brutes : le template les serialise avec json_script, qui
         # echappe <, > et &, contrairement a json.dumps.
         "evol_labels":       evol_labels,
@@ -4538,6 +4639,64 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
     return redirect(redirect_url)
 
 
+# ── RÉGLER TOUTE L'HÉBERGEMENT D'UNE INSCRIPTION EN UN SEUL VERSEMENT ─────────
+@login_required
+def stats_encaisser_solde_hebergement_view(request, inscription_id):
+    """Règle en une seule action le reste dû sur les dettes d'hébergement d'une
+    inscription : un seul groupe_id et un seul numéro de quittance, donc une
+    seule quittance côté apprenant (Mes paiements)."""
+    inscription = get_object_or_404(Inscription.objects.select_related('eleve'), id=inscription_id)
+
+    if not _can_access_eleve_finances(request.user, inscription.eleve):
+        raise PermissionDenied("Vous n'avez pas accès aux informations financières de cet apprenant.")
+
+    if request.method != 'POST':
+        return redirect('courses:hebergement_paiement_list')
+
+    if not (request.user.is_superuser or request.user.has_perm('courses.encaisser_paiement')):
+        raise PermissionDenied("Vous n'avez pas la permission d'encaisser un paiement.")
+
+    redirect_url = reverse('courses:hebergement_paiement_list')
+    dettes = list(
+        inscription.dettes.filter(frais_formation__hebergement__isnull=False)
+        .select_related('frais_formation__type_frais').order_by('id')
+    )
+    reste_total = sum(max(d.reste_a_payer(), 0) for d in dettes)
+    if reste_total <= 0:
+        messages.info(request, "L'hébergement de cette inscription est déjà entièrement réglé.")
+        return redirect(redirect_url)
+
+    mode = request.POST.get('mode_paiement', 'espece')
+    groupe_id = uuid.uuid4()
+    numero_quittance = Paiement.generer_numero_quittance(
+        inscription.formation.centre if inscription.formation else None
+    )
+    try:
+        with transaction.atomic():
+            restant = reste_total
+            nb_total = 0
+            montant_total = 0
+            for dette in dettes:
+                reste_dette = dette.reste_a_payer()
+                if restant <= 0 or reste_dette <= 0:
+                    continue
+                nb, total, restant = _encaisser_montant_dette(
+                    dette, restant, mode, request.user, groupe_id=groupe_id, numero_quittance=numero_quittance,
+                )
+                nb_total += nb
+                montant_total += total
+    except _CascadeInterrompue as exc:
+        messages.error(request, exc.message)
+        return redirect(redirect_url)
+
+    messages.success(
+        request,
+        f"Hébergement réglé : {montant_total:,.0f} FCFA en {nb_total} versement{'s' if nb_total > 1 else ''}. "
+        "Une seule quittance est disponible pour l'apprenant."
+    )
+    return redirect(redirect_url)
+
+
 # ── DÉTAIL D'UNE DETTE (tranches + modal paiement) ────────────────────────────
 @login_required
 def stats_detail_dette_view(request, dette_id):
@@ -4662,8 +4821,14 @@ def stats_detail_dette_view(request, dette_id):
     # solde plusieurs tranches d'un coup) : une seule quittance groupee a
     # telecharger pour tout le lot, plutot qu'une quittance par tranche - meme
     # logique que liste_paiement (page "Mes paiements" de l'apprenant).
+    # La taille du lot se compte sur TOUS ses versements, pas seulement sur
+    # ceux de cette dette : un paiement qui couvre plusieurs types de frais
+    # doit donner la même quittance de lot à chacun.
     from collections import Counter
-    _tailles_groupe = Counter(p.groupe_id for p in paiements if not p.annule and p.groupe_id)
+    groupes_concernes = {p.groupe_id for p in paiements if not p.annule and p.groupe_id}
+    _tailles_groupe = Counter(
+        Paiement.objects.filter(groupe_id__in=groupes_concernes, annule=False).values_list('groupe_id', flat=True)
+    )
     for p in paiements:
         p.annulable = (not p.annule) and _est_dernier_versement_inscription(p)
         p.quittance_groupe_id = (

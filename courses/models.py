@@ -935,6 +935,45 @@ class PieceJointeInscription(models.Model):
         ]
 
 
+class PieceJointeHebergement(models.Model):
+    """Pièce à fournir pour un hébergement donné (liste propre à chaque
+    hébergement, comme PieceJointeInscription l'est pour une formation)."""
+    hebergement = models.ForeignKey(
+        "Hebergement", on_delete=models.CASCADE, related_name="pieces_requises", verbose_name="Hébergement"
+    )
+    libelle_piece = models.CharField(max_length=225, verbose_name="Libellé de la pièce")
+    type_piece = models.CharField(
+        max_length=30, choices=PieceJointeInscription.TYPE_PIECE, default="type_1", verbose_name="Type de pièce"
+    )
+    est_requis = models.BooleanField(default=True, verbose_name="Obligatoire")
+
+    def __str__(self):
+        return self.libelle_piece
+
+    class Meta:
+        verbose_name = "Pièce à fournir (hébergement)"
+        verbose_name_plural = "Pièces à fournir (hébergement)"
+
+
+class DocumentHebergement(models.Model):
+    """Fichier déposé par l'apprenant à l'appui de sa demande d'hébergement."""
+    demande = models.ForeignKey(
+        "DemandeHebergement", on_delete=models.CASCADE, related_name="documents", verbose_name="Demande"
+    )
+    piece_requise = models.ForeignKey(
+        PieceJointeHebergement, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Pièce demandée"
+    )
+    piece = models.FileField(
+        upload_to='hebergements/pieces', blank=True, null=True, verbose_name="Fichier",
+        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
+    )
+    date_depot = models.DateTimeField(auto_now_add=True, verbose_name="Date de dépôt")
+
+    class Meta:
+        verbose_name = "Document d'hébergement"
+        verbose_name_plural = "Documents d'hébergement"
+
+
 #Piece pour suivre les documents d'un élève en fait pur une formation donnée
 class DocumentEleve(models.Model):
     inscription=models.ForeignKey(Inscription,on_delete=models.SET_NULL, null=True, blank=True,verbose_name="Inscriptions")

@@ -119,6 +119,11 @@ urlpatterns = [
          views.stats_download_quittance_view,
          name='stats_download_quittance'),
 
+    # ── Régler tout l'hébergement d'une inscription (une seule quittance) ─────
+    path('statistiques/paiement/inscription/<int:inscription_id>/solder-hebergement',
+         views.stats_encaisser_solde_hebergement_view,
+         name='stats_encaisser_solde_hebergement'),
+
     # ── Quittance groupée (règlement intégral, ex. Reconversion) ──────────────
     path('statistiques/paiement/quittance-groupe/<uuid:groupe_id>/pdf/',
          views.stats_download_quittance_groupe_view,

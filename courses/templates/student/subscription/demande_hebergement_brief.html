@@ -87,18 +87,44 @@
         Vous avez déjà soumis une demande pour cet hébergement, le statut est :
         <span class="font-bold">{{ demande.get_statut_display }}</span>.
       </div>
-      {% else %}
-      <form method="post" class="flex items-center justify-end gap-3 pt-2">
-        {% csrf_token %}
-        <a href="{% url 'courses:my_subscriptions' %}"
-           class="inline-flex items-center gap-2 px-6 py-3 border-2 border-slate-200 rounded-lg text-bsb-ink font-semibold hover:border-red-300 hover:text-bsb-red transition-all">
-          Annuler
+      <div class="flex justify-end">
+        <a href="{% url 'courses:telecharger_recepisse_hebergement' demande.id %}"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-bsb-ink font-semibold bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+          Télécharger le récépissé
         </a>
-        <button type="submit"
-                {% if hebergement.complet %}disabled title="Hébergement complet"{% endif %}
-                class="inline-flex items-center gap-2 px-8 py-3 bg-bsb-green text-white font-bold rounded-lg shadow-lg hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-          Confirmer ma demande
-        </button>
+      </div>
+      {% else %}
+      <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+
+      {% if pieces %}
+      <section class="space-y-4">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-bsb-red">Pièces à fournir</h2>
+        <p class="text-xs text-bsb-muted">Joignez les pièces demandées (PDF, JPG ou PNG). Les pièces marquées « obligatoire » sont requises pour envoyer votre demande.</p>
+        {% for piece in pieces %}
+        <div class="rounded-xl border border-slate-200 p-4">
+          <label class="block text-sm font-semibold text-bsb-ink mb-1">
+            {{ piece.libelle_piece }}
+            {% if piece.est_requis %}<span class="text-red-600">*</span>{% else %}<span class="text-xs text-bsb-muted font-normal">(facultatif)</span>{% endif %}
+          </label>
+          <input type="file" name="piece_{{ piece.id }}" accept=".pdf,.jpg,.jpeg,.png"
+                 class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-bsb-red file:text-white">
+        </div>
+        {% endfor %}
+      </section>
+      {% endif %}
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <a href="{% url 'courses:my_subscriptions' %}"
+             class="inline-flex items-center gap-2 px-6 py-3 border-2 border-slate-200 rounded-lg text-bsb-ink font-semibold hover:border-red-300 hover:text-bsb-red transition-all">
+            Annuler
+          </a>
+          <button type="submit"
+                  {% if hebergement.complet %}disabled title="Hébergement complet"{% endif %}
+                  class="inline-flex items-center gap-2 px-8 py-3 bg-bsb-green text-white font-bold rounded-lg shadow-lg hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+            Confirmer ma demande
+          </button>
+        </div>
       </form>
       {% if hebergement.complet %}
       <p class="text-xs text-red-600 text-right -mt-4">Cet hébergement est complet, vous ne pouvez pas soumettre de demande pour le moment.</p>

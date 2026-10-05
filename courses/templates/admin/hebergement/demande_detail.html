@@ -127,6 +127,34 @@
         </div>
     </div>
 
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 px-6 py-4 flex items-center justify-between">
+            <h2 class="text-white font-bold text-lg">Pièces déposées pour cette demande</h2>
+            {% if documents_hebergement %}<span class="text-xs text-yellow-50">{{ documents_hebergement|length }} fichier(s)</span>{% endif %}
+        </div>
+        <div class="p-6">
+            {% if documents_hebergement %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for doc in documents_hebergement %}
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-700">{{ doc.piece_requise.libelle_piece|default:"Document" }}</span>
+                    {% if doc.piece %}
+                    <a href="{{ doc.piece.url }}" target="_blank"
+                       class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-bsb-red/10 text-bsb-red hover:bg-bsb-red hover:text-white transition-colors">
+                        Visualiser
+                    </a>
+                    {% else %}
+                    <span class="text-xs text-gray-400">Aucun fichier</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-400">Aucune pièce déposée pour cette demande.</p>
+            {% endif %}
+        </div>
+    </div>
+
     {% if demande.statut == 'en_attente' %}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 class="text-lg font-bold text-gray-900 mb-4">Décision</h2>

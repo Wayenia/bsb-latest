@@ -370,6 +370,44 @@
         </div>
 
         <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Âge min</label>
+          <input type="number" name="age_min" min="0" max="120" value="{{ f_age_min }}" class="form-select" placeholder="Ex : 15">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Âge max</label>
+          <input type="number" name="age_max" min="0" max="120" value="{{ f_age_max }}" class="form-select" placeholder="Ex : 25">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Niveau d'études</label>
+          <select name="niveau_scolaire" class="form-select">
+            <option value="">— Tous —</option>
+            {% for code, label in niveaux_scolaires %}
+              <option value="{{ code }}" {% if f_niveau_scolaire == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Personnes vivant avec un handicap</label>
+          <select name="handicap" class="form-select">
+            <option value="">— Tous —</option>
+            <option value="oui" {% if f_handicap == "oui" %}selected{% endif %}>Oui</option>
+            <option value="non" {% if f_handicap == "non" %}selected{% endif %}>Non</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Parrain / organisation</label>
+          <select name="organisation" class="form-select">
+            <option value="">— Tous —</option>
+            <option value="oui" {% if f_organisation == "oui" %}selected{% endif %}>Renseigné</option>
+            <option value="non" {% if f_organisation == "non" %}selected{% endif %}>Non renseigné</option>
+          </select>
+        </div>
+
+        <div>
           <label class="block text-sm font-semibold mb-1 text-[var(--gris)]">Genre</label>
           <select name="genre" class="form-select">
             <option value="">— Tous —</option>

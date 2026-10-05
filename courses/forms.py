@@ -6,7 +6,7 @@ from .models import (
     TITRE_PROFESSIONNEL_CHOICE, TYPE_PROGRAMME_CHOICE, Direction_reg, Filiere, CentreFormation, Module,
     Frais, Cours, Inscription, Paiement, CentreEtFiliere,PieceJointeInscription,TypeFrais,
     AnneeScolaire, TrancheFrais, Region, DG, Membre, CarrouselAccueil, BandeAnnonce, Partenaire,
-    GuideUtilisation, Hebergement, DemandeHebergement,
+    GuideUtilisation, Hebergement, DemandeHebergement, PieceJointeHebergement, DocumentHebergement,
 )
 from django.forms import inlineformset_factory
 from accounts.models import Eleve as _Eleve
@@ -903,6 +903,28 @@ FraisHebergementFormSet = inlineformset_factory(
     extra=0,
     min_num=1,
     validate_min=True,
+    can_delete=True,
+)
+
+
+
+class PieceJointeHebergementForm(BaseModelForm):
+    class Meta:
+        model = PieceJointeHebergement
+        fields = ['libelle_piece', 'type_piece', 'est_requis']
+        labels = {'libelle_piece': 'Libellé de la pièce', 'type_piece': 'Type', 'est_requis': 'Obligatoire'}
+        widgets = {
+            'libelle_piece': forms.TextInput(attrs={'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg text-sm', 'placeholder': 'Ex : Extrait de naissance'}),
+            'type_piece': forms.Select(attrs={'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg text-sm'}),
+            'est_requis': forms.CheckboxInput(attrs={'class': 'h-4 w-4'}),
+        }
+
+
+PieceJointeHebergementFormSet = inlineformset_factory(
+    Hebergement,
+    PieceJointeHebergement,
+    form=PieceJointeHebergementForm,
+    extra=0,
     can_delete=True,
 )
 

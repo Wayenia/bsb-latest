@@ -49,6 +49,11 @@ class HebergementBase(TestCase):
         insc.save()  # signal -> crée une Dette pour le frais de scolarité
         return insc
 
+    def _payer_hors_frais_dossier(self, insc):
+        Paiement.objects.create(
+            dette=insc.dettes.get(), montant_paiement=1000, tranche=1, effectue_par=self.staff,
+        )
+
     def _hebergement(self, nombre_places=2, metiers=None):
         heb = Hebergement.objects.create(
             centre=self.centre, annee_scolaire=self.annee, nombre_places=nombre_places,
@@ -149,7 +154,8 @@ class HebergementFormOverlapTests(HebergementBase):
 
 class DashboardButtonTests(HebergementBase):
     def test_bouton_affiche_a_cote_de_deposer_candidature(self):
-        self._inscription_validee()
+        insc = self._inscription_validee()
+        self._payer_hors_frais_dossier(insc)
         self._hebergement()
         self.client.force_login(self.eleve)
         resp = self.client.get(reverse('courses:student_dashboard'))
@@ -165,6 +171,7 @@ class DashboardButtonTests(HebergementBase):
 
     def test_bouton_absent_si_demande_deja_soumise(self):
         insc = self._inscription_validee()
+        self._payer_hors_frais_dossier(insc)
         heb = self._hebergement()
         DemandeHebergement.objects.create(hebergement=heb, inscription=insc)
         self.client.force_login(self.eleve)
@@ -175,6 +182,7 @@ class DashboardButtonTests(HebergementBase):
 class MySubscriptionsButtonTests(HebergementBase):
     def test_bouton_affiche_si_hebergement_ouvert_a_tous(self):
         insc = self._inscription_validee()
+        self._payer_hors_frais_dossier(insc)
         self._hebergement()  # metiers vide = ouvert à tous
         self.client.force_login(self.eleve)
         resp = self.client.get(reverse('courses:my_subscriptions'))
@@ -205,6 +213,7 @@ class MySubscriptionsButtonTests(HebergementBase):
 class DemandeBriefTests(HebergementBase):
     def test_get_brief(self):
         insc = self._inscription_validee()
+        self._payer_hors_frais_dossier(insc)
         heb = self._hebergement()
         self.client.force_login(self.eleve)
         resp = self.client.get(reverse('courses:demande_hebergement_brief', args=[heb.id, insc.id]))
@@ -213,6 +222,7 @@ class DemandeBriefTests(HebergementBase):
 
     def test_post_brief_cree_la_demande(self):
         insc = self._inscription_validee()
+        self._payer_hors_frais_dossier(insc)
         heb = self._hebergement()
         self.client.force_login(self.eleve)
         resp = self.client.post(reverse('courses:demande_hebergement_brief', args=[heb.id, insc.id]), follow=True)
@@ -363,14 +373,6 @@ class RecepisseHebergementTests(HebergementBase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp['Content-Type'], 'application/pdf')
 
-    def test_refuse_tant_que_en_attente(self):
-        insc = self._inscription_validee()
-        heb = self._hebergement()
-        demande = DemandeHebergement.objects.create(hebergement=heb, inscription=insc)
-
-        self.client.force_login(self.eleve)
-        resp = self.client.get(reverse('courses:telecharger_recepisse_hebergement', args=[demande.id]), follow=True)
-        self.assertNotEqual(resp.get('Content-Type'), 'application/pdf')
 
     def test_refuse_pour_un_autre_apprenant(self):
         insc = self._inscription_validee()
@@ -576,3 +578,164 @@ class HistoriqueTypeFilterTests(HebergementBase):
         ids = {p.id for p in resp.context['paiements']}
         self.assertIn(p_scol.id, ids)
         self.assertNotIn(p_heb.id, ids)
+
+
+class HebergementApresPaiementTests(HebergementBase):
+    """Demande d'hébergement ouverte seulement après un versement non annulé
+    sur une dette d'un type de frais autre que « frais de dossier »."""
+
+    def _paiement(self, dette, montant=1000):
+        return Paiement.objects.create(dette=dette, montant_paiement=montant, tranche=1, effectue_par=self.staff)
+
+    def test_pas_de_bouton_sans_paiement(self):
+        self._inscription_validee()
+        self._hebergement()
+        self.client.force_login(self.eleve)
+        resp = self.client.get(reverse('courses:my_subscriptions'))
+        self.assertNotContains(resp, "Demande d'hébergement")
+
+    def test_bouton_apres_paiement_scolarite(self):
+        insc = self._inscription_validee()
+        self._hebergement()
+        self._paiement(insc.dettes.get())
+        self.client.force_login(self.eleve)
+        resp = self.client.get(reverse('courses:my_subscriptions'))
+        self.assertContains(resp, "Demande d'hébergement")
+
+    def test_paiement_frais_de_dossier_ne_suffit_pas(self):
+        insc = self._inscription_validee()
+        self._hebergement()
+        dette = insc.dettes.get()
+        dette.frais_formation.type_frais.est_frais_de_dossier = True
+        dette.frais_formation.type_frais.save()
+        self._paiement(dette)
+        self.client.force_login(self.eleve)
+        resp = self.client.get(reverse('courses:my_subscriptions'))
+        self.assertNotContains(resp, "Demande d'hébergement")
+
+    def test_paiement_annule_ne_suffit_pas(self):
+        insc = self._inscription_validee()
+        self._hebergement()
+        p = self._paiement(insc.dettes.get())
+        p.annule = True
+        p.save()
+        self.client.force_login(self.eleve)
+        resp = self.client.get(reverse('courses:my_subscriptions'))
+        self.assertNotContains(resp, "Demande d'hébergement")
+
+
+class RecepisseDepotTests(HebergementBase):
+    def test_recepisse_telechargeable_en_attente(self):
+        insc = self._inscription_validee()
+        heb = self._hebergement()
+        demande = DemandeHebergement.objects.create(hebergement=heb, inscription=insc)
+        self.client.force_login(self.eleve)
+        resp = self.client.get(reverse('courses:telecharger_recepisse_hebergement', args=[demande.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/pdf')
+
+
+class PiecesHebergementTests(HebergementBase):
+    """Pièces à fournir propres à chaque hébergement : obligatoires à la
+    demande, et visibles dans la vérification côté agent."""
+
+    def setUp(self):
+        from courses.models import PieceJointeHebergement
+        self.PieceJointeHebergement = PieceJointeHebergement
+
+    def _pret(self):
+        insc = self._inscription_validee()
+        self._payer_hors_frais_dossier(insc)
+        heb = self._hebergement()
+        piece = self.PieceJointeHebergement.objects.create(
+            hebergement=heb, libelle_piece="Extrait de naissance", est_requis=True,
+        )
+        return insc, heb, piece
+
+    def _fichier(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return SimpleUploadedFile("extrait.pdf", b"%PDF-1.4 test", content_type="application/pdf")
+
+    def test_demande_refusee_sans_piece_obligatoire(self):
+        insc, heb, piece = self._pret()
+        self.client.force_login(self.eleve)
+        self.client.post(reverse('courses:demande_hebergement_brief', args=[heb.id, insc.id]), {}, follow=True)
+        self.assertFalse(DemandeHebergement.objects.filter(hebergement=heb, inscription=insc).exists())
+
+    def test_demande_creee_avec_piece_et_enregistree(self):
+        from courses.models import DocumentHebergement
+        insc, heb, piece = self._pret()
+        self.client.force_login(self.eleve)
+        self.client.post(
+            reverse('courses:demande_hebergement_brief', args=[heb.id, insc.id]),
+            {f"piece_{piece.id}": self._fichier()},
+        )
+        demande = DemandeHebergement.objects.get(hebergement=heb, inscription=insc)
+        self.assertTrue(DocumentHebergement.objects.filter(demande=demande, piece_requise=piece).exists())
+
+    def test_agent_voit_les_pieces_deposees(self):
+        insc, heb, piece = self._pret()
+        self.client.force_login(self.eleve)
+        self.client.post(
+            reverse('courses:demande_hebergement_brief', args=[heb.id, insc.id]),
+            {f"piece_{piece.id}": self._fichier()},
+        )
+        demande = DemandeHebergement.objects.get(hebergement=heb, inscription=insc)
+        self.client.force_login(self.staff)
+        resp = self.client.get(reverse('bsb_admin:demande_hebergement_detail', args=[demande.id]))
+        self.assertContains(resp, "Extrait de naissance")
+        self.assertContains(resp, "Pièces déposées pour cette demande")
+
+
+class ReglerToutHebergementTests(HebergementBase):
+    """Un seul versement règle toutes les dettes d'hébergement : une seule
+    quittance côté apprenant, et la scolarité n'est pas touchée."""
+
+    def test_une_seule_quittance_pour_toutes_les_dettes_hebergement(self):
+        insc = self._inscription_validee()
+        heb = self._hebergement()  # frais 20000
+        Frais.objects.create(hebergement=heb, type_frais=TypeFrais.objects.create(libelle="Restauration"), montant=10000)
+        demande = DemandeHebergement.objects.create(hebergement=heb, inscription=insc)
+        self.client.force_login(self.staff)
+        self.client.post(
+            reverse('bsb_admin:demande_hebergement_detail', args=[demande.id]),
+            {'action': 'valider'}, follow=True,
+        )
+        scolarite = insc.dettes.get(frais_formation__hebergement__isnull=True)
+        self.client.post(
+            reverse('courses:stats_encaisser_solde_hebergement', args=[insc.id]),
+            {'mode_paiement': 'espece'}, follow=True,
+        )
+
+        dettes_heb = Dette.objects.filter(inscription=insc, frais_formation__hebergement=heb)
+        self.assertTrue(all(d.reste_a_payer() <= 0 for d in dettes_heb))
+        scolarite.refresh_from_db()
+        self.assertGreater(scolarite.reste_a_payer(), 0)  # scolarité intacte
+
+        groupes = set(Paiement.objects.filter(dette__in=dettes_heb).values_list('groupe_id', flat=True))
+        self.assertEqual(len(groupes), 1)
+        groupe = groupes.pop()
+        self.assertIsNotNone(groupe)
+
+        self.client.force_login(self.eleve)
+        resp = self.client.get(reverse('courses:stats_download_quittance_groupe', args=[groupe]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/pdf')
+
+
+class BriefFormulairePiecesTests(PiecesHebergementTests):
+    def test_champ_fichier_dans_le_formulaire(self):
+        insc, heb, piece = self._pret()
+        self.client.force_login(self.eleve)
+        html = self.client.get(reverse('courses:demande_hebergement_brief', args=[heb.id, insc.id])).content.decode()
+        debut_form = html.index('<form method="post" enctype="multipart/form-data"')
+        fin_form = html.index('</form>', debut_form)
+        self.assertLess(debut_form, html.index(f'name="piece_{piece.id}"'))
+        self.assertLess(html.index(f'name="piece_{piece.id}"'), fin_form)
+
+    def test_recepisse_visible_apres_demande(self):
+        insc, heb, piece = self._pret()
+        demande = DemandeHebergement.objects.create(hebergement=heb, inscription=insc)
+        self.client.force_login(self.eleve)
+        resp = self.client.get(reverse('courses:demande_hebergement_brief', args=[heb.id, insc.id]))
+        self.assertContains(resp, reverse('courses:telecharger_recepisse_hebergement', args=[demande.id]))

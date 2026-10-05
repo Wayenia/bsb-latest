@@ -142,6 +142,15 @@
                                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-700 text-white hover:bg-gray-800 transition-all">
                                                     Voir les dettes
                                                 </a>
+                                                {% if hebergement_only and insc.reste > 0 %}
+                                                <form method="post" action="{% url 'courses:stats_encaisser_solde_hebergement' insc.id %}" class="inline" data-confirmer="Régler tout le reste dû sur l'hébergement de cet apprenant en un seul versement ?">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="mode_paiement" value="espece">
+                                                    <button type="submit"                                                             class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-all">
+                                                        Régler tout l'hébergement
+                                                    </button>
+                                                </form>
+                                                {% endif %}
                                             </div>
                                         </td>
                                     </tr>
@@ -291,6 +300,15 @@
                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-700 text-white hover:bg-gray-800 transition-all">
                                     Voir les dettes
                                 </a>
+                                {% if hebergement_only and insc.reste > 0 %}
+                                <form method="post" action="{% url 'courses:stats_encaisser_solde_hebergement' insc.id %}" class="inline" data-confirmer="Régler tout le reste dû sur l'hébergement de cet apprenant en un seul versement ?">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="mode_paiement" value="espece">
+                                    <button type="submit"                                             class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-all">
+                                        Régler tout l'hébergement
+                                    </button>
+                                </form>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

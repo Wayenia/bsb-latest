@@ -114,6 +114,67 @@
             </div>
         </div>
 
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-700 to-gray-800 px-6 py-4 flex items-center justify-between">
+                <h2 class="text-white font-bold text-lg">Pièces à fournir par l'apprenant</h2>
+                <button type="button" id="btn-add-piece"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-bold text-gray-700 bg-white rounded-lg hover:bg-gray-100 transition-all">
+                    Ajouter une pièce
+                </button>
+            </div>
+            <p class="px-6 pt-4 text-xs text-gray-500">Ces pièces seront demandées à l'apprenant lors de sa demande d'hébergement. Elles apparaîtront ensuite dans la vérification de sa demande.</p>
+            {{ pieces_formset.management_form }}
+            <div id="piece-container" class="p-6 space-y-3">
+                {% for piece_form in pieces_formset %}
+                <div class="piece-row grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Libellé</label>
+                        {{ piece_form.libelle_piece }}
+                        {{ piece_form.id }}
+                        {% if piece_form.libelle_piece.errors %}<p class="text-red-500 text-xs mt-1">{{ piece_form.libelle_piece.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Type</label>
+                        {{ piece_form.type_piece }}
+                    </div>
+                    <div class="sm:col-span-3 flex items-center justify-between">
+                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">{{ piece_form.est_requis }} Obligatoire</label>
+                        <button type="button" data-action="supprimer-piece"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all">
+                            Supprimer
+                        </button>
+                    </div>
+                    <div class="hidden">{{ piece_form.DELETE }}</div>
+                </div>
+                {% empty %}
+                <div id="piece-empty-msg" class="text-center py-6 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+                    <p class="text-sm">Aucune pièce demandée. Cliquez sur « Ajouter une pièce » pour en définir.</p>
+                </div>
+                {% endfor %}
+            </div>
+            <template id="piece-empty-template">
+                <div class="piece-row grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Libellé</label>
+                        {{ pieces_formset.empty_form.libelle_piece }}
+                        {{ pieces_formset.empty_form.id }}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Type</label>
+                        {{ pieces_formset.empty_form.type_piece }}
+                    </div>
+                    <div class="sm:col-span-3 flex items-center justify-between">
+                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">{{ pieces_formset.empty_form.est_requis }} Obligatoire</label>
+                        <button type="button" data-action="supprimer-piece"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all">
+                            Supprimer
+                        </button>
+                    </div>
+                    <div class="hidden">{{ pieces_formset.empty_form.DELETE }}</div>
+                </div>
+            </template>
+        </div>
+
         <div class="flex items-center justify-between pt-2">
             <a href="{% url 'bsb_admin:hebergement_list' %}"
                class="inline-flex items-center gap-2 px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:border-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
@@ -198,6 +259,30 @@ document.addEventListener('click', function (e) {
     if (!e.target.closest) return;
     var el = e.target.closest('[data-action="supprimer-ligne"]');
     if (el) supprimerLigneFrais(el);
+});
+</script>
+
+<script nonce="{{ csp_nonce }}">
+document.getElementById('btn-add-piece').addEventListener('click', function () {
+    var totalInput = document.getElementById('id_pieces-TOTAL_FORMS');
+    var idx = parseInt(totalInput.value);
+    var modele = document.getElementById('piece-empty-template').innerHTML.replace(/__prefix__/g, idx);
+    var container = document.getElementById('piece-container');
+    var vide = document.getElementById('piece-empty-msg');
+    if (vide) vide.style.display = 'none';
+    var div = document.createElement('div');
+    div.innerHTML = modele;
+    container.appendChild(div.firstElementChild);
+    totalInput.value = idx + 1;
+});
+document.addEventListener('click', function (e) {
+    if (!e.target.closest) return;
+    var btn = e.target.closest('[data-action="supprimer-piece"]');
+    if (!btn) return;
+    var ligne = btn.closest('.piece-row');
+    var chk = ligne.querySelector('input[type="checkbox"][name$="-DELETE"]');
+    if (chk) { chk.checked = true; }
+    ligne.style.display = 'none';
 });
 </script>
 {% endblock %}

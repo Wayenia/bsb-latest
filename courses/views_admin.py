@@ -29,7 +29,7 @@ from .forms import (
     DirectionRegForm, FiliereForm, CentreFormationForm, ModuleForm,
     FraisForm, CoursForm, InscriptionForm, PaiementForm, PaiementAdminForm, CentreEtFiliereForm,
     PieceJointeFormSet,FraisFormSet,AnneeScolaireForm, EleveForm, CarrouselAccueilForm,
-    HebergementForm, FraisHebergementFormSet,
+    HebergementForm, FraisHebergementFormSet, PieceJointeHebergementFormSet,
 )
 from accounts.models import Eleve,Formateur
 from .admin_filters import FormationFilter,FiliereFilter,SubscriptionFilter
@@ -2261,22 +2261,27 @@ def hebergement_create(request):
     if request.method == 'POST':
         form = HebergementForm(request.POST, centre_queryset=centres_qs)
         frais_formset = FraisHebergementFormSet(request.POST, prefix='frais')
-        if form.is_valid() and frais_formset.is_valid():
+        pieces_formset = PieceJointeHebergementFormSet(request.POST, prefix='pieces')
+        if form.is_valid() and frais_formset.is_valid() and pieces_formset.is_valid():
             hebergement = form.save(commit=False)
             hebergement.cree_par = request.user
             hebergement.save()
             form.save_m2m()
             frais_formset.instance = hebergement
             frais_formset.save()
+            pieces_formset.instance = hebergement
+            pieces_formset.save()
             messages.success(request, "Hébergement créé avec succès.")
             return redirect('bsb_admin:hebergement_list')
     else:
         form = HebergementForm(centre_queryset=centres_qs)
         frais_formset = FraisHebergementFormSet(prefix='frais')
+        pieces_formset = PieceJointeHebergementFormSet(prefix='pieces')
 
     return render(request, 'admin/hebergement/form.html', {
         'form': form,
         'frais_formset': frais_formset,
+        'pieces_formset': pieces_formset,
         'action': 'Créer',
         'type_frais_options': TypeFrais.objects.all(),
     })
@@ -2290,18 +2295,22 @@ def hebergement_update(request, id):
     if request.method == 'POST':
         form = HebergementForm(request.POST, instance=hebergement, centre_queryset=centres_qs)
         frais_formset = FraisHebergementFormSet(request.POST, instance=hebergement, prefix='frais')
-        if form.is_valid() and frais_formset.is_valid():
+        pieces_formset = PieceJointeHebergementFormSet(request.POST, instance=hebergement, prefix='pieces')
+        if form.is_valid() and frais_formset.is_valid() and pieces_formset.is_valid():
             form.save()
             frais_formset.save()
+            pieces_formset.save()
             messages.success(request, "Hébergement modifié avec succès.")
             return redirect('bsb_admin:hebergement_list')
     else:
         form = HebergementForm(instance=hebergement, centre_queryset=centres_qs)
         frais_formset = FraisHebergementFormSet(instance=hebergement, prefix='frais')
+        pieces_formset = PieceJointeHebergementFormSet(instance=hebergement, prefix='pieces')
 
     return render(request, 'admin/hebergement/form.html', {
         'form': form,
         'frais_formset': frais_formset,
+        'pieces_formset': pieces_formset,
         'action': 'Modifier',
         'hebergement': hebergement,
         'type_frais_options': TypeFrais.objects.all(),
@@ -2421,4 +2430,5 @@ def demande_hebergement_detail(request, id):
         'demande': demande,
         'eleve': eleve,
         'documents': documents,
+        'documents_hebergement': demande.documents.select_related('piece_requise').order_by('date_depot'),
     })

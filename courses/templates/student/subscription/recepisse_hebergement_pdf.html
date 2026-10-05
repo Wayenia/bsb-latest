@@ -153,8 +153,13 @@
     <span class="valeur">{{ numero_dossier }}</span>
   </div>
   <div class="ligne">
+    {% if demande.date_decision %}
     <span class="label">Date de la décision :</span>
     <span class="valeur">{{ demande.date_decision|date:"d/m/Y à H:i" }}</span>
+    {% else %}
+    <span class="label">Date de dépôt :</span>
+    <span class="valeur">{{ demande.date_demande|date:"d/m/Y à H:i" }}</span>
+    {% endif %}
   </div>
 
   <hr class="separateur">
