@@ -2,7 +2,7 @@ from django.utils import timezone
 import random
 import string
 
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, FileExtensionValidator, MinValueValidator
@@ -15,6 +15,15 @@ phone_validator = RegexValidator(
 )
 
 # COMMON MODEL
+class CompteurMatricule(models.Model):
+    """Dernier numéro de matricule attribué pour une année : ne redescend jamais."""
+    annee = models.PositiveIntegerField(unique=True)
+    dernier = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.annee} : {self.dernier}"
+
+
 class Utilisateur(AbstractUser):
     SEXE_CHOICE = [
         ("m", "Masculin"),
@@ -223,16 +232,20 @@ class Eleve(Utilisateur):
         return ''.join(brut.upper().split())
 
     def generate_matricule(self):
+        # Compteur par année, incrémenté sous verrou de ligne : deux créations
+        # simultanées ne peuvent plus recevoir le même numéro, et un numéro
+        # attribué n'est jamais redonné, même si son titulaire est supprimé.
         annee = timezone.now().year
         prefix = f"BSB{annee}"
-
-        count = Utilisateur.objects.filter(matricule__startswith=prefix).count() + 1
-        matricule = f"{prefix}{str(count).zfill(6)}"
-
-        while Utilisateur.objects.filter(matricule=matricule).exists():
-            count += 1
-            matricule = f"{prefix}{str(count).zfill(6)}"
-
+        with transaction.atomic():
+            CompteurMatricule.objects.get_or_create(annee=annee, defaults={'dernier': 0})
+            compteur = CompteurMatricule.objects.select_for_update().get(annee=annee)
+            while True:
+                compteur.dernier += 1
+                matricule = f"{prefix}{str(compteur.dernier).zfill(6)}"
+                if not Utilisateur.objects.filter(matricule=matricule).exists():
+                    break
+            compteur.save(update_fields=['dernier'])
         return matricule
 
     # Champs qui composent numero_identifiant (voir generate_identifiant) : les
