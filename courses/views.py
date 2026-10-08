@@ -1185,6 +1185,9 @@ def _quittance_officielle_pdf(request, paiement):
     inscription = dette.inscription
     eleve = inscription.eleve
     centre = inscription.formation.centre
+    # Le bénéficiaire de la quittance est le centre qui a réellement encaissé
+    # (sa caisse), pas forcément celui de l'inscription de l'apprenant.
+    centre_encaisseur = paiement.centre_encaissement or centre
     # Un frais de dossier se règle intégralement, sans tranche : la colonne
     # « Tranche » n'a pas de sens à afficher pour lui.
     est_frais_dossier = dette.frais_formation.type_frais.est_frais_de_dossier
@@ -1226,8 +1229,8 @@ def _quittance_officielle_pdf(request, paiement):
             str(centre), str(inscription.formation.filiere),
             f"Année : {inscription.annee_scolaire}"]},
         'partie_droite': {'titre': "Bénéficiaire", 'lignes': [
-            "Burkina Suudu Bawdè", str(centre),
-            centre.direction.nom_direction if centre and centre.direction else ""]},
+            "Burkina Suudu Bawdè", str(centre_encaisseur),
+            centre_encaisseur.direction.nom_direction if centre_encaisseur and centre_encaisseur.direction else ""]},
         'colonnes': colonnes,
         'lignes': [ligne],
         'total': fcfa(paiement.montant_paiement),
@@ -1361,7 +1364,9 @@ def _quittance_classique_pdf(paiement):
     width, height = A5
     favicon_path = os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
     _draw_pdf_watermark(p, width, height, favicon_path)
-    header_left, header_right = _pdf_header_lines(inscription.formation.centre)
+    # En-tete au centre qui a reellement encaisse, pas forcement celui de
+    # l'inscription de l'apprenant.
+    header_left, header_right = _pdf_header_lines(paiement.centre_encaissement or inscription.formation.centre)
     line_h = 0.28 * cm
     y_left = height - 0.6 * cm
     p.setFont("Helvetica-Bold", 5.5)
@@ -2117,9 +2122,15 @@ SCOPE_LABELS_PAIEMENT = {
 
 def _paiements_historique_qs(request):
     """Paiements pour l'écran « Historique des paiements » et ses exports :
-    même périmètre que partout ailleurs (_get_scope, inchangé — un caissier y
-    voit son centre comme le responsable), recherche libre (nom/prénom/
-    matricule/n° de quittance) et période (date du versement)."""
+    même périmètre que partout ailleurs (_get_scope), recherche libre (nom/
+    prénom/matricule/n° de quittance) et période (date du versement).
+
+    Le périmètre porte sur le centre d'ENCAISSEMENT (centre_encaissement),
+    pas sur le centre de l'inscription de l'apprenant : un caissier doit voir
+    ici ce que SA caisse a réellement encaissé, y compris pour un apprenant
+    d'un autre centre (recherche multi-centres), et ne doit pas voir dans son
+    propre historique un versement encaissé ailleurs pour l'un de ses
+    apprenants."""
     centres_qs, directions_qs, scope = _get_scope(request.user)
 
     paiements = Paiement.objects.select_related(
@@ -2128,13 +2139,14 @@ def _paiements_historique_qs(request):
         'dette__inscription__formation__centre',
         'dette__frais_formation__type_frais',
         'cree_par',
+        'centre_encaissement',
     ).order_by('-date_paiement')
 
     if scope == 'none':
         paiements = paiements.none()
     else:
         paiements = paiements.filter(
-            dette__inscription__formation__centre_id__in=centres_qs.values_list('id', flat=True)
+            centre_encaissement_id__in=centres_qs.values_list('id', flat=True)
         )
 
     q = request.GET.get('q', '').strip()
@@ -2278,6 +2290,20 @@ def _libelle_versement_lot(v):
     return libelle
 
 
+def _libelle_centre_quittance(paiement, centre_apprenant):
+    """Centre à afficher dans la colonne 'Centre' des exports : celui qui a
+    réellement encaissé (centre_encaissement), avec le centre de l'apprenant
+    ajouté sur une 2e ligne uniquement quand il diffère — même logique que la
+    colonne 'Centre' de historique.html."""
+    centre_encaissement = paiement.centre_encaissement
+    if not centre_encaissement:
+        return centre_apprenant.nom_centre if centre_apprenant else "—"
+    libelle = centre_encaissement.nom_centre
+    if centre_apprenant and centre_apprenant.pk != centre_encaissement.pk:
+        libelle += f"<br/><font size=6>apprenant : {centre_apprenant.nom_centre}</font>"
+    return libelle
+
+
 @require_permission('courses.encaisser_paiement', 'courses.gerer_paiements')
 def paiement_historique(request):
     """
@@ -2386,7 +2412,7 @@ def paiement_historique_export_csv(request):
     writer.writerow(["Filtres appliqués :", _resume_filtres_historique(q, date_debut, date_fin)])
     writer.writerow([])
     writer.writerow([
-        "N°", "Apprenant", "Matricule", "Centre", "Total dû (FCFA)",
+        "N°", "Apprenant", "Matricule", "Centre (encaissement)", "Centre (apprenant)", "Total dû (FCFA)",
         "Total encaissé (FCFA)", "Reste (FCFA)", "Montant du versement (FCFA)",
         "Détail (frais réglés)", "Mode", "Date", "N° Quittance", "Caissier(ère)", "Statut",
     ])
@@ -2405,6 +2431,7 @@ def paiement_historique_export_csv(request):
             i,
             f"{eleve.nom} {eleve.prenom}" if eleve else "—",
             (eleve.matricule or "—") if eleve else "—",
+            p.centre_encaissement.nom_centre if p.centre_encaissement else (centre.nom_centre if centre else "—"),
             centre.nom_centre if centre else "—",
             p.total_du_insc,
             p.encaisse_a_date,
@@ -2442,7 +2469,7 @@ def paiement_historique_export_excel(request):
     ws["A1"].font = filtres_font
     ws.append([])
     headers = [
-        "N°", "Apprenant", "Matricule", "Centre", "Total dû (FCFA)",
+        "N°", "Apprenant", "Matricule", "Centre (encaissement)", "Centre (apprenant)", "Total dû (FCFA)",
         "Total encaissé (FCFA)", "Reste (FCFA)", "Montant du versement (FCFA)",
         "Détail (frais réglés)", "Mode", "Date", "N° Quittance", "Caissier(ère)", "Statut",
     ]
@@ -2468,6 +2495,7 @@ def paiement_historique_export_excel(request):
             i,
             f"{eleve.nom} {eleve.prenom}" if eleve else "—",
             (eleve.matricule or "—") if eleve else "—",
+            p.centre_encaissement.nom_centre if p.centre_encaissement else (centre.nom_centre if centre else "—"),
             centre.nom_centre if centre else "—",
             p.total_du_insc,
             p.encaisse_a_date,
@@ -2607,7 +2635,7 @@ def paiement_historique_export_pdf(request):
             str(i),
             cell(f"{eleve.nom} {eleve.prenom}") if eleve else "—",
             cell(eleve.matricule) if eleve and eleve.matricule else "—",
-            cell(centre.nom_centre) if centre else "—",
+            cell(_libelle_centre_quittance(p, centre)),
             fcfa(p.total_du_insc),
             fcfa(p.encaisse_a_date),
             fcfa(reste),
@@ -3107,8 +3135,10 @@ def _base_qs(user):
     )
     # annule=False une fois pour toutes : un versement annule n'est plus
     # encaisse pour aucune des statistiques qui reutilisent ce queryset.
+    # Scope sur centre_encaissement (la caisse qui a reellement recu l'argent),
+    # pas sur le centre de l'inscription de l'apprenant.
     paiements = Paiement.objects.filter(
-        dette__inscription__formation__centre_id__in=centre_ids, annule=False
+        centre_encaissement_id__in=centre_ids, annule=False
     )
     return inscriptions, dettes, paiements, centres_qs, directions_qs, scope
 
@@ -3141,12 +3171,15 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
     if direction_id and scope == "global":
         inscriptions_qs = inscriptions_qs.filter(formation__centre__direction_id=direction_id)
         dettes_qs = dettes_qs.filter(inscription__formation__centre__direction_id=direction_id)
-        paiements_qs = paiements_qs.filter(dette__inscription__formation__centre__direction_id=direction_id)
+        # Centre/direction/region sur paiements_qs portent sur le centre qui a
+        # ENCAISSE (centre_encaissement), pas sur le centre de l'inscription :
+        # c'est la bonne caisse qui doit recevoir le montant dans les stats.
+        paiements_qs = paiements_qs.filter(centre_encaissement__direction_id=direction_id)
 
     if centre_id and scope in ("global", "direction"):
         inscriptions_qs = inscriptions_qs.filter(formation__centre_id=centre_id)
         dettes_qs = dettes_qs.filter(inscription__formation__centre_id=centre_id)
-        paiements_qs = paiements_qs.filter(dette__inscription__formation__centre_id=centre_id)
+        paiements_qs = paiements_qs.filter(centre_encaissement_id=centre_id)
 
     if filiere_id:
         inscriptions_qs = inscriptions_qs.filter(formation__filiere_id=filiere_id)
@@ -3175,7 +3208,7 @@ def _apply_stats_filters(request, inscriptions_qs, dettes_qs, paiements_qs, scop
     if region_id:
         inscriptions_qs = inscriptions_qs.filter(formation__centre__province__region_id=region_id)
         dettes_qs = dettes_qs.filter(inscription__formation__centre__province__region_id=region_id)
-        paiements_qs = paiements_qs.filter(dette__inscription__formation__centre__province__region_id=region_id)
+        paiements_qs = paiements_qs.filter(centre_encaissement__province__region_id=region_id)
 
     if genre:
         inscriptions_qs = inscriptions_qs.filter(eleve__sexe=genre)
@@ -3604,7 +3637,7 @@ def statistiques_view(request):
     recouvrement_centres = []
     for centre in centres_pour_recouvrement.order_by("nom_centre"):
         c_dettes    = dettes_qs.filter(inscription__formation__centre=centre)
-        c_paiements = paiements_qs.filter(dette__inscription__formation__centre=centre)
+        c_paiements = paiements_qs.filter(centre_encaissement=centre)
         c_du  = c_dettes.aggregate(s=Sum("montant_total"))["s"] or 0
         c_enc = c_paiements.aggregate(s=Sum("montant_paiement"))["s"] or 0
         c_rest = max(c_du - c_enc, 0)
@@ -3831,16 +3864,17 @@ def export_csv(request):
             ])
 
     elif export_type == "paiements":
-        writer.writerow(["N°", "Apprenant", "Quittance", "Montant (FCFA)", "Mode", "Date", "Centre"])
+        writer.writerow(["N°", "Apprenant", "Quittance", "Montant (FCFA)", "Mode", "Date", "Centre d'encaissement", "Centre de l'apprenant"])
         for i, p in enumerate(
             paiements_qs.select_related(
                 "dette__inscription__eleve",
                 "dette__inscription__formation__centre",
+                "centre_encaissement",
             ).order_by("-date_paiement"), 1
         ):
             insc = p.dette.inscription if p.dette else None
             eleve = insc.eleve if insc else None
-            centre = insc.formation.centre if insc and insc.formation else None
+            centre_apprenant = insc.formation.centre if insc and insc.formation else None
             writer.writerow([
                 i,
                 f"{eleve.nom} {eleve.prenom}" if eleve else "—",
@@ -3848,7 +3882,8 @@ def export_csv(request):
                 p.montant_paiement,
                 p.mode_paiement,
                 p.date_paiement.strftime("%d/%m/%Y") if p.date_paiement else "—",
-                centre.nom_centre if centre else "—",
+                p.centre_encaissement.nom_centre if p.centre_encaissement else "—",
+                centre_apprenant.nom_centre if centre_apprenant else "—",
             ])
 
     elif export_type == "recouvrement":
@@ -3858,7 +3893,7 @@ def export_csv(request):
         )
         for centre in centres_pour_recouvrement.order_by("nom_centre"):
             c_dettes    = dettes_qs.filter(inscription__formation__centre=centre)
-            c_paiements = paiements_qs.filter(dette__inscription__formation__centre=centre)
+            c_paiements = paiements_qs.filter(centre_encaissement=centre)
             c_du   = c_dettes.aggregate(s=Sum("montant_total"))["s"] or 0
             c_enc  = c_paiements.aggregate(s=Sum("montant_paiement"))["s"] or 0
             c_rest = max(c_du - c_enc, 0)
@@ -3948,7 +3983,7 @@ def export_excel(request):
         )
         for centre in centres_pour_recouvrement.order_by("nom_centre"):
             c_dettes    = dettes_qs.filter(inscription__formation__centre=centre)
-            c_paiements = paiements_qs.filter(dette__inscription__formation__centre=centre)
+            c_paiements = paiements_qs.filter(centre_encaissement=centre)
             c_du   = c_dettes.aggregate(s=Sum("montant_total"))["s"] or 0
             c_enc  = c_paiements.aggregate(s=Sum("montant_paiement"))["s"] or 0
             c_rest = max(c_du - c_enc, 0)
@@ -4145,7 +4180,7 @@ def export_pdf(request):
         )
         for centre in centres_pour_recouvrement.order_by("nom_centre"):
             c_dettes    = dettes_qs.filter(inscription__formation__centre=centre)
-            c_paiements = paiements_qs.filter(dette__inscription__formation__centre=centre)
+            c_paiements = paiements_qs.filter(centre_encaissement=centre)
             c_du   = c_dettes.aggregate(s=Sum("montant_total"))["s"] or 0
             c_enc  = c_paiements.aggregate(s=Sum("montant_paiement"))["s"] or 0
             c_rest = max(c_du - c_enc, 0)
@@ -4340,7 +4375,7 @@ def _encaisser_montant_dette(dette, montant, mode_paiement, user, motif_derogati
     montant non utilisé).
     """
     if numero_quittance is None:
-        centre = dette.inscription.formation.centre if dette.inscription.formation else None
+        centre = Paiement.deriver_centre_encaisseur(user, dette.inscription)
         numero_quittance = Paiement.generer_numero_quittance(centre)
 
     tranche_num = dette.paiements.count()
@@ -4584,7 +4619,7 @@ def stats_encaisser_solde_inscription_view(request, inscription_id):
     # dettes (frais différents) d'un coup : généré une fois ici et transmis à
     # chaque appel de _encaisser_montant_dette ci-dessous.
     numero_quittance = Paiement.generer_numero_quittance(
-        inscription.formation.centre if inscription.formation else None
+        Paiement.deriver_centre_encaisseur(request.user, inscription)
     )
     try:
         with transaction.atomic():
@@ -4669,7 +4704,7 @@ def stats_encaisser_solde_hebergement_view(request, inscription_id):
     mode = request.POST.get('mode_paiement', 'espece')
     groupe_id = uuid.uuid4()
     numero_quittance = Paiement.generer_numero_quittance(
-        inscription.formation.centre if inscription.formation else None
+        Paiement.deriver_centre_encaisseur(request.user, inscription)
     )
     try:
         with transaction.atomic():
@@ -5068,7 +5103,8 @@ def _quittance_tranche_classique_pdf(dette, tranche, paiements):
     width, height = A5
     favicon_path = os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
     _draw_pdf_watermark(p, width, height, favicon_path)
-    header_left, header_right = _pdf_header_lines(inscription.formation.centre)
+    # En-tete au centre qui a reellement encaisse (premier verse du lot).
+    header_left, header_right = _pdf_header_lines(premier.centre_encaissement or inscription.formation.centre)
     line_h = 0.28 * cm
     y_left = height - 0.6 * cm
     p.setFont("Helvetica-Bold", 5.5)
@@ -5312,7 +5348,8 @@ def _quittance_groupe_classique_pdf(paiements):
     width, height = A5
     favicon_path = os.path.join(settings.BASE_DIR, 'static/images/favicon.png')
     _draw_pdf_watermark(p, width, height, favicon_path)
-    header_left, header_right = _pdf_header_lines(inscription.formation.centre)
+    # En-tete au centre qui a reellement encaisse (premier verse du lot).
+    header_left, header_right = _pdf_header_lines(premier.centre_encaissement or inscription.formation.centre)
     line_h = 0.28 * cm
     y_left = height - 0.6 * cm
     p.setFont("Helvetica-Bold", 5.5)
@@ -5458,6 +5495,8 @@ def _quittance_groupe_officielle_pdf(request, paiements):
     inscription = premier.dette.inscription
     eleve = inscription.eleve
     centre = inscription.formation.centre
+    # Le beneficiaire de la quittance est le centre qui a reellement encaisse.
+    centre_encaisseur = premier.centre_encaissement or centre
     fcfa = lambda v: f"{v:,.0f} FCFA".replace(",", " ")
     montant_lettres = lambda v: f"{montant_en_lettres(v)} ({fcfa(v)})"
 
@@ -5479,8 +5518,8 @@ def _quittance_groupe_officielle_pdf(request, paiements):
             str(centre), str(inscription.formation.filiere),
             f"Année : {inscription.annee_scolaire}"]},
         'partie_droite': {'titre': "Bénéficiaire", 'lignes': [
-            "Burkina Suudu Bawdè", str(centre),
-            centre.direction.nom_direction if centre and centre.direction else ""]},
+            "Burkina Suudu Bawdè", str(centre_encaisseur),
+            centre_encaisseur.direction.nom_direction if centre_encaisseur and centre_encaisseur.direction else ""]},
         'colonnes': [{'libelle': "Type de frais"},
                      {'libelle': "Montant dû", 'num': True}, {'libelle': "Montant payé", 'num': True}],
         'lignes': [[

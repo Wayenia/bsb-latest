@@ -220,7 +220,10 @@
                         </td>
                         {% if multi_centre %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" data-label="Centre">
-                            {{ pmt.dette.inscription.formation.centre }}
+                            {{ pmt.centre_encaissement|default:pmt.dette.inscription.formation.centre }}
+                            {% if pmt.centre_encaissement and pmt.centre_encaissement_id != pmt.dette.inscription.formation.centre_id %}
+                            <div class="text-xs text-gray-400" title="Centre de l'apprenant">apprenant : {{ pmt.dette.inscription.formation.centre }}</div>
+                            {% endif %}
                         </td>
                         {% endif %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Type de frais">

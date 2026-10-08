@@ -1037,6 +1037,16 @@ class Paiement(models.Model):
         related_name="paiements_crees"
     )
 
+    # Centre dont la caisse reçoit réellement l'argent — distinct du centre de
+    # l'inscription de l'apprenant (ex. un caissier du centre B encaisse pour
+    # un apprenant du centre A : l'argent est dans la caisse du centre B).
+    # Déduit automatiquement de cree_par à la création (voir save()), jamais
+    # saisi manuellement.
+    centre_encaissement = models.ForeignKey(
+        "CentreFormation", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="paiements_encaisses", verbose_name="Centre d'encaissement",
+    )
+
     # Regroupe les paiements crees en une seule action : c'est ce lot, et non
     # une ligne isolee, qui est annule d'un bloc.
     groupe_id = models.UUIDField(null=True, blank=True, db_index=True, verbose_name="Lot d'encaissement")
@@ -1070,6 +1080,14 @@ class Paiement(models.Model):
     def _code_centre(self):
         centre = self.dette.inscription.formation.centre if self.dette and self.dette.inscription.formation else None
         return centre.code_centre if centre and centre.code_centre else "CENTRE"
+
+    @property
+    def centre_apprenant(self):
+        """Centre de l'inscription de l'apprenant — distinct de
+        centre_encaissement quand un autre centre a encaissé pour lui."""
+        if self.dette and self.dette.inscription and self.dette.inscription.formation:
+            return self.dette.inscription.formation.centre
+        return None
 
     @classmethod
     def generer_numero_quittance(cls, centre):
@@ -1105,10 +1123,33 @@ class Paiement(models.Model):
                 return candidat
         raise IntegrityError("Impossible de générer un numéro de quittance après plusieurs tentatives.")
 
+    @staticmethod
+    def deriver_centre_encaisseur(cree_par, inscription):
+        """Centre dont la caisse reçoit l'argent : celui de l'agent qui encaisse
+        s'il est rattaché à un seul centre (Caissier/Gestionnaire, via
+        MembreAdministration.structure) ; sinon (Agent comptable, Admin, DG,
+        DEPS, Directeur inter-régional, DAF, superutilisateur — aucun centre
+        unique sur leur compte), le centre de l'inscription de l'apprenant,
+        comme avant ce changement. `inscription` peut être None (les appelants
+        qui ne l'ont pas sous la main passent déjà le bon centre autrement)."""
+        from accounts.models import MembreAdministration
+        if cree_par is not None:
+            try:
+                membre = MembreAdministration.objects.get(pk=cree_par.pk)
+            except MembreAdministration.DoesNotExist:
+                membre = None
+            if membre is not None and membre.structure_id:
+                return membre.structure
+        if inscription and inscription.formation:
+            return inscription.formation.centre
+        return None
+
     def save(self, *args, **kwargs):
+        if not self.centre_encaissement_id:
+            inscription = self.dette.inscription if self.dette else None
+            self.centre_encaissement = Paiement.deriver_centre_encaisseur(self.cree_par, inscription)
         if not self.numero_quittance:
-            centre = self.dette.inscription.formation.centre if self.dette and self.dette.inscription.formation else None
-            self.numero_quittance = Paiement.generer_numero_quittance(centre)
+            self.numero_quittance = Paiement.generer_numero_quittance(self.centre_encaissement)
         return super().save(*args, **kwargs)
         
 
