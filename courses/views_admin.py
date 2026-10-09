@@ -1766,6 +1766,8 @@ MATRIX_PERMISSIONS = [
     ('gerer_facturation', "Créer/gérer les factures de prestation", 'accounts', 'Facturation de prestations'),
     ('valider_facture_prestation', "Valider une facture proforma en définitive", 'accounts', 'Facturation de prestations'),
     ('encaisser_prestation', "Encaisser un paiement de prestation", 'accounts', 'Facturation de prestations'),
+    ('gerer_hebergements', "Créer/modifier/désactiver un hébergement", 'courses', 'Hébergement'),
+    ('valider_demande_hebergement', "Valider ou rejeter une demande d'hébergement", 'courses', 'Hébergement'),
 ]
 MATRIX_CODENAMES = [codename for codename, _, _, _ in MATRIX_PERMISSIONS]
 
