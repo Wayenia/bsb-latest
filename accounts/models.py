@@ -164,7 +164,9 @@ class Eleve(Utilisateur):
         ("bpt", "BPT"),
         ("bpts", "BPTS"),
         ("licence", "Licence"),
-        ("maitrise", "Maîtrise"),
+        # Valeur ("maitrise") inchangée pour ne pas affecter les données
+        # existantes ; seul le libellé affiché passe à "Master".
+        ("maitrise", "Master"),
         ("doctorat", "Doctorat"),
     ]
 
