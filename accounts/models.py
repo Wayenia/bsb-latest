@@ -165,6 +165,7 @@ class Eleve(Utilisateur):
         ("bpts", "BPTS"),
         ("licence", "Licence"),
         ("maitrise", "Maîtrise"),
+        ("doctorat", "Doctorat"),
     ]
 
     lieu_naissance = models.CharField(max_length=225, verbose_name="Lieu de naissance")
