@@ -27,7 +27,8 @@ maintenir le projet en bon état.
      9.3 Exécution en conteneur non privilégié · 9.4 Courrier électronique ·
      9.5 Rapport d'inspection · 9.6 Peuplement initial · 9.7 Facturation ·
      9.8 Réversibilité de l'interface · 9.9 Réversibilité du format des documents ·
-     9.10 Pages d'erreur personnalisées
+     9.10 Pages d'erreur personnalisées · 9.11 Guides d'aide par rôle ·
+     9.12 Hébergement · 9.13 Historique des modifications (audit)
 10. [Résolution des incidents courants](#10-résolution-des-incidents-courants)
 11. [Organisation des fichiers](#11-organisation-des-fichiers)
 
@@ -814,6 +815,42 @@ année, au moins un métier en commun) sont refusées dès la création
 (`HebergementForm.clean()`) : sans ce contrôle, l'élève ne verrait qu'une
 offre choisie arbitrairement sur son tableau de bord, l'autre restant
 invisible.
+
+### 9.13 Historique des modifications (audit)
+
+Les modèles métier (configuration — Région/Province/Centre/Filière/Module/
+Cours/Année/Centre-métier/Frais —, dossiers — Inscription/Dette/Paiement/
+Hébergement/Demande d'hébergement/Effectif réel —, et comptes — Utilisateur
+et ses sous-types Eleve/Formateur/MembreAdministration/DirecteurInterRegional/
+DAF —, ainsi que la facturation de prestations) portent chacun un attribut
+`history` (`django-simple-history`) : chaque création, modification et
+**suppression** laisse une ligne dans une table `Historical<Modèle>` dédiée,
+avec l'état complet du champ à cet instant et l'auteur (capturé automatique-
+ment via `HistoryRequestMiddleware` pour tout changement passé par une
+requête HTTP ; absent pour un changement fait hors requête, ex. un script ou
+une migration de données).
+
+C'est ce mécanisme qui couvre aujourd'hui le cas qui l'a motivé : un
+apprenant supprimé (plus aucune trace dans `Eleve`) reste consultable dans
+`HistoricalEleve`, avec son dernier état et — si la suppression est passée
+par une requête HTTP — qui l'a supprimé. Volontairement, on n'a **pas**
+ajouté en plus un mécanisme de suppression douce (`is_deleted`) ni des
+champs `cree_par`/`modifie_par` manuels sur ces modèles : l'un comme l'autre
+feraient double emploi avec ce que `history` donne déjà (premier
+enregistrement = création, dernier = état actuel, `history_user` = auteur).
+
+Conséquences pratiques :
+- **Aucun impact sur les données existantes** : ce sont de nouvelles tables,
+  les tables d'origine ne sont pas touchées. Un instantané de départ a été
+  créé une fois (`manage.py populate_history --auto`) pour que chaque ligne
+  déjà en base ait au moins un historique « création », sans auteur connu
+  (cette information n'a jamais été enregistrée avant l'activation).
+- Un nouveau modèle ajouté plus tard à cette liste doit, après sa migration,
+  recevoir lui aussi cet instantané de départ (même commande, elle ignore les
+  modèles déjà peuplés).
+- Pas d'écran de consultation pour l'instant : la table s'interroge via
+  `ModelX.history` (ex. `Frais.history.filter(id=...)`) ou directement en
+  base (`accounts_historicaleleve`, `courses_historicalpaiement`, etc.).
 
 ---
 

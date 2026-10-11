@@ -46,10 +46,17 @@ INSTALLED_APPS = [
     'actualites',
     'audit',
     'assistant',
-   
+
 
     # third party for erd
     'django_extensions',
+
+    # Historique avant/apres des modeles metier (qui a change quoi, quand) —
+    # voir simple_history dans chaque modele courses/models.py et
+    # accounts/models.py concerne. HistoryRequestMiddleware (ci-dessous)
+    # renseigne automatiquement l'auteur de chaque changement passe par une
+    # requete HTTP.
+    'simple_history',
 
 ]
 
@@ -62,6 +69,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Doit suivre AuthenticationMiddleware : capture request.user pour
+    # l'enregistrer comme auteur de chaque changement sur un modele suivi.
+    'simple_history.middleware.HistoryRequestMiddleware',
     'config.middleware.SecurityHeadersMiddleware',
     'django.middleware.csp.ContentSecurityPolicyMiddleware',
     # En dernier : la reponse 429 traverse ainsi les middlewares au-dessus et

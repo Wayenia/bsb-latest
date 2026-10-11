@@ -5,6 +5,7 @@ from django.db.utils import IntegrityError
 from django.core.validators import FileExtensionValidator, MinValueValidator
 from accounts.models import phone_validator
 from django.utils import timezone
+from simple_history.models import HistoricalRecords
 
 ##########   COMMON MODEL   ##########
 class TimeStampModel(models.Model):
@@ -18,6 +19,7 @@ class TimeStampModel(models.Model):
 ##########   ABOUT LEVEL    ##########
 
 class Region(TimeStampModel):
+    history = HistoricalRecords()
     nom_region = models.CharField(max_length=225, unique=True, verbose_name="Nom de la région")
     chef_lieu = models.CharField(max_length=225, verbose_name="Chef-lieu")
 
@@ -33,6 +35,7 @@ class Region(TimeStampModel):
 
 
 class Province(TimeStampModel):
+    history = HistoricalRecords()
     region = models.ForeignKey(Region, on_delete=models.CASCADE, verbose_name="Région", related_name="provinces")
     nom_province = models.CharField(max_length=225, unique=True, verbose_name="Nom de la province")
     chef_lieu = models.CharField(max_length=225, verbose_name="Chef-lieu")
@@ -140,6 +143,7 @@ class Membre(models.Model):
 
 # DIRECTION
 class Direction_reg(TimeStampModel):
+    history = HistoricalRecords()
     directeur = models.ForeignKey(DG, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Directeur")#
     nom_direction = models.CharField(max_length=225, unique=True, verbose_name="Nom de la direction")
     chef_lieu = models.CharField(max_length=225, verbose_name="Chef-lieu")#
@@ -165,6 +169,7 @@ TITRE_PROFESSIONNEL_CHOICE = [
 ]
 
 class Filiere(TimeStampModel):
+    history = HistoricalRecords()
     nom_filiere = models.CharField(max_length=225, unique=True, verbose_name="Nom de la filiere")
     nom_diplome = models.CharField(max_length=225, verbose_name="Nom du diplome",null=True,blank=True)# a supprimmer
     titre_professionnel = models.CharField(max_length=10, choices=TITRE_PROFESSIONNEL_CHOICE, verbose_name="Titre professionnel", null=True,blank=True)  # ← remplace nom_diplom
@@ -190,6 +195,7 @@ class Filiere(TimeStampModel):
 
 # CENTER
 class CentreFormation(TimeStampModel):
+    history = HistoricalRecords()
     province = models.ForeignKey(Province, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Province", related_name="centre_formations")  # ← AJOUTER
     direction = models.ForeignKey(Direction_reg, on_delete=models.CASCADE, verbose_name="Direction du centre", related_name="centre_formations", null=True, blank=True)
     parent=models.ForeignKey('self',on_delete=models.SET_NULL,null=True,blank=True,verbose_name="Centre parent",related_name="centre_enfants")
@@ -239,6 +245,7 @@ class CentreFormation(TimeStampModel):
 
 # MODULE
 class Module(TimeStampModel):
+    history = HistoricalRecords()
     filieres = models.ManyToManyField(Filiere, related_name="modules", blank=True, verbose_name="Métiers")
     nom_module = models.CharField(max_length=225, verbose_name="Nom du module")
     volume_h_cours = models.IntegerField(verbose_name="Volume d'heure")
@@ -256,6 +263,7 @@ class Module(TimeStampModel):
 
 # COURSE
 class Cours(TimeStampModel):
+    history = HistoricalRecords()
     module = models.ForeignKey(Module, on_delete=models.CASCADE, verbose_name="Module")
     libelle_cours = models.CharField(max_length=225, verbose_name="Libelle du cours")
     volume_h_cours = models.CharField(max_length=225, verbose_name="Volume d'heure")
@@ -268,6 +276,7 @@ class Cours(TimeStampModel):
         verbose_name_plural = "Cours"
 
 class AnneeScolaire(models.Model):
+     history = HistoricalRecords()
      libelle_anne=models.CharField(max_length=25)
      date_creation = models.DateTimeField(auto_now_add=True, null=True, verbose_name="Date de création")
 
@@ -361,6 +370,7 @@ def _format_duree_en_jours(total_jours):
 
 
 class CentreEtFiliere(models.Model):
+    history = HistoricalRecords()
     centre = models.ForeignKey(CentreFormation, on_delete=models.CASCADE, verbose_name="Centre")
     type_formation = models.CharField(max_length=30, choices=TYPE_FORMATION_CHOICE, verbose_name="Type de formation", null=True,blank=True)  # ← AJOUTE
     type_programme = models.CharField(max_length=20, choices=TYPE_PROGRAMME_CHOICE, verbose_name="Type de programme", null=True, blank=True)
@@ -422,6 +432,7 @@ class Hebergement(TimeStampModel):
     normaux dont `hebergement` est renseigné au lieu de `formation` — même
     mécanisme de Dette/Paiement que pour une formation, sans rien changer à
     l'encaissement existant."""
+    history = HistoricalRecords()
     STATUT_CHOICES = [
         ("actif", "Actif"),
         ("inactif", "Inactif"),
@@ -470,6 +481,7 @@ class Hebergement(TimeStampModel):
 
 
 class DemandeHebergement(models.Model):
+    history = HistoricalRecords()
     STATUT_CHOICES = [
         ("en_attente", "En attente"),
         ("validee", "Validée"),
@@ -507,6 +519,7 @@ class EffectifReel(models.Model):
     un site donné. Saisi/corrigé manuellement par le DSI via le module
     "Statistiques réelles" : l'app ne sait pas qui a effectivement suivi la
     formation, contrairement aux inscriptions qu'elle gère nativement."""
+    history = HistoricalRecords()
     formation = models.ForeignKey(
         CentreEtFiliere, on_delete=models.CASCADE, related_name="effectifs_reels",
         verbose_name="Formation"
@@ -584,6 +597,7 @@ class EffectifReel(models.Model):
 
 #Type de frais
 class TypeFrais(models.Model):
+    history = HistoricalRecords()
     libelle=models.CharField(max_length=100,verbose_name="Type de frais")
     est_frais_de_dossier = models.BooleanField(
         default=False,
@@ -604,6 +618,7 @@ class TrancheFrais(models.Model):
     pourcentage / 100 (le montant du type de frais varie selon la formation,
     via Frais.montant — le pourcentage est donc la seule donnée stable ici).
     """
+    history = HistoricalRecords()
     type_frais = models.ForeignKey(TypeFrais, on_delete=models.CASCADE, related_name="tranches", verbose_name="Type de frais")
     libelle = models.CharField(max_length=100, verbose_name="Libellé de la tranche")
     ordre = models.PositiveIntegerField(default=1, verbose_name="Ordre de paiement")
@@ -632,6 +647,7 @@ class TrancheFrais(models.Model):
 
 # FEE
 class Frais(TimeStampModel):
+    history = HistoricalRecords()
     # Un Frais se rattache SOIT a une formation SOIT a un hebergement, jamais
     # les deux (contrainte ci-dessous) — c'est ce qui permet a Dette/Paiement
     # et tout l'encaissement existant de fonctionner tel quel pour
@@ -666,6 +682,7 @@ class Frais(TimeStampModel):
 
 # SUBSCRIPTION
 class Inscription(models.Model):
+    history = HistoricalRecords()
     STATUT_CHOICE = [
         ("en_cours", "En cours de traitement"),
         ("valide", "Validé - Non payé"),
@@ -681,6 +698,19 @@ class Inscription(models.Model):
     statut = models.CharField(max_length=30, choices=STATUT_CHOICE, default="en_cours", verbose_name="Statut de l'inscription")
     date_validation=models.DateTimeField(blank=True,null=True)
     motif_rejet=models.TextField(blank=True,null=True)
+
+    # Qui a validé / rejeté ce dossier — jusqu'ici seules la date et (pour un
+    # rejet) la raison étaient conservées, jamais l'auteur de la décision.
+    # NULL pour les dossiers déjà validés/rejetés avant l'ajout de ce champ :
+    # cette information n'a jamais été enregistrée, impossible à reconstituer.
+    valide_par = models.ForeignKey(
+        "accounts.Utilisateur", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="inscriptions_validees", verbose_name="Validée par"
+    )
+    rejete_par = models.ForeignKey(
+        "accounts.Utilisateur", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="inscriptions_rejetees", verbose_name="Rejetée par"
+    )
 
     # Annulation d'une inscription déjà validée (retour à "en_cours", dettes
     # supprimées — voir annuler_inscription) : mêmes noms de champs que sur
@@ -808,6 +838,7 @@ class Inscription(models.Model):
         ]
 
 class Dette(models.Model):
+    history = HistoricalRecords()
     STATUT_CHOICES=[
         ("non_soldé","Non soldé"),
         ("soldé","Soldée"),
@@ -991,6 +1022,7 @@ class DocumentEleve(models.Model):
 
 # PAYMENT
 class Paiement(models.Model):
+    history = HistoricalRecords()
     PAYMENT_MODE = [
         ("chèque", "Chèque"),
         ("mobile", "Mobile Money"),

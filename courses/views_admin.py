@@ -779,6 +779,7 @@ def gerer_inscription(request,id):
              subscription.statut='valide'
              subscription.date_validation=timezone.now()
              subscription.motif_rejet=None
+             subscription.valide_par = request.user
              messages.success(request, "Souscription validée et dettes générées.")
              subscription.save()
      return redirect("bsb_admin:subscription_en_cours")
@@ -799,6 +800,7 @@ def rejeter_inscription(request,id):
         subscription.statut = "rejete"
         subscription.motif_rejet = motif
         subscription.date_validation = timezone.now()
+        subscription.rejete_par = request.user
         subscription.save()
         messages.warning(request, "Souscription rejetée")
         return redirect("bsb_admin:subscription_en_cours")

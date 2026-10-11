@@ -1927,6 +1927,7 @@ def gerer_inscription(request,id):
              subscription.statut='valide'
              subscription.date_validation=timezone.now()
              subscription.motif_rejet=None
+             subscription.valide_par = request.user
              messages.success(request, "Inscription validée et dettes générées.")
              subscription.save()
      return redirect("courses:valide_inscription")
@@ -1946,6 +1947,7 @@ def rejeter_inscription(request,id):
         subscription.statut = "rejete"
         subscription.motif_rejet = motif
         subscription.date_validation = timezone.now()
+        subscription.rejete_par = request.user
         subscription.save()
         messages.warning(request, "Inscription rejetée")
         return redirect("courses:valide_inscription")

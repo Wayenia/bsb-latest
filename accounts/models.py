@@ -6,6 +6,7 @@ from django.db import models, transaction
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, FileExtensionValidator, MinValueValidator
+from simple_history.models import HistoricalRecords
 
 # Garde-fou serveur au format E.164 ; le nombre de chiffres par pays est valide
 # cote client par intl-tel-input.
@@ -25,6 +26,7 @@ class CompteurMatricule(models.Model):
 
 
 class Utilisateur(AbstractUser):
+    history = HistoricalRecords()
     SEXE_CHOICE = [
         ("m", "Masculin"),
         ("f", "Féminin")
@@ -131,6 +133,7 @@ class Utilisateur(AbstractUser):
 
 
 class Eleve(Utilisateur):
+    history = HistoricalRecords()
     TYPE_DOCUMENT_CHOICES = [
         ("extrait_naissance", "Extrait de naissance"),
         ("jugement_supletif", "Jugement supplétif"),
@@ -303,6 +306,7 @@ class Eleve(Utilisateur):
 
 # TEACHER MODEL
 class Formateur(Utilisateur):
+    history = HistoricalRecords()
     centre = models.ForeignKey('courses.CentreFormation', on_delete=models.CASCADE, null=True, blank=True, verbose_name="Centre de formation associe", related_name="formateurs")
     emploi = models.CharField(max_length=225, verbose_name="Emploi") # don't understand
     specialite = models.CharField(max_length=225, verbose_name="Specialite")
@@ -330,6 +334,7 @@ class Formateur(Utilisateur):
         verbose_name_plural = "Formateurs"
     
 class MembreAdministration(Utilisateur):
+     history = HistoricalRecords()
      structure=models.ForeignKey('courses.CentreFormation',on_delete=models.SET_NULL,null=True,blank=True,verbose_name="Centre de formation",related_name="membres_administration")
      direction=models.ForeignKey('courses.Direction_reg',on_delete=models.SET_NULL,null=True,blank=True,verbose_name="Direction",related_name="membres_administration")
      emploi=models.CharField(max_length=225, verbose_name="Emploi")
@@ -362,6 +367,7 @@ class MembreAdministration(Utilisateur):
          verbose_name_plural = "Membres de l'administration"
          
 class DirecteurInterRegional(Utilisateur):
+    history = HistoricalRecords()
     direction=models.ForeignKey('courses.Direction_reg',on_delete=models.SET_NULL,null=True,blank=True,verbose_name="directeurs",related_name="direction_interregionale")
 
     class Meta:
@@ -376,6 +382,7 @@ class DirecteurInterRegional(Utilisateur):
         return f"{self.nom} {self.prenom} - {self.direction.nom_direction}"
 
 class DAF(Utilisateur):
+    history = HistoricalRecords()
     structure = models.ForeignKey(
         'courses.CentreFormation',
         on_delete=models.SET_NULL,
@@ -402,6 +409,7 @@ class DAF(Utilisateur):
         return f"{self.nom} {self.prenom}"
     
 class Client_prestation(models.Model):
+    history = HistoricalRecords()
 
     TYPE_CLIENT = [
         ("personne", "Personne physique"),
@@ -471,6 +479,7 @@ class Client_prestation(models.Model):
         return self.raison_sociale
     
 class Prestation_prestation(models.Model):
+    history = HistoricalRecords()
 
     libelle = models.CharField(max_length=255)
 
@@ -490,6 +499,7 @@ class Prestation_prestation(models.Model):
         return self.libelle
     
 class Facture_prestation(models.Model):
+    history = HistoricalRecords()
 
     TYPE_FACTURE = [
         ("proforma","Proforma"),
@@ -576,6 +586,7 @@ class Facture_prestation(models.Model):
 
 
 class LigneFacture_prestation(models.Model):
+    history = HistoricalRecords()
 
     facture=models.ForeignKey(
         Facture_prestation,
@@ -617,6 +628,7 @@ class LigneFacture_prestation(models.Model):
 
 
 class Paiement_prestation(models.Model):
+    history = HistoricalRecords()
 
     MODE_PAIEMENT=[
         ("espece","Espèces"),
@@ -690,6 +702,7 @@ class Paiement_prestation(models.Model):
 
 
 class LignePaiement_prestation(models.Model):
+    history = HistoricalRecords()
 
     paiement=models.ForeignKey(
         Paiement_prestation,
