@@ -156,17 +156,18 @@ class Eleve(Utilisateur):
         ("5e", "5ème"),
         ("4e", "4ème"),
         ("3e", "3ème"),
+        ("bepc", "BEPC"),
         ("2nde", "2nde"),
         ("1ere", "1ère"),
         ("terminale", "Terminale"),
+        ("bac", "BAC"),
         ("cqp", "CQP"),
         ("bqp", "BQP"),
         ("bpt", "BPT"),
         ("bpts", "BPTS"),
         ("licence", "Licence"),
-        # Valeur ("maitrise") inchangée pour ne pas affecter les données
-        # existantes ; seul le libellé affiché passe à "Master".
-        ("maitrise", "Master"),
+        ("maitrise", "Maîtrise"),
+        ("master", "Master"),
         ("doctorat", "Doctorat"),
     ]
 

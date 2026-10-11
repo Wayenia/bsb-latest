@@ -71,6 +71,13 @@ class FiltresProfilStatistiquesTests(TestCase):
     def test_niveau_scolaire(self):
         self.assertEqual(self._total({'niveau_scolaire': 'licence'}), 1)
 
+    def test_niveau_scolaire_nouveau_code_bac(self):
+        """BEPC/BAC/Master ajoutés à Eleve.NIVEAU_SCOLAIRE_CHOICES doivent
+        filtrer comme n'importe quel autre niveau, sans rien de spécifique
+        à ajouter côté vue."""
+        self.assertEqual(self._total({'niveau_scolaire': 'terminale'}), 1)  # cls.jeune
+        self.assertEqual(self._total({'niveau_scolaire': 'bac'}), 0)  # personne à ce niveau
+
     def test_handicap_oui(self):
         self.assertEqual(self._total({'handicap': 'oui'}), 1)
 
