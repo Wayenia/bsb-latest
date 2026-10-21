@@ -1761,6 +1761,7 @@ MATRIX_PERMISSIONS = [
     ('gerer_paiements', "Modifier/supprimer un paiement", 'courses', 'Paiements de scolarité'),
     ('annuler_paiement', "Annuler un versement encaissé (dernier mouvement)", 'courses', 'Paiements de scolarité'),
     ('rechercher_tous_centres', "Rechercher un apprenant dans tous les centres (paiements)", 'courses', 'Paiements de scolarité'),
+    ('filtrer_historique_avance', "Filtrer l'historique des paiements par critères avancés (direction, centre, métier, statut, région...)", 'courses', 'Paiements de scolarité'),
     ('telecharger_pieces', "Télécharger les pièces jointes des candidats", 'courses', 'Inscriptions'),
     ('voir_statistiques', "Voir les statistiques", 'courses', 'Statistiques et exports'),
     ('gerer_statistiques_reelles', "Gérer le bilan des effectifs formés (saisie manuelle)", 'courses', 'Statistiques et exports'),
