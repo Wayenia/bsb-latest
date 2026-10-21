@@ -134,10 +134,14 @@
                         </td>
                         <td class="px-4 py-3 text-center" data-label="Statut dossier">
                             {% with s=item.inscription.statut %}
-                            {% if s == 'valide_paye' %}
-                            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">Validé & payé</span>
-                            {% elif s == 'valide' or s == 'Valide' %}
-                            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Validé</span>
+                            {% if s == 'valide' or s == 'Valide' %}
+                                {% if item.total_du and item.total_paye >= item.total_du %}
+                                <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">Validé & payé</span>
+                                {% elif item.a_paye %}
+                                <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Validé - partiel</span>
+                                {% else %}
+                                <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Validé</span>
+                                {% endif %}
                             {% elif s == 'en_cours' %}
                             <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">En cours</span>
                             {% elif s == 'rejete' %}
