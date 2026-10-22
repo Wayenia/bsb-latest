@@ -138,11 +138,13 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-500 mb-1">Statut inscription</label>
-                {# "valide_paye" retiré : Inscription.statut ne prend jamais
-                   cette valeur (reste "valide" quel que soit le paiement,
-                   voir Inscription.libelle_statut_paiement) — ce filtre ne
-                   retournait donc jamais aucun résultat. "Statut de paiement"
-                   plus bas couvre déjà payé/partiellement payé/pas payé. #}
+                {% comment %}
+                "valide_paye" retiré : Inscription.statut ne prend jamais
+                cette valeur (reste "valide" quel que soit le paiement,
+                voir Inscription.libelle_statut_paiement) — ce filtre ne
+                retournait donc jamais aucun résultat. "Statut de paiement"
+                plus bas couvre déjà payé/partiellement payé/pas payé.
+                {% endcomment %}
                 <select name="statut" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition">
                     <option value="">— Tous —</option>
                     <option value="en_cours" {% if f_statut == "en_cours" %}selected{% endif %}>En attente</option>

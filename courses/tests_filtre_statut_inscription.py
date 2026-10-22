@@ -35,6 +35,20 @@ class FiltreStatutMortTests(HebergementBase):
             html = self.client.get(reverse(url_name)).content.decode()
             self.assertNotIn('value="valide_paye"', html, url_name)
 
+    def test_aucune_fuite_de_commentaire_template(self):
+        """Un commentaire Django {# ... #} qui s'étend sur plusieurs lignes
+        n'est PAS supprimé par le moteur de template (restriction propre à ce
+        tag, contrairement à {% comment %}/{% endcomment %}) : son texte
+        brut, accolades comprises, se retrouve alors affiché tel quel sur la
+        page — exactement le bug introduit (puis corrigé) par le commentaire
+        multi-ligne ajouté avec ce correctif. Garde-fou générique pour ne pas
+        reproduire l'erreur ailleurs sur ces deux pages."""
+        self.client.force_login(self.staff)
+        for url_name in ('courses:statistiques', 'courses:paiement_historique'):
+            html = self.client.get(reverse(url_name)).content.decode()
+            self.assertNotIn('{#', html, url_name)
+            self.assertNotIn('#}', html, url_name)
+
     def test_exports_partagent_le_meme_filtre_donc_deja_couverts(self):
         """Les exports (CSV/Excel/PDF, stat-globaux et historique) réutilisent
         tous _apply_stats_filters / _appliquer_filtres_avances_historique —
